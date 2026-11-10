@@ -67,6 +67,15 @@ export const sharedScriptFiles = [
   "src/routes/data/data-error-messages.ts",
 ];
 
+export const sharedLocaleFiles = [
+  "src/lib/data/categories.ts",
+  "src/lib/data/item-variants.ts",
+  "src/lib/data/source-filters.ts",
+  "src/lib/presentation/quest-sections.ts",
+  "src/lib/presentation/source-labels.ts",
+  "src/lib/sources/source-names.ts",
+];
+
 export const routeSvelteFiles = [
   "src/routes/+page.svelte",
   "src/routes/data/+page.svelte",

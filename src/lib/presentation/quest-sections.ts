@@ -2,7 +2,6 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { questSources } from "#lib/engine/projections/quests.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { displayQuestName } from "#lib/utils/en-grammar.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -127,7 +126,7 @@ function comparator(
 
 function cravingRow(
   completed: DeepReadonly<ProgressState>,
-  locale: LocaleCode,
+  _locale: LocaleCode,
 ): SortableRow | undefined {
   const craving = getCravingQuest(completed);
   if (!craving.applicable) return undefined;
@@ -135,13 +134,13 @@ function cravingRow(
     heartLevel: 99,
     row: {
       completed: craving.completed,
-      displayName: m.quest_craving_name({}, { locale }),
+      displayName: "A Craving",
       id: craving.questId ?? CRAVING_PLACEHOLDER_ID,
       kind: "craving",
       questId: craving.questId,
       subtitle:
         craving.questId && craving.villagerId
-          ? getName("villagers", craving.villagerId, locale)
+          ? getName("villagers", craving.villagerId, _locale)
           : undefined,
       villagerId: craving.villagerId,
     },
@@ -190,16 +189,16 @@ function questSubtitle(
   villager: undefined | VillagerId,
   questType: QuestType,
   duplicateNames: Set<string>,
-  locale: LocaleCode,
+  _locale: LocaleCode,
 ): string | undefined {
   if (!villager) return undefined;
   const duplicated = duplicateNames.has(row.displayName);
   if (questType !== "fetch" && questType !== "heart" && !duplicated) return undefined;
-  const villagerName = getName("villagers", villager, locale);
+  const villagerName = getName("villagers", villager, _locale);
   const rewardRecipeName =
-    questType === "fetch" ? fetchRewardRecipeName(row.id, locale) : undefined;
+    questType === "fetch" ? fetchRewardRecipeName(row.id, _locale) : undefined;
   return duplicated && rewardRecipeName
-    ? m.quest_subtitle_with_recipe({ recipe: rewardRecipeName, villager: villagerName }, { locale })
+    ? /* @wc-include */ `${villagerName} · ${rewardRecipeName}`
     : villagerName;
 }
 

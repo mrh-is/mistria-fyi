@@ -1,6 +1,5 @@
 import { getName, nameCollator } from "#lib/data/names.js";
 import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -21,27 +20,27 @@ export interface CategoryInfo {
 const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
   almanac: (locale) => getName("ui", "almanac", locale),
   animals: (locale) => getName("ui", "animals", locale),
-  cosmetics: (locale) => m.category_cosmetics_name({}, { locale }),
-  mines: (locale) => m.category_mines_name({}, { locale }),
+  cosmetics: (_locale) => "Cosmetics",
+  mines: (_locale) => "Mines",
   museum: (locale) => getName("ui", "museum", locale),
-  quests: (locale) => m.category_quests_name({}, { locale }),
-  recipes: (locale) => m.category_recipes_name({}, { locale }),
+  quests: (_locale) => "Quests",
+  recipes: (_locale) => "Recipes",
   renown: (locale) => getName("ui", "renown", locale),
   skills: (locale) => getName("ui", "skills", locale),
   villagers: (locale) => getName("ui", "villagers", locale),
 };
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string> = {
-  almanac: (locale) => m.category_almanac_description({}, { locale }),
-  animals: (locale) => m.category_animals_description({}, { locale }),
-  cosmetics: (locale) => m.category_cosmetics_description({}, { locale }),
-  mines: (locale) => m.category_mines_description({}, { locale }),
-  museum: (locale) => m.category_museum_description({}, { locale }),
-  quests: (locale) => m.category_quests_description({}, { locale }),
-  recipes: (locale) => m.category_recipes_description({}, { locale }),
+  almanac: (_locale) => "Crops, fish, forage, & more",
+  animals: (_locale) => "Breeds, variants, & cosmetics",
+  cosmetics: (_locale) => "Wardrobe & appearance",
+  mines: (_locale) => "Floors & spells",
+  museum: (_locale) => "Collections & donations",
+  quests: (_locale) => "Story & requests",
+  recipes: (_locale) => "Cooking & crafting",
   renown: (locale) => getName("ui", "town_rank", locale),
   skills: (locale) => getName("ui", "skill_levels", locale),
-  villagers: (locale) => m.category_villagers_description({}, { locale }),
+  villagers: (_locale) => "Friendship & relationships",
 };
 
 /** A category's color as a CSS `var()` reference; the one lookup that needs no locale. */

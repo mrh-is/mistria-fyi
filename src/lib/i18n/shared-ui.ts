@@ -9,6 +9,6 @@ const sharedUi = createCatalogRuntime("shared UI", (locale) => loadCatalog(0, lo
 /** Loading a target locale during navigation does not change the current page's runtime. */
 export const loadSharedUi = sharedUi.load;
 
-export function readSharedRuntime(): Runtime {
-  return sharedUi.read(getLocale());
+export function readSharedRuntime(locale = getLocale()): Runtime {
+  return sharedUi.read(locale);
 }

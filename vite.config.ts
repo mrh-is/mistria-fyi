@@ -18,6 +18,7 @@ import {
   aboutSvelteFiles,
   routeMetadataFiles,
   routeSvelteFiles,
+  sharedLocaleFiles,
   sharedScriptFiles,
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
@@ -239,6 +240,7 @@ export default defineConfig(({ command }) => ({
       ...aboutSvelteFiles,
       ...routeMetadataFiles,
       ...routeSvelteFiles,
+      ...sharedLocaleFiles,
       ...sharedScriptFiles,
       ...sharedSvelteFiles,
       "scripts/lib/offline-copy.ts",

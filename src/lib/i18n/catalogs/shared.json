@@ -331,6 +331,28 @@
   },
   {
     "translations": {
+      "en": "A Craving",
+      "ja": "つわり",
+      "zh-Hans": "孕期渴望",
+      "zh-Hant": "孕期渴望",
+      "es": "Un antojo",
+      "fr": "Une envie",
+      "ko": "입덧",
+      "ru": "Тяга к еде"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/quest-sections.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "About",
       "ja": "アプリについて",
       "zh-Hans": "关于",
@@ -396,6 +418,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Activities",
+      "ja": "アクティビティ",
+      "zh-Hans": "活动",
+      "zh-Hant": "活動",
+      "es": "Actividades",
+      "fr": "Activités",
+      "ko": "활동",
+      "ru": "Занятия"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
         ]
       }
     ],
@@ -470,6 +514,28 @@
   },
   {
     "translations": {
+      "en": "Animal products",
+      "ja": "畜産物",
+      "zh-Hans": "动物产品",
+      "zh-Hant": "動物產品",
+      "es": "Productos animales",
+      "fr": "Produits animaux",
+      "ko": "동물 생산품",
+      "ru": "Продукты животных"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Answer it",
       "ja": "答える",
       "zh-Hans": "去回答",
@@ -504,6 +570,50 @@
     "references": [
       {
         "file": "src/lib/components/mount-appearances-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Aqua",
+      "ja": "アクア色",
+      "zh-Hans": "水蓝色",
+      "zh-Hant": "水藍色",
+      "es": "Turquesa",
+      "fr": "Turquoise",
+      "ko": "아쿠아",
+      "ru": "Аквамариновый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Artifact digs",
+      "ja": "遺物の発掘",
+      "zh-Hans": "古代文物挖掘",
+      "zh-Hant": "古代文物挖掘",
+      "es": "Excavación de curiosidades",
+      "fr": "Fouilles d’artéfacts",
+      "ko": "유물 발굴",
+      "ru": "Раскопки артефактов"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -603,6 +713,28 @@
   },
   {
     "translations": {
+      "en": "Bait fish",
+      "ja": "エサ釣り",
+      "zh-Hans": "鱼饵钓鱼",
+      "zh-Hant": "魚餌釣魚",
+      "es": "Pesca con cebo",
+      "fr": "Pêche à l’appât",
+      "ko": "미끼 낚시",
+      "ru": "Ловля на наживку"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Based on your tracked progress, it doesn’t seem like you should be able to get this yet. Are you sure?",
       "ja": "記録された進行状況だと、これはまだ手に入らないはずです。本当にチェックしますか？",
       "zh-Hans": "根据你记录的进度，你现在似乎还拿不到这个。确定要勾选吗？",
@@ -692,6 +824,72 @@
   },
   {
     "translations": {
+      "en": "Black",
+      "ja": "黒",
+      "zh-Hans": "黑色",
+      "zh-Hant": "黑色",
+      "es": "Negro",
+      "fr": "Noir",
+      "ko": "검은색",
+      "ru": "Чёрный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Blue",
+      "ja": "青",
+      "zh-Hans": "蓝色",
+      "zh-Hant": "藍色",
+      "es": "Azul",
+      "fr": "Bleu",
+      "ko": "파란색",
+      "ru": "Синий"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Blue & yellow",
+      "ja": "青と黄色",
+      "zh-Hans": "蓝黄相间",
+      "zh-Hant": "藍色與黃色",
+      "es": "Azul y amarillo",
+      "fr": "Bleu et jaune",
+      "ko": "파란색과 노란색",
+      "ru": "Голубой с жёлтым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Break-ups disabled",
       "ja": "別れは無効",
       "zh-Hans": "已禁用分手",
@@ -726,6 +924,94 @@
     "references": [
       {
         "file": "src/lib/components/villagers-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Breeding",
+      "ja": "繁殖",
+      "zh-Hans": "繁殖",
+      "zh-Hant": "繁殖",
+      "es": "Cría",
+      "fr": "Élevage",
+      "ko": "번식",
+      "ru": "Разведение"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Breeds, variants, & cosmetics",
+      "ja": "品種・バリアント・コスメ",
+      "zh-Hans": "品种、变体与装饰",
+      "zh-Hant": "品種、變體與裝飾",
+      "es": "Razas, variantes y cosméticos",
+      "fr": "Races, variantes et cosmétiques",
+      "ko": "품종, 변형, 코스메틱",
+      "ru": "Породы, варианты и косметика"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Brown",
+      "ja": "茶色",
+      "zh-Hans": "棕色",
+      "zh-Hant": "棕色",
+      "es": "Marrón",
+      "fr": "Marron",
+      "ko": "갈색",
+      "ru": "Коричневый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Bug catching",
+      "ja": "虫捕り",
+      "zh-Hans": "捕虫",
+      "zh-Hant": "捕蟲",
+      "es": "Caza de insectos",
+      "fr": "Chasse aux insectes",
+      "ko": "곤충 채집",
+      "ru": "Ловля насекомых"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -823,6 +1109,95 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cherry",
+      "ja": "サクラ材",
+      "zh-Hans": "樱桃木",
+      "zh-Hant": "櫻桃木",
+      "es": "Cerezo",
+      "fr": "Cerisier",
+      "ko": "체리목",
+      "ru": "Вишня"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Chests",
+      "ja": "宝箱",
+      "zh-Hans": "宝箱",
+      "zh-Hant": "寶箱",
+      "es": "Cofres",
+      "fr": "Coffres",
+      "ko": "상자",
+      "ru": "Сундуки"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Chicken statue",
+      "ja": "ニワトリ像",
+      "zh-Hans": "小鸡雕像",
+      "zh-Hant": "小雞雕像",
+      "es": "Estatua del pollo",
+      "fr": "Statue de poule",
+      "ko": "닭 조각상",
+      "ru": "Статуя курицы"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Chocolate",
+      "ja": "チョコレート",
+      "zh-Hans": "巧克力",
+      "zh-Hant": "巧克力",
+      "es": "Chocolate",
+      "fr": "Chocolat",
+      "ko": "초콜릿",
+      "ru": "Шоколадный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
         ]
       }
     ],
@@ -1108,6 +1483,28 @@
   },
   {
     "translations": {
+      "en": "Collections & donations",
+      "ja": "コレクションと寄贈",
+      "zh-Hans": "收藏与捐赠",
+      "zh-Hant": "收藏與捐贈",
+      "es": "Colecciones y donaciones",
+      "fr": "Collections et dons",
+      "ko": "컬렉션과 기증",
+      "ru": "Коллекции и пожертвования"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Completed",
       "ja": "完了済み",
       "zh-Hans": "已完成",
@@ -1144,6 +1541,50 @@
     "references": [
       {
         "file": "src/lib/components/rank-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cooking & crafting",
+      "ja": "料理とクラフト",
+      "zh-Hans": "烹饪与制作",
+      "zh-Hant": "烹飪與製作",
+      "es": "Cocina y artesanía",
+      "fr": "Cuisine et artisanat",
+      "ko": "요리와 제작",
+      "ru": "Кулинария и крафт"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cool-toned",
+      "ja": "ひんやりした色合い",
+      "zh-Hans": "冷色调",
+      "zh-Hant": "冷色調",
+      "es": "Colores fríos",
+      "fr": "Couleurs froides",
+      "ko": "차가운 색조",
+      "ru": "Холодный оттенок"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -1213,6 +1654,100 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cracked purple",
+      "ja": "ひびの入った紫色",
+      "zh-Hans": "有裂纹的紫色",
+      "zh-Hant": "有裂痕的紫色",
+      "es": "Púrpura agrietado",
+      "fr": "Mauve fendillé",
+      "ko": "깨진 보라색",
+      "ru": "Фиолетовый с трещиной"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Crafting",
+      "ja": "クラフト",
+      "zh-Hans": "制作",
+      "zh-Hant": "製作",
+      "es": "Fabricación",
+      "fr": "Fabrication",
+      "ko": "제작",
+      "ru": "Изготовление"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cream",
+      "ja": "クリーム色",
+      "zh-Hans": "奶油色",
+      "zh-Hant": "奶油色",
+      "es": "Crema",
+      "fr": "Crème",
+      "ko": "크림색",
+      "ru": "Кремовый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Crops, fish, forage, & more",
+      "ja": "作物・魚・採集など",
+      "zh-Hans": "作物、鱼类、采集等",
+      "zh-Hant": "作物、魚類、採集等",
+      "es": "Cultivos, peces, forrajeo y más",
+      "fr": "Cultures, poissons, cueillette et plus",
+      "ko": "작물, 물고기, 채집 등",
+      "ru": "Урожай, рыба, собирательство и другое"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -1254,6 +1789,50 @@
     "references": [
       {
         "file": "src/lib/components/quick-settings-theme-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dark brown",
+      "ja": "濃茶色",
+      "zh-Hans": "深棕色",
+      "zh-Hant": "深棕色",
+      "es": "Marrón oscuro",
+      "fr": "Marron foncé",
+      "ko": "암갈색",
+      "ru": "Тёмно-коричневый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dark wood",
+      "ja": "ダークウッド",
+      "zh-Hans": "深色木材",
+      "zh-Hant": "深色木材",
+      "es": "Madera oscura",
+      "fr": "Bois foncé",
+      "ko": "짙은 색 목재",
+      "ru": "Тёмное дерево"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -1308,6 +1887,50 @@
   },
   {
     "translations": {
+      "en": "Dates",
+      "ja": "デート",
+      "zh-Hans": "约会",
+      "zh-Hant": "約會",
+      "es": "Citas",
+      "fr": "Rendez-vous",
+      "ko": "데이트",
+      "ru": "Свидания"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dating",
+      "ja": "デート",
+      "zh-Hans": "约会",
+      "zh-Hant": "約會",
+      "es": "Citas",
+      "fr": "Rendez-vous",
+      "ko": "데이트",
+      "ru": "Свидания"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Decrease renown",
       "ja": "名声を下げる",
       "zh-Hans": "降低声望",
@@ -1320,6 +1943,138 @@
     "references": [
       {
         "file": "src/lib/components/renown-current-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Default",
+      "ja": "初期",
+      "zh-Hans": "初始",
+      "zh-Hant": "初始",
+      "es": "Desde el principio",
+      "fr": "Dès le début",
+      "ko": "기본 제공",
+      "ru": "С самого начала"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dig sites",
+      "ja": "発掘場所",
+      "zh-Hans": "挖掘点",
+      "zh-Hant": "挖掘點",
+      "es": "Excavaciones",
+      "fr": "Sites de fouille",
+      "ko": "발굴지",
+      "ru": "Места раскопок"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Diving",
+      "ja": "ダイビング",
+      "zh-Hans": "潜水",
+      "zh-Hant": "潛水",
+      "es": "Buceo",
+      "fr": "Plongée",
+      "ko": "잠수",
+      "ru": "Ныряние"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Donation rewards",
+      "ja": "寄贈の報酬",
+      "zh-Hans": "捐赠奖励",
+      "zh-Hant": "捐贈獎勵",
+      "es": "Recompensas por donaciones",
+      "fr": "Récompenses de dons",
+      "ko": "기증 보상",
+      "ru": "Награды за пожертвования"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Donations",
+      "ja": "寄贈",
+      "zh-Hans": "捐赠",
+      "zh-Hant": "捐贈",
+      "es": "Donaciones",
+      "fr": "Dons",
+      "ko": "기증",
+      "ru": "Пожертвования"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Double",
+      "ja": "ダブル",
+      "zh-Hans": "双块",
+      "zh-Hant": "雙塊",
+      "es": "Doble",
+      "fr": "Double",
+      "ko": "더블",
+      "ru": "Двойной"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -1366,6 +2121,72 @@
         "file": "src/lib/components/sync/courier-note.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Drops",
+      "ja": "ドロップ",
+      "zh-Hans": "掉落",
+      "zh-Hant": "掉落",
+      "es": "Botín",
+      "fr": "Butin",
+      "ko": "드롭",
+      "ru": "Добыча"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Engagement",
+      "ja": "婚約",
+      "zh-Hans": "订婚",
+      "zh-Hant": "訂婚",
+      "es": "Compromiso",
+      "fr": "Fiançailles",
+      "ko": "약혼",
+      "ru": "Помолвка"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Equipment",
+      "ja": "装備品",
+      "zh-Hans": "装备",
+      "zh-Hant": "裝備",
+      "es": "Equipo",
+      "fr": "Équipement",
+      "ko": "장비",
+      "ru": "Снаряжение"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
           null
         ]
       }
@@ -1443,6 +2264,50 @@
       },
       {
         "file": "src/lib/controllers/tracking-reminders.svelte.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Farming",
+      "ja": "農業",
+      "zh-Hans": "农耕",
+      "zh-Hant": "農耕",
+      "es": "Agricultura",
+      "fr": "Agriculture",
+      "ko": "농사",
+      "ru": "Фермерство"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Festivals",
+      "ja": "お祭り",
+      "zh-Hans": "节日",
+      "zh-Hant": "節日",
+      "es": "Festivales",
+      "fr": "Festivals",
+      "ko": "축제",
+      "ru": "Фестивали"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -1563,6 +2428,72 @@
   },
   {
     "translations": {
+      "en": "Fish",
+      "ja": "魚",
+      "zh-Hans": "鱼",
+      "zh-Hant": "魚",
+      "es": "Peces",
+      "fr": "Poissons",
+      "ko": "물고기",
+      "ru": "Рыба"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Fish traps",
+      "ja": "お魚トラップ",
+      "zh-Hans": "捕鱼笼",
+      "zh-Hant": "捕魚籠",
+      "es": "Nasas",
+      "fr": "Nasses",
+      "ko": "물고기 덫",
+      "ru": "Верши"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Fishing",
+      "ja": "釣り",
+      "zh-Hans": "钓鱼",
+      "zh-Hant": "釣魚",
+      "es": "Pesca",
+      "fr": "Pêche",
+      "ko": "낚시",
+      "ru": "Рыбалка"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Floor",
       "ja": "階層",
       "zh-Hans": "楼层",
@@ -1614,6 +2545,28 @@
   },
   {
     "translations": {
+      "en": "Floors & spells",
+      "ja": "フロアと魔法",
+      "zh-Hans": "楼层与法术",
+      "zh-Hant": "樓層與法術",
+      "es": "Pisos y hechizos",
+      "fr": "Étages et sorts",
+      "ko": "층과 마법",
+      "ru": "Этажи и заклинания"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "For a computer with no camera",
       "ja": "カメラのないパソコン向け",
       "zh-Hans": "适用于没有摄像头的电脑",
@@ -1648,6 +2601,72 @@
     "references": [
       {
         "file": "src/lib/components/sync/courier-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Foraging",
+      "ja": "採集物",
+      "zh-Hans": "野生采集",
+      "zh-Hant": "採集物",
+      "es": "Recursos naturales",
+      "fr": "Objets ramassés",
+      "ko": "채집물",
+      "ru": "Собирательство"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Friendship & relationships",
+      "ja": "友情と関係",
+      "zh-Hans": "友情与关系",
+      "zh-Hant": "友情與關係",
+      "es": "Amistad y relaciones",
+      "fr": "Amitié et relations",
+      "ko": "우정과 관계",
+      "ru": "Дружба и отношения"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Gathering",
+      "ja": "採集",
+      "zh-Hans": "采集",
+      "zh-Hant": "採集",
+      "es": "Recolección",
+      "fr": "Cueillette",
+      "ko": "채집",
+      "ru": "Сбор"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -1768,6 +2787,50 @@
   },
   {
     "translations": {
+      "en": "Gold",
+      "ja": "金色",
+      "zh-Hans": "金色",
+      "zh-Hant": "金色",
+      "es": "Dorado",
+      "fr": "Doré",
+      "ko": "황금",
+      "ru": "Золотой"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Gold accents",
+      "ja": "金のアクセント",
+      "zh-Hans": "金色点缀",
+      "zh-Hant": "金色綴線",
+      "es": "Adornos dorados",
+      "fr": "Teintes dorées",
+      "ko": "금색 포인트",
+      "ru": "Золотые акценты"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Got it",
       "ja": "了解",
       "zh-Hans": "知道了",
@@ -1814,6 +2877,50 @@
     "references": [
       {
         "file": "src/lib/components/sync/got-it-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Gray",
+      "ja": "灰色",
+      "zh-Hans": "灰色",
+      "zh-Hant": "灰色",
+      "es": "Gris",
+      "fr": "Gris",
+      "ko": "회색",
+      "ru": "Серый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Green",
+      "ja": "緑色",
+      "zh-Hans": "绿色",
+      "zh-Hant": "綠色",
+      "es": "Verde",
+      "fr": "Vert",
+      "ko": "녹색",
+      "ru": "Зелёный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -1904,6 +3011,28 @@
   },
   {
     "translations": {
+      "en": "Hidden chests",
+      "ja": "隠し宝箱",
+      "zh-Hans": "隐藏宝箱",
+      "zh-Hant": "隱藏寶箱",
+      "es": "Cofres ocultos",
+      "fr": "Coffres cachés",
+      "ko": "숨겨진 상자",
+      "ru": "Тайные сундуки"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Hmm, we can’t read this as a Fields of Mistria save. It might be damaged, or a different file. Try the newest file that ends in “autosave”.",
       "ja": "うーん、Fields of Mistria のセーブとして読み込めません。壊れているか、別のファイルかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
       "zh-Hans": "嗯，没法把它当作 Fields of Mistria 的存档来读取。它可能已损坏，或者是别的文件。试试以“autosave”结尾的最新文件。",
@@ -1960,6 +3089,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/save-drop.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Horse statue",
+      "ja": "馬の像",
+      "zh-Hans": "马雕像",
+      "zh-Hant": "馬雕像",
+      "es": "Estatua del caballo",
+      "fr": "Statue de cheval",
+      "ko": "말 조각상",
+      "ru": "Статуя лошади"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -2308,6 +3459,28 @@
   },
   {
     "translations": {
+      "en": "Letters",
+      "ja": "手紙",
+      "zh-Hans": "信件",
+      "zh-Hant": "信件",
+      "es": "Cartas",
+      "fr": "Lettres",
+      "ko": "편지",
+      "ru": "Письма"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Let’s get you set up to keep track of all that hard work. How do you wanna work?",
       "ja": "がんばった成果をしっかり記録できるように準備しましょう。どのやり方にしますか？",
       "zh-Hans": "我们来帮你准备好，记录下所有的辛勤劳动。你想怎么做？",
@@ -2374,6 +3547,50 @@
   },
   {
     "translations": {
+      "en": "Light brown",
+      "ja": "薄茶色",
+      "zh-Hans": "浅棕色",
+      "zh-Hant": "淺棕色",
+      "es": "Marrón claro",
+      "fr": "Marron clair",
+      "ko": "연갈색",
+      "ru": "Светло-коричневый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Lightning",
+      "ja": "稲妻",
+      "zh-Hans": "闪电",
+      "zh-Hant": "閃電",
+      "es": "Relámpagos",
+      "fr": "Orageux",
+      "ko": "번개무늬",
+      "ru": "Молнии"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Live on stream? Maybe don’t show this bit.",
       "ja": "配信中？ここは映さないほうがいいかも。",
       "zh-Hans": "正在直播？这部分最好别给观众看。",
@@ -2386,6 +3603,28 @@
     "references": [
       {
         "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Lost & found",
+      "ja": "落とし物箱",
+      "zh-Hans": "失物招领",
+      "zh-Hant": "失物招領",
+      "es": "Objetos perdidos",
+      "fr": "Objets trouvés",
+      "ko": "분실물 상자",
+      "ru": "Бюро находок"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -2579,6 +3818,28 @@
   },
   {
     "translations": {
+      "en": "Mine fishing",
+      "ja": "鉱坑での釣り",
+      "zh-Hans": "矿洞钓鱼",
+      "zh-Hant": "礦洞釣魚",
+      "es": "Pesca en las minas",
+      "fr": "Pêche dans les mines",
+      "ko": "광산 낚시",
+      "ru": "Рыбалка в шахтах"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Mine floor",
       "ja": "鉱坑の階層",
       "zh-Hans": "矿洞楼层",
@@ -2634,6 +3895,56 @@
   },
   {
     "translations": {
+      "en": "Mines",
+      "ja": "鉱坑",
+      "zh-Hans": "矿洞",
+      "zh-Hant": "礦洞",
+      "es": "Minas",
+      "fr": "Mines",
+      "ko": "광산",
+      "ru": "Шахты"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Mining",
+      "ja": "採掘",
+      "zh-Hans": "采矿",
+      "zh-Hant": "採礦",
+      "es": "Minería",
+      "fr": "Minage",
+      "ko": "채굴",
+      "ru": "Добыча руды"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Mistria Field Guide",
       "ja": "Mistria Field Guide",
       "zh-Hans": "Mistria Field Guide",
@@ -2646,6 +3957,78 @@
     "references": [
       {
         "file": "src/lib/components/og-share-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Mocha",
+      "ja": "モカ",
+      "zh-Hans": "摩卡",
+      "zh-Hant": "摩卡",
+      "es": "Moca",
+      "fr": "Café",
+      "ko": "모카",
+      "ru": "Мокко"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Monsters",
+      "ja": "モンスター",
+      "zh-Hans": "怪物",
+      "zh-Hant": "怪物",
+      "es": "Monstruos",
+      "fr": "Monstres",
+      "ko": "몬스터",
+      "ru": "Монстры"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/presentation/source-labels.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Moon",
+      "ja": "月",
+      "zh-Hans": "月亮",
+      "zh-Hant": "月亮",
+      "es": "Lunas",
+      "fr": "Lunaire",
+      "ko": "달 무늬",
+      "ru": "Лунный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -2938,6 +4321,94 @@
   },
   {
     "translations": {
+      "en": "Oak",
+      "ja": "オーク材",
+      "zh-Hans": "橡木",
+      "zh-Hant": "橡木",
+      "es": "Roble",
+      "fr": "Chêne",
+      "ko": "참나무",
+      "ru": "Дуб"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Oak & brown",
+      "ja": "オーク材と茶色",
+      "zh-Hans": "橡木与棕色",
+      "zh-Hant": "橡木與棕色",
+      "es": "Roble y marrón",
+      "fr": "Chêne et marron",
+      "ko": "참나무와 갈색",
+      "ru": "Дуб с коричневым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Oak & green",
+      "ja": "オーク材と緑色",
+      "zh-Hans": "橡木与绿色",
+      "zh-Hant": "橡木與綠色",
+      "es": "Roble y verde",
+      "fr": "Chêne et vert",
+      "ko": "참나무와 녹색",
+      "ru": "Дуб с зелёным"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Oak & white",
+      "ja": "オーク材と白",
+      "zh-Hans": "橡木与白色",
+      "zh-Hant": "橡木與白色",
+      "es": "Roble y blanco",
+      "fr": "Chêne et blanc",
+      "ko": "참나무와 흰색",
+      "ru": "Дуб с белым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Obtainable",
       "ja": "入手可能",
       "zh-Hans": "可获取",
@@ -2950,6 +4421,72 @@
     "references": [
       {
         "file": "src/lib/components/filter-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Ocean",
+      "ja": "海",
+      "zh-Hans": "海洋",
+      "zh-Hant": "海洋",
+      "es": "Mar",
+      "fr": "Mer",
+      "ko": "바다",
+      "ru": "Море"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Off-white",
+      "ja": "オフホワイト",
+      "zh-Hans": "米白色",
+      "zh-Hant": "米白色",
+      "es": "Blanco roto",
+      "fr": "Blanc cassé",
+      "ko": "오프화이트",
+      "ru": "Молочно-белый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Offerings",
+      "ja": "お供え物",
+      "zh-Hans": "供品",
+      "zh-Hant": "供品",
+      "es": "Ofrendas",
+      "fr": "Offrandes",
+      "ko": "공물",
+      "ru": "Подношения"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -3033,6 +4570,50 @@
   },
   {
     "translations": {
+      "en": "Orange",
+      "ja": "オレンジ色",
+      "zh-Hans": "橙色",
+      "zh-Hant": "橘色",
+      "es": "Naranja",
+      "fr": "Orange",
+      "ko": "주황색",
+      "ru": "Оранжевый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Orange gourd",
+      "ja": "オレンジ色のウリ型",
+      "zh-Hans": "橙色葫芦形",
+      "zh-Hant": "橘色葫蘆形",
+      "es": "Calabaza naranja",
+      "fr": "Calebasse orange",
+      "ko": "주황색 호박 모양",
+      "ru": "Рыжая тыква"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Peek at my progress",
       "ja": "自分の進捗をのぞく",
       "zh-Hans": "看看我的进度",
@@ -3092,6 +4673,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -3143,6 +4730,139 @@
   },
   {
     "translations": {
+      "en": "Pink",
+      "ja": "ピンク色",
+      "zh-Hans": "粉色",
+      "zh-Hant": "粉色",
+      "es": "Rosa",
+      "fr": "Rose",
+      "ko": "분홍색",
+      "ru": "Розовый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Pink accents",
+      "ja": "ピンク色のアクセント",
+      "zh-Hans": "粉色点缀",
+      "zh-Hant": "粉色綴線",
+      "es": "Adornos rosa",
+      "fr": "Rehauts de rose",
+      "ko": "분홍색 포인트",
+      "ru": "Розовые акценты"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Pink-tinged",
+      "ja": "ピンクゴールド",
+      "zh-Hans": "泛粉",
+      "zh-Hant": "粉色",
+      "es": "Tonalidades rosas",
+      "fr": "Teintes roses",
+      "ko": "분홍빛",
+      "ru": "Розовый отлив"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Plain",
+      "ja": "アクセントなし",
+      "zh-Hans": "无点缀",
+      "zh-Hant": "無綴線",
+      "es": "Sencillo",
+      "fr": "Sans rehauts",
+      "ko": "기본",
+      "ru": "Простой"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Pond",
+      "ja": "池",
+      "zh-Hans": "池塘",
+      "zh-Hant": "池塘",
+      "es": "Estanque",
+      "fr": "Étang",
+      "ko": "연못",
+      "ru": "Пруд"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Progress",
+      "ja": "進捗",
+      "zh-Hans": "进度",
+      "zh-Hant": "進度",
+      "es": "Progreso",
+      "fr": "Progression",
+      "ko": "진행 상황",
+      "ru": "Прогресс"
+    },
+    "context": "everything progress",
+    "references": [
+      {
+        "file": "src/lib/presentation/source-labels.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Progress",
       "ja": "進捗",
       "zh-Hans": "进度",
@@ -3156,6 +4876,173 @@
     "references": [
       {
         "file": "src/lib/components/feedback/extras-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Progress",
+      "ja": "進行",
+      "zh-Hans": "进度",
+      "zh-Hant": "進度",
+      "es": "Progreso",
+      "fr": "Progression",
+      "ko": "진행",
+      "ru": "Прогресс"
+    },
+    "context": "source filter progress",
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Proposals",
+      "ja": "プロポーズ",
+      "zh-Hans": "求婚",
+      "zh-Hant": "求婚",
+      "es": "Pedidas de mano",
+      "fr": "Demandes en mariage",
+      "ko": "청혼",
+      "ru": "Предложения руки"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purple",
+      "ja": "紫色",
+      "zh-Hans": "紫色",
+      "zh-Hant": "紫色",
+      "es": "Morado",
+      "fr": "Violet",
+      "ko": "보라색",
+      "ru": "Фиолетовый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purple-blue",
+      "ja": "青紫",
+      "zh-Hans": "紫蓝色",
+      "zh-Hant": "紫藍色",
+      "es": "Azul violáceo",
+      "fr": "Bleu violacé",
+      "ko": "남보라색",
+      "ru": "Тёмно-синий"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purple-blue & yellow",
+      "ja": "青紫と黄色",
+      "zh-Hans": "紫蓝黄相间",
+      "zh-Hant": "紫藍色與黃色",
+      "es": "Morado y amarillo",
+      "fr": "Bleu violacé et jaune",
+      "ko": "남보라색과 노란색",
+      "ru": "Тёмно-синий с жёлтым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purple-framed",
+      "ja": "紫色の枠",
+      "zh-Hans": "紫色边框",
+      "zh-Hant": "紫框",
+      "es": "Marco púrpura",
+      "fr": "Violet",
+      "ko": "보라색 프레임",
+      "ru": "Фиолетовая рама"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Quests",
+      "ja": "クエスト",
+      "zh-Hans": "任务",
+      "zh-Hant": "任務",
+      "es": "Misiones",
+      "fr": "Quêtes",
+      "ko": "퀘스트",
+      "ru": "Задания"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/presentation/source-labels.ts",
         "refs": [
           null
         ]
@@ -3180,6 +5067,28 @@
         "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Raindrop",
+      "ja": "雨粒",
+      "zh-Hans": "雨滴",
+      "zh-Hant": "雨滴",
+      "es": "Gotas",
+      "fr": "Pluvieux",
+      "ko": "빗방울 무늬",
+      "ru": "Дождевой"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
           null
         ]
       }
@@ -3223,6 +5132,56 @@
     "references": [
       {
         "file": "src/lib/components/welcome-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Recipes",
+      "ja": "レシピ",
+      "zh-Hans": "食谱",
+      "zh-Hant": "食譜",
+      "es": "Recetas",
+      "fr": "Recettes",
+      "ko": "레시피",
+      "ru": "Рецепты"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Red",
+      "ja": "赤",
+      "zh-Hans": "红色",
+      "zh-Hant": "紅色",
+      "es": "Rojo",
+      "fr": "Rouge",
+      "ko": "빨간색",
+      "ru": "Красный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -3328,6 +5287,28 @@
   },
   {
     "translations": {
+      "en": "Replicator",
+      "ja": "複製機",
+      "zh-Hans": "复制器",
+      "zh-Hant": "複製器",
+      "es": "Replicador",
+      "fr": "Réplicateur",
+      "ko": "복제기",
+      "ru": "Репликатор"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reply",
       "ja": "返信",
       "zh-Hans": "回复",
@@ -3395,6 +5376,50 @@
   },
   {
     "translations": {
+      "en": "Ritual chamber",
+      "ja": "儀式の間",
+      "zh-Hans": "仪式室",
+      "zh-Hant": "儀式室",
+      "es": "Cámara ritual",
+      "fr": "Chambre rituelle",
+      "ko": "의식의 방",
+      "ru": "Ритуальный зал"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "River",
+      "ja": "川",
+      "zh-Hans": "河流",
+      "zh-Hant": "河流",
+      "es": "Río",
+      "fr": "Rivière",
+      "ko": "강",
+      "ru": "Река"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Safari can clear your progress after seven days of Safari use without a visit here. Adding the field guide to your Home Screen gives it its own storage, so we’ll move your progress over with a backup.",
       "ja": "Safariを使った日が7日間続いて、その間ここを開かないと、Safariが進み具合を消すことがあるよ。ホーム画面に追加した図鑑は別の保存場所を使うから、バックアップで記録を移そう。",
       "zh-Hans": "如果使用 Safari 的七天里都没来这里，Safari 可能会清除你的进度。添加到主屏幕的图鉴使用独立的存储空间，所以我们用备份把进度搬过去。",
@@ -3407,6 +5432,28 @@
     "references": [
       {
         "file": "src/lib/components/install-nudge-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sage",
+      "ja": "セージ色",
+      "zh-Hans": "鼠尾草绿",
+      "zh-Hant": "鼠尾草綠",
+      "es": "Salvia",
+      "fr": "Vert olive",
+      "ko": "세이지 색상",
+      "ru": "Серо-зелёный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -3524,6 +5571,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Scroll bundles",
+      "ja": "巻物セット",
+      "zh-Hans": "卷轴组合",
+      "zh-Hant": "卷軸組合",
+      "es": "Lotes de pergaminos",
+      "fr": "Lots de parchemins",
+      "ko": "두루마리 묶음",
+      "ru": "Наборы свитков"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -3777,6 +5846,50 @@
   },
   {
     "translations": {
+      "en": "Shipping",
+      "ja": "出荷",
+      "zh-Hans": "出货",
+      "zh-Hant": "出貨",
+      "es": "Envíos",
+      "fr": "Expédition",
+      "ko": "출하",
+      "ru": "Отгрузка"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Shops",
+      "ja": "ショップ",
+      "zh-Hans": "商店",
+      "zh-Hant": "商店",
+      "es": "Tiendas",
+      "fr": "Boutiques",
+      "ko": "상점",
+      "ru": "Магазины"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Show",
       "ja": "表示",
       "zh-Hans": "显示",
@@ -3813,6 +5926,28 @@
         "file": "src/lib/components/quick-settings-panel.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Single",
+      "ja": "シングル",
+      "zh-Hans": "单块",
+      "zh-Hant": "單塊",
+      "es": "Sencillo",
+      "fr": "Simple",
+      "ko": "싱글",
+      "ru": "Одинарный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
           null
         ]
       }
@@ -3927,6 +6062,28 @@
   },
   {
     "translations": {
+      "en": "Sparkly",
+      "ja": "キラキラ",
+      "zh-Hans": "闪亮",
+      "zh-Hant": "星光",
+      "es": "Brillos",
+      "fr": "Étoilé",
+      "ko": "반짝이는 무늬",
+      "ru": "Звёздный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Spoilered item",
       "ja": "ネタバレ項目",
       "zh-Hans": "剧透物品",
@@ -3939,6 +6096,78 @@
     "references": [
       {
         "file": "src/lib/components/rank-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Spouse gifts",
+      "ja": "配偶者からの贈り物",
+      "zh-Hans": "配偶礼物",
+      "zh-Hant": "配偶禮物",
+      "es": "Regalos del cónyuge",
+      "fr": "Cadeaux du conjoint",
+      "ko": "배우자 선물",
+      "ru": "Подарки супруга"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/presentation/source-labels.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stations",
+      "ja": "作業台",
+      "zh-Hans": "工作台",
+      "zh-Hant": "工作台",
+      "es": "Estaciones",
+      "fr": "Stations",
+      "ko": "작업대",
+      "ru": "Станки"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stone-framed",
+      "ja": "石枠",
+      "zh-Hans": "石头边框",
+      "zh-Hant": "石框",
+      "es": "Marco de piedra",
+      "fr": "Pierre",
+      "ko": "석조 프레임",
+      "ru": "Каменная рама"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -4007,6 +6236,72 @@
     "references": [
       {
         "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stores",
+      "ja": "ショップ",
+      "zh-Hans": "商店",
+      "zh-Hant": "商店",
+      "es": "Tiendas",
+      "fr": "Boutiques",
+      "ko": "상점",
+      "ru": "Магазины"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Story & requests",
+      "ja": "ストーリーと依頼",
+      "zh-Hans": "剧情与委托",
+      "zh-Hant": "劇情與委託",
+      "es": "Historia y encargos",
+      "fr": "Histoire et requêtes",
+      "ko": "스토리와 의뢰",
+      "ru": "Сюжет и поручения"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Strawberry",
+      "ja": "イチゴ",
+      "zh-Hans": "草莓",
+      "zh-Hant": "草莓",
+      "es": "Fresa",
+      "fr": "Fraise",
+      "ko": "딸기",
+      "ru": "Клубничный"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -4507,6 +6802,50 @@
   },
   {
     "translations": {
+      "en": "Treasure boxes",
+      "ja": "お宝ボックス",
+      "zh-Hans": "钓鱼宝箱",
+      "zh-Hant": "釣魚寶箱",
+      "es": "Cofres del tesoro",
+      "fr": "Coffres au trésor",
+      "ko": "보물 상자",
+      "ru": "Сундуки с сокровищами"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Trees",
+      "ja": "木",
+      "zh-Hans": "树木",
+      "zh-Hant": "樹木",
+      "es": "Árboles",
+      "fr": "Arbres",
+      "ko": "나무",
+      "ru": "Деревья"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Try again",
       "ja": "もう一度試す",
       "zh-Hans": "重试",
@@ -4550,6 +6889,28 @@
   },
   {
     "translations": {
+      "en": "Unlocks",
+      "ja": "解放",
+      "zh-Hans": "解锁",
+      "zh-Hant": "解鎖",
+      "es": "Desbloqueos",
+      "fr": "Déblocages",
+      "ko": "해금",
+      "ru": "Открытие"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Upcoming",
       "ja": "今後",
       "zh-Hans": "即将到来",
@@ -4562,6 +6923,28 @@
     "references": [
       {
         "file": "src/lib/components/rank-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Upgrades",
+      "ja": "アップグレード",
+      "zh-Hans": "升级",
+      "zh-Hant": "升級",
+      "es": "Mejoras",
+      "fr": "Améliorations",
+      "ko": "업그레이드",
+      "ru": "Улучшения"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
         ]
@@ -4650,6 +7033,160 @@
     "references": [
       {
         "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Walnut",
+      "ja": "クルミ材",
+      "zh-Hans": "胡桃木",
+      "zh-Hant": "核桃木",
+      "es": "Nogal",
+      "fr": "Noyer",
+      "ko": "호두나무",
+      "ru": "Орех"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Walnut & gold",
+      "ja": "クルミ材と金色",
+      "zh-Hans": "胡桃木与金色",
+      "zh-Hant": "核桃木與金色",
+      "es": "Nogal y dorado",
+      "fr": "Noyer et doré",
+      "ko": "호두나무와 황금",
+      "ru": "Орех с золотым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Walnut & green",
+      "ja": "クルミ材と緑色",
+      "zh-Hans": "胡桃木与绿色",
+      "zh-Hant": "核桃木與綠色",
+      "es": "Nogal y verde",
+      "fr": "Noyer et vert",
+      "ko": "호두나무와 녹색",
+      "ru": "Орех с зелёным"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Walnut & orange",
+      "ja": "クルミ材とオレンジ色",
+      "zh-Hans": "胡桃木与橙色",
+      "zh-Hant": "核桃木與橘色",
+      "es": "Nogal y naranja",
+      "fr": "Noyer et orange",
+      "ko": "호두나무와 주황색",
+      "ru": "Орех с оранжевым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Walnut & white",
+      "ja": "クルミ材と白",
+      "zh-Hans": "胡桃木与白色",
+      "zh-Hant": "核桃木與白色",
+      "es": "Nogal y blanco",
+      "fr": "Noyer et blanc",
+      "ko": "호두나무와 흰색",
+      "ru": "Орех с белым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Wardrobe & appearance",
+      "ja": "服装と見た目",
+      "zh-Hans": "服装与外观",
+      "zh-Hant": "服裝與外觀",
+      "es": "Vestuario y apariencia",
+      "fr": "Garde-robe et apparence",
+      "ko": "의상과 외형",
+      "ru": "Гардероб и внешность"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Warm-toned",
+      "ja": "温かみのある色合い",
+      "zh-Hans": "暖色调",
+      "zh-Hant": "暖色調",
+      "es": "Colores cálidos",
+      "fr": "Couleurs chaudes",
+      "ko": "따뜻한 색조",
+      "ru": "Тёплый оттенок"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -5032,6 +7569,28 @@
   },
   {
     "translations": {
+      "en": "Wedding",
+      "ja": "結婚式",
+      "zh-Hans": "婚礼",
+      "zh-Hant": "婚禮",
+      "es": "Boda",
+      "fr": "Mariage",
+      "ko": "결혼식",
+      "ru": "Свадьба"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "We’ll ask for your email so Michael can write back. Nobody else sees it, and it never goes on the issue.",
       "ja": "Michaelが返信できるようにメールアドレスをお聞きします。ほかの人には見えず、Issueにも載りません。",
       "zh-Hans": "我们会请你填写邮箱，好让 Michael 回复你。别人看不到，也绝不会出现在议题里。",
@@ -5220,6 +7779,116 @@
   },
   {
     "translations": {
+      "en": "White",
+      "ja": "白",
+      "zh-Hans": "白色",
+      "zh-Hant": "白色",
+      "es": "Blanco",
+      "fr": "Blanc",
+      "ko": "흰색",
+      "ru": "Белый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "White & blue",
+      "ja": "白と青",
+      "zh-Hans": "白色与蓝色",
+      "zh-Hant": "白色與藍色",
+      "es": "Blanco y azul",
+      "fr": "Blanc et bleu",
+      "ko": "흰색과 파란색",
+      "ru": "Белый с синим"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "White & gold",
+      "ja": "白と金色",
+      "zh-Hans": "白色与金色",
+      "zh-Hant": "白色與金色",
+      "es": "Blanco y dorado",
+      "fr": "Blanc et doré",
+      "ko": "흰색과 금색",
+      "ru": "Белый с золотым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "White & tan",
+      "ja": "白と黄褐色",
+      "zh-Hans": "白色与棕褐色",
+      "zh-Hant": "白色與棕褐色",
+      "es": "Blanco y marrón",
+      "fr": "Blanc et beige",
+      "ko": "흰색과 황갈색",
+      "ru": "Белый с бежевым"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "White goblet",
+      "ja": "白いゴブレット型",
+      "zh-Hans": "白色高脚杯形",
+      "zh-Hant": "白色高腳杯形",
+      "es": "Cáliz blanco",
+      "fr": "Coupe blanche",
+      "ko": "흰색 잔 모양",
+      "ru": "Белый кубок"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Whoa, that’s a lot of new codes! Give it a few minutes and try again.",
       "ja": "おっと、新しいコードがたくさんです！数分待ってからもう一度試してください。",
       "zh-Hans": "哇，新代码太多了！等几分钟再试吧。",
@@ -5232,6 +7901,50 @@
     "references": [
       {
         "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Wishing well",
+      "ja": "願いの井戸",
+      "zh-Hans": "许愿井",
+      "zh-Hant": "許願井",
+      "es": "Pozo de los deseos",
+      "fr": "Puits à souhaits",
+      "ko": "소원의 우물",
+      "ru": "Колодец желаний"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Wood-framed",
+      "ja": "木枠",
+      "zh-Hans": "木制边框",
+      "zh-Hant": "木框",
+      "es": "Marco de madera",
+      "fr": "Bois",
+      "ko": "나무 프레임",
+      "ru": "Деревянная рама"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -5298,6 +8011,28 @@
     "references": [
       {
         "file": "src/lib/components/confirm-spoiler-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Yellow",
+      "ja": "黄色",
+      "zh-Hans": "黄色",
+      "zh-Hant": "黃色",
+      "es": "Amarillo",
+      "fr": "Jaune",
+      "ko": "노란색",
+      "ru": "Жёлтый"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -6108,6 +8843,50 @@
   },
   {
     "translations": {
+      "en": "the Mines",
+      "ja": "鉱坑",
+      "zh-Hans": "矿洞",
+      "zh-Hant": "礦洞",
+      "es": "Minas",
+      "fr": "Mines",
+      "ko": "광산",
+      "ru": "Шахты"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "the dungeon",
+      "ja": "ダンジョン",
+      "zh-Hans": "地下城",
+      "zh-Hant": "地下城",
+      "es": "Mazmorra",
+      "fr": "Donjon",
+      "ko": "던전",
+      "ru": "Подземелье"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "up to date",
       "ja": "最新",
       "zh-Hans": "已是最新",
@@ -6122,6 +8901,405 @@
         "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "your farm",
+      "ja": "農場",
+      "zh-Hans": "农场",
+      "zh-Hant": "農場",
+      "es": "Granja",
+      "fr": "Ferme",
+      "ko": "농장",
+      "ru": "Ферма"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (blue)",
+      "ja": "{0}（青）",
+      "zh-Hans": "{0}（蓝）",
+      "zh-Hant": "{0}（藍）",
+      "es": "{0} (azul)",
+      "fr": "{0} (bleu)",
+      "ko": "{0} (파랑)",
+      "ru": "{0} (синий)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (cool)",
+      "ja": "{0}（寒色）",
+      "zh-Hans": "{0}（冷色）",
+      "zh-Hant": "{0}（冷色）",
+      "es": "{0} (frío)",
+      "fr": "{0} (froid)",
+      "ko": "{0} (차가운 색)",
+      "ru": "{0} (холодный)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (copper)",
+      "ja": "{0}（銅）",
+      "zh-Hans": "{0}（铜）",
+      "zh-Hant": "{0}（銅）",
+      "es": "{0} (cobre)",
+      "fr": "{0} (cuivre)",
+      "ko": "{0} (구리)",
+      "ru": "{0} (медь)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (gold)",
+      "ja": "{0}（金）",
+      "zh-Hans": "{0}（金）",
+      "zh-Hant": "{0}（金）",
+      "es": "{0} (oro)",
+      "fr": "{0} (or)",
+      "ko": "{0} (금)",
+      "ru": "{0} (золото)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (green)",
+      "ja": "{0}（緑）",
+      "zh-Hans": "{0}（绿）",
+      "zh-Hant": "{0}（綠）",
+      "es": "{0} (verde)",
+      "fr": "{0} (vert)",
+      "ko": "{0} (초록)",
+      "ru": "{0} (зелёный)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (iron)",
+      "ja": "{0}（鉄）",
+      "zh-Hans": "{0}（铁）",
+      "zh-Hant": "{0}（鐵）",
+      "es": "{0} (hierro)",
+      "fr": "{0} (fer)",
+      "ko": "{0} (철)",
+      "ru": "{0} (железо)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (mistril)",
+      "ja": "{0}（ミストリル）",
+      "zh-Hans": "{0}（秘银）",
+      "zh-Hant": "{0}（秘銀）",
+      "es": "{0} (mistril)",
+      "fr": "{0} (mistril)",
+      "ko": "{0} (미스트릴)",
+      "ru": "{0} (мистрил)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (orange)",
+      "ja": "{0}（オレンジ）",
+      "zh-Hans": "{0}（橙）",
+      "zh-Hant": "{0}（橘）",
+      "es": "{0} (naranja)",
+      "fr": "{0} (orange)",
+      "ko": "{0} (주황)",
+      "ru": "{0} (оранжевый)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (pink)",
+      "ja": "{0}（ピンク）",
+      "zh-Hans": "{0}（粉）",
+      "zh-Hant": "{0}（粉）",
+      "es": "{0} (rosa)",
+      "fr": "{0} (rose)",
+      "ko": "{0} (분홍)",
+      "ru": "{0} (розовый)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (purple)",
+      "ja": "{0}（紫）",
+      "zh-Hans": "{0}（紫）",
+      "zh-Hant": "{0}（紫）",
+      "es": "{0} (morado)",
+      "fr": "{0} (violet)",
+      "ko": "{0} (보라)",
+      "ru": "{0} (фиолетовый)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (red)",
+      "ja": "{0}（赤）",
+      "zh-Hans": "{0}（红）",
+      "zh-Hant": "{0}（紅）",
+      "es": "{0} (rojo)",
+      "fr": "{0} (rouge)",
+      "ko": "{0} (빨강)",
+      "ru": "{0} (красный)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (silver)",
+      "ja": "{0}（銀）",
+      "zh-Hans": "{0}（银）",
+      "zh-Hant": "{0}（銀）",
+      "es": "{0} (plata)",
+      "fr": "{0} (argent)",
+      "ko": "{0} (은)",
+      "ru": "{0} (серебро)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (small orange)",
+      "ja": "{0}（小・オレンジ）",
+      "zh-Hans": "{0}（小・橙）",
+      "zh-Hant": "{0}（小・橘）",
+      "es": "{0} (naranja pequeño)",
+      "fr": "{0} (petit orange)",
+      "ko": "{0} (작은 주황)",
+      "ru": "{0} (маленький оранжевый)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monster"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6616,6 +9794,39 @@
               [
                 "2",
                 "String(date.year)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} · {1}",
+      "ja": "{0}・{1}",
+      "zh-Hans": "{0} · {1}",
+      "zh-Hant": "{0} · {1}",
+      "es": "{0} · {1}",
+      "fr": "{0} · {1}",
+      "ko": "{0} · {1}",
+      "ru": "{0} · {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/quest-sections.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "villagerName"
+              ],
+              [
+                "1",
+                "rewardRecipeName"
               ]
             ]
           }

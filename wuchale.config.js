@@ -7,6 +7,7 @@ import {
   aboutSvelteFiles,
   routeMetadataFiles,
   routeSvelteFiles,
+  sharedLocaleFiles,
   sharedScriptFiles,
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
@@ -73,6 +74,13 @@ export default defineConfig({
       files: sharedSvelteFiles,
       loader: "custom",
       runtime: instanceRuntime,
+      storage: sharedStorage,
+    }),
+    "shared-locale": scriptAdapter({
+      files: sharedLocaleFiles,
+      loader: "custom",
+      // Presentation helpers receive the locale of the data they format.
+      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, "_locale)") } },
       storage: sharedStorage,
     }),
     "shared-script": scriptAdapter({

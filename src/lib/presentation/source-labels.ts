@@ -3,7 +3,6 @@ import { nameCollator } from "#lib/data/names.js";
 import { sourceFilterLabel } from "#lib/data/source-filters.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { buildSourceSegments } from "#lib/sources/source-segments.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
@@ -11,12 +10,12 @@ import type { SourceSection, SourceTypeGroup } from "#lib/presentation/source-gr
 import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
-export function sourceTypeLabel(group: SourceTypeGroup, locale: LocaleCode): string {
-  if (group === "quests") return m.category_quests_name({}, { locale });
-  if (group === "gifts") return m.source_filter_member_spouse_gifts({}, { locale });
-  if (group === "monsters") return m.source_filter_member_monsters({}, { locale });
-  if (group === "progress") return m.everything_progress({}, { locale });
-  return sourceFilterLabel(group, locale);
+export function sourceTypeLabel(group: SourceTypeGroup, _locale: LocaleCode): string {
+  if (group === "quests") return "Quests";
+  if (group === "gifts") return "Spouse gifts";
+  if (group === "monsters") return "Monsters";
+  if (group === "progress") return /* @wc-context: everything progress */ "Progress";
+  return sourceFilterLabel(group, _locale);
 }
 
 /** Names come from the same localized tables & gated sentences as acquisition cards. */
@@ -27,7 +26,7 @@ export function sourceSectionLabel(
 ): { name: string; spoilered: boolean } {
   const { source } = section;
   if (!source) {
-    return { name: m.everything_progress({}, { locale: lookups.locale }), spoilered: false };
+    return { name: sourceTypeLabel("progress", lookups.locale), spoilered: false };
   }
   let name: string | undefined;
   if ("storeId" in source && source.type !== "festival") {
