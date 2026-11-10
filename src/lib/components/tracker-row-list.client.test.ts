@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRowList from "#lib/components/tracker-row-list.svelte";
 import { INITIAL_ROW_BUDGET, RESTORE_SLACK } from "#lib/controllers/row-reveal.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 const row = createRawSnippet<[string]>((item) => ({
   render: () => `<div data-tracker-row data-source-state="none">${item()}</div>`,

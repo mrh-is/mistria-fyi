@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import SectionGroupsHarness from "#lib/components/section-groups.test-harness.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 import type { SectionGrouping } from "#lib/controllers/section-grouping.svelte.js";

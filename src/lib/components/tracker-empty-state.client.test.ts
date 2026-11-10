@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
 import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 afterEach(() => {
   toolbarState.filterPanelAvailable = false;

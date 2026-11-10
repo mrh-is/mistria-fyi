@@ -1,5 +1,5 @@
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";

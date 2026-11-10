@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
-import * as m from "#lib/paraglide/messages.js";
 import { PROGRESS_STORAGE_KEY, QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { buildSavFile } from "#lib/test-utils/sav.js";
 import { enableSpoilers } from "#lib/test-utils/spoilers.js";
 import { CURRENT_SERIALIZATION_VERSION } from "#lib/types/user-progress.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import ImportCard from "./import-card.svelte";

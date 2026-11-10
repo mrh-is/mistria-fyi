@@ -21,12 +21,12 @@
   import { showStarterItemsToast } from "#lib/effects/undo-toast.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
-  import * as m from "#lib/paraglide/messages.js";
-  import { getTextDirection } from "#lib/paraglide/runtime.js";
+  import { getTextDirection } from "#lib/i18n/locale-runtime.js";
   import { keepLocaleOffline } from "#lib/pwa/offline-locales.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { keepRetiring } from "#lib/sync/sharing.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
@@ -104,7 +104,7 @@
 
 <SeoHead {metadata} pathname={page.url.pathname} />
 
-<!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
+<!-- Keyed messages read the active locale when the chrome mounts. -->
 {#key page.data.locale}
   <div
     class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar

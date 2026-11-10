@@ -1,6 +1,6 @@
 import localeManifest from "#lib/data/locales.json";
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { LocaleCode, LocaleManifest } from "#lib/types/locale.js";
 import type {

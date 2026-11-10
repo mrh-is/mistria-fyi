@@ -1,13 +1,13 @@
 <script lang="ts">
   import { getName } from "#lib/data/names.js";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
-  import * as m from "#lib/paraglide/messages.js";
   import {
     formatMergeCount,
     MERGE_COUNT_LABELS,
     totalMergeCounts,
   } from "#lib/presentation/merge-labels.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber, formatPercent } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";

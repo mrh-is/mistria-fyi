@@ -1,0 +1,12 @@
+{
+  "foldout_close": {
+    "en": "Close {title}",
+    "ja": "{title}を閉じる",
+    "zh-Hans": "关闭{title}",
+    "zh-Hant": "關閉{title}",
+    "es": "Cerrar {title}",
+    "fr": "Fermer {title}",
+    "ko": "{title} 닫기",
+    "ru": "Закрыть {title}"
+  }
+}

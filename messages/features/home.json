@@ -1,0 +1,22 @@
+{
+  "home_everything_label": {
+    "en": "Everything",
+    "ja": "すべて",
+    "zh-Hans": "全部",
+    "zh-Hant": "全部",
+    "es": "Todo",
+    "fr": "Tout",
+    "ko": "전체",
+    "ru": "Всё"
+  },
+  "home_page_description": {
+    "en": "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
+    "ja": "Fields of Mistriaの博物館への寄贈、アルマナックの発見、レシピ、交流、スキル、クエストなどを記録して、100%コンプリートを目指しましょう。",
+    "zh-Hans": "追踪《Fields of Mistria》中的博物馆捐赠、年鉴发现、食谱、关系、技能、任务等内容，向 100% 完成度迈进。",
+    "zh-Hant": "追蹤《Fields of Mistria》中的博物館捐贈、年鑑發現、食譜、關係、技能、任務等內容，向 100% 完成度邁進。",
+    "es": "Sigue las donaciones al museo, los hallazgos del almanaque, las recetas, las relaciones, las habilidades, las misiones y más en Fields of Mistria mientras avanzas hacia el 100 % de completado.",
+    "fr": "Suivez les dons au musée, les trouvailles de l’almanach, les recettes, les relations, les compétences, les quêtes et plus encore dans Fields of Mistria, en route vers les 100 % de complétion.",
+    "ko": "Fields of Mistria의 박물관 기증, 알마낙 발견, 레시피, 관계, 스킬, 퀘스트 등을 기록하며 100% 달성을 향해 나아가세요.",
+    "ru": "Отслеживайте пожертвования музею, находки альманаха, рецепты, отношения, умения, задания и многое другое в Fields of Mistria на пути к 100% прохождения."
+  }
+}

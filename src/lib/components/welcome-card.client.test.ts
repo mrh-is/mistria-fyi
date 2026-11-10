@@ -3,8 +3,8 @@ import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import WelcomeCard from "#lib/components/welcome-card.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 

@@ -50,7 +50,7 @@ describe("one asset origin", () => {
       .filter(
         (path) =>
           !path.endsWith(".test.ts") &&
-          !path.startsWith("src/lib/paraglide/") &&
+          !path.startsWith("src/lib/ui-messages/") &&
           path !== "src/lib/asset-origin.ts",
       )
       .filter((path) => read(path).includes(PRODUCTION_ASSET_ORIGIN));

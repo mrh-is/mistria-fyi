@@ -1,5 +1,5 @@
 import { PRODUCTION_ASSET_ORIGIN } from "#lib/asset-origin.js";
-import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
+import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/locale-path.js";
 import { IMMUTABLE_DIRECTORY, VERSION_METADATA_PATH } from "#lib/pwa/config.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 

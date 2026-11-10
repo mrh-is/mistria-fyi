@@ -16,10 +16,10 @@
   import { trackerData } from "#lib/data/index.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { progressAttachment } from "#lib/feedback/progress-attachment.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
   import { ensureTurnstileScript } from "#lib/turnstile.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { version } from "$app/env";
 
   import type { ReportTarget } from "#lib/feedback/types.js";

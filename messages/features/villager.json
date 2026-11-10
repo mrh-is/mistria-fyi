@@ -1,0 +1,72 @@
+{
+  "villager_birthday_aria": {
+    "en": "Birthday: {season} {day}",
+    "ja": "誕生日：{season}{day}日",
+    "zh-Hans": "生日：{season}{day}日",
+    "zh-Hant": "生日：{season}{day}日",
+    "es": "Cumpleaños: {day} de {season}",
+    "fr": "Anniversaire : {day} {season}",
+    "ko": "생일: {season} {day}일",
+    "ru": "День рождения: {day} {season}"
+  },
+  "villager_birthday_spoilered": {
+    "en": "Birthday hidden",
+    "ja": "誕生日は非表示",
+    "zh-Hans": "生日已隐藏",
+    "zh-Hant": "生日已隱藏",
+    "es": "Cumpleaños oculto",
+    "fr": "Anniversaire masqué",
+    "ko": "생일 숨김",
+    "ru": "День рождения скрыт"
+  },
+  "villager_spoilered_name": {
+    "en": "Hidden villager",
+    "ja": "非表示の町の住民",
+    "zh-Hans": "隐藏的村民",
+    "zh-Hant": "隱藏的村民",
+    "es": "Aldeano oculto",
+    "fr": "Habitant masqué",
+    "ko": "숨겨진 마을 주민",
+    "ru": "Скрытый житель"
+  },
+  "villager_relationship_level_aria": {
+    "en": "{name} relationship level, {level} of {max}",
+    "ja": "{name}との関係レベル、{max}中{level}",
+    "zh-Hans": "与{name}的关系等级，{max}级中的{level}级",
+    "zh-Hant": "與{name}的關係等級，{max}級中的{level}級",
+    "es": "Nivel de relación con {name}, {level} de {max}",
+    "fr": "Niveau de relation avec {name}, {level} sur {max}",
+    "ko": "{name}와의 관계 레벨, {max}중 {level}",
+    "ru": "Уровень отношений с «{name}», {level} из {max}"
+  },
+  "villager_decrease_hearts": {
+    "en": "Decrease {name} hearts",
+    "ja": "{name}のハートを減らす",
+    "zh-Hans": "减少{name}的好感度",
+    "zh-Hant": "減少{name}的愛心",
+    "es": "Reducir corazones de {name}",
+    "fr": "Diminuer les cœurs de {name}",
+    "ko": "{name}의 하트 줄이기",
+    "ru": "Уменьшить количество сердец «{name}»"
+  },
+  "villager_increase_hearts": {
+    "en": "Increase {name} hearts",
+    "ja": "{name}のハートを増やす",
+    "zh-Hans": "增加{name}的好感度",
+    "zh-Hant": "增加{name}的愛心",
+    "es": "Aumentar corazones de {name}",
+    "fr": "Augmenter les cœurs de {name}",
+    "ko": "{name}의 하트 늘리기",
+    "ru": "Увеличить количество сердец «{name}»"
+  },
+  "villager_spoilered_name_lower": {
+    "en": "hidden villager",
+    "ja": "非表示の町の住民",
+    "zh-Hans": "隐藏的村民",
+    "zh-Hant": "隱藏的村民",
+    "es": "aldeano oculto",
+    "fr": "Habitant masqué",
+    "ko": "숨겨진 마을 주민",
+    "ru": "скрытый житель"
+  }
+}

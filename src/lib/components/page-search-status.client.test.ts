@@ -6,10 +6,10 @@ import MuseumContent from "#lib/components/museum-content.svelte";
 import PageSearchStatus from "#lib/components/page-search-status.svelte";
 import SearchGuideLink from "#lib/components/search-guide-link.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { FilteredCounts } from "#lib/engine/shelves.js";
 

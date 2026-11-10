@@ -195,7 +195,7 @@ export interface LicensesPluginOptions {
   allowlist?: Readonly<Record<string, string>>;
   /**
    * Project directories whose generated code comes from an installed package, keyed by prefix (for
-   * example Paraglide's compiled runtime). A bundled module under a prefix counts that package.
+   * example a generated dependency runtime). A bundled module under a prefix counts that package.
    */
   generatedFrom?: Readonly<Record<string, string>>;
   /** Stylesheets (relative to the project root) whose bare `@import`s ship in the bundle. */

@@ -4,7 +4,7 @@ import { aroundEach, beforeAll, vi } from "vitest";
 
 import { resetRowReveal } from "#lib/controllers/row-reveal.svelte.js";
 import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { updateHolds } from "#lib/pwa/update-holds.js";
 import { theme } from "#lib/stores/theme.svelte.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -12,8 +12,6 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { syncNotice } from "#lib/sync/notice.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { toastState } from "#lib/test-utils/sonner-state.js";
-
-const originalGetLocale = getLocale;
 
 function resetSharedState(): void {
   resetRowReveal();
@@ -32,7 +30,7 @@ function resetSharedState(): void {
   pageStub.reset();
   syncNotice.dismiss();
   theme.set("system");
-  overwriteGetLocale(originalGetLocale);
+  overwriteGetLocale();
   flushSync();
   localStorage.clear();
   sessionStorage.clear();

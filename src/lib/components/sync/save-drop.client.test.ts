@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import FindSaveStep from "../../../routes/sync/find-save-step.svelte";
 import SaveDrop from "./save-drop.svelte";

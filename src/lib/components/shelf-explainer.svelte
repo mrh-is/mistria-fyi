@@ -2,9 +2,9 @@
   import { Icon } from "#lib/components/icon/index.js";
   import TagDialog from "#lib/components/tag-dialog.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { page } from "$app/state";
 

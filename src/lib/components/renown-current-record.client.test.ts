@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import RenownCurrentRecordHarness from "#lib/components/renown-current-record.test-harness.svelte";
 import { getName } from "#lib/data/names.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 describe("RenownCurrentRecord", () => {
   beforeEach(async () => {

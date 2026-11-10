@@ -7,7 +7,7 @@ import { wuchale } from "wuchale/vite";
 const fromFixture = (...parts) => path.resolve(import.meta.dirname, ...parts);
 
 export default defineConfig(({ mode }) => {
-  const baseline = mode === "paraglide";
+  const baseline = mode === "keyed";
   const featureDir = baseline ? "baseline" : "features";
   return {
     plugins: [

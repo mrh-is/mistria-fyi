@@ -10,9 +10,9 @@
   import { isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import { getPartnerId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
   import { relationshipLevelColor } from "#lib/utils/palette.js";
   import { page } from "$app/state";

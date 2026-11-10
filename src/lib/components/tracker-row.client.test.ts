@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
-import { overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";

@@ -1,0 +1,62 @@
+{
+  "data_title": {
+    "en": "Data management",
+    "ja": "データ管理",
+    "zh-Hans": "数据管理",
+    "zh-Hant": "資料管理",
+    "es": "Gestión de datos",
+    "fr": "Gestion des données",
+    "ko": "데이터 관리",
+    "ru": "Управление данными"
+  },
+  "data_page_description": {
+    "en": "Import, sync, back up, restore, or reset your Mistria Field Guide tracking progress.",
+    "ja": "Mistria Field Guideの進捗をインポート、同期、バックアップ、復元、リセットできます。",
+    "zh-Hans": "导入、同步、备份、恢复或重置你的 Mistria Field Guide 记录进度。",
+    "zh-Hant": "匯入、同步、備份、還原或重設你的 Mistria Field Guide 紀錄進度。",
+    "es": "Importa, sincroniza, guarda, restaura o reinicia tu progreso en Mistria Field Guide.",
+    "fr": "Importez, synchronisez, sauvegardez, restaurez ou réinitialisez votre progression dans Mistria Field Guide.",
+    "ko": "Mistria Field Guide 진행도를 가져오고, 동기화하고, 백업하고, 복원하거나 초기화하세요.",
+    "ru": "Импортируйте, синхронизируйте, сохраняйте, восстанавливайте или сбрасывайте прогресс в Mistria Field Guide."
+  },
+  "data_field_kit_heading": {
+    "en": "Field kit",
+    "ja": "フィールドキット",
+    "zh-Hans": "田野工具包",
+    "zh-Hant": "田野工具包",
+    "es": "Kit de campo",
+    "fr": "Trousse à outils",
+    "ko": "필드 키트",
+    "ru": "Набор инструментов"
+  },
+  "data_reset_heading": {
+    "en": "Reset",
+    "ja": "リセット",
+    "zh-Hans": "重置",
+    "zh-Hant": "重設",
+    "es": "Reinicio",
+    "fr": "Réinitialisation",
+    "ko": "초기화",
+    "ru": "Сброс"
+  },
+  "data_footer_versions": {
+    "en": "Fields of Mistria v{gameVersion} · Field Guide v{appVersion}",
+    "ja": "Fields of Mistria v{gameVersion}・Field Guide v{appVersion}",
+    "zh-Hans": "Fields of Mistria v{gameVersion} · 田野指南 v{appVersion}",
+    "zh-Hant": "Fields of Mistria v{gameVersion} · 田野指南 v{appVersion}",
+    "es": "Fields of Mistria v{gameVersion} · Field Guide v{appVersion}",
+    "fr": "Fields of Mistria v{gameVersion} · Field Guide v{appVersion}",
+    "ko": "Fields of Mistria v{gameVersion} · 필드 가이드 v{appVersion}",
+    "ru": "Fields of Mistria v{gameVersion} · Field Guide v{appVersion}"
+  },
+  "data_no_new_data_import": {
+    "en": "No new data to import",
+    "ja": "インポートする新しいデータはありません",
+    "zh-Hans": "没有新数据可导入",
+    "zh-Hant": "沒有新資料可匯入",
+    "es": "No hay datos nuevos para importar",
+    "fr": "Aucune nouvelle donnée à importer",
+    "ko": "가져올 새 데이터가 없습니다",
+    "ru": "Нет новых данных для импорта"
+  }
+}

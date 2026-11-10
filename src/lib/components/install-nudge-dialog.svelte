@@ -5,7 +5,7 @@
     downloadProgressBackup,
     trackingReminders,
   } from "#lib/controllers/tracking-reminders.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   let open = $derived(trackingReminders.installOpen);
 </script>

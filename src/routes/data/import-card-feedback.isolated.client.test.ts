@@ -1,9 +1,9 @@
 import { fireEvent, screen, within } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import ImportCard from "./import-card.svelte";
 

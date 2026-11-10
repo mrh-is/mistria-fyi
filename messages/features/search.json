@@ -1,0 +1,154 @@
+{
+  "search_results_count": {
+    "en": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "{count} result",
+          "countPlural=other": "{count} results"
+        }
+      }
+    ],
+    "ja": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{count}件の結果"
+        }
+      }
+    ],
+    "zh-Hans": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{count} 个结果"
+        }
+      }
+    ],
+    "zh-Hant": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{count} 項結果"
+        }
+      }
+    ],
+    "es": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "{count} resultado",
+          "countPlural=many": "{count} resultados",
+          "countPlural=other": "{count} resultados"
+        }
+      }
+    ],
+    "fr": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "{count} résultat",
+          "countPlural=many": "{count} résultats",
+          "countPlural=other": "{count} résultats"
+        }
+      }
+    ],
+    "ko": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "결과 {count}개"
+        }
+      }
+    ],
+    "ru": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "{count} результат",
+          "countPlural=few": "{count} результата",
+          "countPlural=many": "{count} результатов",
+          "countPlural=other": "{count} результата"
+        }
+      }
+    ]
+  },
+  "search_no_results": {
+    "en": "No items found",
+    "ja": "アイテムが見つかりません",
+    "zh-Hans": "未找到任何物品",
+    "zh-Hant": "找不到任何物品",
+    "es": "No se encontraron elementos",
+    "fr": "Aucun élément trouvé",
+    "ko": "항목을 찾을 수 없습니다",
+    "ru": "Ничего не найдено"
+  },
+  "search_filters_off": {
+    "en": "Your filters are off for this search.",
+    "ja": "この検索ではフィルターがオフです。",
+    "zh-Hans": "本次搜索已关闭筛选条件。",
+    "zh-Hant": "本次搜尋已關閉篩選條件。",
+    "es": "Tus filtros están desactivados para esta búsqueda.",
+    "fr": "Vos filtres sont désactivés pour cette recherche.",
+    "ko": "이 검색에서는 필터가 꺼져 있습니다.",
+    "ru": "Фильтры отключены для этого поиска."
+  },
+  "search_filters_resume": {
+    "en": "Turn them back on",
+    "ja": "フィルターを戻す",
+    "zh-Hans": "恢复筛选条件",
+    "zh-Hant": "恢復篩選條件",
+    "es": "Volver a activarlos",
+    "fr": "Les réactiver",
+    "ko": "필터 다시 적용",
+    "ru": "Вернуть фильтры"
+  },
+  "search_guide_prompt": {
+    "en": "Don’t see what you’re looking for?",
+    "ja": "お探しのものが見つかりませんか？",
+    "zh-Hans": "没有找到想要的内容？",
+    "zh-Hant": "沒有找到想要的內容？",
+    "es": "¿No ves lo que buscas?",
+    "fr": "Vous ne trouvez pas ce que vous cherchez ?",
+    "ko": "찾는 항목이 없나요?",
+    "ru": "Не нашли, что искали?"
+  },
+  "search_guide_link": {
+    "en": "Search the entire Field Guide for “{query}”",
+    "ja": "フィールドガイド全体から「{query}」を検索",
+    "zh-Hans": "在整本田野指南中搜索“{query}”",
+    "zh-Hant": "在整本田野指南中搜尋「{query}」",
+    "es": "Buscar “{query}” en toda la guía de campo",
+    "fr": "Chercher « {query} » dans tout le guide de terrain",
+    "ko": "필드 가이드 전체에서 “{query}” 검색",
+    "ru": "Искать «{query}» во всём полевом справочнике"
+  },
+  "search_loading": {
+    "en": "Loading search…",
+    "ja": "検索を読み込み中…",
+    "zh-Hans": "正在加载搜索…",
+    "zh-Hant": "正在載入搜尋…",
+    "es": "Cargando la búsqueda…",
+    "fr": "Chargement de la recherche…",
+    "ko": "검색 불러오는 중…",
+    "ru": "Загрузка поиска…"
+  },
+  "search_error": {
+    "en": "We couldn’t load search. Check that you’re online, then try again.",
+    "ja": "検索を読み込めませんでした。オンラインになっているか確認して、もう一度お試しください。",
+    "zh-Hans": "没能加载搜索。请确认你已联网，然后再试一次。",
+    "zh-Hant": "沒能載入搜尋。請確認你已連上網路，然後再試一次。",
+    "es": "No hemos podido cargar la búsqueda. Comprueba que tienes conexión e inténtalo de nuevo.",
+    "fr": "Impossible de charger la recherche. Vérifiez que vous êtes en ligne, puis réessayez.",
+    "ko": "검색을 불러오지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
+    "ru": "Не удалось загрузить поиск. Проверьте подключение к интернету и попробуйте ещё раз."
+  }
+}

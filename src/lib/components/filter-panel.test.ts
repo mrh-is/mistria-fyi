@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 // Interaction coverage (source groups, the explainer dialog, & the unobtainable switch) lives in
 // filter-panel.client.test.ts.

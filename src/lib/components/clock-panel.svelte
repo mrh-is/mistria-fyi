@@ -5,8 +5,8 @@
   import { Icon } from "#lib/components/icon/index.js";
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
   import { weathersForSeason } from "#lib/engine/world-state.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, seasonLabelAbbr, weatherLabel } from "#lib/utils/format.js";
   import { page } from "$app/state";
 

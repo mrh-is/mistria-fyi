@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 describe("QuickSettingsPanel", () => {
   it("groups compact links to the data and About pages", () => {

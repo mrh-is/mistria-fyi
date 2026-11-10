@@ -2,10 +2,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/sv
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { buildSavFile } from "#lib/test-utils/sav.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { CourierOptions, CourierStatus } from "#lib/sync/courier.js";
 import type { RelayClient, RetireResult } from "#lib/sync/follow.js";

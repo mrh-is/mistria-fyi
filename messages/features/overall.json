@@ -1,0 +1,12 @@
+{
+  "overall_progress_label": {
+    "en": "{completed} of {total} completed overall, {pct}",
+    "ja": "全体で{total}件中{completed}件完了、{pct}",
+    "zh-Hans": "总计已完成 {completed}/{total}，{pct}",
+    "zh-Hant": "總計已完成 {completed}/{total}，{pct}",
+    "es": "{completed} de {total} completados en total, {pct}",
+    "fr": "{completed} sur {total} terminés au total, {pct}",
+    "ko": "전체 {total}개 중 {completed}개 완료, {pct}",
+    "ru": "Выполнено {completed} из {total} всего, {pct}"
+  }
+}

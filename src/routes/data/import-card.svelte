@@ -15,10 +15,10 @@
   import { readSaveIdentity } from "#lib/engine/save-identity.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { describeErrorForReport } from "#lib/feedback/error-details.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { progressImport } from "#lib/progress/index.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { isIosDevice } from "#lib/utils/ios-device.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";

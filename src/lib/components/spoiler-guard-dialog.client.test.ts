@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
 import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 describe("SpoilerGuardDialog", () => {
   it("renders nothing until the guard holds a condition", () => {

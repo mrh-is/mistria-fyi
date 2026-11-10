@@ -1,0 +1,104 @@
+{
+  "filter_note": {
+    "en": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "{count} {shelf} item is being filtered out.",
+          "countPlural=other": "{count} {shelf} items are being filtered out."
+        }
+      }
+    ],
+    "ja": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{shelf}の項目{count}件がフィルターで非表示になっています。"
+        }
+      }
+    ],
+    "zh-Hans": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "有 {count} 个“{shelf}”项目被筛选隐藏了。"
+        }
+      }
+    ],
+    "zh-Hant": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "有 {count} 個「{shelf}」項目被篩選隱藏了。"
+        }
+      }
+    ],
+    "es": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Se está filtrando {count} elemento de {shelf}.",
+          "countPlural=many": "Se están filtrando {count} elementos de {shelf}.",
+          "countPlural=other": "Se están filtrando {count} elementos de {shelf}."
+        }
+      }
+    ],
+    "fr": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "{count} élément {shelf} est masqué par les filtres.",
+          "countPlural=many": "{count} éléments {shelf} sont masqués par les filtres.",
+          "countPlural=other": "{count} éléments {shelf} sont masqués par les filtres."
+        }
+      }
+    ],
+    "ko": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{shelf} 항목 {count}개가 필터로 숨겨져 있어요."
+        }
+      }
+    ],
+    "ru": [
+      {
+        "declarations": ["input count", "input shelf", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Фильтры скрывают {count} элемент полки «{shelf}».",
+          "countPlural=few": "Фильтры скрывают элементы полки «{shelf}»: {count}.",
+          "countPlural=many": "Фильтры скрывают элементы полки «{shelf}»: {count}.",
+          "countPlural=other": "Фильтры скрывают элементы полки «{shelf}»: {count}."
+        }
+      }
+    ]
+  },
+  "filter_note_show": {
+    "en": "Show anyway",
+    "ja": "それでも表示",
+    "zh-Hans": "仍然显示",
+    "zh-Hant": "仍然顯示",
+    "es": "Mostrar igualmente",
+    "fr": "Afficher quand même",
+    "ko": "그래도 표시",
+    "ru": "Всё равно показать"
+  },
+  "filter_note_nothing_left": {
+    "en": "Your filters leave nothing on this page.",
+    "ja": "フィルターにより、このページには何も表示されません。",
+    "zh-Hans": "筛选后，此页面没有内容了。",
+    "zh-Hant": "篩選後，此頁面沒有內容了。",
+    "es": "Tus filtros no dejan nada en esta página.",
+    "fr": "Tes filtres ne laissent rien sur cette page.",
+    "ko": "필터 때문에 이 페이지에 남은 항목이 없어요.",
+    "ru": "С такими фильтрами на этой странице ничего не осталось."
+  }
+}

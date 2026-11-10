@@ -2,7 +2,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import type { Snippet } from "svelte";
 

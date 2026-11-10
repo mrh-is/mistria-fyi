@@ -1,0 +1,22 @@
+{
+  "no_items_match_filters": {
+    "en": "Nothing matches {filters}.",
+    "ja": "{filters}に一致するものはありません。",
+    "zh-Hans": "没有符合{filters}的内容。",
+    "zh-Hant": "沒有符合{filters}的內容。",
+    "es": "No hay nada que coincida con {filters}.",
+    "fr": "Rien ne correspond à {filters}.",
+    "ko": "{filters}에 맞는 항목이 없어요.",
+    "ru": "Под {filters} ничего не подходит."
+  },
+  "no_items_match_filters_link": {
+    "en": "your current filters",
+    "ja": "今のフィルター",
+    "zh-Hans": "当前筛选条件",
+    "zh-Hant": "目前篩選條件",
+    "es": "tus filtros actuales",
+    "fr": "vos filtres actuels",
+    "ko": "현재 필터",
+    "ru": "ваши текущие фильтры"
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "backup_card_title": {
+    "en": "Backup & restore",
+    "ja": "バックアップと復元",
+    "zh-Hans": "备份与恢复",
+    "zh-Hant": "備份與還原",
+    "es": "Copia de seguridad y restauración",
+    "fr": "Sauvegarde et restauration",
+    "ko": "백업 및 복원",
+    "ru": "Резервное копирование и восстановление"
+  },
+  "backup_card_summary": {
+    "en": "Export or restore all tracker data.",
+    "ja": "トラッカーの全データをエクスポートまたは復元します。",
+    "zh-Hans": "导出或恢复所有追踪器数据。",
+    "zh-Hant": "匯出或還原所有追蹤器資料。",
+    "es": "Exporta o restaura todos los datos del tracker.",
+    "fr": "Exportez ou restaurez toutes les données du tracker.",
+    "ko": "모든 트래커 데이터를 내보내거나 복원합니다.",
+    "ru": "Экспорт или восстановление всех данных трекера."
+  },
+  "backup_export_action": {
+    "en": "Export backup",
+    "ja": "バックアップをエクスポート",
+    "zh-Hans": "导出备份",
+    "zh-Hant": "匯出備份",
+    "es": "Exportar copia de seguridad",
+    "fr": "Exporter la sauvegarde",
+    "ko": "백업 내보내기",
+    "ru": "Экспортировать резервную копию"
+  },
+  "backup_download_unreadable_action": {
+    "en": "Download unreadable data",
+    "ja": "読み込めなかったデータをダウンロード",
+    "zh-Hans": "下载无法读取的数据",
+    "zh-Hant": "下載無法讀取的資料",
+    "es": "Descargar datos ilegibles",
+    "fr": "Télécharger les données illisibles",
+    "ko": "읽을 수 없는 데이터 다운로드",
+    "ru": "Скачать нечитаемые данные"
+  },
+  "backup_restore_action": {
+    "en": "Restore from backup",
+    "ja": "バックアップから復元",
+    "zh-Hans": "从备份恢复",
+    "zh-Hant": "從備份還原",
+    "es": "Restaurar desde copia de seguridad",
+    "fr": "Restaurer depuis une sauvegarde",
+    "ko": "백업에서 복원",
+    "ru": "Восстановить из резервной копии"
+  },
+  "backup_choose_file_aria": {
+    "en": "Choose a backup file to restore",
+    "ja": "復元するバックアップファイルを選択",
+    "zh-Hans": "选择要恢复的备份文件",
+    "zh-Hant": "選擇要還原的備份檔案",
+    "es": "Elegir un archivo de copia de seguridad para restaurar",
+    "fr": "Choisir un fichier de sauvegarde à restaurer",
+    "ko": "복원할 백업 파일 선택",
+    "ru": "Выбрать файл резервной копии для восстановления"
+  },
+  "backup_restoring_status": {
+    "en": "Restoring backup…",
+    "ja": "バックアップを復元中…",
+    "zh-Hans": "正在恢复备份…",
+    "zh-Hant": "正在還原備份…",
+    "es": "Restaurando copia de seguridad…",
+    "fr": "Restauration de la sauvegarde…",
+    "ko": "백업 복원 중…",
+    "ru": "Восстановление резервной копии…"
+  },
+  "backup_restored_success": {
+    "en": "All set, your backup is restored!",
+    "ja": "完了！バックアップを復元しました！",
+    "zh-Hans": "搞定，你的备份已恢复！",
+    "zh-Hant": "搞定，你的備份已還原！",
+    "es": "¡Listo, tu copia de seguridad se ha restaurado!",
+    "fr": "C’est bon, votre sauvegarde est restaurée !",
+    "ko": "완료, 백업을 복원했어요!",
+    "ru": "Готово, резервная копия восстановлена!"
+  },
+  "backup_could_not_read": {
+    "en": "We couldn’t open that file, so we left your progress as it was. Make sure you picked a backup you downloaded from here.",
+    "ja": "そのファイルを開けなかったので、進行状況はそのままにしてあります。ここからダウンロードしたバックアップを選んでいるか確認してください。",
+    "zh-Hans": "没能打开那个文件，所以你的进度保持原样。请确认你选的是从这里下载的备份。",
+    "zh-Hant": "沒能開啟那個檔案，所以你的進度維持原樣。請確認你選的是從這裡下載的備份。",
+    "es": "No hemos podido abrir ese archivo, así que hemos dejado tu progreso como estaba. Asegúrate de elegir una copia de seguridad que descargaste de aquí.",
+    "fr": "Impossible d’ouvrir ce fichier, donc on a laissé votre progression telle quelle. Vérifiez que vous avez choisi une sauvegarde téléchargée ici.",
+    "ko": "그 파일을 열지 못해서 진행 상황은 그대로 두었어요. 여기서 내려받은 백업을 골랐는지 확인해 주세요.",
+    "ru": "Не удалось открыть этот файл, поэтому мы оставили ваш прогресс как был. Убедитесь, что выбрали резервную копию, скачанную отсюда."
+  },
+  "backup_error_invalid_fields": {
+    "en": "This backup is missing some data, so we left your progress as it was. It might be damaged, or from a different app.",
+    "ja": "このバックアップには足りないデータがあるため、進行状況はそのままにしてあります。壊れているか、別のアプリのものかもしれません。",
+    "zh-Hans": "这个备份缺少一些数据，所以你的进度保持原样。它可能已损坏，或者来自别的应用。",
+    "zh-Hant": "這個備份缺少一些資料，所以你的進度維持原樣。它可能已損毀，或是來自別的應用程式。",
+    "es": "A esta copia de seguridad le faltan datos, así que hemos dejado tu progreso como estaba. Puede que esté dañada o que sea de otra aplicación.",
+    "fr": "Il manque des données à cette sauvegarde, donc on a laissé votre progression telle quelle. Elle est peut-être endommagée, ou elle vient d’une autre application.",
+    "ko": "이 백업에는 빠진 데이터가 있어서 진행 상황은 그대로 두었어요. 손상됐거나 다른 앱의 파일일 수 있어요.",
+    "ru": "В этой резервной копии не хватает данных, поэтому мы оставили ваш прогресс как был. Возможно, она повреждена или создана другим приложением."
+  },
+  "backup_error_malformed_json": {
+    "en": "This doesn’t look like a backup file, so we left your progress as it was. Make sure you picked one you downloaded from here.",
+    "ja": "これはバックアップファイルではないようなので、進行状況はそのままにしてあります。ここからダウンロードしたものを選んでいるか確認してください。",
+    "zh-Hans": "这看起来不像备份文件，所以你的进度保持原样。请确认你选的是从这里下载的备份。",
+    "zh-Hant": "這看起來不像備份檔案，所以你的進度維持原樣。請確認你選的是從這裡下載的備份。",
+    "es": "Esto no parece una copia de seguridad, así que hemos dejado tu progreso como estaba. Asegúrate de elegir una que descargaste de aquí.",
+    "fr": "Ce fichier ne ressemble pas à une sauvegarde, donc on a laissé votre progression telle quelle. Vérifiez que vous avez choisi une sauvegarde téléchargée ici.",
+    "ko": "백업 파일이 아닌 것 같아서 진행 상황은 그대로 두었어요. 여기서 내려받은 파일을 골랐는지 확인해 주세요.",
+    "ru": "Это не похоже на резервную копию, поэтому мы оставили ваш прогресс как был. Убедитесь, что выбрали копию, скачанную отсюда."
+  },
+  "backup_error_newer_version": {
+    "en": "A time traveler! That backup seems to be from a future version of the field guide. To be safe, we left your progress as it was. Reload this page to get the latest update, then try again.",
+    "ja": "タイムトラベラーですね！そのバックアップは未来のバージョンのフィールドガイドのもののようです。念のため、進行状況はそのままにしてあります。このページを再読み込みして最新版にしてから、もう一度お試しください。",
+    "zh-Hans": "时间旅行者来了！这个备份似乎来自未来版本的田野指南。为了保险起见，你的进度保持原样。请重新加载此页面以获取最新版本，然后再试一次。",
+    "zh-Hant": "時空旅人來了！這個備份似乎來自未來版本的田野指南。為了保險起見，你的進度維持原樣。請重新載入此頁面以取得最新版本，然後再試一次。",
+    "es": "¡Un viaje en el tiempo! Parece que esa copia de seguridad es de una versión futura de la guía de campo. Por si acaso, hemos dejado tu progreso como estaba. Recarga esta página para tener la última actualización e inténtalo de nuevo.",
+    "fr": "Un voyageur temporel ! Cette sauvegarde semble venir d’une future version du guide de terrain. Par prudence, on a laissé votre progression telle quelle. Rechargez cette page pour obtenir la dernière mise à jour, puis réessayez.",
+    "ko": "시간 여행자시군요! 그 백업은 미래 버전의 필드 가이드에서 온 것 같아요. 혹시 모르니 진행 상황은 그대로 두었어요. 이 페이지를 새로고침해서 최신 업데이트를 받은 뒤 다시 시도해 주세요.",
+    "ru": "Гость из будущего! Похоже, эта резервная копия из будущей версии справочника. На всякий случай мы оставили ваш прогресс как был. Перезагрузите эту страницу, чтобы получить последнее обновление, и попробуйте ещё раз."
+  }
+}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getCompletionScope } from "#lib/controllers/completion-scope.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   let { isAllCompleted }: { isAllCompleted: boolean } = $props();
   const completionScope = getCompletionScope();

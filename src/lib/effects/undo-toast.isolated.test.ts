@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { questToastMessage, showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 const dismiss = vi.hoisted(() => vi.fn());

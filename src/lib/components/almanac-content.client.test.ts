@@ -6,10 +6,10 @@ import AlmanacContent from "#lib/components/almanac-content.svelte";
 import { INITIAL_ROW_BUDGET } from "#lib/controllers/row-reveal.svelte.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ItemId } from "#lib/types/tracker-data.js";

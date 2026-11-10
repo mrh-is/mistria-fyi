@@ -4,8 +4,8 @@
 
   import PageHeader from "#lib/components/page-header.svelte";
   import { trackerData } from "#lib/data/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { version } from "$app/env";
   import { page } from "$app/state";

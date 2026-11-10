@@ -2,8 +2,8 @@ import { adapter } from "@wuchale/svelte";
 import { defineConfig } from "wuchale";
 import { adapter as scriptAdapter } from "wuchale/adapter-vanilla";
 
-import settings from "./project.inlang/settings.json" with { type: "json" };
 import { partitionedStorage } from "./scripts/lib/wuchale-storage.js";
+import { LOCALE_CODES } from "./src/lib/types/locale.ts";
 
 const aboutStorage = partitionedStorage(["about"], () => "about");
 
@@ -25,6 +25,6 @@ export default defineConfig({
     }),
   },
   dev: "read",
-  locales: settings.locales,
+  locales: [...LOCALE_CODES],
   localesDir: "src/lib/i18n/catalogs",
 });

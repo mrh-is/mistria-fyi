@@ -1,0 +1,62 @@
+{
+  "everything_group_by": {
+    "en": "Group by",
+    "ja": "グループ分け",
+    "zh-Hans": "分组方式",
+    "zh-Hant": "分組方式",
+    "es": "Agrupar por",
+    "fr": "Regrouper par",
+    "ko": "그룹 기준",
+    "ru": "Группировать по"
+  },
+  "everything_group_category": {
+    "en": "Category",
+    "ja": "カテゴリ",
+    "zh-Hans": "类别",
+    "zh-Hant": "類別",
+    "es": "Categoría",
+    "fr": "Catégorie",
+    "ko": "카테고리",
+    "ru": "Категории"
+  },
+  "everything_group_source": {
+    "en": "Source",
+    "ja": "入手先",
+    "zh-Hans": "来源",
+    "zh-Hant": "來源",
+    "es": "Fuente",
+    "fr": "Source",
+    "ko": "획득처",
+    "ru": "Источнику"
+  },
+  "everything_progress": {
+    "en": "Progress",
+    "ja": "進捗",
+    "zh-Hans": "进度",
+    "zh-Hant": "進度",
+    "es": "Progreso",
+    "fr": "Progression",
+    "ko": "진행 상황",
+    "ru": "Прогресс"
+  },
+  "everything_source_done": {
+    "en": "Done",
+    "ja": "完了",
+    "zh-Hans": "已完成",
+    "zh-Hant": "已完成",
+    "es": "Completado",
+    "fr": "Terminé",
+    "ko": "완료",
+    "ru": "Готово"
+  },
+  "everything_source_heading": {
+    "en": "{name} · {state}",
+    "ja": "{name} · {state}",
+    "zh-Hans": "{name} · {state}",
+    "zh-Hant": "{name} · {state}",
+    "es": "{name} · {state}",
+    "fr": "{name} · {state}",
+    "ko": "{name} · {state}",
+    "ru": "{name} · {state}"
+  }
+}

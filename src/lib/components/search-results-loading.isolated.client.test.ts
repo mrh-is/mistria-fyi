@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SearchResults from "#lib/components/search-results.svelte";
 import { NAME_CHUNKS } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type * as NamesModule from "#lib/data/names.js";
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Icon } from "#lib/components/icon/index.js";
   import { categoryForKey } from "#lib/data/categories.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 

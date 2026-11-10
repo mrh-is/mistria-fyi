@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import QuestsContent from "#lib/components/quests-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 it("labels the matching shelf without the unfiltered section's shelf heading", async () => {

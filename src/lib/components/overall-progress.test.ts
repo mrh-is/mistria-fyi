@@ -2,21 +2,19 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import OverallProgress from "#lib/components/overall-progress.svelte";
 import { getAllProgress } from "#lib/engine/categories.js";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 import { formatNumber } from "#lib/utils/format.js";
 import { page } from "$app/state";
 
 describe("OverallProgress", () => {
-  const defaultGetLocale = getLocale;
-
   beforeEach(() => {
     userState.resetAll();
   });
 
   afterEach(() => {
-    overwriteGetLocale(defaultGetLocale);
+    overwriteGetLocale();
     page.data.locale = "en";
   });
 

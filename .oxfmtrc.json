@@ -26,11 +26,9 @@
     "pipeline/input/",
     "pipeline/output/",
     "src/lib/data/tracker-data.json",
-    "src/lib/paraglide/",
+    "src/lib/ui-messages/",
     "spikes/wuchale/catalogs/*.json",
     "src/lib/i18n/catalogs/*.json",
-    "project.inlang/*",
-    "!project.inlang/settings.json",
     "src/lib/fonts/locale-fonts-*.css"
   ],
   "sortImports": {

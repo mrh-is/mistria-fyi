@@ -1,8 +1,8 @@
 import { categoryColor } from "#lib/data/categories.js";
 import { getName } from "#lib/data/names.js";
 import { localizedPageLoad } from "#lib/data/page-load.js";
-import * as m from "#lib/paraglide/messages.js";
 import { SEGMENT_LOOKUP_NAME_CHUNKS } from "#lib/sources/segment-lookups.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageLoad } from "./$types";
 

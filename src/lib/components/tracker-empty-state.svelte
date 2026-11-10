@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
   // The note shown where a tracker section has nothing to list. Without a `message`, it blames the

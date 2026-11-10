@@ -2,8 +2,8 @@
   import IconCheck from "@tabler/icons-svelte-runes/icons/check";
   import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { copiedFromPath, SAVE_FOLDERS } from "#lib/sync/save-folders.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import type { SaveFolderPlatform } from "#lib/sync/save-folders.js";
 

@@ -1,0 +1,52 @@
+{
+  "rank_level_single": {
+    "en": "Lv {level}",
+    "ja": "Lv{level}",
+    "zh-Hans": "Lv{level}",
+    "zh-Hant": "Lv{level}",
+    "es": "Nv {level}",
+    "fr": "Niv {level}",
+    "ko": "Lv{level}",
+    "ru": "Ур. {level}"
+  },
+  "rank_level_range": {
+    "en": "Lv {start}–{end}",
+    "ja": "Lv{start}〜{end}",
+    "zh-Hans": "Lv{start}–{end}",
+    "zh-Hant": "Lv{start}–{end}",
+    "es": "Nv {start}–{end}",
+    "fr": "Niv {start}–{end}",
+    "ko": "Lv{start}~{end}",
+    "ru": "Ур. {start}–{end}"
+  },
+  "rank_state_completed": {
+    "en": "Completed",
+    "ja": "完了",
+    "zh-Hans": "已完成",
+    "zh-Hant": "已完成",
+    "es": "Completado",
+    "fr": "Terminé",
+    "ko": "완료",
+    "ru": "Завершено"
+  },
+  "rank_state_current": {
+    "en": "Current",
+    "ja": "現在",
+    "zh-Hans": "当前",
+    "zh-Hant": "目前",
+    "es": "Actual",
+    "fr": "Actuel",
+    "ko": "현재",
+    "ru": "Текущий"
+  },
+  "rank_state_upcoming": {
+    "en": "Upcoming",
+    "ja": "今後",
+    "zh-Hans": "即将到来",
+    "zh-Hant": "即將到來",
+    "es": "Próximo",
+    "fr": "À venir",
+    "ko": "예정",
+    "ru": "Предстоящий"
+  }
+}

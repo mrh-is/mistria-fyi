@@ -1,8 +1,8 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { goto } from "$app/navigation";

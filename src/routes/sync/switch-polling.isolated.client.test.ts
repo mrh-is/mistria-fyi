@@ -79,7 +79,7 @@ describe("switching to a code without a save", () => {
     const [{ userState }, { default: SyncPage }, messages] = await Promise.all([
       import("#lib/stores/user-state.svelte.js"),
       import("./+page.svelte"),
-      import("#lib/paraglide/messages.js"),
+      import("#lib/ui-messages/messages.js"),
     ]);
     userState.loadFromStorage();
     render(SyncPage);

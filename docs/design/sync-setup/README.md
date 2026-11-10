@@ -61,4 +61,4 @@ node docs/design/sync-setup/generator/shots.mjs "$OUT" docs/design/sync-setup/sh
 
 `build.mjs` writes `$OUT/project/` & a `manifest.json` naming the boards written & removed; publish
 the changed files to the canvas, then re-render the sheets. Change a board in `boards.mjs`, never in
-the built files, & change copy in the `sync_` keys in `messages/en.json` first.
+the built files, & change copy in the `sync_` keys in `messages/features/sync.json` first.

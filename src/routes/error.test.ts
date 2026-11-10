@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import ErrorPage from "./+error.svelte";
 

@@ -2,8 +2,8 @@
   import { onMount } from "svelte";
 
   import { getName } from "#lib/data/names.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { LOCALE_CODES } from "#lib/types/locale.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 

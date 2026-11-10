@@ -5,9 +5,9 @@
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { getRenownPresentation } from "#lib/presentation/renown-presentation.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";

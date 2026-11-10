@@ -2,7 +2,7 @@
   import IconArrowLeft from "@tabler/icons-svelte-runes/icons/arrow-left";
 
   import { Icon } from "#lib/components/icon/index.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";

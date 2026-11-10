@@ -6,8 +6,8 @@ import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";

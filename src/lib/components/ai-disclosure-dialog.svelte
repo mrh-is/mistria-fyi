@@ -1,7 +1,7 @@
 <script lang="ts">
   import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>

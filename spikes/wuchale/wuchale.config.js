@@ -1,7 +1,7 @@
 import { adapter } from "@wuchale/svelte";
 import { defineConfig } from "wuchale";
 
-import settings from "../../project.inlang/settings.json" with { type: "json" };
+import { LOCALE_CODES } from "../../src/lib/types/locale.ts";
 import { splitStorage } from "./split-storage.js";
 
 export default defineConfig({
@@ -14,6 +14,6 @@ export default defineConfig({
     }),
   },
   dev: "read",
-  locales: settings.locales,
+  locales: [...LOCALE_CODES],
   localesDir: "catalogs",
 });

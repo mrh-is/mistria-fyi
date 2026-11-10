@@ -9,7 +9,7 @@ const config = {
     "src/lib/components/ui/**",
     // Generated.
     "src/lib/fonts/**",
-    "src/lib/paraglide/**",
+    "src/lib/ui-messages/**",
   ],
   overrides: [{ customSyntax: "postcss-html", files: ["**/*.svelte"] }],
   // Every disable comment must say why (`-- reason`), name its rules, and still be needed.

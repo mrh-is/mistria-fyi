@@ -5,8 +5,8 @@
   import SourceSegmentText from "#lib/components/source-segment-text.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import type { SourceSegment } from "#lib/sources/source-segments.js";
 

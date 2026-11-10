@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
-import { locales } from "#lib/paraglide/runtime.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import PrivacyPage from "./+page.svelte";
 
@@ -62,14 +62,14 @@ describe("privacy page sync sections", () => {
   });
 
   it("keeps the date & the email retention period in every locale", () => {
-    for (const locale of locales) {
+    for (const locale of LOCALE_CODES) {
       expect(m.privacy_last_updated({ date: "SLOT" }, { locale })).toContain("SLOT");
       expect(m.privacy_feedback_email_storage({}, { locale })).toContain("90");
     }
   });
 
   it("keeps the addendum link's slot in every locale", () => {
-    for (const locale of locales) {
+    for (const locale of LOCALE_CODES) {
       expect(m.privacy_sync_turnstile_body({ addendum: "SLOT" }, { locale })).toContain("SLOT");
     }
   });
@@ -104,7 +104,7 @@ describe("privacy page sync sections", () => {
   });
 
   it("names the feedback section as its heading reads in every locale", () => {
-    for (const locale of locales) {
+    for (const locale of LOCALE_CODES) {
       expect(m.privacy_sync_what_feedback_log({}, { locale })).toContain(
         m.privacy_feedback_heading({}, { locale }),
       );
@@ -123,7 +123,7 @@ describe("privacy page sync sections", () => {
       "zh-Hant": "請不要在留言中包含個人資訊",
     };
 
-    for (const locale of locales) {
+    for (const locale of LOCALE_CODES) {
       expect(m.privacy_feedback_public_middle_sync_log({}, { locale })).toContain(warnings[locale]);
     }
   });

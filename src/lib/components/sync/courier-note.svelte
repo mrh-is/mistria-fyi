@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { guessPlatform } from "#lib/sync/save-folders.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
   import SaveDrop from "./save-drop.svelte";

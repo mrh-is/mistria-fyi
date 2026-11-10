@@ -5,7 +5,7 @@
   import IconDeviceMobile from "@tabler/icons-svelte-runes/icons/device-mobile";
   import IconPencil from "@tabler/icons-svelte-runes/icons/pencil";
 
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   let {
     mac,

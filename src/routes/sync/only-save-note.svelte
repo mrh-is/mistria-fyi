@@ -1,7 +1,7 @@
 <script lang="ts">
   import IconInfoCircle from "@tabler/icons-svelte-runes/icons/info-circle";
 
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   let { computer }: { computer: boolean } = $props();
 </script>

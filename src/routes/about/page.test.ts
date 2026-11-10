@@ -4,8 +4,8 @@ import toRuntime from "wuchale/runtime";
 import { trackerData } from "#lib/data/index.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { loadAboutCatalog } from "#lib/i18n/about-ui.js";
-import * as m from "#lib/paraglide/messages.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import AboutPage from "./+page.svelte";
 import { aboutMetadata } from "./about-metadata.js";

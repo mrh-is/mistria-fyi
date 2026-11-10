@@ -1,14 +1,15 @@
 # Wuchale localization spike
 
-**Recommendation: expand by feature and measure with both systems present.** The isolated fixture
-shipped about 21% less compressed JavaScript. Moving About's body, footer, and metadata reduced the
-real Spanish route's initial JavaScript by 2,934 gzip bytes. A full migration still needs evidence
-for shared chrome, dynamic script messages, and the URL and offline fallback paths.
+The isolated fixture shipped about 21% less compressed JavaScript. Moving About's body, footer, and
+metadata reduced the real Spanish route's initial JavaScript by 2,934 gzip bytes. Those are
+historical measurements from before the app-wide migration. The app now uses Wuchale for the
+source-extracted About catalog and for the keyed UI catalogs shared by the rest of the app.
 
 ## Run from the workspace root
 
 Use the regular worktree setup first. The fixture has a separate SvelteKit app, Vite config and
-Cloudflare Pages output. Its build reads the real Paraglide messages and game data for comparison.
+Cloudflare Pages output. Its keyed build reads the app's keyed messages and game data for
+comparison.
 
 ```sh
 pnpm exec wuchale check --full --config spikes/wuchale/wuchale.config.js
@@ -30,8 +31,10 @@ pnpm exec wrangler --cwd spikes/wuchale pages dev --port 4381 --ip 127.0.0.1
 ```
 
 Run the probe in a second terminal. An optional directory argument saves desktop and mobile
-screenshots. Stop the local server, repeat the build with `build paraglide`, and run the probe
-without `--wuchale` against the rebuilt fixture. Both builds use the same output directory.
+screenshots. Stop the local server, repeat the build with `build keyed`, and run the probe without
+`--wuchale` against the rebuilt fixture. Both builds use the same output directory. The keyed build
+uses the current compiler. To reproduce the Paraglide baseline below, use the earlier fixture at
+commit `100b0d23` and its `build paraglide` mode.
 
 ```sh
 pnpm exec node spikes/wuchale/browser-probe.js http://127.0.0.1:4381 --wuchale
@@ -142,11 +145,11 @@ context, visiting Spanish Home cached the Spanish and English About catalogs und
 bilingual-search policy. The other six stayed out of the cache. About then hydrated on its first
 visit with the network disabled.
 
-The expanded pilot moves About's linked sentences, footer controls, page heading, and metadata.
+The expanded pilot moved About's linked sentences, footer controls, page heading, and metadata.
 Svelte's inline tags let the catalog place links and icons in the translated sentence. A file-scoped
 script adapter uses the runtime explicitly passed by the page load. Both adapters share the About
-catalog, and the page header uses the same title as metadata. The rest of the app, including shared
-components on About, continues to use Paraglide.
+catalog, and the page header uses the same title as metadata. At this stage, shared components on
+About and the rest of the app still used Paraglide.
 
 The expanded pilot measured **362,643 gzip bytes across 57 JavaScript files** against the same
 365,577-byte Paraglide baseline. Chromium verified Spanish prerendered metadata, Traditional Chinese
@@ -159,11 +162,11 @@ pnpm exec wrangler pages dev --port 4395 --ip 127.0.0.1
 pnpm exec node spikes/wuchale/app-probe.js http://127.0.0.1:4395 --wuchale
 ```
 
-## Adoption and rollback
+## App-wide migration
 
-A gradual migration would keep app UI and game ownership separate, pin the compiler and adapter
-versions, preserve message context and plural rules in the conversion, and retain the existing
-checks for unconverted routes. The About pilot can be reverted independently of the fixture.
+The keyed compiler preserves existing call signatures, locale values, and plural selection. The app
+owns locale URLs and request context. [Localization](../../docs/localization.md) describes the
+current catalogs and the checks for translators and contributors.
 
 Upstream references: [Svelte adapter](https://wuchale.dev/adapters/svelte/),
 [catalog loading](https://wuchale.dev/guides/loading/),

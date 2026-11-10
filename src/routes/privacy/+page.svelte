@@ -1,6 +1,6 @@
 <script lang="ts">
   import PageHeader from "#lib/components/page-header.svelte";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
   import { browser } from "$app/env";
   import { page } from "$app/state";

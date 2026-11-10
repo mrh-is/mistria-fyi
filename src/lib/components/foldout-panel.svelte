@@ -2,7 +2,7 @@
   import IconX from "@tabler/icons-svelte-runes/icons/x";
 
   import { trapFocus } from "#lib/attachments/trap-focus.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import type { Snippet } from "svelte";
 

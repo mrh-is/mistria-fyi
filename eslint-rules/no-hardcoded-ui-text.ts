@@ -1,4 +1,4 @@
-// Flags literal English text in Svelte templates that should go through a Paraglide message
+// Flags literal English text in Svelte templates that should go through a localized message
 // (`m.someKey()`) instead. Catches UI chrome text only — see docs/localization.md for the
 // game-data localization path, which this rule cannot see (it's a plain property access like
 // `entity.name`, indistinguishable syntactically from any other field).
@@ -161,12 +161,12 @@ const rule: Rule.RuleModule = {
   meta: {
     type: "problem",
     docs: {
-      description: "disallow hardcoded UI text in Svelte templates; use a Paraglide message",
+      description: "disallow hardcoded UI text in Svelte templates; use a localized message",
     },
     messages: {
       hardcodedAttribute:
-        'Hardcoded UI text {{text}} in "{{attribute}}" — use a Paraglide message (m.someKey()) instead.',
-      hardcodedText: "Hardcoded UI text {{text}} — use a Paraglide message (m.someKey()) instead.",
+        'Hardcoded UI text {{text}} in "{{attribute}}" — use a localized message (m.someKey()) instead.',
+      hardcodedText: "Hardcoded UI text {{text}} — use a localized message (m.someKey()) instead.",
     },
     schema: [],
   },

@@ -1,0 +1,62 @@
+{
+  "animals_page_description": {
+    "en": "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
+    "ja": "Fields of Mistriaの農場で動物の品種、カラー、コスメを記録します。",
+    "zh-Hans": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
+    "zh-Hant": "追蹤《Fields of Mistria》農場中動物的品種、顏色與裝飾。",
+    "es": "Sigue las razas, colores y cosméticos de animales en tu granja de Fields of Mistria.",
+    "fr": "Suivez les races, couleurs et cosmétiques des animaux de votre ferme dans Fields of Mistria.",
+    "ko": "Fields of Mistria 농장의 동물 품종, 색상, 코스메틱을 기록하세요.",
+    "ru": "Отслеживайте породы, окрасы и косметику животных на вашей ферме в Fields of Mistria."
+  },
+  "animals_mount_appearances": {
+    "en": "Appearances",
+    "ja": "外見",
+    "zh-Hans": "外观",
+    "zh-Hant": "外觀",
+    "es": "Apariencias",
+    "fr": "Apparences",
+    "ko": "외형",
+    "ru": "Облики"
+  },
+  "animals_mount_perks": {
+    "en": "Perks",
+    "ja": "スキルボーナス",
+    "zh-Hans": "技能特长",
+    "zh-Hant": "技能特長",
+    "es": "Dones de habilidad",
+    "fr": "Bonus de compétences",
+    "ko": "스킬 특성",
+    "ru": "Навыки"
+  },
+  "animals_cosmetics_section_name": {
+    "en": "Cosmetics",
+    "ja": "コスメ",
+    "zh-Hans": "装饰",
+    "zh-Hant": "裝飾",
+    "es": "Cosméticos",
+    "fr": "Cosmétiques",
+    "ko": "코스메틱",
+    "ru": "Косметика"
+  },
+  "animals_pet_cosmetics_section_name": {
+    "en": "Pet cosmetics",
+    "ja": "ペットのコスメ",
+    "zh-Hans": "宠物装饰",
+    "zh-Hant": "寵物裝飾",
+    "es": "Cosméticos de mascota",
+    "fr": "Cosmétiques d'animal",
+    "ko": "펫 코스메틱",
+    "ru": "Косметика питомца"
+  },
+  "animals_pet_skins_section_name": {
+    "en": "Pet skins",
+    "ja": "ペットのスキン",
+    "zh-Hans": "宠物皮肤",
+    "zh-Hant": "寵物外觀",
+    "es": "Aspectos de mascota",
+    "fr": "Apparences d'animal",
+    "ko": "펫 스킨",
+    "ru": "Скины питомца"
+  }
+}

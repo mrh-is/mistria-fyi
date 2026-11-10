@@ -4,10 +4,10 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import AlmanacContent from "#lib/components/almanac-content.svelte";
 import FilterPanel from "#lib/components/filter-panel.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type * as DataModule from "#lib/data/index.js";
 import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";

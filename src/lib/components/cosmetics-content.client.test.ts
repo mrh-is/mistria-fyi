@@ -2,8 +2,8 @@ import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 describe("CosmeticsContent", () => {
   // Its section progress is a new object on every render, which once made sections re-report their

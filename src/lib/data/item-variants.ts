@@ -1,4 +1,4 @@
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { AlmanacEntry, ItemVariant } from "#lib/types/tracker-data.js";
@@ -6,7 +6,7 @@ import type { AlmanacEntry, ItemVariant } from "#lib/types/tracker-data.js";
 type VariantMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
 
 /**
- * The game names no colorway, so each variant is a Paraglide message, taken from the game’s own
+ * The game names no colorway, so each variant is a keyed UI message, taken from the game’s own
  * localized descriptions where they name it. Provenance per locale is in
  * `pipeline/src/overrides/item-variant-terms.ts`.
  */

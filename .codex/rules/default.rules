@@ -19,7 +19,7 @@ prefix_rule(
             "lint",
             "lint:fix",
             "lint:shell",
-            "paraglide:compile",
+            "messages:compile",
             "pipeline",
             "pipeline:assets",
             "pipeline:atlas",

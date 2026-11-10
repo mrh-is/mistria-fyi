@@ -2,7 +2,7 @@ import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { PersistenceFailureKind } from "#lib/stores/user-state.svelte.js";
 

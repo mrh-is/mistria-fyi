@@ -4,8 +4,8 @@
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { progressShelf, SHELVES } from "#lib/engine/shelves.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 

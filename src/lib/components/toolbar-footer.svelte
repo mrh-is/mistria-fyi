@@ -22,12 +22,12 @@
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
-  import { deLocalizeHref } from "#lib/paraglide/runtime.js";
+  import { stripLocale } from "#lib/i18n/locale-path.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -42,7 +42,7 @@
 
   const feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
-  let pathname = $derived(deLocalizeHref(page.url.pathname));
+  let pathname = $derived(stripLocale(page.url.pathname));
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
   let toolbarAccent = $derived(metadata.accent);
 

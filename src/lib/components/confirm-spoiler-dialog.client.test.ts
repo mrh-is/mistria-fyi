@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { GuardSubject } from "#lib/controllers/spoiler-guard.svelte.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";

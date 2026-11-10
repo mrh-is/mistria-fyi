@@ -3,10 +3,10 @@
 
   import SaveDrop from "#lib/components/sync/save-drop.svelte";
   import SaveFolderPath from "#lib/components/sync/save-folder-path.svelte";
-  import * as m from "#lib/paraglide/messages.js";
   import { readSaveFile } from "#lib/sync/read-save.js";
   import { AUTOSAVE_EXAMPLE } from "#lib/sync/save-folders.js";
   import { fileOf } from "#lib/sync/save-source.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
   import type { ReadSave } from "#lib/sync/read-save.js";

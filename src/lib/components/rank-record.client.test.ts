@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import RankRecordHarness from "#lib/components/rank-record.test-harness.svelte";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 describe("RankRecord", () => {
   it.each([

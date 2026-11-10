@@ -2,10 +2,10 @@
   import { onMount, untrack } from "svelte";
   import { toast } from "svelte-sonner";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import SyncQuestionDialog from "./sync-question-dialog.svelte";
 

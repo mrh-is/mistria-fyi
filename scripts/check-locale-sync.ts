@@ -1,9 +1,11 @@
 import "#scripts/lib/require-pinned-node";
 
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { FEATURE_CATALOGS, readUiMessageSources } from "#scripts/lib/ui-message-sources";
 
 /**
  * Fails when an English message changes in a PR but a locale’s value for the same key does not
@@ -167,6 +169,38 @@ function readHead(root: string, locale: string): Map<string, string> {
   return flattenMessages(JSON.parse(text));
 }
 
+function readFeatureBase(root: string, ref: string): Map<string, Map<string, string>> {
+  const files = git(root, [
+    "ls-tree",
+    "-r",
+    "--name-only",
+    ref,
+    "--",
+    path.posix.join(MESSAGES_DIRECTORY, FEATURE_CATALOGS),
+  ])
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+  const locales = new Map<string, Map<string, string>>();
+  for (const file of files) {
+    const entries = JSON.parse(git(root, ["show", `${ref}:${file}`])) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    for (const [key, translations] of Object.entries(entries)) {
+      for (const [locale, value] of Object.entries(translations)) {
+        let messages = locales.get(locale);
+        if (!messages) {
+          messages = new Map();
+          locales.set(locale, messages);
+        }
+        messages.set(key, JSON.stringify(value));
+      }
+    }
+  }
+  return locales;
+}
+
 export interface LocaleSyncResult {
   allowlistProblems: string[];
   stale: StaleKey[];
@@ -187,12 +221,22 @@ export function checkLocaleSync(
         "(`git fetch origin main`) or pass another ref with --base <ref>.",
     );
   }
-  const locales = readdirSync(path.join(root, MESSAGES_DIRECTORY))
-    .filter((file) => file.endsWith(".json"))
-    .map((file) => path.basename(file, ".json"));
+  const directory = path.join(root, MESSAGES_DIRECTORY);
+  const featureHead = existsSync(path.join(directory, FEATURE_CATALOGS))
+    ? readUiMessageSources(directory)
+    : undefined;
+  const featureBase = readFeatureBase(root, mergeBase);
+  const locales = featureHead
+    ? Object.keys(featureHead)
+    : readdirSync(directory)
+        .filter((file) => file.endsWith(".json"))
+        .map((file) => path.basename(file, ".json"));
   const versions = (locale: string): LocaleVersions => ({
-    base: readBase(root, mergeBase, locale),
-    head: readHead(root, locale),
+    base:
+      featureBase.size > 0
+        ? (featureBase.get(locale) ?? new Map())
+        : readBase(root, mergeBase, locale),
+    head: featureHead ? flattenMessages(featureHead[locale]) : readHead(root, locale),
   });
   const english = versions(BASE_LOCALE);
   const others = Object.fromEntries(

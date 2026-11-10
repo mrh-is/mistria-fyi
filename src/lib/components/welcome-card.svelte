@@ -4,8 +4,8 @@
   import { onMount } from "svelte";
 
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { currentDevice } from "#lib/sync/device.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   let syncComputer = $state(true);

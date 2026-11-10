@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import MountAppearancesSection from "#lib/components/mount-appearances-section.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { PerkId } from "#lib/types/tracker-data.js";

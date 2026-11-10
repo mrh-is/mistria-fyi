@@ -1,0 +1,482 @@
+{
+  "feedback_attach_sync_log": {
+    "en": "Attach my save file sync log",
+    "ja": "セーブファイルの同期ログを添付する",
+    "zh-Hans": "附加存档同步日志",
+    "zh-Hant": "附加存檔同步紀錄",
+    "es": "Adjuntar mi registro de sincronización de partidas",
+    "fr": "Joindre mon journal de synchronisation des sauvegardes",
+    "ko": "저장 파일 동기화 로그 첨부",
+    "ru": "Прикрепить журнал синхронизации сохранений"
+  },
+  "feedback_sync_log_description": {
+    "en": "Recent sync activity from this tab will be public, including your game version and any game IDs we didn’t recognize. We take out your character and farm names and your sync links, and your farm number is hashed.",
+    "ja": "このタブの最近の同期履歴が公開されます。ゲームのバージョンと、認識できなかったゲーム内IDも含まれます。キャラクター名、農場名、同期リンクは取り除かれ、農場番号はハッシュ化されます。",
+    "zh-Hans": "此标签页最近的同步活动将公开，包括游戏版本和我们无法识别的游戏 ID。角色名、农场名和同步链接会被移除；农场编号会经过哈希处理。",
+    "zh-Hant": "此分頁最近的同步活動將公開，包括遊戲版本和我們無法識別的遊戲 ID。角色名稱、農場名稱和同步連結會被移除；農場編號會經過雜湊處理。",
+    "es": "La actividad reciente de sincronización de esta pestaña será pública, incluida tu versión del juego y cualquier ID del juego que no reconozcamos. Quitamos los nombres de tu personaje y de tu granja y los enlaces de sincronización, y el número de tu granja se convierte en un hash.",
+    "fr": "L’activité récente de synchronisation de cet onglet sera publique, y compris votre version du jeu et les identifiants de jeu que nous ne reconnaissons pas. Nous retirons les noms de votre personnage et de votre ferme ainsi que les liens de synchronisation, et le numéro de votre ferme est haché.",
+    "ko": "이 탭의 최근 동기화 활동이 공개됩니다. 게임 버전과 인식하지 못한 게임 ID도 포함됩니다. 캐릭터 이름, 농장 이름, 동기화 링크는 제거되며 농장 번호는 해시 처리됩니다.",
+    "ru": "Недавние события синхронизации в этой вкладке станут общедоступными, включая версию игры и нераспознанные игровые ID. Имена персонажа и фермы и ссылки синхронизации удаляются, а номер фермы хешируется."
+  },
+  "feedback_show_sync_log": {
+    "en": "Show sync log",
+    "ja": "同期ログを表示",
+    "zh-Hans": "显示同步日志",
+    "zh-Hant": "顯示同步紀錄",
+    "es": "Mostrar registro de sincronización",
+    "fr": "Afficher le journal de synchronisation",
+    "ko": "동기화 로그 보기",
+    "ru": "Показать журнал синхронизации"
+  },
+  "feedback_hide_sync_log": {
+    "en": "Hide sync log",
+    "ja": "同期ログを隠す",
+    "zh-Hans": "隐藏同步日志",
+    "zh-Hant": "隱藏同步紀錄",
+    "es": "Ocultar registro de sincronización",
+    "fr": "Masquer le journal de synchronisation",
+    "ko": "동기화 로그 숨기기",
+    "ru": "Скрыть журнал синхронизации"
+  },
+  "feedback_close_aria": {
+    "en": "Close feedback",
+    "ja": "フィードバックを閉じる",
+    "zh-Hans": "关闭反馈",
+    "zh-Hant": "關閉回饋",
+    "es": "Cerrar comentarios",
+    "fr": "Fermer le retour",
+    "ko": "피드백 닫기",
+    "ru": "Закрыть форму обратной связи"
+  },
+  "feedback_message_label": {
+    "en": "Message",
+    "ja": "メッセージ",
+    "zh-Hans": "留言",
+    "zh-Hant": "留言",
+    "es": "Mensaje",
+    "fr": "Message",
+    "ko": "메시지",
+    "ru": "Сообщение"
+  },
+  "feedback_required_note": {
+    "en": "required",
+    "ja": "必須",
+    "zh-Hans": "必填",
+    "zh-Hant": "必填",
+    "es": "obligatorio",
+    "fr": "obligatoire",
+    "ko": "필수",
+    "ru": "обязательно"
+  },
+  "feedback_message_placeholder": {
+    "en": "Comments, questions, suggestions, praise?",
+    "ja": "コメント、質問、提案、感想など",
+    "zh-Hans": "评论、问题、建议或夸奖？",
+    "zh-Hant": "評論、問題、建議或誇獎？",
+    "es": "¿Comentarios, preguntas, sugerencias, elogios?",
+    "fr": "Commentaires, questions, suggestions, compliments ?",
+    "ko": "의견, 질문, 제안, 칭찬 등을 남겨주세요",
+    "ru": "Комментарии, вопросы, предложения, похвала?"
+  },
+  "feedback_message_required": {
+    "en": "What did you wanna say?",
+    "ja": "何を伝えたかったですか？",
+    "zh-Hans": "你想说点什么？",
+    "zh-Hant": "你想說些什麼？",
+    "es": "¿Qué querías decir?",
+    "fr": "Vous vouliez dire quoi ?",
+    "ko": "무슨 말을 하고 싶으셨어요?",
+    "ru": "Что вы хотели сказать?"
+  },
+  "feedback_privacy_notice": {
+    "en": "Your message becomes a public GitHub issue. Please don’t include personal data.",
+    "ja": "メッセージはGitHubの公開Issueとして投稿されます。個人情報は含めないでください。",
+    "zh-Hans": "你的留言将作为公开议题发布到 GitHub。请不要包含个人信息。",
+    "zh-Hant": "你的留言將作為公開議題發布到 GitHub。請不要包含個人資訊。",
+    "es": "Tu mensaje se publicará como una incidencia pública en GitHub. Por favor, no incluyas datos personales.",
+    "fr": "Votre message sera publié dans un ticket public sur GitHub. Merci de ne pas inclure de données personnelles.",
+    "ko": "메시지가 GitHub의 공개 이슈로 게시됩니다. 개인정보를 포함하지 말아 주세요.",
+    "ru": "Ваше сообщение станет общедоступной задачей на GitHub. Пожалуйста, не указывайте личные данные."
+  },
+  "feedback_extra_data_heading": {
+    "en": "Extra data",
+    "ja": "追加データ",
+    "zh-Hans": "附加数据",
+    "zh-Hant": "附加資料",
+    "es": "Datos adicionales",
+    "fr": "Données supplémentaires",
+    "ko": "추가 데이터",
+    "ru": "Дополнительные данные"
+  },
+  "feedback_optional_note": {
+    "en": "optional",
+    "ja": "任意",
+    "zh-Hans": "可选",
+    "zh-Hant": "選填",
+    "es": "opcional",
+    "fr": "facultatif",
+    "ko": "선택",
+    "ru": "необязательно"
+  },
+  "feedback_attach_progress_label": {
+    "en": "Attach my tracker progress",
+    "ja": "自分の進捗を添付する",
+    "zh-Hans": "附上我的追踪进度",
+    "zh-Hant": "附上我的追蹤進度",
+    "es": "Adjuntar mi progreso",
+    "fr": "Joindre ma progression",
+    "ko": "내 진행 상황 첨부하기",
+    "ru": "Прикрепить мой прогресс"
+  },
+  "feedback_toggle_less": {
+    "en": "Less",
+    "ja": "閉じる",
+    "zh-Hans": "收起",
+    "zh-Hant": "收起",
+    "es": "Menos",
+    "fr": "Réduire",
+    "ko": "접기",
+    "ru": "Свернуть"
+  },
+  "feedback_toggle_read_more": {
+    "en": "Read more",
+    "ja": "もっと見る",
+    "zh-Hans": "了解更多",
+    "zh-Hant": "了解更多",
+    "es": "Leer más",
+    "fr": "En savoir plus",
+    "ko": "더 보기",
+    "ru": "Подробнее"
+  },
+  "feedback_save_data_description": {
+    "en": "Sends your tracked completion state (items checked off, skill levels, etc.). No personal information.",
+    "ja": "記録された達成状況(チェック済みの項目、スキルレベルなど)を送信します。個人情報は含まれません。",
+    "zh-Hans": "发送你已追踪的完成状态（已勾选的项目、技能等级等）。不含个人信息。",
+    "zh-Hant": "傳送你已追蹤的完成狀態（已勾選的項目、技能等級等）。不含個人資訊。",
+    "es": "Envía tu estado de finalización registrado (elementos marcados, niveles de habilidad, etc.). Sin información personal.",
+    "fr": "Envoie votre progression suivie (éléments cochés, niveaux de compétence, etc.). Aucune information personnelle.",
+    "ko": "기록된 완료 상태(체크한 항목, 스킬 레벨 등)를 전송합니다. 개인정보는 포함되지 않습니다.",
+    "ru": "Отправляет ваше отслеживаемое состояние выполнения (отмеченные предметы, уровни навыков и т. д.). Без личной информации."
+  },
+  "feedback_save_data_public_warning": {
+    "en": "This data will be publicly visible.",
+    "ja": "このデータは公開されます。",
+    "zh-Hans": "此数据将公开可见。",
+    "zh-Hant": "此資料將公開可見。",
+    "es": "Estos datos serán públicamente visibles.",
+    "fr": "Ces données seront visibles publiquement.",
+    "ko": "이 데이터는 공개적으로 표시됩니다.",
+    "ru": "Эти данные будут общедоступны."
+  },
+  "feedback_hide_progress_data": {
+    "en": "Hide my progress data",
+    "ja": "進捗データを隠す",
+    "zh-Hans": "隐藏我的进度数据",
+    "zh-Hant": "隱藏我的進度資料",
+    "es": "Ocultar mis datos de progreso",
+    "fr": "Masquer mes données de progression",
+    "ko": "진행 데이터 숨기기",
+    "ru": "Скрыть данные о прогрессе"
+  },
+  "feedback_show_progress_data": {
+    "en": "Show my progress data",
+    "ja": "進捗データを表示",
+    "zh-Hans": "显示我的进度数据",
+    "zh-Hant": "顯示我的進度資料",
+    "es": "Mostrar mis datos de progreso",
+    "fr": "Afficher mes données de progression",
+    "ko": "진행 데이터 보기",
+    "ru": "Показать данные о прогрессе"
+  },
+  "feedback_wants_reply_label": {
+    "en": "I’d like a reply",
+    "ja": "返信を希望する",
+    "zh-Hans": "我希望得到回复",
+    "zh-Hant": "我希望得到回覆",
+    "es": "Me gustaría recibir una respuesta",
+    "fr": "Je souhaite une réponse",
+    "ko": "답장을 받고 싶어요",
+    "ru": "Хочу получить ответ"
+  },
+  "feedback_email_aria": {
+    "en": "Your email",
+    "ja": "あなたのメールアドレス",
+    "zh-Hans": "你的邮箱",
+    "zh-Hant": "你的信箱",
+    "es": "Tu correo electrónico",
+    "fr": "Votre e-mail",
+    "ko": "이메일",
+    "ru": "Ваш email"
+  },
+  "feedback_email_placeholder": {
+    "en": "you@example.com",
+    "ja": "you@example.com",
+    "zh-Hans": "you@example.com",
+    "zh-Hant": "you@example.com",
+    "es": "tu@ejemplo.com",
+    "fr": "vous@exemple.com",
+    "ko": "you@example.com",
+    "ru": "you@example.com"
+  },
+  "feedback_email_missing": {
+    "en": "Oops, forgot to put in your email!",
+    "ja": "あっ、メールアドレスの入力を忘れています!",
+    "zh-Hans": "哎呀，忘记填写邮箱了！",
+    "zh-Hant": "哎呀，忘記填寫信箱了！",
+    "es": "¡Vaya, olvidaste escribir tu correo electrónico!",
+    "fr": "Oups, vous avez oublié de saisir votre e-mail !",
+    "ko": "이런, 이메일 입력을 잊으셨네요!",
+    "ru": "Ой, вы забыли указать email!"
+  },
+  "feedback_email_invalid": {
+    "en": "Hmmmmmmmmmmmmmm, this doesn’t look like an email…",
+    "ja": "うーん、これはメールアドレスに見えません…",
+    "zh-Hans": "嗯……这看起来不像是邮箱地址……",
+    "zh-Hant": "嗯……這看起來不像是信箱地址……",
+    "es": "Mmmmmmmmmmmmmm, esto no parece un correo electrónico…",
+    "fr": "Hmmmmmmmmmmmmmm, cela ne ressemble pas à un e-mail…",
+    "ko": "흐으으으음, 이메일처럼 보이지 않아요…",
+    "ru": "Хмммммммм, это не похоже на email…"
+  },
+  "feedback_email_note": {
+    "en": "Your email is stored separately and never added to the public issue.",
+    "ja": "メールアドレスは別途保存され、公開issueには追加されません。",
+    "zh-Hans": "你的邮箱会单独保存，绝不会添加到公开的 issue 中。",
+    "zh-Hant": "你的信箱會另外儲存，絕不會加入公開的 issue 中。",
+    "es": "Tu correo electrónico se guarda por separado y nunca se añade al issue público.",
+    "fr": "Votre e-mail est stocké séparément et n'est jamais ajouté à l'issue publique.",
+    "ko": "이메일은 별도로 저장되며 공개 issue에는 절대 추가되지 않습니다.",
+    "ru": "Ваш email хранится отдельно и никогда не добавляется в публичный issue."
+  },
+  "feedback_version_info": {
+    "en": "App v{appVersion} · Game data v{gameVersion}",
+    "ja": "アプリ v{appVersion}・ゲームデータ v{gameVersion}",
+    "zh-Hans": "应用 v{appVersion} · 游戏数据 v{gameVersion}",
+    "zh-Hant": "應用程式 v{appVersion} · 遊戲資料 v{gameVersion}",
+    "es": "App v{appVersion} · Datos del juego v{gameVersion}",
+    "fr": "Appli v{appVersion} · Données de jeu v{gameVersion}",
+    "ko": "앱 v{appVersion} · 게임 데이터 v{gameVersion}",
+    "ru": "Приложение v{appVersion} · Данные игры v{gameVersion}"
+  },
+  "feedback_copy_action": {
+    "en": "Copy",
+    "ja": "コピー",
+    "zh-Hans": "复制",
+    "zh-Hant": "複製",
+    "es": "Copiar",
+    "fr": "Copier",
+    "ko": "복사",
+    "ru": "Копировать"
+  },
+  "feedback_turnstile_unavailable_intro": {
+    "en": "Our bot check isn’t loading right now. You can still",
+    "ja": "いまボット確認が読み込めません。それでも、",
+    "zh-Hans": "我们的人机验证现在加载不出来。你仍然可以",
+    "zh-Hant": "我們的人機驗證現在載入不了。你仍然可以",
+    "es": "Nuestra comprobación antibots no carga ahora mismo. Aun así, puedes",
+    "fr": "Notre vérification anti-robot ne se charge pas pour l’instant. Vous pouvez quand même",
+    "ko": "지금은 봇 확인이 로드되지 않아요. 그래도",
+    "ru": "Наша проверка на ботов сейчас не загружается. Но вы всё равно можете"
+  },
+  "feedback_turnstile_github_action": {
+    "en": "submit feedback on GitHub",
+    "ja": "GitHubでフィードバックを送信する",
+    "zh-Hans": "在 GitHub 上提交反馈",
+    "zh-Hant": "在 GitHub 上提交回饋",
+    "es": "enviar comentarios en GitHub",
+    "fr": "envoyer un retour sur GitHub",
+    "ko": "GitHub에서 피드백을 보낼",
+    "ru": "отправить отзыв через GitHub"
+  },
+  "feedback_turnstile_unavailable_suffix": {
+    "en": "directly.",
+    "ja": "ことができます。",
+    "zh-Hans": "。",
+    "zh-Hant": "。",
+    "es": "directamente.",
+    "fr": "directement.",
+    "ko": "수 있습니다.",
+    "ru": "напрямую."
+  },
+  "feedback_change_selection": {
+    "en": "Change",
+    "ja": "変更",
+    "zh-Hans": "更改",
+    "zh-Hant": "變更",
+    "es": "Cambiar",
+    "fr": "Modifier",
+    "ko": "변경",
+    "ru": "Изменить"
+  },
+  "feedback_clear_selection_aria": {
+    "en": "Clear selected item",
+    "ja": "選択した項目をクリア",
+    "zh-Hans": "清除所选项目",
+    "zh-Hant": "清除所選項目",
+    "es": "Borrar elemento seleccionado",
+    "fr": "Effacer l'élément sélectionné",
+    "ko": "선택한 항목 지우기",
+    "ru": "Очистить выбранный элемент"
+  },
+  "feedback_pick_action": {
+    "en": "Point at something",
+    "ja": "対象を指定する",
+    "zh-Hans": "指向某个项目",
+    "zh-Hant": "指向某個項目",
+    "es": "Señalar un elemento",
+    "fr": "Désigner un élément",
+    "ko": "항목 지정하기",
+    "ru": "Указать на элемент"
+  },
+  "feedback_send_action": {
+    "en": "Send",
+    "ja": "送信",
+    "zh-Hans": "发送",
+    "zh-Hant": "傳送",
+    "es": "Enviar",
+    "fr": "Envoyer",
+    "ko": "보내기",
+    "ru": "Отправить"
+  },
+  "feedback_sending_action": {
+    "en": "Sending…",
+    "ja": "送信中…",
+    "zh-Hans": "发送中…",
+    "zh-Hant": "傳送中…",
+    "es": "Enviando…",
+    "fr": "Envoi…",
+    "ko": "보내는 중…",
+    "ru": "Отправка…"
+  },
+  "feedback_toast_copied": {
+    "en": "Message copied to clipboard",
+    "ja": "メッセージをクリップボードにコピーしました",
+    "zh-Hans": "留言已复制到剪贴板",
+    "zh-Hant": "留言已複製到剪貼簿",
+    "es": "Mensaje copiado al portapapeles",
+    "fr": "Message copié dans le presse-papiers",
+    "ko": "메시지를 클립보드에 복사했습니다",
+    "ru": "Сообщение скопировано в буфер обмена"
+  },
+  "feedback_toast_copy_failed": {
+    "en": "We couldn’t copy that for you. You’ll have to select the text and copy it yourself, sorry!",
+    "ja": "コピーできませんでした。すみませんが、テキストを選択して手動でコピーしてください！",
+    "zh-Hans": "没能帮你复制。只能请你自己选中文字再复制了，抱歉！",
+    "zh-Hant": "沒能幫你複製。只能請你自己選取文字再複製了，抱歉！",
+    "es": "No hemos podido copiarlo. Tendrás que seleccionar el texto y copiarlo tú, ¡lo siento!",
+    "fr": "On n’a pas pu le copier. Il faudra sélectionner le texte et le copier vous-même, désolé !",
+    "ko": "복사하지 못했어요. 죄송하지만 텍스트를 선택해서 직접 복사해 주세요!",
+    "ru": "Не получилось скопировать. Придётся выделить текст и скопировать его самостоятельно, извините!"
+  },
+  "feedback_error_generic": {
+    "en": "There was a technical error on our end while recording your feedback. Please try again.",
+    "ja": "フィードバックの記録中に、こちら側で技術的なエラーが起きました。もう一度お試しください。",
+    "zh-Hans": "记录你的反馈时，我们这边出了技术错误。请再试一次。",
+    "zh-Hant": "記錄你的意見回饋時，我們這邊發生了技術錯誤。請再試一次。",
+    "es": "Ha habido un error técnico por nuestra parte al registrar tus comentarios. Vuelve a intentarlo, por favor.",
+    "fr": "Une erreur technique de notre côté a empêché l’enregistrement de votre commentaire. Réessayez, s’il vous plaît.",
+    "ko": "피드백을 기록하는 중에 저희 쪽에서 기술적인 오류가 생겼어요. 다시 시도해 주세요.",
+    "ru": "При сохранении вашего отзыва у нас произошла техническая ошибка. Попробуйте ещё раз, пожалуйста."
+  },
+  "feedback_error_timeout": {
+    "en": "There was a technical error on our end while recording your feedback. Please try again.",
+    "ja": "フィードバックの記録中に、こちら側で技術的なエラーが起きました。もう一度お試しください。",
+    "zh-Hans": "记录你的反馈时，我们这边出了技术错误。请再试一次。",
+    "zh-Hant": "記錄你的意見回饋時，我們這邊發生了技術錯誤。請再試一次。",
+    "es": "Ha habido un error técnico por nuestra parte al registrar tus comentarios. Vuelve a intentarlo, por favor.",
+    "fr": "Une erreur technique de notre côté a empêché l’enregistrement de votre commentaire. Réessayez, s’il vous plaît.",
+    "ko": "피드백을 기록하는 중에 저희 쪽에서 기술적인 오류가 생겼어요. 다시 시도해 주세요.",
+    "ru": "При сохранении вашего отзыва у нас произошла техническая ошибка. Попробуйте ещё раз, пожалуйста."
+  },
+  "feedback_error_offline": {
+    "en": "We couldn’t send your feedback. Check that you’re online, then please try again.",
+    "ja": "フィードバックを送信できませんでした。オンラインになっているか確認して、もう一度お試しください。",
+    "zh-Hans": "没能发送你的反馈。请确认你已联网，然后再试一次。",
+    "zh-Hant": "沒能送出你的意見回饋。請確認你已連上網路，然後再試一次。",
+    "es": "No hemos podido enviar tus comentarios. Comprueba que tienes conexión y vuelve a intentarlo, por favor.",
+    "fr": "Impossible d’envoyer votre commentaire. Vérifiez que vous êtes en ligne, puis réessayez, s’il vous plaît.",
+    "ko": "피드백을 보내지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
+    "ru": "Не удалось отправить отзыв. Проверьте подключение к интернету и попробуйте ещё раз, пожалуйста."
+  },
+  "feedback_toast_email_not_saved": {
+    "en": "Your feedback went through, but we couldn’t save your email, so I won’t be able to reply. If you still want a private reply, submit feedback again, and I’ll get it sorted out.",
+    "ja": "フィードバックは届きましたが、メールアドレスを保存できなかったため返信できません。非公開の返信が必要な場合は、もう一度フィードバックを送ってください。こちらで対応します。",
+    "zh-Hans": "你的反馈已送达，但我们没能保存你的邮箱，所以我没法回复你。如果你仍需要私下回复，请再提交一次反馈，我会处理好的。",
+    "zh-Hant": "你的意見回饋已送達，但我們沒能儲存你的電子郵件，所以我沒辦法回覆你。如果你仍需要私下回覆，請再送出一次回饋，我會處理好的。",
+    "es": "Tus comentarios se han enviado, pero no hemos podido guardar tu correo, así que no podré responderte. Si aún quieres una respuesta privada, vuelve a enviar tus comentarios y lo solucionaré.",
+    "fr": "Votre commentaire est bien parti, mais on n’a pas pu enregistrer votre e-mail, donc je ne pourrai pas vous répondre. Si vous voulez toujours une réponse privée, renvoyez votre commentaire, et je m’en occuperai.",
+    "ko": "피드백은 전달됐지만 이메일을 저장하지 못해서 답장을 드릴 수 없어요. 그래도 비공개 답장이 필요하면 피드백을 다시 보내 주세요. 제가 해결해 둘게요.",
+    "ru": "Ваш отзыв отправлен, но мы не смогли сохранить ваш email, поэтому я не смогу ответить. Если ответ лично вам всё ещё нужен, отправьте отзыв ещё раз, и я со всем разберусь."
+  },
+  "feedback_toast_dry_run": {
+    "en": "Preview build: Your feedback passed every check, but nothing was filed.",
+    "ja": "プレビュー版のため、フィードバックは確認済みですが送信されていません。",
+    "zh-Hans": "预览版本：反馈已通过所有检查，但未提交任何内容。",
+    "zh-Hant": "預覽版本：回饋已通過所有檢查，但未提交任何內容。",
+    "es": "Versión de prueba: tus comentarios superaron todas las comprobaciones, pero no se envió nada.",
+    "fr": "Version de prévisualisation : votre retour a passé toutes les vérifications, mais rien n'a été envoyé.",
+    "ko": "미리보기 빌드: 피드백이 모든 확인을 통과했지만 아무것도 제출되지 않았습니다.",
+    "ru": "Предварительная сборка: отзыв прошёл все проверки, но ничего не отправлено."
+  },
+  "feedback_toast_thanks": {
+    "en": "Thanks for your feedback!",
+    "ja": "フィードバックをありがとうございます!",
+    "zh-Hans": "感谢你的反馈！",
+    "zh-Hant": "感謝你的回饋！",
+    "es": "¡Gracias por tu comentario!",
+    "fr": "Merci pour votre retour !",
+    "ko": "피드백 감사합니다!",
+    "ru": "Спасибо за ваш отзыв!"
+  },
+  "feedback_action_view_issue": {
+    "en": "View issue",
+    "ja": "issueを見る",
+    "zh-Hans": "查看 issue",
+    "zh-Hant": "查看 issue",
+    "es": "Ver issue",
+    "fr": "Voir l'issue",
+    "ko": "issue 보기",
+    "ru": "Посмотреть issue"
+  },
+  "feedback_picker_dialog_title": {
+    "en": "Pick an item to report",
+    "ja": "報告する項目を選択",
+    "zh-Hans": "选择要报告的项目",
+    "zh-Hant": "選擇要回報的項目",
+    "es": "Elige un elemento para reportar",
+    "fr": "Choisissez un élément à signaler",
+    "ko": "신고할 항목 선택",
+    "ru": "Выберите элемент, чтобы сообщить о нём"
+  },
+  "feedback_picker_cancel_outside_aria": {
+    "en": "Cancel item picker by clicking outside",
+    "ja": "外側をクリックして項目選択をキャンセル",
+    "zh-Hans": "点击外部区域取消项目选择",
+    "zh-Hant": "點選外部區域取消項目選擇",
+    "es": "Cancelar el selector de elementos haciendo clic fuera",
+    "fr": "Annuler la sélection en cliquant à l'extérieur",
+    "ko": "바깥쪽을 클릭해 항목 선택 취소",
+    "ru": "Отменить выбор элемента, нажав снаружи"
+  },
+  "feedback_picker_report_about_aria": {
+    "en": "Report feedback about {name}",
+    "ja": "{name}についてフィードバックを報告",
+    "zh-Hans": "报告关于{name}的反馈",
+    "zh-Hant": "回報關於{name}的意見",
+    "es": "Reportar sobre {name}",
+    "fr": "Signaler un problème concernant {name}",
+    "ko": "{name}에 대해 신고하기",
+    "ru": "Сообщить о {name}"
+  },
+  "feedback_picker_cancel_aria": {
+    "en": "Cancel item picker",
+    "ja": "項目選択をキャンセル",
+    "zh-Hans": "取消项目选择",
+    "zh-Hant": "取消項目選擇",
+    "es": "Cancelar el selector de elementos",
+    "fr": "Annuler la sélection de l'élément",
+    "ko": "항목 선택 취소",
+    "ru": "Отменить выбор элемента"
+  }
+}

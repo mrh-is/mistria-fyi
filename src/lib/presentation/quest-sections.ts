@@ -2,7 +2,7 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { questSources } from "#lib/engine/projections/quests.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { displayQuestName } from "#lib/utils/en-grammar.js";
 import { recordEntries } from "#lib/utils/record.js";
 

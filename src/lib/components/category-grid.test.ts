@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import CategoryGrid from "#lib/components/category-grid.svelte";
-import * as m from "#lib/paraglide/messages.js";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 const complete = { completed: 2, completedShown: 2, todo: 0, total: 2, waiting: 0 };
 
@@ -26,10 +26,8 @@ const oneActiveOneComplete = {
 };
 
 describe("CategoryGrid", () => {
-  const defaultGetLocale = getLocale;
-
   afterEach(() => {
-    overwriteGetLocale(defaultGetLocale);
+    overwriteGetLocale();
   });
 
   it("renders in-progress categories alphabetized by displayed name", () => {

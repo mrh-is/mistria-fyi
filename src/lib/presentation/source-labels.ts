@@ -2,8 +2,8 @@ import { trackerData } from "#lib/data/index.js";
 import { nameCollator } from "#lib/data/names.js";
 import { sourceFilterLabel } from "#lib/data/source-filters.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
-import * as m from "#lib/paraglide/messages.js";
 import { buildSourceSegments } from "#lib/sources/source-segments.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";

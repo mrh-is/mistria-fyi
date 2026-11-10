@@ -1,3 +1,3 @@
 export function prepareUi() {
-  // Paraglide message modules already contain every locale they support.
+  // Keyed message modules already contain every locale they support.
 }

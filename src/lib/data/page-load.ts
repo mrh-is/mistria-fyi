@@ -12,8 +12,7 @@ interface LocalizedPageLoadEvent {
 
 /**
  * Builds a page `load()` that renders in the locale the root layout resolved. Reading the locale
- * from `parent()` rather than the URL is what makes SSR correct: on the server, paraglide's
- * `getLocaleForUrl` ignores the URL and reports the base locale (see `src/routes/+layout.ts`).
+ * from `parent()` keeps server rendering, preloading, and hydration on the same route locale.
  *
  * `categories` are the name chunks the page renders beyond `ui`, which the root layout already
  * awaits on every route. They're loaded before `metadata` runs, so it can call `getName`.

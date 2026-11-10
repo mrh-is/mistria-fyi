@@ -1,0 +1,142 @@
+{
+  "settings_show_spoilers": {
+    "en": "Show spoilers?",
+    "ja": "ネタバレを表示しますか？",
+    "zh-Hans": "显示剧透吗？",
+    "zh-Hant": "顯示爆雷內容嗎？",
+    "es": "¿Mostrar spoilers?",
+    "fr": "Afficher les spoilers ?",
+    "ko": "스포일러를 표시할까요?",
+    "ru": "Показывать спойлеры?"
+  },
+  "settings_spoilers_dialog_description": {
+    "en": "This will reveal hidden content throughout the guide.",
+    "ja": "ガイド全体の非表示コンテンツが表示されるようになります。",
+    "zh-Hans": "这将显示指南中所有隐藏的内容。",
+    "zh-Hant": "這將顯示指南中所有隱藏的內容。",
+    "es": "Esto revelará el contenido oculto en toda la guía.",
+    "fr": "Cela révélera le contenu masqué dans tout le guide.",
+    "ko": "가이드 전체에서 숨겨진 콘텐츠가 표시됩니다.",
+    "ru": "Это откроет скрытый контент во всём гайде."
+  },
+  "settings_spoilers_cancel": {
+    "en": "Never mind",
+    "ja": "やめておく",
+    "zh-Hans": "算了",
+    "zh-Hant": "算了",
+    "es": "Cancelar",
+    "fr": "Annuler",
+    "ko": "취소",
+    "ru": "Не надо"
+  },
+  "settings_spoilers_confirm": {
+    "en": "Yes, show spoilers",
+    "ja": "はい、表示する",
+    "zh-Hans": "是的，显示剧透",
+    "zh-Hant": "是的，顯示爆雷內容",
+    "es": "Sí, mostrar spoilers",
+    "fr": "Oui, afficher les spoilers",
+    "ko": "네, 표시할게요",
+    "ru": "Да, показать спойлеры"
+  },
+  "settings_data_link": {
+    "en": "Data",
+    "ja": "データ",
+    "zh-Hans": "数据",
+    "zh-Hant": "資料",
+    "es": "Datos",
+    "fr": "Données",
+    "ko": "데이터",
+    "ru": "Данные"
+  },
+  "settings_about_link": {
+    "en": "About",
+    "ja": "アプリについて",
+    "zh-Hans": "关于",
+    "zh-Hant": "關於",
+    "es": "Acerca de",
+    "fr": "À propos",
+    "ko": "정보",
+    "ru": "О проекте"
+  },
+  "settings_choose_language": {
+    "en": "Choose language",
+    "ja": "言語を選択",
+    "zh-Hans": "选择语言",
+    "zh-Hant": "選擇語言",
+    "es": "Elegir idioma",
+    "fr": "Choisir la langue",
+    "ko": "언어 선택",
+    "ru": "Выбрать язык"
+  },
+  "settings_languages_group_aria": {
+    "en": "Languages",
+    "ja": "言語一覧",
+    "zh-Hans": "语言列表",
+    "zh-Hant": "語言清單",
+    "es": "Idiomas",
+    "fr": "Langues",
+    "ko": "언어 목록",
+    "ru": "Языки"
+  },
+  "settings_beta_translation_aria": {
+    "en": "Beta translation",
+    "ja": "ベータ翻訳",
+    "zh-Hans": "测试版翻译",
+    "zh-Hant": "測試版翻譯",
+    "es": "Traducción beta",
+    "fr": "Traduction bêta",
+    "ko": "베타 번역",
+    "ru": "Бета-перевод"
+  },
+  "settings_language_offline": {
+    "en": "Go online to download the {language} text, then try again.",
+    "ja": "{language}のテキストをダウンロードするには、オンラインにしてからもう一度お試しください。",
+    "zh-Hans": "请联网下载{language}文本，然后重试。",
+    "zh-Hant": "請連上網路下載{language}文字，然後再試一次。",
+    "es": "Conéctate a internet para descargar el texto en {language} y vuelve a intentarlo.",
+    "fr": "Connectez-vous à Internet pour télécharger le texte en {language}, puis réessayez.",
+    "ko": "{language} 텍스트를 다운로드하려면 온라인에 연결한 후 다시 시도하세요.",
+    "ru": "Подключитесь к интернету, чтобы загрузить текст на языке «{language}», и повторите попытку."
+  },
+  "settings_theme_label": {
+    "en": "Theme",
+    "ja": "テーマ",
+    "zh-Hans": "主题",
+    "zh-Hant": "主題",
+    "es": "Tema",
+    "fr": "Thème",
+    "ko": "테마",
+    "ru": "Тема"
+  },
+  "settings_theme_auto": {
+    "en": "Auto",
+    "ja": "自動",
+    "zh-Hans": "自动",
+    "zh-Hant": "自動",
+    "es": "Auto",
+    "fr": "Auto",
+    "ko": "자동",
+    "ru": "Авто"
+  },
+  "settings_theme_light": {
+    "en": "Light",
+    "ja": "ライト",
+    "zh-Hans": "浅色",
+    "zh-Hant": "淺色",
+    "es": "Claro",
+    "fr": "Clair",
+    "ko": "라이트",
+    "ru": "Светлая"
+  },
+  "settings_theme_dark": {
+    "en": "Dark",
+    "ja": "ダーク",
+    "zh-Hans": "深色",
+    "zh-Hant": "深色",
+    "es": "Oscuro",
+    "fr": "Sombre",
+    "ko": "다크",
+    "ru": "Тёмная"
+  }
+}

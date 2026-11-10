@@ -1,6 +1,6 @@
 <script lang="ts">
   import CategoryStripe from "#lib/components/category-stripe.svelte";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   let { total }: { total: number } = $props();
 </script>

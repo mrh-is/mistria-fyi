@@ -7,9 +7,9 @@
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import { downloadProgressBackup } from "#lib/controllers/tracking-reminders.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { progressBackup } from "#lib/progress/index.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { downloadJson } from "#lib/utils/download.js";
   import { page } from "$app/state";
 

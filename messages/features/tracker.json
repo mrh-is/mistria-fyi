@@ -1,0 +1,82 @@
+{
+  "tracker_row_spoilered_item": {
+    "en": "Spoilered item",
+    "ja": "ネタバレ項目",
+    "zh-Hans": "剧透物品",
+    "zh-Hant": "爆雷項目",
+    "es": "Elemento con spoiler",
+    "fr": "Élément spoilé",
+    "ko": "스포일러 항목",
+    "ru": "Заспойлеренный предмет"
+  },
+  "tracker_row_uncheck": {
+    "en": "Uncheck {name}",
+    "ja": "{name}のチェックを外す",
+    "zh-Hans": "取消勾选{name}",
+    "zh-Hant": "取消勾選{name}",
+    "es": "Desmarcar {name}",
+    "fr": "Décocher {name}",
+    "ko": "{name} 선택 해제",
+    "ru": "Снять отметку с «{name}»"
+  },
+  "tracker_row_check_spoilered": {
+    "en": "Check spoilered item",
+    "ja": "ネタバレ項目をチェック",
+    "zh-Hans": "勾选剧透物品",
+    "zh-Hant": "勾選爆雷項目",
+    "es": "Marcar elemento con spoiler",
+    "fr": "Cocher l'élément spoilé",
+    "ko": "스포일러 항목 선택",
+    "ru": "Отметить заспойлеренный предмет"
+  },
+  "tracker_row_check": {
+    "en": "Check {name}",
+    "ja": "{name}をチェック",
+    "zh-Hans": "勾选{name}",
+    "zh-Hant": "勾選{name}",
+    "es": "Marcar {name}",
+    "fr": "Cocher {name}",
+    "ko": "{name} 선택",
+    "ru": "Отметить «{name}»"
+  },
+  "tracker_row_variant_name": {
+    "en": "{name}, {variant}",
+    "ja": "{name}（{variant}）",
+    "zh-Hans": "{name}，{variant}",
+    "zh-Hant": "{name}，{variant}",
+    "es": "{name}, {variant}",
+    "fr": "{name}, {variant}",
+    "ko": "{name}({variant})",
+    "ru": "{name}, {variant}"
+  },
+  "tracker_row_preview_sprite": {
+    "en": "Show {name} in color",
+    "ja": "{name}をカラーで表示",
+    "zh-Hans": "以彩色显示{name}",
+    "zh-Hant": "以彩色顯示{name}",
+    "es": "Mostrar {name} a color",
+    "fr": "Afficher {name} en couleur",
+    "ko": "{name} 컬러로 보기",
+    "ru": "Показать «{name}» в цвете"
+  },
+  "tracker_row_active_badge": {
+    "en": "Active",
+    "ja": "アクティブ",
+    "zh-Hans": "使用中",
+    "zh-Hant": "使用中",
+    "es": "Activo",
+    "fr": "Actif",
+    "ko": "활성",
+    "ru": "Активно"
+  },
+  "tracker_row_sources_label": {
+    "en": "{name} sources",
+    "ja": "{name}の入手先",
+    "zh-Hans": "{name}的获取来源",
+    "zh-Hant": "{name}的取得來源",
+    "es": "Fuentes de {name}",
+    "fr": "Sources de {name}",
+    "ko": "{name} 획득처",
+    "ru": "Источники «{name}»"
+  }
+}

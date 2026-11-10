@@ -6,8 +6,8 @@
 
   import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { parseFollowLink } from "#lib/sync/follow.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { messageParts } from "#lib/utils/message-parts.js";
 
   import QrScanner from "./qr-scanner.svelte";

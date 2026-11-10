@@ -4,11 +4,11 @@
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import { countShelfRows, filteredCounts } from "#lib/engine/shelves.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries, recordKeys } from "#lib/utils/record.js";
 

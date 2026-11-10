@@ -3,8 +3,8 @@
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { getRankState } from "#lib/presentation/renown-presentation.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { TownRank } from "#lib/types/tracker-data.js";

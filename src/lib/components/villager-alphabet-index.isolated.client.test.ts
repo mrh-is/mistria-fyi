@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import VillagerAlphabetIndexHarness from "#lib/components/villager-alphabet-index.test-harness.svelte";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 const reducedMotion = vi.hoisted(() => ({ current: false }));
 vi.mock("svelte/motion", () => ({ prefersReducedMotion: reducedMotion }));

@@ -1,0 +1,32 @@
+{
+  "common_completed_heading": {
+    "en": "Completed",
+    "ja": "完了済み",
+    "zh-Hans": "已完成",
+    "zh-Hant": "已完成",
+    "es": "Completado",
+    "fr": "Terminé",
+    "ko": "완료",
+    "ru": "Выполнено"
+  },
+  "common_go_back": {
+    "en": "Go back",
+    "ja": "戻る",
+    "zh-Hans": "返回",
+    "zh-Hant": "返回",
+    "es": "Volver",
+    "fr": "Retour",
+    "ko": "돌아가기",
+    "ru": "Назад"
+  },
+  "common_close": {
+    "en": "Close",
+    "ja": "閉じる",
+    "zh-Hans": "关闭",
+    "zh-Hant": "關閉",
+    "es": "Cerrar",
+    "fr": "Fermer",
+    "ko": "닫기",
+    "ru": "Закрыть"
+  }
+}

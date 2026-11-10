@@ -1,6 +1,6 @@
 import { getName, nameCollator } from "#lib/data/names.js";
 import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";

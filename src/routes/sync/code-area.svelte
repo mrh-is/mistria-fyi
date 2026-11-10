@@ -7,11 +7,11 @@
 
   import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { buildFollowLink } from "#lib/sync/follow.js";
   import { shareCode, shareFailureCopy } from "#lib/sync/sharing.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import { generateFollowQr } from "./qr.js";
 

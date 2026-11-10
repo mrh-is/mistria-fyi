@@ -17,5 +17,5 @@ it("keeps generated modules out of the dev config's restart dependencies", async
   const dependencies = JSON.parse(stdout.trim()) as string[];
   expect(dependencies.some((file) => file.endsWith("/vite.config.ts"))).toBe(true);
   expect(dependencies.some((file) => file.endsWith("/i18n/bare-path-stub.ts"))).toBe(true);
-  expect(dependencies.filter((file) => /\/(?:paraglide|\.svelte-kit)\//u.test(file))).toEqual([]);
+  expect(dependencies.filter((file) => /\/(?:ui-messages|\.svelte-kit)\//u.test(file))).toEqual([]);
 });

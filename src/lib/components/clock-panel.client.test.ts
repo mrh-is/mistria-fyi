@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/sve
 import { describe, expect, it } from "vitest";
 
 import ClockPanel from "#lib/components/clock-panel.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 function weatherStrip() {
   return screen.getByRole("radiogroup", { name: m.visibility_weather_label() });

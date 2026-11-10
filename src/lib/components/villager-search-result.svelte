@@ -4,9 +4,9 @@
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { VillagerId } from "#lib/types/tracker-data.js";

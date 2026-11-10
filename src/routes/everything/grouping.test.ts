@@ -2,10 +2,10 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import AllPage from "./+page.svelte";
 

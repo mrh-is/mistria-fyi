@@ -2,8 +2,8 @@
   import IconPalette from "@tabler/icons-svelte-runes/icons/palette";
 
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
-  import * as m from "#lib/paraglide/messages.js";
   import { theme } from "#lib/stores/theme.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import type { Theme } from "#lib/stores/theme.svelte.js";
 

@@ -4,19 +4,15 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import { localePreference } from "./locale-preference.svelte.js";
 
-const { ensureLocaleCachedOffline, goto, setLocale } = vi.hoisted(() => ({
+const { ensureLocaleCachedOffline, goto, rememberLocale } = vi.hoisted(() => ({
   ensureLocaleCachedOffline: vi.fn<(locale: string) => Promise<boolean | undefined>>(),
   goto: vi.fn(),
-  setLocale: vi.fn(),
+  rememberLocale: vi.fn(),
 }));
 
 vi.mock("$app/navigation", () => ({ goto }));
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
-vi.mock("#lib/paraglide/runtime.js", () => ({
-  deLocalizeHref: (pathname: string) => pathname.replace(/^\/[^/]+/, ""),
-  localizeHref: (pathname: string, { locale }: { locale: string }) => `/${locale}${pathname}`,
-  setLocale,
-}));
+vi.mock("#lib/i18n/locale-runtime.js", () => ({ rememberLocale }));
 vi.mock("#lib/pwa/offline-locales.js", () => ({ ensureLocaleCachedOffline }));
 
 describe("localePreference", () => {
@@ -25,14 +21,14 @@ describe("localePreference", () => {
     pageStub.navigate("/ru/almanac");
     goto.mockReset();
     ensureLocaleCachedOffline.mockReset().mockResolvedValue(true);
-    setLocale.mockReset();
+    rememberLocale.mockReset();
   });
 
-  it("persists the locale without Paraglide's reload, then client-navigates to the same page", async () => {
+  it("persists the locale and client-navigates to the same page", async () => {
     expect(await localePreference.select("ja")).toBe(true);
 
     expect(ensureLocaleCachedOffline).toHaveBeenCalledWith("ja");
-    expect(setLocale).toHaveBeenCalledWith("ja", { reload: false });
+    expect(rememberLocale).toHaveBeenCalledWith("ja");
     expect(goto).toHaveBeenCalledWith("/ja/almanac");
   });
 
@@ -41,7 +37,7 @@ describe("localePreference", () => {
 
     expect(await localePreference.select("zh-Hans")).toBe(false);
 
-    expect(setLocale).not.toHaveBeenCalled();
+    expect(rememberLocale).not.toHaveBeenCalled();
     expect(goto).not.toHaveBeenCalled();
   });
 

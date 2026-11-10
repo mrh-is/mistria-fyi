@@ -1,0 +1,72 @@
+{
+  "persistence_warning": {
+    "en": "Your browser won’t let the field guide store anything. Check your settings to make sure storage isn’t full or turned off. For now, make a backup so you don’t lose your changes.",
+    "ja": "ブラウザがフィールドガイドに保存を許可していません。設定で、ストレージがいっぱいになっていないか、オフになっていないか確認してください。ひとまず、変更を失わないようにバックアップを取っておきましょう。",
+    "zh-Hans": "你的浏览器不允许田野指南存储任何内容。请在设置中确认存储空间没有满，也没有被关闭。在此之前，先做个备份，以免丢失更改。",
+    "zh-Hant": "你的瀏覽器不允許田野指南儲存任何內容。請在設定中確認儲存空間沒有滿，也沒有被關閉。在那之前，先做個備份，以免遺失變更。",
+    "es": "Tu navegador no deja que la guía de campo guarde nada. Revisa los ajustes para asegurarte de que el almacenamiento no esté lleno ni desactivado. Mientras tanto, haz una copia de seguridad para no perder tus cambios.",
+    "fr": "Votre navigateur ne laisse le guide de terrain rien stocker. Vérifiez dans vos réglages que le stockage n’est ni plein ni désactivé. En attendant, faites une sauvegarde pour ne pas perdre vos modifications.",
+    "ko": "브라우저가 필드 가이드의 저장을 허용하지 않아요. 설정에서 저장 공간이 가득 찼거나 꺼져 있지 않은지 확인해 주세요. 그동안 변경 사항을 잃지 않도록 백업해 두세요.",
+    "ru": "Браузер не даёт справочнику ничего сохранять. Проверьте в настройках, не заполнено ли хранилище и не отключено ли оно. А пока сделайте резервную копию, чтобы не потерять изменения."
+  },
+  "persistence_warning_title": {
+    "en": "We couldn’t save your last change",
+    "ja": "最後の変更を保存できませんでした",
+    "zh-Hans": "没能保存你的最近一次更改",
+    "zh-Hant": "沒能儲存你最近一次的變更",
+    "es": "No hemos podido guardar tu último cambio",
+    "fr": "Impossible d’enregistrer votre dernière modification",
+    "ko": "마지막 변경 사항을 저장하지 못했어요",
+    "ru": "Не удалось сохранить последнее изменение"
+  },
+  "persistence_warning_backup": {
+    "en": "Make a backup",
+    "ja": "バックアップを取る",
+    "zh-Hans": "备份一下",
+    "zh-Hant": "備份一下",
+    "es": "Hacer una copia",
+    "fr": "Faire une sauvegarde",
+    "ko": "백업하기",
+    "ru": "Сделать копию"
+  },
+  "persistence_warning_load_title": {
+    "en": "We can’t reach your saved progress",
+    "ja": "保存された進行状況にアクセスできません",
+    "zh-Hans": "无法访问你保存的进度",
+    "zh-Hant": "無法存取你儲存的進度",
+    "es": "No podemos acceder a tu progreso guardado",
+    "fr": "Impossible d’accéder à votre progression enregistrée",
+    "ko": "저장된 진행 상황에 접근할 수 없어요",
+    "ru": "Не удаётся открыть сохранённый прогресс"
+  },
+  "persistence_warning_load": {
+    "en": "Your browser won’t let the field guide read its storage, so your progress isn’t showing. Nothing has been erased. Check your settings to make sure storage isn’t turned off, then reload the page.",
+    "ja": "ブラウザがフィールドガイドにストレージの読み込みを許可していないため、進行状況が表示されていません。何も消えてはいません。設定でストレージがオフになっていないか確認してから、ページを再読み込みしてください。",
+    "zh-Hans": "你的浏览器不允许田野指南读取存储，所以你的进度没有显示出来。什么都没有被删除。请在设置中确认存储没有被关闭，然后重新加载页面。",
+    "zh-Hant": "你的瀏覽器不允許田野指南讀取儲存空間，所以你的進度沒有顯示出來。什麼都沒有被刪除。請在設定中確認儲存空間沒有被關閉，然後重新載入頁面。",
+    "es": "Tu navegador no deja que la guía de campo lea su almacenamiento, así que tu progreso no aparece. No se ha borrado nada. Revisa los ajustes para asegurarte de que el almacenamiento no esté desactivado y recarga la página.",
+    "fr": "Votre navigateur ne laisse pas le guide de terrain lire son stockage, donc votre progression ne s’affiche pas. Rien n’a été effacé. Vérifiez dans vos réglages que le stockage n’est pas désactivé, puis rechargez la page.",
+    "ko": "브라우저가 필드 가이드의 저장 공간 읽기를 허용하지 않아서 진행 상황이 보이지 않아요. 지워진 건 없어요. 설정에서 저장 공간이 꺼져 있지 않은지 확인한 뒤 페이지를 새로고침해 주세요.",
+    "ru": "Браузер не даёт справочнику читать своё хранилище, поэтому ваш прогресс не отображается. Ничего не стёрто. Проверьте в настройках, не отключено ли хранилище, а затем перезагрузите страницу."
+  },
+  "persistence_warning_newer_data": {
+    "en": "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
+    "ja": "進行状況は無事です！新しいバージョンのフィールドガイドで保存されたものなので、このページを再読み込みして最新版にしてください。",
+    "zh-Hans": "你的进度很安全！它是由更新版本的田野指南保存的，请重新加载此页面以获取最新版本。",
+    "zh-Hant": "你的進度很安全！它是由較新版本的田野指南儲存的，請重新載入此頁面以取得最新版本。",
+    "es": "¡Tu progreso está a salvo! Lo guardó una versión más reciente de la guía de campo, así que recarga esta página para tener la última actualización.",
+    "fr": "Votre progression est en sécurité ! Une version plus récente du guide de terrain l’a enregistrée, alors rechargez cette page pour obtenir la dernière mise à jour.",
+    "ko": "진행 상황은 안전해요! 더 새로운 버전의 필드 가이드가 저장한 것이니, 이 페이지를 새로고침해서 최신 업데이트를 받아 주세요.",
+    "ru": "Ваш прогресс в безопасности! Его сохранила более новая версия справочника, так что перезагрузите эту страницу, чтобы получить последнее обновление."
+  },
+  "persistence_warning_unreadable": {
+    "en": "We can’t read your saved progress, so we’re not saving changes for now. This isn’t anything you did. Download a copy of the unreadable data from Data so nothing gets lost.",
+    "ja": "保存された進行状況を読み込めないため、今は変更を保存していません。あなたのせいではありません。何も失わないように、「データ」から読み込めないデータのコピーをダウンロードしてください。",
+    "zh-Hans": "我们读不了你保存的进度，所以暂时不会保存更改。这不是你的问题。请在“数据”中下载一份无法读取的数据副本，以免丢失任何内容。",
+    "zh-Hant": "我們讀不了你儲存的進度，所以暫時不會儲存變更。這不是你的問題。請在「資料」中下載一份無法讀取的資料副本，以免遺失任何內容。",
+    "es": "No podemos leer tu progreso guardado, así que de momento no guardamos cambios. No es nada que hayas hecho. Descarga una copia de los datos ilegibles desde Datos para que no se pierda nada.",
+    "fr": "Impossible de lire votre progression enregistrée, donc on n’enregistre plus les modifications pour l’instant. Vous n’y êtes pour rien. Téléchargez une copie des données illisibles depuis Données pour ne rien perdre.",
+    "ko": "저장된 진행 상황을 읽을 수 없어서 지금은 변경 사항을 저장하지 않고 있어요. 플레이어님 잘못이 아니에요. 아무것도 잃지 않도록 데이터에서 읽을 수 없는 데이터의 사본을 내려받아 주세요.",
+    "ru": "Мы не можем прочитать сохранённый прогресс, поэтому пока не сохраняем изменения. Вы тут ни при чём. Скачайте копию нечитаемых данных в разделе «Данные», чтобы ничего не потерять."
+  }
+}

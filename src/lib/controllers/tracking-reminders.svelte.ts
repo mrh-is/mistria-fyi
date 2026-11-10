@@ -1,10 +1,10 @@
 import { toast } from "svelte-sonner";
 
 import { shouldNudgeInstall, shouldSuggestBackup } from "#lib/engine/tracking-reminders.js";
-import * as m from "#lib/paraglide/messages.js";
 import { progressBackup } from "#lib/progress/index.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { currentDevice } from "#lib/sync/device.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
 
 import type { InstallNudgeMoment } from "#lib/engine/tracking-reminders.js";

@@ -5,9 +5,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import * as celebration from "#lib/effects/celebrate.js";
 import { factKey } from "#lib/engine/provenance.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 import SourceContent from "./source-content.test-harness.svelte";

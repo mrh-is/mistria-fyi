@@ -3,9 +3,9 @@
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
   import { tick } from "svelte";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { isEditing } from "#lib/pwa/safe-reload.js";
   import { browserGivesHandles, sourceFromTransfer } from "#lib/sync/save-source.js";
+  import * as m from "#lib/ui-messages/messages.js";
 
   import type { SaveFolderPlatform } from "#lib/sync/save-folders.js";
   import type { SaveSource } from "#lib/sync/save-source.js";

@@ -8,9 +8,9 @@
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS } from "#lib/utils/row-timing.js";
   import { page } from "$app/state";
 

@@ -1,5 +1,5 @@
-import * as m from "#lib/paraglide/messages.js";
-import { getLocale } from "#lib/paraglide/runtime.js";
+import { getLocale } from "#lib/i18n/locale-runtime.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { formatNumber } from "#lib/utils/format.js";
 
 import type { SaveImportWarning } from "#lib/engine/import-save.js";

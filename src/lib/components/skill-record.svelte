@@ -7,8 +7,8 @@
   import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";

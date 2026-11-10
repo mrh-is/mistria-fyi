@@ -1,0 +1,388 @@
+{
+  "skill_level_label": {
+    "en": "{name} level",
+    "ja": "{name}レベル",
+    "zh-Hans": "{name}等级",
+    "zh-Hant": "{name}等級",
+    "es": "Nivel de {name}",
+    "fr": "Niveau de {name}",
+    "ko": "{name} 레벨",
+    "ru": "Уровень «{name}»"
+  },
+  "skill_decrease_level": {
+    "en": "Decrease {name} level",
+    "ja": "{name}レベルを下げる",
+    "zh-Hans": "降低{name}等级",
+    "zh-Hant": "降低{name}等級",
+    "es": "Reducir nivel de {name}",
+    "fr": "Diminuer le niveau de {name}",
+    "ko": "{name} 레벨 낮추기",
+    "ru": "Понизить уровень «{name}»"
+  },
+  "skill_increase_level": {
+    "en": "Increase {name} level",
+    "ja": "{name}レベルを上げる",
+    "zh-Hans": "提高{name}等级",
+    "zh-Hant": "提高{name}等級",
+    "es": "Aumentar nivel de {name}",
+    "fr": "Augmenter le niveau de {name}",
+    "ko": "{name} 레벨 올리기",
+    "ru": "Повысить уровень «{name}»"
+  },
+  "skill_edit_level_aria": {
+    "en": "Edit {name} level, currently {level} of {max}",
+    "ja": "{name}レベルを編集、現在{max}中{level}",
+    "zh-Hans": "编辑{name}等级，当前为{max}级中的{level}级",
+    "zh-Hant": "編輯{name}等級，目前為{max}級中的{level}級",
+    "es": "Editar nivel de {name}, actualmente {level} de {max}",
+    "fr": "Modifier le niveau de {name}, actuellement {level} sur {max}",
+    "ko": "{name} 레벨 편집, 현재 {max}중 {level}",
+    "ru": "Изменить уровень «{name}», сейчас {level} из {max}"
+  },
+  "skill_perks_label": {
+    "en": "Perks",
+    "ja": "スキルボーナス",
+    "zh-Hans": "技能特长",
+    "zh-Hant": "技能特長",
+    "es": "Dones de habilidad",
+    "fr": "Bonus de compétences",
+    "ko": "스킬 특성",
+    "ru": "Навыки"
+  },
+  "skill_perks_toggle_aria": {
+    "en": "{name} perks, {count} of {available} unlocked",
+    "ja": "{name}のスキルボーナス、{available}個中{count}個解放済み",
+    "zh-Hans": "{name}技能特长，已解锁{count}/{available}",
+    "zh-Hant": "{name}技能特長，已解鎖{count}/{available}",
+    "es": "Dones de habilidad de {name}: {count} de {available} desbloqueados",
+    "fr": "Bonus de compétences de {name} : {count} sur {available} débloqués",
+    "ko": "{name} 스킬 특성, {available}개 중 {count}개 해금",
+    "ru": "Навыки умения «{name}»: открыто {count} из {available}"
+  },
+  "skill_perk_tier_level": {
+    "en": "Level {level}",
+    "ja": "レベル{level}",
+    "zh-Hans": "{level}级",
+    "zh-Hant": "{level}級",
+    "es": "Nivel {level}",
+    "fr": "Niveau {level}",
+    "ko": "레벨 {level}",
+    "ru": "Уровень {level}"
+  },
+  "skill_perk_tier_aria": {
+    "en": "{name} perks, {tier}, level {level}",
+    "ja": "{name}のスキルボーナス、{tier}、レベル{level}",
+    "zh-Hans": "{name}技能特长，{tier}，{level}级",
+    "zh-Hant": "{name}技能特長，{tier}，{level}級",
+    "es": "Dones de habilidad de {name}, {tier}, nivel {level}",
+    "fr": "Bonus de compétences de {name}, {tier}, niveau {level}",
+    "ko": "{name} 스킬 특성, {tier}, 레벨 {level}",
+    "ru": "Навыки умения «{name}», {tier}, уровень {level}"
+  },
+  "skill_perks_toggle_aria_more_locked": {
+    "en": "{name} perks, {count} of {available} unlocked, {locked} more locked",
+    "ja": "{name}のスキルボーナス、{available}個中{count}個解放済み、ほか{locked}個未解放",
+    "zh-Hans": "{name}技能特长，已解锁{count}/{available}，另有{locked}个未解锁",
+    "zh-Hant": "{name}技能特長，已解鎖{count}/{available}，另有{locked}個未解鎖",
+    "es": "Dones de habilidad de {name}: {count} de {available} desbloqueados, {locked} más bloqueados",
+    "fr": "Bonus de compétences de {name} : {count} sur {available} débloqués, encore {locked} verrouillés",
+    "ko": "{name} 스킬 특성, {available}개 중 {count}개 해금, {locked}개 더 잠김",
+    "ru": "Навыки умения «{name}»: открыто {count} из {available}, ещё закрыто: {locked}"
+  },
+  "skill_perks_toggle_aria_locked": {
+    "en": "{name} perks, {locked} locked",
+    "ja": "{name}のスキルボーナス、{locked}個未解放",
+    "zh-Hans": "{name}技能特长，{locked}个未解锁",
+    "zh-Hant": "{name}技能特長，{locked}個未解鎖",
+    "es": "Dones de habilidad de {name}: {locked} bloqueados",
+    "fr": "Bonus de compétences de {name} : {locked} verrouillés",
+    "ko": "{name} 스킬 특성, {locked}개 잠김",
+    "ru": "Навыки умения «{name}», закрыто: {locked}"
+  },
+  "skill_perks_unlocked": {
+    "en": "{count} / {available} unlocked",
+    "ja": "{count}/{available} 解放済み",
+    "zh-Hans": "已解锁 {count}/{available}",
+    "zh-Hant": "已解鎖 {count}/{available}",
+    "es": "{count} / {available} desbloqueados",
+    "fr": "{count} / {available} débloqués",
+    "ko": "{count}/{available} 해금",
+    "ru": "открыто {count} / {available}"
+  },
+  "skill_perks_more_locked": {
+    "en": "{count} more locked",
+    "ja": "ほか{count}個未解放",
+    "zh-Hans": "另有{count}个未解锁",
+    "zh-Hant": "另有{count}個未解鎖",
+    "es": "{count} más bloqueados",
+    "fr": "encore {count} verrouillés",
+    "ko": "{count}개 더 잠김",
+    "ru": "ещё закрыто: {count}"
+  },
+  "skill_perks_locked": {
+    "en": "{count} locked",
+    "ja": "{count}個未解放",
+    "zh-Hans": "{count}个未解锁",
+    "zh-Hant": "{count}個未解鎖",
+    "es": "{count} bloqueados",
+    "fr": "{count} verrouillés",
+    "ko": "{count}개 잠김",
+    "ru": "закрыто: {count}"
+  },
+  "skill_perk_unlocks_almanac": {
+    "en": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "unlocks {count} almanac item",
+          "countPlural=other": "unlocks {count} almanac items"
+        }
+      }
+    ],
+    "ja": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "図鑑アイテム{count}個を解放"
+        }
+      }
+    ],
+    "zh-Hans": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "解锁{count}个图鉴物品"
+        }
+      }
+    ],
+    "zh-Hant": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "解鎖{count}個圖鑑物品"
+        }
+      }
+    ],
+    "es": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "desbloquea {count} objeto del almanaque",
+          "countPlural=many": "desbloquea {count} objetos del almanaque",
+          "countPlural=other": "desbloquea {count} objetos del almanaque"
+        }
+      }
+    ],
+    "fr": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "débloque {count} objet de l’almanach",
+          "countPlural=many": "débloque {count} objets de l’almanach",
+          "countPlural=other": "débloque {count} objets de l’almanach"
+        }
+      }
+    ],
+    "ko": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "도감 아이템 {count}개 해금"
+        }
+      }
+    ],
+    "ru": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "открывает {count} предмет альманаха",
+          "countPlural=few": "открывает {count} предмета альманаха",
+          "countPlural=many": "открывает {count} предметов альманаха",
+          "countPlural=other": "открывает {count} предмета альманаха"
+        }
+      }
+    ]
+  },
+  "skill_perk_unlocks_cosmetics": {
+    "en": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "unlocks {count} cosmetic",
+          "countPlural=other": "unlocks {count} cosmetics"
+        }
+      }
+    ],
+    "ja": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "コスメ{count}個を解放"
+        }
+      }
+    ],
+    "zh-Hans": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "解锁{count}个装饰"
+        }
+      }
+    ],
+    "zh-Hant": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "解鎖{count}個裝飾"
+        }
+      }
+    ],
+    "es": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "desbloquea {count} cosmético",
+          "countPlural=many": "desbloquea {count} cosméticos",
+          "countPlural=other": "desbloquea {count} cosméticos"
+        }
+      }
+    ],
+    "fr": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "débloque {count} cosmétique",
+          "countPlural=many": "débloque {count} cosmétiques",
+          "countPlural=other": "débloque {count} cosmétiques"
+        }
+      }
+    ],
+    "ko": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "코스메틱 {count}개 해금"
+        }
+      }
+    ],
+    "ru": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "открывает {count} предмет косметики",
+          "countPlural=few": "открывает {count} предмета косметики",
+          "countPlural=many": "открывает {count} предметов косметики",
+          "countPlural=other": "открывает {count} предмета косметики"
+        }
+      }
+    ]
+  },
+  "skill_perk_unlocks_recipes": {
+    "en": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "unlocks {count} recipe",
+          "countPlural=other": "unlocks {count} recipes"
+        }
+      }
+    ],
+    "ja": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "レシピ{count}個を解放"
+        }
+      }
+    ],
+    "zh-Hans": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "解锁{count}个食谱"
+        }
+      }
+    ],
+    "zh-Hant": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "解鎖{count}個食譜"
+        }
+      }
+    ],
+    "es": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "desbloquea {count} receta",
+          "countPlural=many": "desbloquea {count} recetas",
+          "countPlural=other": "desbloquea {count} recetas"
+        }
+      }
+    ],
+    "fr": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "débloque {count} recette",
+          "countPlural=many": "débloque {count} recettes",
+          "countPlural=other": "débloque {count} recettes"
+        }
+      }
+    ],
+    "ko": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "레시피 {count}개 해금"
+        }
+      }
+    ],
+    "ru": [
+      {
+        "declarations": ["input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "открывает {count} рецепт",
+          "countPlural=few": "открывает {count} рецепта",
+          "countPlural=many": "открывает {count} рецептов",
+          "countPlural=other": "открывает {count} рецепта"
+        }
+      }
+    ]
+  },
+  "skill_level_heading": {
+    "en": "Level",
+    "ja": "レベル",
+    "zh-Hans": "等级",
+    "zh-Hant": "等級",
+    "es": "Nivel",
+    "fr": "Niveau",
+    "ko": "레벨",
+    "ru": "Уровень"
+  }
+}

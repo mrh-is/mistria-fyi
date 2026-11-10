@@ -3,7 +3,7 @@ import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import ShelfGroups from "#lib/components/shelf-groups.svelte";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { Shelf } from "#lib/engine/shelves.js";
 

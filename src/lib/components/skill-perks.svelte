@@ -12,8 +12,8 @@
   import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { recordKeys } from "#lib/utils/record.js";
 
   import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";

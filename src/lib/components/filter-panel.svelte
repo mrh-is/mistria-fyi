@@ -10,8 +10,8 @@
   import { SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import SourceExplainerDialog from "#lib/components/source-explainer-dialog.svelte";
   import { sortSourceFiltersByLabel, sourceFilterLabel } from "#lib/data/source-filters.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";

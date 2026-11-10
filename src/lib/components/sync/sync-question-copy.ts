@@ -3,7 +3,7 @@
  * A question names a category of the tracker rather than each fact, so it stays one sentence.
  */
 import { categoryNameForKey } from "#lib/data/categories.js";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { AskReason, FactsQuestion, SyncField } from "#lib/engine/sync-apply.js";

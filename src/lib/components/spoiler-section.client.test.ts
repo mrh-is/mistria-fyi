@@ -3,7 +3,7 @@ import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import SpoilerSection from "#lib/components/spoiler-section.svelte";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 const children = createRawSnippet(() => ({
   render: () => `<p data-testid="revealed-section">Revealed section</p>`,

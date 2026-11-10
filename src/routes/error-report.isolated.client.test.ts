@@ -4,10 +4,10 @@ import { beforeEach, expect, it, vi } from "vitest";
 import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import ErrorPage from "./+error.svelte";
 

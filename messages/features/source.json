@@ -1,0 +1,1894 @@
+{
+  "source_spoilered": {
+    "en": "Hidden",
+    "ja": "非表示",
+    "zh-Hans": "已隐藏",
+    "zh-Hant": "已隱藏",
+    "es": "Oculto",
+    "fr": "Masqué",
+    "ko": "숨김",
+    "ru": "Скрыто"
+  },
+  "source_explainer_overline": {
+    "en": "Field Guide inventory",
+    "ja": "フィールドガイドの持ち物",
+    "zh-Hans": "田野指南物品栏",
+    "zh-Hant": "田野指南物品欄",
+    "es": "Inventario de la guía",
+    "fr": "Inventaire du guide",
+    "ko": "필드 가이드 소지품",
+    "ru": "Инвентарь путеводителя"
+  },
+  "source_explainer_description": {
+    "en": "The source types shown in the filter panel.",
+    "ja": "フィルターパネルに表示される入手方法の種類。",
+    "zh-Hans": "筛选面板中显示的来源类型。",
+    "zh-Hant": "篩選面板中顯示的來源類型。",
+    "es": "Los tipos de fuente que se muestran en el panel de filtros.",
+    "fr": "Les types de source affichés dans le panneau de filtres.",
+    "ko": "필터 패널에 표시되는 획득 경로 유형입니다.",
+    "ru": "Типы источников, отображаемые на панели фильтров."
+  },
+  "source_explainer_dismiss": {
+    "en": "Got it",
+    "ja": "了解",
+    "zh-Hans": "知道了",
+    "zh-Hant": "知道了",
+    "es": "Entendido",
+    "fr": "Compris",
+    "ko": "확인",
+    "ru": "Понятно"
+  },
+  "source_filter_chests": {
+    "en": "Chests",
+    "ja": "宝箱",
+    "zh-Hans": "宝箱",
+    "zh-Hant": "寶箱",
+    "es": "Cofres",
+    "fr": "Coffres",
+    "ko": "상자",
+    "ru": "Сундуки"
+  },
+  "source_filter_crafting": {
+    "en": "Crafting",
+    "ja": "クラフト",
+    "zh-Hans": "制作",
+    "zh-Hant": "製作",
+    "es": "Fabricación",
+    "fr": "Fabrication",
+    "ko": "제작",
+    "ru": "Изготовление"
+  },
+  "source_filter_dating": {
+    "en": "Dating",
+    "ja": "デート",
+    "zh-Hans": "约会",
+    "zh-Hant": "約會",
+    "es": "Citas",
+    "fr": "Rendez-vous",
+    "ko": "데이트",
+    "ru": "Свидания"
+  },
+  "source_filter_farming": {
+    "en": "Farming",
+    "ja": "農業",
+    "zh-Hans": "农耕",
+    "zh-Hant": "農耕",
+    "es": "Agricultura",
+    "fr": "Agriculture",
+    "ko": "농사",
+    "ru": "Фермерство"
+  },
+  "source_filter_festivals": {
+    "en": "Festivals",
+    "ja": "お祭り",
+    "zh-Hans": "节日",
+    "zh-Hant": "節日",
+    "es": "Festivales",
+    "fr": "Festivals",
+    "ko": "축제",
+    "ru": "Фестивали"
+  },
+  "source_filter_fishing": {
+    "en": "Fishing",
+    "ja": "釣り",
+    "zh-Hans": "钓鱼",
+    "zh-Hant": "釣魚",
+    "es": "Pesca",
+    "fr": "Pêche",
+    "ko": "낚시",
+    "ru": "Рыбалка"
+  },
+  "source_filter_gathering": {
+    "en": "Gathering",
+    "ja": "採集",
+    "zh-Hans": "采集",
+    "zh-Hant": "採集",
+    "es": "Recolección",
+    "fr": "Cueillette",
+    "ko": "채집",
+    "ru": "Сбор"
+  },
+  "source_filter_offerings": {
+    "en": "Offerings",
+    "ja": "お供え物",
+    "zh-Hans": "供品",
+    "zh-Hant": "供品",
+    "es": "Ofrendas",
+    "fr": "Offrandes",
+    "ko": "공물",
+    "ru": "Подношения"
+  },
+  "source_filter_perks": {
+    "en": "Perks",
+    "ja": "スキルボーナス",
+    "zh-Hans": "技能特长",
+    "zh-Hant": "技能特長",
+    "es": "Dones de habilidad",
+    "fr": "Bonus de compétences",
+    "ko": "스킬 특성",
+    "ru": "Навыки"
+  },
+  "source_filter_progress": {
+    "en": "Progress",
+    "ja": "進行",
+    "zh-Hans": "进度",
+    "zh-Hant": "進度",
+    "es": "Progreso",
+    "fr": "Progression",
+    "ko": "진행",
+    "ru": "Прогресс"
+  },
+  "source_filter_stores": {
+    "en": "Stores",
+    "ja": "ショップ",
+    "zh-Hans": "商店",
+    "zh-Hant": "商店",
+    "es": "Tiendas",
+    "fr": "Boutiques",
+    "ko": "상점",
+    "ru": "Магазины"
+  },
+  "source_filter_member_activities": {
+    "en": "Activities",
+    "ja": "アクティビティ",
+    "zh-Hans": "活动",
+    "zh-Hant": "活動",
+    "es": "Actividades",
+    "fr": "Activités",
+    "ko": "활동",
+    "ru": "Занятия"
+  },
+  "source_filter_member_animal_products": {
+    "en": "Animal products",
+    "ja": "畜産物",
+    "zh-Hans": "动物产品",
+    "zh-Hant": "動物產品",
+    "es": "Productos animales",
+    "fr": "Produits animaux",
+    "ko": "동물 생산품",
+    "ru": "Продукты животных"
+  },
+  "source_filter_member_artifact_digs": {
+    "en": "Artifact digs",
+    "ja": "遺物の発掘",
+    "zh-Hans": "古代文物挖掘",
+    "zh-Hant": "古代文物挖掘",
+    "es": "Excavación de curiosidades",
+    "fr": "Fouilles d’artéfacts",
+    "ko": "유물 발굴",
+    "ru": "Раскопки артефактов"
+  },
+  "source_filter_member_bait_fish": {
+    "en": "Bait fish",
+    "ja": "エサ釣り",
+    "zh-Hans": "鱼饵钓鱼",
+    "zh-Hant": "魚餌釣魚",
+    "es": "Pesca con cebo",
+    "fr": "Pêche à l’appât",
+    "ko": "미끼 낚시",
+    "ru": "Ловля на наживку"
+  },
+  "source_filter_member_breeding": {
+    "en": "Breeding",
+    "ja": "繁殖",
+    "zh-Hans": "繁殖",
+    "zh-Hant": "繁殖",
+    "es": "Cría",
+    "fr": "Élevage",
+    "ko": "번식",
+    "ru": "Разведение"
+  },
+  "source_filter_member_bug_catching": {
+    "en": "Bug catching",
+    "ja": "虫捕り",
+    "zh-Hans": "捕虫",
+    "zh-Hant": "捕蟲",
+    "es": "Caza de insectos",
+    "fr": "Chasse aux insectes",
+    "ko": "곤충 채집",
+    "ru": "Ловля насекомых"
+  },
+  "source_filter_member_chests": {
+    "en": "Chests",
+    "ja": "宝箱",
+    "zh-Hans": "宝箱",
+    "zh-Hant": "寶箱",
+    "es": "Cofres",
+    "fr": "Coffres",
+    "ko": "상자",
+    "ru": "Сундуки"
+  },
+  "source_filter_member_chicken_statue": {
+    "en": "Chicken statue",
+    "ja": "ニワトリ像",
+    "zh-Hans": "小鸡雕像",
+    "zh-Hant": "小雞雕像",
+    "es": "Estatua del pollo",
+    "fr": "Statue de poule",
+    "ko": "닭 조각상",
+    "ru": "Статуя курицы"
+  },
+  "source_filter_member_horse_statue": {
+    "en": "Horse statue",
+    "ja": "馬の像",
+    "zh-Hans": "马雕像",
+    "zh-Hant": "馬雕像",
+    "es": "Estatua del caballo",
+    "fr": "Statue de cheval",
+    "ko": "말 조각상",
+    "ru": "Статуя лошади"
+  },
+  "source_filter_member_dates": {
+    "en": "Dates",
+    "ja": "デート",
+    "zh-Hans": "约会",
+    "zh-Hant": "約會",
+    "es": "Citas",
+    "fr": "Rendez-vous",
+    "ko": "데이트",
+    "ru": "Свидания"
+  },
+  "source_filter_member_default": {
+    "en": "Default",
+    "ja": "初期",
+    "zh-Hans": "初始",
+    "zh-Hant": "初始",
+    "es": "Desde el principio",
+    "fr": "Dès le début",
+    "ko": "기본 제공",
+    "ru": "С самого начала"
+  },
+  "source_filter_member_dig_sites": {
+    "en": "Dig sites",
+    "ja": "発掘場所",
+    "zh-Hans": "挖掘点",
+    "zh-Hant": "挖掘點",
+    "es": "Excavaciones",
+    "fr": "Sites de fouille",
+    "ko": "발굴지",
+    "ru": "Места раскопок"
+  },
+  "source_filter_member_diving": {
+    "en": "Diving",
+    "ja": "ダイビング",
+    "zh-Hans": "潜水",
+    "zh-Hant": "潛水",
+    "es": "Buceo",
+    "fr": "Plongée",
+    "ko": "잠수",
+    "ru": "Ныряние"
+  },
+  "source_filter_member_donation_rewards": {
+    "en": "Donation rewards",
+    "ja": "寄贈の報酬",
+    "zh-Hans": "捐赠奖励",
+    "zh-Hant": "捐贈獎勵",
+    "es": "Recompensas por donaciones",
+    "fr": "Récompenses de dons",
+    "ko": "기증 보상",
+    "ru": "Награды за пожертвования"
+  },
+  "source_filter_member_donations": {
+    "en": "Donations",
+    "ja": "寄贈",
+    "zh-Hans": "捐赠",
+    "zh-Hant": "捐贈",
+    "es": "Donaciones",
+    "fr": "Dons",
+    "ko": "기증",
+    "ru": "Пожертвования"
+  },
+  "source_filter_member_drops": {
+    "en": "Drops",
+    "ja": "ドロップ",
+    "zh-Hans": "掉落",
+    "zh-Hant": "掉落",
+    "es": "Botín",
+    "fr": "Butin",
+    "ko": "드롭",
+    "ru": "Добыча"
+  },
+  "source_filter_member_engagement": {
+    "en": "Engagement",
+    "ja": "婚約",
+    "zh-Hans": "订婚",
+    "zh-Hant": "訂婚",
+    "es": "Compromiso",
+    "fr": "Fiançailles",
+    "ko": "약혼",
+    "ru": "Помолвка"
+  },
+  "source_filter_member_equipment": {
+    "en": "Equipment",
+    "ja": "装備品",
+    "zh-Hans": "装备",
+    "zh-Hant": "裝備",
+    "es": "Equipo",
+    "fr": "Équipement",
+    "ko": "장비",
+    "ru": "Снаряжение"
+  },
+  "source_filter_member_fish": {
+    "en": "Fish",
+    "ja": "魚",
+    "zh-Hans": "鱼",
+    "zh-Hant": "魚",
+    "es": "Peces",
+    "fr": "Poissons",
+    "ko": "물고기",
+    "ru": "Рыба"
+  },
+  "source_filter_member_fish_traps": {
+    "en": "Fish traps",
+    "ja": "お魚トラップ",
+    "zh-Hans": "捕鱼笼",
+    "zh-Hant": "捕魚籠",
+    "es": "Nasas",
+    "fr": "Nasses",
+    "ko": "물고기 덫",
+    "ru": "Верши"
+  },
+  "source_filter_member_foraging": {
+    "en": "Foraging",
+    "ja": "採集物",
+    "zh-Hans": "野生采集",
+    "zh-Hant": "採集物",
+    "es": "Recursos naturales",
+    "fr": "Objets ramassés",
+    "ko": "채집물",
+    "ru": "Собирательство"
+  },
+  "source_filter_member_letters": {
+    "en": "Letters",
+    "ja": "手紙",
+    "zh-Hans": "信件",
+    "zh-Hant": "信件",
+    "es": "Cartas",
+    "fr": "Lettres",
+    "ko": "편지",
+    "ru": "Письма"
+  },
+  "source_filter_member_lost_and_found": {
+    "en": "Lost & found",
+    "ja": "落とし物箱",
+    "zh-Hans": "失物招领",
+    "zh-Hant": "失物招領",
+    "es": "Objetos perdidos",
+    "fr": "Objets trouvés",
+    "ko": "분실물 상자",
+    "ru": "Бюро находок"
+  },
+  "source_filter_member_mine_fishing": {
+    "en": "Mine fishing",
+    "ja": "鉱坑での釣り",
+    "zh-Hans": "矿洞钓鱼",
+    "zh-Hant": "礦洞釣魚",
+    "es": "Pesca en las minas",
+    "fr": "Pêche dans les mines",
+    "ko": "광산 낚시",
+    "ru": "Рыбалка в шахтах"
+  },
+  "source_filter_member_mining": {
+    "en": "Mining",
+    "ja": "採掘",
+    "zh-Hans": "采矿",
+    "zh-Hant": "採礦",
+    "es": "Minería",
+    "fr": "Minage",
+    "ko": "채굴",
+    "ru": "Добыча руды"
+  },
+  "source_filter_member_monsters": {
+    "en": "Monsters",
+    "ja": "モンスター",
+    "zh-Hans": "怪物",
+    "zh-Hant": "怪物",
+    "es": "Monstruos",
+    "fr": "Monstres",
+    "ko": "몬스터",
+    "ru": "Монстры"
+  },
+  "source_filter_member_proposals": {
+    "en": "Proposals",
+    "ja": "プロポーズ",
+    "zh-Hans": "求婚",
+    "zh-Hant": "求婚",
+    "es": "Pedidas de mano",
+    "fr": "Demandes en mariage",
+    "ko": "청혼",
+    "ru": "Предложения руки"
+  },
+  "source_filter_member_replicator": {
+    "en": "Replicator",
+    "ja": "複製機",
+    "zh-Hans": "复制器",
+    "zh-Hant": "複製器",
+    "es": "Replicador",
+    "fr": "Réplicateur",
+    "ko": "복제기",
+    "ru": "Репликатор"
+  },
+  "source_filter_member_ritual_chamber": {
+    "en": "Ritual chamber",
+    "ja": "儀式の間",
+    "zh-Hans": "仪式室",
+    "zh-Hant": "儀式室",
+    "es": "Cámara ritual",
+    "fr": "Chambre rituelle",
+    "ko": "의식의 방",
+    "ru": "Ритуальный зал"
+  },
+  "source_filter_member_scroll_bundles": {
+    "en": "Scroll bundles",
+    "ja": "巻物セット",
+    "zh-Hans": "卷轴组合",
+    "zh-Hant": "卷軸組合",
+    "es": "Lotes de pergaminos",
+    "fr": "Lots de parchemins",
+    "ko": "두루마리 묶음",
+    "ru": "Наборы свитков"
+  },
+  "source_filter_member_secret_chests": {
+    "en": "Hidden chests",
+    "ja": "隠し宝箱",
+    "zh-Hans": "隐藏宝箱",
+    "zh-Hant": "隱藏寶箱",
+    "es": "Cofres ocultos",
+    "fr": "Coffres cachés",
+    "ko": "숨겨진 상자",
+    "ru": "Тайные сундуки"
+  },
+  "source_filter_member_shipping": {
+    "en": "Shipping",
+    "ja": "出荷",
+    "zh-Hans": "出货",
+    "zh-Hant": "出貨",
+    "es": "Envíos",
+    "fr": "Expédition",
+    "ko": "출하",
+    "ru": "Отгрузка"
+  },
+  "source_filter_member_shops": {
+    "en": "Shops",
+    "ja": "ショップ",
+    "zh-Hans": "商店",
+    "zh-Hant": "商店",
+    "es": "Tiendas",
+    "fr": "Boutiques",
+    "ko": "상점",
+    "ru": "Магазины"
+  },
+  "source_filter_member_spouse_gifts": {
+    "en": "Spouse gifts",
+    "ja": "配偶者からの贈り物",
+    "zh-Hans": "配偶礼物",
+    "zh-Hant": "配偶禮物",
+    "es": "Regalos del cónyuge",
+    "fr": "Cadeaux du conjoint",
+    "ko": "배우자 선물",
+    "ru": "Подарки супруга"
+  },
+  "source_filter_member_stations": {
+    "en": "Stations",
+    "ja": "作業台",
+    "zh-Hans": "工作台",
+    "zh-Hant": "工作台",
+    "es": "Estaciones",
+    "fr": "Stations",
+    "ko": "작업대",
+    "ru": "Станки"
+  },
+  "source_filter_member_trees": {
+    "en": "Trees",
+    "ja": "木",
+    "zh-Hans": "树木",
+    "zh-Hant": "樹木",
+    "es": "Árboles",
+    "fr": "Arbres",
+    "ko": "나무",
+    "ru": "Деревья"
+  },
+  "source_filter_member_treasure_boxes": {
+    "en": "Treasure boxes",
+    "ja": "お宝ボックス",
+    "zh-Hans": "钓鱼宝箱",
+    "zh-Hant": "釣魚寶箱",
+    "es": "Cofres del tesoro",
+    "fr": "Coffres au trésor",
+    "ko": "보물 상자",
+    "ru": "Сундуки с сокровищами"
+  },
+  "source_filter_member_unlocks": {
+    "en": "Unlocks",
+    "ja": "解放",
+    "zh-Hans": "解锁",
+    "zh-Hant": "解鎖",
+    "es": "Desbloqueos",
+    "fr": "Déblocages",
+    "ko": "해금",
+    "ru": "Открытие"
+  },
+  "source_filter_member_upgrades": {
+    "en": "Upgrades",
+    "ja": "アップグレード",
+    "zh-Hans": "升级",
+    "zh-Hant": "升級",
+    "es": "Mejoras",
+    "fr": "Améliorations",
+    "ko": "업그레이드",
+    "ru": "Улучшения"
+  },
+  "source_filter_member_wedding": {
+    "en": "Wedding",
+    "ja": "結婚式",
+    "zh-Hans": "婚礼",
+    "zh-Hant": "婚禮",
+    "es": "Boda",
+    "fr": "Mariage",
+    "ko": "결혼식",
+    "ru": "Свадьба"
+  },
+  "source_filter_member_wishing_well": {
+    "en": "Wishing well",
+    "ja": "願いの井戸",
+    "zh-Hans": "许愿井",
+    "zh-Hant": "許願井",
+    "es": "Pozo de los deseos",
+    "fr": "Puits à souhaits",
+    "ko": "소원의 우물",
+    "ru": "Колодец желаний"
+  },
+  "source_animal_product": {
+    "en": "Collect from {animal}",
+    "ja": "{animal}から採取",
+    "zh-Hans": "从{animal}处收集",
+    "zh-Hant": "從{animal}處收集",
+    "es": "Obtener de: {animal}",
+    "fr": "Récolter sur : {animal}",
+    "ko": "{animal}에게서 채집",
+    "ru": "Получить от: {animal}"
+  },
+  "source_artifact_dig": {
+    "en": "Dig up at {locations}",
+    "ja": "{locations}で掘り出す",
+    "zh-Hans": "在{locations}挖掘",
+    "zh-Hant": "在{locations}挖掘",
+    "es": "Desenterrar en {locations}",
+    "fr": "Déterrer à : {locations}",
+    "ko": "{locations}에서 발굴",
+    "ru": "Выкопать: {locations}"
+  },
+  "source_artifact_dig_any": {
+    "en": "Dig up at an artifact dig site",
+    "ja": "遺物の発掘ポイントで掘り出す",
+    "zh-Hans": "在文物挖掘点挖掘",
+    "zh-Hant": "在文物挖掘點挖掘",
+    "es": "Desenterrar en una excavación de artefactos",
+    "fr": "Déterrer dans un site de fouilles",
+    "ko": "유물 발굴지에서 발굴",
+    "ru": "Выкопать на месте раскопок"
+  },
+  "source_artifact_replicator": {
+    "en": "Replicate from {item}",
+    "ja": "{item}から複製",
+    "zh-Hans": "由{item}复制",
+    "zh-Hant": "由{item}複製",
+    "es": "Replicar a partir de {item}",
+    "fr": "Répliquer à partir de : {item}",
+    "ko": "{item}에서 복제",
+    "ru": "Воспроизвести из: {item}"
+  },
+  "source_bait_fish": {
+    "en": "Catch with bait",
+    "ja": "エサを使って釣る",
+    "zh-Hans": "用鱼饵钓取",
+    "zh-Hant": "用魚餌釣取",
+    "es": "Pescar con cebo",
+    "fr": "Pêcher avec un appât",
+    "ko": "미끼로 낚기",
+    "ru": "Поймать на наживку"
+  },
+  "source_breed": {
+    "en": "Breed",
+    "ja": "繁殖させる",
+    "zh-Hans": "繁殖",
+    "zh-Hant": "繁殖",
+    "es": "Criar",
+    "fr": "Faire se reproduire",
+    "ko": "번식",
+    "ru": "Разведение"
+  },
+  "source_bug_catch": {
+    "en": "Catch at {locations}",
+    "ja": "{locations}で捕まえる",
+    "zh-Hans": "在{locations}捕捉",
+    "zh-Hant": "在{locations}捕捉",
+    "es": "Atrapar en {locations}",
+    "fr": "Attraper à : {locations}",
+    "ko": "{locations}에서 잡기",
+    "ru": "Поймать: {locations}"
+  },
+  "source_bug_catch_any": {
+    "en": "Catch",
+    "ja": "捕まえる",
+    "zh-Hans": "捕捉",
+    "zh-Hant": "捕捉",
+    "es": "Atrapar",
+    "fr": "Attraper",
+    "ko": "잡기",
+    "ru": "Поймать"
+  },
+  "source_chicken_statue_cost": {
+    "en": "Obtain from the Chicken Statue ({cost} beads)",
+    "ja": "ニワトリ像から入手（ビーズ{cost}個）",
+    "zh-Hans": "从小鸡雕像处获得（{cost}颗珠子）",
+    "zh-Hant": "從小雞雕像處獲得（{cost}顆珠子）",
+    "es": "Obtener de la estatua del pollo ({cost} cuentas)",
+    "fr": "Obtenir auprès de la statue de poule ({cost} perles)",
+    "ko": "닭 조각상에서 획득 (구슬 {cost}개)",
+    "ru": "Получить у статуи курицы ({cost} бус.)"
+  },
+  "source_horse_statue": {
+    "en": "Unlock at the Horse Statue ({cost} essence) after starting the {quest} quest",
+    "ja": "クエスト「{quest}」の開始後、馬の像で解放（エッセンス{cost}）",
+    "zh-Hans": "开始任务“{quest}”后，在马雕像处解锁（{cost}精华）",
+    "zh-Hant": "開始任務「{quest}」後，在馬雕像處解鎖（{cost}精華）",
+    "es": "Desbloquear en la estatua del caballo ({cost} de esencia) tras empezar la misión: {quest}",
+    "fr": "Débloquer à la statue de cheval ({cost} d’essence) après avoir commencé la quête : {quest}",
+    "ko": "퀘스트 '{quest}' 시작 후 말 조각상에서 해금 (정수 {cost})",
+    "ru": "Открыть у статуи лошади ({cost} эссенции) после начала задания: {quest}"
+  },
+  "source_horse_statue_perk": {
+    "en": "Buy at the Horse Statue ({cost} essence) once you have the {mount}",
+    "ja": "{mount}の入手後、馬の像で購入（エッセンス{cost}）",
+    "zh-Hans": "获得{mount}后，在马雕像处购买（{cost}精华）",
+    "zh-Hant": "獲得{mount}後，在馬雕像處購買（{cost}精華）",
+    "es": "Comprar en la estatua del caballo ({cost} de esencia) cuando tengas a {mount}",
+    "fr": "Acheter à la statue de cheval ({cost} d’essence) une fois que vous avez {mount}",
+    "ko": "{mount} 획득 후 말 조각상에서 구매 (정수 {cost})",
+    "ru": "Купить у статуи лошади ({cost} эссенции) после получения: {mount}"
+  },
+  "source_chicken_statue_all_tiers": {
+    "en": "Obtain from the Chicken Statue after breeding every chicken tier",
+    "ja": "すべてのランクのニワトリを繁殖させた後、ニワトリ像から入手",
+    "zh-Hans": "繁殖出所有等级的鸡后，从小鸡雕像处获得",
+    "zh-Hant": "繁殖出所有等級的雞後，從小雞雕像處獲得",
+    "es": "Obtener de la estatua del pollo tras criar todos los niveles de pollo",
+    "fr": "Obtenir auprès de la statue de poule après avoir élevé tous les niveaux de poule",
+    "ko": "모든 등급의 닭을 번식시킨 후 닭 조각상에서 획득",
+    "ru": "Получить у статуи курицы после разведения кур всех уровней"
+  },
+  "source_crop": {
+    "en": "Grow from {seed}",
+    "ja": "{seed}から育てる",
+    "zh-Hans": "由{seed}种植",
+    "zh-Hant": "由{seed}種植",
+    "es": "Cultivar a partir de {seed}",
+    "fr": "Cultiver à partir de : {seed}",
+    "ko": "{seed}에서 재배",
+    "ru": "Вырастить из: {seed}"
+  },
+  "source_crop_greenhouse": {
+    "en": "Grow in the greenhouse from {seed}",
+    "ja": "温室で{seed}から育てる",
+    "zh-Hans": "在温室中由{seed}种植",
+    "zh-Hant": "在溫室中由{seed}種植",
+    "es": "Cultivar en el invernadero a partir de {seed}",
+    "fr": "Cultiver dans la serre à partir de : {seed}",
+    "ko": "온실에서 {seed} 재배",
+    "ru": "Вырастить в теплице из: {seed}"
+  },
+  "source_cutscene_elsie_dating_tutorial": {
+    "en": "Receive during {villager}’s dating tutorial",
+    "ja": "{villager}のデートのチュートリアルで受け取る",
+    "zh-Hans": "在{villager}的约会教程中获得",
+    "zh-Hant": "在{villager}的約會教學中獲得",
+    "es": "Recibir durante el tutorial de citas de {villager}",
+    "fr": "Recevoir pendant le tutoriel des rendez-vous de {villager}",
+    "ko": "{villager}의 데이트 튜토리얼에서 받기",
+    "ru": "Получить во время обучения свиданиям ({villager})"
+  },
+  "source_cutscene_great_bird_0": {
+    "en": "Receive in a cutscene after you marry",
+    "ja": "結婚後のイベントで受け取る",
+    "zh-Hans": "婚后在剧情中获得",
+    "zh-Hant": "婚後在劇情中獲得",
+    "es": "Recibir en una escena tras casarte",
+    "fr": "Recevoir lors d’une cinématique après votre mariage",
+    "ko": "결혼 후 이벤트에서 받기",
+    "ru": "Получить в сценке после свадьбы"
+  },
+  "source_date": {
+    "en": "Receive on a date",
+    "ja": "デートで受け取る",
+    "zh-Hans": "在约会中获得",
+    "zh-Hant": "在約會中獲得",
+    "es": "Recibir en una cita",
+    "fr": "Recevoir lors d’un rendez-vous",
+    "ko": "데이트에서 받기",
+    "ru": "Получить на свидании"
+  },
+  "source_date_inspiration": {
+    "en": "Find the {item}",
+    "ja": "{item}を見つける",
+    "zh-Hans": "找到{item}",
+    "zh-Hant": "找到{item}",
+    "es": "Encontrar: {item}",
+    "fr": "Trouver : {item}",
+    "ko": "{item} 찾기",
+    "ru": "Найти: {item}"
+  },
+  "source_date_inspiration_dig_site": {
+    "en": "Chance to dig up at dig sites on {location} after unlocking any date, until you unlock the {date}",
+    "ja": "デートを解放した後、{date}を解放するまで{location}の発掘ポイントで掘り出せることがある",
+    "zh-Hans": "解锁任意约会后、解锁{date}前，有几率在{location}的挖掘点挖到",
+    "zh-Hant": "解鎖任意約會後、解鎖{date}前，有機率在{location}的挖掘點挖到",
+    "es": "Posibilidad de desenterrar en los puntos de excavación de {location} tras desbloquear una cita, hasta desbloquear: {date}",
+    "fr": "Chance de déterrer sur les sites de fouille de : {location}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {date}",
+    "ko": "데이트를 해금한 뒤 {date} 해금 전까지 {location}의 발굴 지점에서 확률로 발굴",
+    "ru": "Шанс выкопать на местах раскопок ({location}) после открытия любого свидания, пока не открыто: {date}"
+  },
+  "source_date_inspiration_fish": {
+    "en": "Find when you catch a fish at {location} after unlocking any date, until you unlock the {date}",
+    "ja": "デートを解放した後、{date}を解放するまで{location}で魚を釣ると見つかる",
+    "zh-Hans": "解锁任意约会后、解锁{date}前，在{location}钓到鱼时找到",
+    "zh-Hant": "解鎖任意約會後、解鎖{date}前，在{location}釣到魚時找到",
+    "es": "Encontrar al pescar en {location} tras desbloquear una cita, hasta desbloquear: {date}",
+    "fr": "Trouver en pêchant à : {location}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {date}",
+    "ko": "데이트를 해금한 뒤 {date} 해금 전까지 {location}에서 물고기를 낚으면 발견",
+    "ru": "Найти при ловле рыбы ({location}) после открытия любого свидания, пока не открыто: {date}"
+  },
+  "source_date_inspiration_mines_chest": {
+    "en": "Chance to find in Mines chests after unlocking any date, until you unlock the {date}",
+    "ja": "デートを解放した後、{date}を解放するまで鉱坑の宝箱で見つかることがある",
+    "zh-Hans": "解锁任意约会后、解锁{date}前，有几率在矿洞宝箱中找到",
+    "zh-Hant": "解鎖任意約會後、解鎖{date}前，有機率在礦洞寶箱中找到",
+    "es": "Posibilidad de encontrar en cofres de las Minas tras desbloquear una cita, hasta desbloquear: {date}",
+    "fr": "Chance de trouver dans les coffres des Mines, après avoir débloqué un rendez-vous et jusqu’à débloquer : {date}",
+    "ko": "데이트를 해금한 뒤 {date} 해금 전까지 광산 상자에서 확률로 발견",
+    "ru": "Шанс найти в сундуках шахт после открытия любого свидания, пока не открыто: {date}"
+  },
+  "source_default": {
+    "en": "Available from the start",
+    "ja": "最初から入手可能",
+    "zh-Hans": "初始即可获得",
+    "zh-Hant": "初始即可獲得",
+    "es": "Disponible desde el principio",
+    "fr": "Disponible dès le début",
+    "ko": "처음부터 사용 가능",
+    "ru": "Доступно с самого начала"
+  },
+  "source_dive": {
+    "en": "Dive in {waters}",
+    "ja": "{waters}で潜る",
+    "zh-Hans": "在{waters}潜水",
+    "zh-Hant": "在{waters}潛水",
+    "es": "Bucear en {waters}",
+    "fr": "Plonger : {waters}",
+    "ko": "{waters}에서 잠수",
+    "ru": "Нырять: {waters}"
+  },
+  "source_dive_any": {
+    "en": "Dive",
+    "ja": "潜る",
+    "zh-Hans": "潜水",
+    "zh-Hant": "潛水",
+    "es": "Bucear",
+    "fr": "Plonger",
+    "ko": "잠수",
+    "ru": "Нырять"
+  },
+  "source_letter_birthday": {
+    "en": "Receive in a birthday letter",
+    "ja": "誕生日の手紙で受け取る",
+    "zh-Hans": "通过生日来信获得",
+    "zh-Hant": "透過生日來信獲得",
+    "es": "Recibir en una carta de cumpleaños",
+    "fr": "Recevoir dans une lettre d’anniversaire",
+    "ko": "생일 편지로 받기",
+    "ru": "Получить в письме на день рождения"
+  },
+  "source_letter_condition": {
+    "en": "Receive in a letter",
+    "ja": "手紙で受け取る",
+    "zh-Hans": "通过来信获得",
+    "zh-Hant": "透過來信獲得",
+    "es": "Recibir en una carta",
+    "fr": "Recevoir dans une lettre",
+    "ko": "편지로 받기",
+    "ru": "Получить в письме"
+  },
+  "source_donate_item": {
+    "en": "Receive in a letter after donating {item}",
+    "ja": "{item}を寄贈した後に手紙で受け取る",
+    "zh-Hans": "捐赠{item}后通过信件获得",
+    "zh-Hant": "捐贈{item}後透過信件獲得",
+    "es": "Recibir por carta tras donar: {item}",
+    "fr": "Recevoir par lettre après avoir fait don de : {item}",
+    "ko": "{item}을(를) 기증한 후 편지로 받기",
+    "ru": "Получить письмом после пожертвования: {item}"
+  },
+  "source_ship_item": {
+    "en": "Receive in a letter after shipping {item}",
+    "ja": "{item}を出荷した後に手紙で受け取る",
+    "zh-Hans": "出货{item}后通过信件获得",
+    "zh-Hant": "出貨{item}後透過信件獲得",
+    "es": "Recibir por carta tras enviar: {item}",
+    "fr": "Recevoir par lettre après avoir expédié : {item}",
+    "ko": "{item}을(를) 출하한 후 편지로 받기",
+    "ru": "Получить письмом после отправки: {item}"
+  },
+  "source_engagement": {
+    "en": "Receive from Elsie after getting to 10 hearts with a dateable villager",
+    "ja": "デート可能な町の住民とハートが10になった後、エルシーから受け取る",
+    "zh-Hans": "与可约会的村民达到10颗心后从艾尔西处获得",
+    "zh-Hant": "與可約會的村民好感度達到10心後從愛爾西處獲得",
+    "es": "Recibir de Elsie tras alcanzar 10 corazones con un aldeano con el que se pueda salir",
+    "fr": "Recevoir d’Elsie après avoir atteint 10 cœurs avec un habitant avec qui sortir",
+    "ko": "데이트 가능한 마을 주민과 하트 10개 달성 후 엘시에게서 받기",
+    "ru": "Получить от Элси после 10 сердец с жителем, с которым можно встречаться"
+  },
+  "source_equipment": {
+    "en": "Use {item}",
+    "ja": "{item}を使う",
+    "zh-Hans": "使用{item}",
+    "zh-Hant": "使用{item}",
+    "es": "Usar: {item}",
+    "fr": "Utiliser : {item}",
+    "ko": "{item} 사용",
+    "ru": "Использовать: {item}"
+  },
+  "source_festival": {
+    "en": "Obtain at the {festival}",
+    "ja": "{festival}で入手",
+    "zh-Hans": "在{festival}获得",
+    "zh-Hant": "在{festival}獲得",
+    "es": "Obtener en la {festival}",
+    "fr": "Obtenir pendant la {festival}",
+    "ko": "{festival}에서 획득",
+    "ru": "Получить на празднике «{festival}»"
+  },
+  "source_festival_dated": {
+    "en": "Obtain at the {festival} ({date})",
+    "ja": "{festival}（{date}）で入手",
+    "zh-Hans": "在{festival}（{date}）获得",
+    "zh-Hant": "在{festival}（{date}）獲得",
+    "es": "Obtener en la {festival} ({date})",
+    "fr": "Obtenir pendant la {festival} ({date})",
+    "ko": "{festival}({date})에서 획득",
+    "ru": "Получить на празднике «{festival}» ({date})"
+  },
+  "source_festival_store": {
+    "en": "Purchase from {store} at the {festival}",
+    "ja": "{festival}の{store}で購入",
+    "zh-Hans": "在{festival}的{store}购买",
+    "zh-Hant": "在{festival}的{store}購買",
+    "es": "Comprar en {store} durante la {festival}",
+    "fr": "Acheter à : {store}, pendant la {festival}",
+    "ko": "{festival}의 {store}에서 구매",
+    "ru": "Купить: {store}, на празднике «{festival}»"
+  },
+  "source_festival_store_dated": {
+    "en": "Purchase from {store} at the {festival} ({date})",
+    "ja": "{festival}（{date}）の{store}で購入",
+    "zh-Hans": "在{festival}（{date}）的{store}购买",
+    "zh-Hant": "在{festival}（{date}）的{store}購買",
+    "es": "Comprar en {store} durante la {festival} ({date})",
+    "fr": "Acheter à : {store}, pendant la {festival} ({date})",
+    "ko": "{festival}({date})의 {store}에서 구매",
+    "ru": "Купить: {store}, на празднике «{festival}» ({date})"
+  },
+  "source_festival_activity": {
+    "en": "Participate in an activity at the {festival}",
+    "ja": "{festival}のイベントに参加する",
+    "zh-Hans": "参加{festival}的活动",
+    "zh-Hant": "參加{festival}的活動",
+    "es": "Participar en una actividad de la {festival}",
+    "fr": "Participer à une activité de la {festival}",
+    "ko": "{festival}의 활동에 참여",
+    "ru": "Участвовать в развлечении на празднике «{festival}»"
+  },
+  "source_fish": {
+    "en": "Catch in {waters}",
+    "ja": "{waters}で釣る",
+    "zh-Hans": "在{waters}钓取",
+    "zh-Hant": "在{waters}釣取",
+    "es": "Pescar en {waters}",
+    "fr": "Pêcher : {waters}",
+    "ko": "{waters}에서 낚기",
+    "ru": "Поймать: {waters}"
+  },
+  "source_fish_any": {
+    "en": "Catch while fishing",
+    "ja": "釣りで入手",
+    "zh-Hans": "钓鱼获得",
+    "zh-Hant": "釣魚獲得",
+    "es": "Pescar",
+    "fr": "Pêcher",
+    "ko": "낚시로 잡기",
+    "ru": "Поймать на рыбалке"
+  },
+  "source_fish_trap": {
+    "en": "Catch in a fish trap (requires bait)",
+    "ja": "お魚トラップで捕まえる（エサが必要）",
+    "zh-Hans": "用捕鱼笼捕获（需要鱼饵）",
+    "zh-Hant": "用捕魚籠捕獲（需要魚餌）",
+    "es": "Atrapar con una nasa (requiere cebo)",
+    "fr": "Attraper dans une nasse (appât requis)",
+    "ko": "물고기 덫으로 잡기 (미끼 필요)",
+    "ru": "Поймать в верше (нужна наживка)"
+  },
+  "source_forage": {
+    "en": "Forage at {locations}",
+    "ja": "{locations}で採集",
+    "zh-Hans": "在{locations}采集",
+    "zh-Hant": "在{locations}採集",
+    "es": "Recolectar en {locations}",
+    "fr": "Cueillir à : {locations}",
+    "ko": "{locations}에서 채집",
+    "ru": "Собрать: {locations}"
+  },
+  "source_forage_any": {
+    "en": "Forage in the wild",
+    "ja": "野外で採集",
+    "zh-Hans": "在野外采集",
+    "zh-Hant": "在野外採集",
+    "es": "Recolectar en la naturaleza",
+    "fr": "Cueillir dans la nature",
+    "ko": "야생에서 채집",
+    "ru": "Собрать в дикой природе"
+  },
+  "source_lost_and_found": {
+    "en": "Obtain from the Lost and Found chest",
+    "ja": "落とし物箱から入手",
+    "zh-Hans": "从失物招领箱获得",
+    "zh-Hant": "從失物招領箱獲得",
+    "es": "Obtener del cofre de objetos perdidos",
+    "fr": "Obtenir dans le coffre des objets trouvés",
+    "ko": "분실물 상자에서 획득",
+    "ru": "Получить из сундука бюро находок"
+  },
+  "source_mine": {
+    "en": "Mine in {biome}",
+    "ja": "{biome}で採掘",
+    "zh-Hans": "在{biome}采矿",
+    "zh-Hant": "在{biome}採礦",
+    "es": "Picar en {biome}",
+    "fr": "Miner : {biome}",
+    "ko": "{biome}에서 채굴",
+    "ru": "Добыть: {biome}"
+  },
+  "source_mine_fish": {
+    "en": "Fish in {biome}",
+    "ja": "{biome}で釣る",
+    "zh-Hans": "在{biome}钓鱼",
+    "zh-Hant": "在{biome}釣魚",
+    "es": "Pescar en {biome}",
+    "fr": "Pêcher : {biome}",
+    "ko": "{biome}에서 낚시",
+    "ru": "Рыбачить: {biome}"
+  },
+  "source_mine_fish_any": {
+    "en": "Fish in the Mines",
+    "ja": "鉱坑で釣る",
+    "zh-Hans": "在矿洞钓鱼",
+    "zh-Hant": "在礦洞釣魚",
+    "es": "Pescar en las minas",
+    "fr": "Pêcher dans les mines",
+    "ko": "광산에서 낚시",
+    "ru": "Рыбачить в шахтах"
+  },
+  "source_mines_chest": {
+    "en": "Find in a Treasure Chest in {biome}",
+    "ja": "{biome}の宝箱から入手",
+    "zh-Hans": "在{biome}的宝箱中找到",
+    "zh-Hant": "在{biome}的寶箱中找到",
+    "es": "Encontrar en un cofre del tesoro en {biome}",
+    "fr": "Trouver dans un coffre au trésor : {biome}",
+    "ko": "{biome}의 보물 상자에서 발견",
+    "ru": "Найти в сундуке: {biome}"
+  },
+  "source_mines_chest_perk": {
+    "en": "Find in a Treasure Chest in {biome}, with {perk}",
+    "ja": "{perk}を習得した状態で、{biome}の宝箱から入手",
+    "zh-Hans": "拥有{perk}时，在{biome}的宝箱中找到",
+    "zh-Hant": "擁有{perk}時，在{biome}的寶箱中找到",
+    "es": "Encontrar en un cofre del tesoro en {biome}, con {perk}",
+    "fr": "Trouver dans un coffre au trésor : {biome}, avec {perk}",
+    "ko": "{perk} 보유 시 {biome}의 보물 상자에서 발견",
+    "ru": "Найти в сундуке: {biome}, с {perk}"
+  },
+  "source_mines_dig_site": {
+    "en": "Dig up in {biome}",
+    "ja": "{biome}で掘り出す",
+    "zh-Hans": "在{biome}挖掘",
+    "zh-Hant": "在{biome}挖掘",
+    "es": "Desenterrar en {biome}",
+    "fr": "Déterrer : {biome}",
+    "ko": "{biome}에서 발굴",
+    "ru": "Выкопать: {biome}"
+  },
+  "source_mines_dig_site_perk": {
+    "en": "Dig up in {biome}, with {perk}",
+    "ja": "{perk}を習得した状態で、{biome}で掘り出す",
+    "zh-Hans": "拥有{perk}时，在{biome}挖掘",
+    "zh-Hant": "擁有{perk}時，在{biome}挖掘",
+    "es": "Desenterrar en {biome}, con {perk}",
+    "fr": "Déterrer : {biome}, avec {perk}",
+    "ko": "{perk} 보유 시 {biome}에서 발굴",
+    "ru": "Выкопать: {biome}, с {perk}"
+  },
+  "source_monster": {
+    "en": "Dropped by {monster}",
+    "ja": "{monster}がドロップ",
+    "zh-Hans": "由{monster}掉落",
+    "zh-Hant": "由{monster}掉落",
+    "es": "Soltado por: {monster}",
+    "fr": "Lâché par : {monster}",
+    "ko": "{monster}이(가) 드롭",
+    "ru": "Выпадает из: {monster}"
+  },
+  "source_monster_feed": {
+    "en": "Feed {monster}",
+    "ja": "{monster}にエサをあげる",
+    "zh-Hans": "喂食{monster}",
+    "zh-Hant": "餵食{monster}",
+    "es": "Alimentar a: {monster}",
+    "fr": "Nourrir : {monster}",
+    "ko": "{monster}에게 먹이 주기",
+    "ru": "Покормить: {monster}"
+  },
+  "source_monster_any": {
+    "en": "any monster",
+    "ja": "すべてのモンスター",
+    "zh-Hans": "任意怪物",
+    "zh-Hant": "任意怪物",
+    "es": "cualquier monstruo",
+    "fr": "n’importe quel monstre",
+    "ko": "모든 몬스터",
+    "ru": "любого монстра"
+  },
+  "source_perk": {
+    "en": "Unlock {perk}",
+    "ja": "{perk}を習得",
+    "zh-Hans": "解锁{perk}",
+    "zh-Hant": "解鎖{perk}",
+    "es": "Desbloquear {perk}",
+    "fr": "Débloquer {perk}",
+    "ko": "{perk} 해금",
+    "ru": "Открыть {perk}"
+  },
+  "source_perk_drop": {
+    "en": "Random drop with {perk}",
+    "ja": "{perk}でランダムにドロップ",
+    "zh-Hans": "拥有{perk}时随机掉落",
+    "zh-Hant": "擁有{perk}時隨機掉落",
+    "es": "Obtención aleatoria con {perk}",
+    "fr": "Butin aléatoire avec {perk}",
+    "ko": "{perk} 보유 시 무작위 드롭",
+    "ru": "Случайная добыча с {perk}"
+  },
+  "source_proposal": {
+    "en": "Propose to {villager}",
+    "ja": "{villager}にプロポーズする",
+    "zh-Hans": "向{villager}求婚",
+    "zh-Hant": "向{villager}求婚",
+    "es": "Pedir matrimonio a {villager}",
+    "fr": "Demander {villager} en mariage",
+    "ko": "{villager}에게 청혼",
+    "ru": "Сделать предложение: {villager}"
+  },
+  "source_reach_day": {
+    "en": "Receive in a letter after reaching {date}",
+    "ja": "{date}になった後に手紙で受け取る",
+    "zh-Hans": "到达{date}后通过信件获得",
+    "zh-Hant": "到達{date}後透過信件獲得",
+    "es": "Recibir por carta al llegar al {date}",
+    "fr": "Recevoir par lettre après avoir atteint le {date}",
+    "ko": "{date}이 된 후 편지로 받기",
+    "ru": "Получить письмом после наступления даты: {date}"
+  },
+  "source_recipe_cook": {
+    "en": "Cook via {recipe}",
+    "ja": "{recipe}で料理する",
+    "zh-Hans": "通过{recipe}烹饪",
+    "zh-Hant": "透過{recipe}烹飪",
+    "es": "Cocinar mediante {recipe}",
+    "fr": "Cuisiner via : {recipe}",
+    "ko": "{recipe}(으)로 요리",
+    "ru": "Приготовить по рецепту: {recipe}"
+  },
+  "source_recipe_craft": {
+    "en": "Craft via {recipe}",
+    "ja": "{recipe}で作る",
+    "zh-Hans": "通过{recipe}制作",
+    "zh-Hant": "透過{recipe}製作",
+    "es": "Fabricar mediante {recipe}",
+    "fr": "Fabriquer via : {recipe}",
+    "ko": "{recipe}(으)로 제작",
+    "ru": "Изготовить по рецепту: {recipe}"
+  },
+  "source_recipe_dragon_forge": {
+    "en": "Dragon Forge via {recipe}",
+    "ja": "{recipe}でドラゴンの炉を使う",
+    "zh-Hans": "通过{recipe}使用龙之熔炉",
+    "zh-Hant": "透過{recipe}使用龍之熔爐",
+    "es": "Forja del dragón mediante {recipe}",
+    "fr": "Forge du dragon via : {recipe}",
+    "ko": "{recipe}(으)로 용의 대장간 제작",
+    "ru": "Драконья кузня по рецепту: {recipe}"
+  },
+  "source_recipe_mill": {
+    "en": "Mill via {recipe}",
+    "ja": "{recipe}で製粉する",
+    "zh-Hans": "通过{recipe}研磨",
+    "zh-Hant": "透過{recipe}研磨",
+    "es": "Moler mediante {recipe}",
+    "fr": "Moudre via : {recipe}",
+    "ko": "{recipe}(으)로 제분",
+    "ru": "Смолоть по рецепту: {recipe}"
+  },
+  "source_recipe_smith": {
+    "en": "Smith via {recipe}",
+    "ja": "{recipe}で鍛冶をする",
+    "zh-Hans": "通过{recipe}锻造",
+    "zh-Hant": "透過{recipe}鍛造",
+    "es": "Forjar mediante {recipe}",
+    "fr": "Forger via : {recipe}",
+    "ko": "{recipe}(으)로 대장 작업",
+    "ru": "Выковать по рецепту: {recipe}"
+  },
+  "source_renown": {
+    "en": "Get the town rank to level {level}",
+    "ja": "タウンランクをレベル{level}にする",
+    "zh-Hans": "将城镇等级提升至{level}级",
+    "zh-Hant": "將城鎮段位提升至{level}級",
+    "es": "Subir la categoría de la aldea al nivel {level}",
+    "fr": "Porter le classement de la ville au niveau {level}",
+    "ko": "마을 등급을 레벨 {level}까지 올리기",
+    "ru": "Поднять ранг города до уровня {level}"
+  },
+  "source_ritual_chamber": {
+    "en": "Craft at the Ritual Chamber with {perk}",
+    "ja": "{perk}を習得した状態で、儀式の間で作る",
+    "zh-Hans": "拥有{perk}时，在仪式室制作",
+    "zh-Hant": "擁有{perk}時，在儀式室製作",
+    "es": "Fabricar en la cámara ritual con {perk}",
+    "fr": "Fabriquer dans la chambre rituelle avec {perk}",
+    "ko": "{perk} 보유 시 의식의 방에서 제작",
+    "ru": "Изготовить в ритуальном зале с {perk}"
+  },
+  "source_scroll_bundle": {
+    "en": "Purchase the {bundle} from {store}",
+    "ja": "{store}で{bundle}を購入",
+    "zh-Hans": "在{store}购买{bundle}",
+    "zh-Hant": "在{store}購買{bundle}",
+    "es": "Comprar {bundle} en {store}",
+    "fr": "Acheter : {bundle}, à : {store}",
+    "ko": "{store}에서 {bundle} 구매",
+    "ru": "Купить: {bundle}, место: {store}"
+  },
+  "source_secret_chest": {
+    "en": "Find in the Gold Treasure Chest in the {location}",
+    "ja": "{location}にある金の宝箱から入手",
+    "zh-Hans": "在{location}的金宝箱中找到",
+    "zh-Hant": "在{location}的金寶箱中找到",
+    "es": "Encontrar en el cofre del tesoro dorado de {location}",
+    "fr": "Trouver dans le coffre au trésor en or de : {location}",
+    "ko": "{location}의 황금 보물 상자에서 발견",
+    "ru": "Найти в золотом сундуке ({location})"
+  },
+  "source_scroll_bundle_qualified": {
+    "en": "Purchase the {bundle} from {store} ({qualifier})",
+    "ja": "{qualifier}、{store}で{bundle}を購入",
+    "zh-Hans": "{qualifier}，在{store}购买{bundle}",
+    "zh-Hant": "{qualifier}，在{store}購買{bundle}",
+    "es": "Comprar {bundle} en {store} ({qualifier})",
+    "fr": "Acheter : {bundle}, à : {store} ({qualifier})",
+    "ko": "{qualifier} {store}에서 {bundle} 구매",
+    "ru": "Купить: {bundle}, место: {store} ({qualifier})"
+  },
+  "source_spouse_gift": {
+    "en": "Get married to {villager}",
+    "ja": "{villager}と結婚する",
+    "zh-Hans": "与{villager}结婚",
+    "zh-Hant": "與{villager}結婚",
+    "es": "Casarse con {villager}",
+    "fr": "Épouser {villager}",
+    "ko": "{villager}와(과) 결혼",
+    "ru": "Вступить в брак: {villager}"
+  },
+  "source_station": {
+    "en": "Process at {station}",
+    "ja": "{station}で加工",
+    "zh-Hans": "在{station}加工",
+    "zh-Hant": "在{station}加工",
+    "es": "Procesar en: {station}",
+    "fr": "Transformer : {station}",
+    "ko": "{station}에서 가공",
+    "ru": "Переработать: {station}"
+  },
+  "source_store": {
+    "en": "Purchase from {store}",
+    "ja": "{store}で購入",
+    "zh-Hans": "在{store}购买",
+    "zh-Hant": "在{store}購買",
+    "es": "Comprar en {store}",
+    "fr": "Acheter à : {store}",
+    "ko": "{store}에서 구매",
+    "ru": "Купить: {store}"
+  },
+  "source_store_qualified": {
+    "en": "Purchase from {store} ({qualifier})",
+    "ja": "{qualifier}、{store}で購入",
+    "zh-Hans": "{qualifier}，在{store}购买",
+    "zh-Hant": "{qualifier}，在{store}購買",
+    "es": "Comprar en {store} ({qualifier})",
+    "fr": "Acheter à : {store} ({qualifier})",
+    "ko": "{qualifier} {store}에서 구매",
+    "ru": "Купить: {store} ({qualifier})"
+  },
+  "source_treasure_chest": {
+    "en": "Fish up {chest}",
+    "ja": "{chest}を釣り上げる",
+    "zh-Hans": "钓起{chest}",
+    "zh-Hant": "釣起{chest}",
+    "es": "Pescar: {chest}",
+    "fr": "Pêcher : {chest}",
+    "ko": "{chest} 낚아 올리기",
+    "ru": "Выловить: {chest}"
+  },
+  "source_tree": {
+    "en": "Harvest from {sapling}",
+    "ja": "{sapling}から収穫",
+    "zh-Hans": "从{sapling}收获",
+    "zh-Hant": "從{sapling}收穫",
+    "es": "Cosechar de: {sapling}",
+    "fr": "Récolter sur : {sapling}",
+    "ko": "{sapling}에서 수확",
+    "ru": "Собрать с дерева: {sapling}"
+  },
+  "source_upgrade_adept_kitchen": {
+    "en": "Upgrade to the adept kitchen",
+    "ja": "熟練のキッチンにアップグレード",
+    "zh-Hans": "升级为熟练厨房",
+    "zh-Hant": "升級為熟練廚房",
+    "es": "Mejorar a la cocina experta",
+    "fr": "Améliorer en cuisine experte",
+    "ko": "숙련된 주방으로 업그레이드",
+    "ru": "Улучшить до кухни мастера"
+  },
+  "source_upgrade_cozy_kitchen": {
+    "en": "Upgrade to the cozy kitchen",
+    "ja": "居心地のいいキッチンにアップグレード",
+    "zh-Hans": "升级为舒适厨房",
+    "zh-Hant": "升級為舒適廚房",
+    "es": "Mejorar a la cocina acogedora",
+    "fr": "Améliorer en cuisine douillette",
+    "ko": "아늑한 주방으로 업그레이드",
+    "ru": "Улучшить до уютной кухни"
+  },
+  "source_upgrade_farm_bridge": {
+    "en": "Expand your farm",
+    "ja": "農場を拡張する",
+    "zh-Hans": "扩建农场",
+    "zh-Hant": "擴建農場",
+    "es": "Ampliar tu granja",
+    "fr": "Agrandir votre ferme",
+    "ko": "농장 확장",
+    "ru": "Расширить ферму"
+  },
+  "source_upgrade_stairs": {
+    "en": "Upgrade your home a fourth time",
+    "ja": "家を4回目のアップグレードをする",
+    "zh-Hans": "第四次升级房屋",
+    "zh-Hant": "第四次升級房屋",
+    "es": "Mejorar tu casa por cuarta vez",
+    "fr": "Améliorer votre maison une quatrième fois",
+    "ko": "집을 네 번째로 업그레이드",
+    "ru": "Улучшить дом в четвёртый раз"
+  },
+  "source_wedding": {
+    "en": "Receive after getting married",
+    "ja": "結婚した後に受け取る",
+    "zh-Hans": "结婚后获得",
+    "zh-Hant": "結婚後獲得",
+    "es": "Recibir tras casarse",
+    "fr": "Recevoir après le mariage",
+    "ko": "결혼 후 받기",
+    "ru": "Получить после свадьбы"
+  },
+  "source_wishing_well": {
+    "en": "Obtain from the Wishing Well ({cost}t)",
+    "ja": "願いの井戸から入手（{cost}t）",
+    "zh-Hans": "从许愿井获得（{cost}t）",
+    "zh-Hant": "從許願井獲得（{cost}t）",
+    "es": "Obtener del pozo de los deseos ({cost} t)",
+    "fr": "Obtenir au puits à souhaits ({cost} t)",
+    "ko": "소원의 우물에서 획득 ({cost}t)",
+    "ru": "Получить из колодца желаний ({cost} т)"
+  },
+  "source_quest_cooking": {
+    "en": "Complete the {recipe} cooking challenge",
+    "ja": "料理チャレンジ「{recipe}」を完了する",
+    "zh-Hans": "完成烹饪挑战“{recipe}”",
+    "zh-Hant": "完成烹飪挑戰「{recipe}」",
+    "es": "Completar el desafío culinario: {recipe}",
+    "fr": "Terminer le défi culinaire : {recipe}",
+    "ko": "요리 도전 '{recipe}' 완료",
+    "ru": "Выполнить кулинарное испытание: {recipe}"
+  },
+  "source_quest_crown": {
+    "en": "Complete the Crown Request for {subject}",
+    "ja": "ロイヤルリクエスト「{subject}」を完了する",
+    "zh-Hans": "完成皇家委托“{subject}”",
+    "zh-Hant": "完成皇室請求「{subject}」",
+    "es": "Completar el encargo de la corona: {subject}",
+    "fr": "Terminer la requête royale : {subject}",
+    "ko": "왕실 의뢰 '{subject}' 완료",
+    "ru": "Выполнить заказ Короны: {subject}"
+  },
+  "source_quest_fetch": {
+    "en": "Complete {villager}’s request for {item}",
+    "ja": "{villager}の依頼「{item}」を完了する",
+    "zh-Hans": "完成{villager}的委托“{item}”",
+    "zh-Hant": "完成{villager}的委託「{item}」",
+    "es": "Completar el encargo de {villager}: {item}",
+    "fr": "Terminer la demande de {villager} : {item}",
+    "ko": "{villager}의 의뢰 '{item}' 완료",
+    "ru": "Выполнить просьбу ({villager}): {item}"
+  },
+  "source_quest_heart": {
+    "en": "Complete {villager}’s {quest} quest",
+    "ja": "{villager}のクエスト「{quest}」を完了する",
+    "zh-Hans": "完成{villager}的任务“{quest}”",
+    "zh-Hant": "完成{villager}的任務「{quest}」",
+    "es": "Completar la misión de {villager}: {quest}",
+    "fr": "Terminer la quête de {villager} : {quest}",
+    "ko": "{villager}의 퀘스트 '{quest}' 완료",
+    "ru": "Выполнить задание ({villager}): {quest}"
+  },
+  "source_quest_mission": {
+    "en": "Complete the {quest} mission",
+    "ja": "ミッション「{quest}」を完了する",
+    "zh-Hans": "完成使命“{quest}”",
+    "zh-Hant": "完成使命「{quest}」",
+    "es": "Completar la misión: {quest}",
+    "fr": "Terminer la mission : {quest}",
+    "ko": "미션 '{quest}' 완료",
+    "ru": "Выполнить миссию: {quest}"
+  },
+  "source_quest_story": {
+    "en": "Complete the {quest} quest",
+    "ja": "クエスト「{quest}」を完了する",
+    "zh-Hans": "完成任务“{quest}”",
+    "zh-Hant": "完成任務「{quest}」",
+    "es": "Completar la misión: {quest}",
+    "fr": "Terminer la quête : {quest}",
+    "ko": "퀘스트 '{quest}' 완료",
+    "ru": "Выполнить задание: {quest}"
+  },
+  "source_biome_floors": {
+    "en": "{biome} (Mines floors {start}–{end})",
+    "ja": "{biome}（鉱坑{start}～{end}階）",
+    "zh-Hans": "{biome}（矿洞第{start}–{end}层）",
+    "zh-Hant": "{biome}（礦洞第{start}–{end}層）",
+    "es": "{biome} (pisos {start}–{end} de las minas)",
+    "fr": "{biome} (étages {start} à {end} des mines)",
+    "ko": "{biome} (광산 {start}~{end}층)",
+    "ru": "{biome} (этажи шахт {start}–{end})"
+  },
+  "source_perk_label": {
+    "en": "the {perk} perk ({skill} tier {tier})",
+    "ja": "スキルボーナス「{perk}」（{skill}ランク{tier}）",
+    "zh-Hans": "技能特长“{perk}”（{skill}第{tier}阶）",
+    "zh-Hant": "技能特長「{perk}」（{skill}第{tier}階）",
+    "es": "el don de habilidad {perk} ({skill}, nivel {tier})",
+    "fr": "le bonus de compétence {perk} ({skill}, niveau {tier})",
+    "ko": "스킬 특성 '{perk}' ({skill} {tier}단계)",
+    "ru": "навык «{perk}» ({skill}, уровень {tier})"
+  },
+  "source_date_label": {
+    "en": "{season} {day}",
+    "ja": "{season}{day}日",
+    "zh-Hans": "{season}{day}日",
+    "zh-Hant": "{season}{day}日",
+    "es": "{day} de {season}",
+    "fr": "{day} {season}",
+    "ko": "{season} {day}일",
+    "ru": "{day}-й день сезона «{season}»"
+  },
+  "source_date_label_year": {
+    "en": "{season} {day}, Year {year}",
+    "ja": "{year}年目{season}{day}日",
+    "zh-Hans": "第{year}年{season}{day}日",
+    "zh-Hant": "第{year}年{season}{day}日",
+    "es": "{day} de {season}, año {year}",
+    "fr": "{day} {season}, année {year}",
+    "ko": "{year}년차 {season} {day}일",
+    "ru": "{day}-й день сезона «{season}», год {year}"
+  },
+  "source_clause_append": {
+    "en": ", {clause}",
+    "ja": "、{clause}",
+    "zh-Hans": "，{clause}",
+    "zh-Hant": "，{clause}",
+    "es": ", {clause}",
+    "fr": ", {clause}",
+    "ko": ", {clause}",
+    "ru": ", {clause}"
+  },
+  "source_clause_after_one_of": {
+    "en": "after one of: {options}",
+    "ja": "次のいずれかの後：{options}",
+    "zh-Hans": "满足以下任一条件后：{options}",
+    "zh-Hant": "滿足以下任一條件後：{options}",
+    "es": "tras una de estas condiciones: {options}",
+    "fr": "après l’une de ces conditions : {options}",
+    "ko": "다음 중 하나 이후: {options}",
+    "ru": "после одного из условий: {options}"
+  },
+  "source_clause_upgraded_home": {
+    "en": "after upgrading your home",
+    "ja": "家をアップグレードした後",
+    "zh-Hans": "升级房屋后",
+    "zh-Hant": "升級房屋後",
+    "es": "tras mejorar tu casa",
+    "fr": "après avoir amélioré votre maison",
+    "ko": "집 업그레이드 후",
+    "ru": "после улучшения дома"
+  },
+  "source_clause_heart_level": {
+    "en": "at {level} hearts with {villager}",
+    "ja": "{villager}とのハートが{level}以上",
+    "zh-Hans": "与{villager}达到{level}颗心",
+    "zh-Hant": "與{villager}的好感度達到{level}心",
+    "es": "con {level} corazones con {villager}",
+    "fr": "à {level} cœurs avec {villager}",
+    "ko": "{villager}와(과) 하트 {level}개 이상",
+    "ru": "при {level} сердцах с жителем {villager}"
+  },
+  "source_branch_heart_level": {
+    "en": "{level} hearts with {villager}",
+    "ja": "{villager}とのハートが{level}",
+    "zh-Hans": "与{villager}达到{level}颗心",
+    "zh-Hant": "與{villager}的好感度達到{level}心",
+    "es": "{level} corazones con {villager}",
+    "fr": "{level} cœurs avec {villager}",
+    "ko": "{villager}와(과) 하트 {level}개",
+    "ru": "{level} сердец с жителем {villager}"
+  },
+  "source_clause_dating": {
+    "en": "while dating someone",
+    "ja": "誰かと交際中",
+    "zh-Hans": "与某人交往期间",
+    "zh-Hant": "與某人交往期間",
+    "es": "mientras sales con alguien",
+    "fr": "en fréquentant quelqu’un",
+    "ko": "누군가와 교제 중",
+    "ru": "во время отношений"
+  },
+  "source_clause_mines_floor": {
+    "en": "after reaching Mines floor {floor}",
+    "ja": "鉱坑{floor}階に到達した後",
+    "zh-Hans": "到达矿洞第{floor}层后",
+    "zh-Hant": "到達礦洞第{floor}層後",
+    "es": "tras llegar al piso {floor} de las minas",
+    "fr": "après avoir atteint l’étage {floor} des mines",
+    "ko": "광산 {floor}층 도달 후",
+    "ru": "после достижения {floor}-го этажа шахт"
+  },
+  "source_branch_mines_floor": {
+    "en": "reaching Mines floor {floor}",
+    "ja": "鉱坑{floor}階に到達",
+    "zh-Hans": "到达矿洞第{floor}层",
+    "zh-Hant": "到達礦洞第{floor}層",
+    "es": "llegar al piso {floor} de las minas",
+    "fr": "atteindre l’étage {floor} des mines",
+    "ko": "광산 {floor}층 도달",
+    "ru": "достижение {floor}-го этажа шахт"
+  },
+  "source_clause_perk": {
+    "en": "with {perk}",
+    "ja": "{perk}を習得済み",
+    "zh-Hans": "拥有{perk}",
+    "zh-Hant": "擁有{perk}",
+    "es": "con {perk}",
+    "fr": "avec {perk}",
+    "ko": "{perk} 보유 시",
+    "ru": "с {perk}"
+  },
+  "source_clause_repairing": {
+    "en": "after repairing",
+    "ja": "修理後",
+    "zh-Hans": "修复后",
+    "zh-Hant": "修復後",
+    "es": "tras la reparación",
+    "fr": "après la réparation",
+    "ko": "수리 후",
+    "ru": "после ремонта"
+  },
+  "source_clause_upgrading": {
+    "en": "after upgrading",
+    "ja": "アップグレード後",
+    "zh-Hans": "升级后",
+    "zh-Hant": "升級後",
+    "es": "tras la mejora",
+    "fr": "après l’amélioration",
+    "ko": "업그레이드 후",
+    "ru": "после улучшения"
+  },
+  "source_clause_quest_completed": {
+    "en": "after completing {quest}",
+    "ja": "「{quest}」の完了後",
+    "zh-Hans": "完成“{quest}”后",
+    "zh-Hant": "完成「{quest}」後",
+    "es": "tras completar {quest}",
+    "fr": "après avoir terminé {quest}",
+    "ko": "'{quest}' 완료 후",
+    "ru": "после выполнения: {quest}"
+  },
+  "source_branch_quest_completed": {
+    "en": "completing {quest}",
+    "ja": "「{quest}」の完了",
+    "zh-Hans": "完成“{quest}”",
+    "zh-Hant": "完成「{quest}」",
+    "es": "completar {quest}",
+    "fr": "terminer {quest}",
+    "ko": "'{quest}' 완료",
+    "ru": "выполнение: {quest}"
+  },
+  "source_clause_quest_available": {
+    "en": "once {quest} is available",
+    "ja": "「{quest}」が受注可能になった後",
+    "zh-Hans": "“{quest}”可接取后",
+    "zh-Hant": "「{quest}」可接取後",
+    "es": "cuando {quest} esté disponible",
+    "fr": "une fois {quest} disponible",
+    "ko": "'{quest}' 수락 가능 시",
+    "ru": "когда станет доступно: {quest}"
+  },
+  "source_branch_quest_available": {
+    "en": "{quest} is available",
+    "ja": "「{quest}」が受注可能",
+    "zh-Hans": "“{quest}”可接取",
+    "zh-Hant": "「{quest}」可接取",
+    "es": "{quest} está disponible",
+    "fr": "{quest} est disponible",
+    "ko": "'{quest}' 수락 가능",
+    "ru": "доступно: {quest}"
+  },
+  "source_clause_season": {
+    "en": "after reaching {season}",
+    "ja": "{season}になった後",
+    "zh-Hans": "到达{season}后",
+    "zh-Hant": "到達{season}後",
+    "es": "tras llegar a {season}",
+    "fr": "après avoir atteint : {season}",
+    "ko": "{season}이 된 후",
+    "ru": "после наступления сезона «{season}»"
+  },
+  "source_branch_season": {
+    "en": "reaching {season}",
+    "ja": "{season}になる",
+    "zh-Hans": "到达{season}",
+    "zh-Hant": "到達{season}",
+    "es": "llegar a {season}",
+    "fr": "atteindre : {season}",
+    "ko": "{season} 도달",
+    "ru": "наступление сезона «{season}»"
+  },
+  "source_clause_skill_level": {
+    "en": "at {skill} level {level}",
+    "ja": "{skill}レベル{level}以上",
+    "zh-Hans": "{skill}达到{level}级",
+    "zh-Hant": "{skill}達到{level}級",
+    "es": "con {skill} al nivel {level}",
+    "fr": "avec {skill} au niveau {level}",
+    "ko": "{skill} 레벨 {level} 이상",
+    "ru": "при навыке «{skill}» уровня {level}"
+  },
+  "source_branch_skill_level": {
+    "en": "{skill} level {level}",
+    "ja": "{skill}レベル{level}",
+    "zh-Hans": "{skill}{level}级",
+    "zh-Hant": "{skill}{level}級",
+    "es": "{skill} al nivel {level}",
+    "fr": "{skill} au niveau {level}",
+    "ko": "{skill} 레벨 {level}",
+    "ru": "навык «{skill}» уровня {level}"
+  },
+  "source_location_dungeon": {
+    "en": "the dungeon",
+    "ja": "ダンジョン",
+    "zh-Hans": "地下城",
+    "zh-Hant": "地下城",
+    "es": "Mazmorra",
+    "fr": "Donjon",
+    "ko": "던전",
+    "ru": "Подземелье"
+  },
+  "source_location_farm": {
+    "en": "your farm",
+    "ja": "農場",
+    "zh-Hans": "农场",
+    "zh-Hant": "農場",
+    "es": "Granja",
+    "fr": "Ferme",
+    "ko": "농장",
+    "ru": "Ферма"
+  },
+  "source_location_mines": {
+    "en": "the Mines",
+    "ja": "鉱坑",
+    "zh-Hans": "矿洞",
+    "zh-Hant": "礦洞",
+    "es": "Minas",
+    "fr": "Mines",
+    "ko": "광산",
+    "ru": "Шахты"
+  },
+  "source_water_ocean": {
+    "en": "Ocean",
+    "ja": "海",
+    "zh-Hans": "海洋",
+    "zh-Hant": "海洋",
+    "es": "Mar",
+    "fr": "Mer",
+    "ko": "바다",
+    "ru": "Море"
+  },
+  "source_water_pond": {
+    "en": "Pond",
+    "ja": "池",
+    "zh-Hans": "池塘",
+    "zh-Hant": "池塘",
+    "es": "Estanque",
+    "fr": "Étang",
+    "ko": "연못",
+    "ru": "Пруд"
+  },
+  "source_water_river": {
+    "en": "River",
+    "ja": "川",
+    "zh-Hans": "河流",
+    "zh-Hant": "河流",
+    "es": "Río",
+    "fr": "Rivière",
+    "ko": "강",
+    "ru": "Река"
+  },
+  "source_monster_variant_blue": {
+    "en": "{monster} (blue)",
+    "ja": "{monster}（青）",
+    "zh-Hans": "{monster}（蓝）",
+    "zh-Hant": "{monster}（藍）",
+    "es": "{monster} (azul)",
+    "fr": "{monster} (bleu)",
+    "ko": "{monster} (파랑)",
+    "ru": "{monster} (синий)"
+  },
+  "source_monster_variant_green": {
+    "en": "{monster} (green)",
+    "ja": "{monster}（緑）",
+    "zh-Hans": "{monster}（绿）",
+    "zh-Hant": "{monster}（綠）",
+    "es": "{monster} (verde)",
+    "fr": "{monster} (vert)",
+    "ko": "{monster} (초록)",
+    "ru": "{monster} (зелёный)"
+  },
+  "source_monster_variant_purple": {
+    "en": "{monster} (purple)",
+    "ja": "{monster}（紫）",
+    "zh-Hans": "{monster}（紫）",
+    "zh-Hant": "{monster}（紫）",
+    "es": "{monster} (morado)",
+    "fr": "{monster} (violet)",
+    "ko": "{monster} (보라)",
+    "ru": "{monster} (фиолетовый)"
+  },
+  "source_monster_variant_red": {
+    "en": "{monster} (red)",
+    "ja": "{monster}（赤）",
+    "zh-Hans": "{monster}（红）",
+    "zh-Hant": "{monster}（紅）",
+    "es": "{monster} (rojo)",
+    "fr": "{monster} (rouge)",
+    "ko": "{monster} (빨강)",
+    "ru": "{monster} (красный)"
+  },
+  "source_monster_variant_orange": {
+    "en": "{monster} (orange)",
+    "ja": "{monster}（オレンジ）",
+    "zh-Hans": "{monster}（橙）",
+    "zh-Hant": "{monster}（橘）",
+    "es": "{monster} (naranja)",
+    "fr": "{monster} (orange)",
+    "ko": "{monster} (주황)",
+    "ru": "{monster} (оранжевый)"
+  },
+  "source_monster_variant_orange_mini": {
+    "en": "{monster} (small orange)",
+    "ja": "{monster}（小・オレンジ）",
+    "zh-Hans": "{monster}（小・橙）",
+    "zh-Hant": "{monster}（小・橘）",
+    "es": "{monster} (naranja pequeño)",
+    "fr": "{monster} (petit orange)",
+    "ko": "{monster} (작은 주황)",
+    "ru": "{monster} (маленький оранжевый)"
+  },
+  "source_monster_variant_pink": {
+    "en": "{monster} (pink)",
+    "ja": "{monster}（ピンク）",
+    "zh-Hans": "{monster}（粉）",
+    "zh-Hant": "{monster}（粉）",
+    "es": "{monster} (rosa)",
+    "fr": "{monster} (rose)",
+    "ko": "{monster} (분홍)",
+    "ru": "{monster} (розовый)"
+  },
+  "source_monster_variant_cool": {
+    "en": "{monster} (cool)",
+    "ja": "{monster}（寒色）",
+    "zh-Hans": "{monster}（冷色）",
+    "zh-Hant": "{monster}（冷色）",
+    "es": "{monster} (frío)",
+    "fr": "{monster} (froid)",
+    "ko": "{monster} (차가운 색)",
+    "ru": "{monster} (холодный)"
+  },
+  "source_monster_variant_copper": {
+    "en": "{monster} (copper)",
+    "ja": "{monster}（銅）",
+    "zh-Hans": "{monster}（铜）",
+    "zh-Hant": "{monster}（銅）",
+    "es": "{monster} (cobre)",
+    "fr": "{monster} (cuivre)",
+    "ko": "{monster} (구리)",
+    "ru": "{monster} (медь)"
+  },
+  "source_monster_variant_iron": {
+    "en": "{monster} (iron)",
+    "ja": "{monster}（鉄）",
+    "zh-Hans": "{monster}（铁）",
+    "zh-Hant": "{monster}（鐵）",
+    "es": "{monster} (hierro)",
+    "fr": "{monster} (fer)",
+    "ko": "{monster} (철)",
+    "ru": "{monster} (железо)"
+  },
+  "source_monster_variant_silver": {
+    "en": "{monster} (silver)",
+    "ja": "{monster}（銀）",
+    "zh-Hans": "{monster}（银）",
+    "zh-Hant": "{monster}（銀）",
+    "es": "{monster} (plata)",
+    "fr": "{monster} (argent)",
+    "ko": "{monster} (은)",
+    "ru": "{monster} (серебро)"
+  },
+  "source_monster_variant_gold": {
+    "en": "{monster} (gold)",
+    "ja": "{monster}（金）",
+    "zh-Hans": "{monster}（金）",
+    "zh-Hant": "{monster}（金）",
+    "es": "{monster} (oro)",
+    "fr": "{monster} (or)",
+    "ko": "{monster} (금)",
+    "ru": "{monster} (золото)"
+  },
+  "source_monster_variant_mistril": {
+    "en": "{monster} (mistril)",
+    "ja": "{monster}（ミストリル）",
+    "zh-Hans": "{monster}（秘银）",
+    "zh-Hant": "{monster}（秘銀）",
+    "es": "{monster} (mistril)",
+    "fr": "{monster} (mistril)",
+    "ko": "{monster} (미스트릴)",
+    "ru": "{monster} (мистрил)"
+  },
+  "source_museum_donation": {
+    "en": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Complete {count} set in the {wing} wing",
+          "countPlural=other": "Complete {count} sets in the {wing} wing"
+        }
+      }
+    ],
+    "ja": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{wing}の展示セットを{count}個完成させる"
+        }
+      }
+    ],
+    "zh-Hans": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "在{wing}展区完成{count}套收藏"
+        }
+      }
+    ],
+    "zh-Hant": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "在{wing}展區完成{count}套收藏"
+        }
+      }
+    ],
+    "es": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Completar {count} colección en el ala de {wing}",
+          "countPlural=many": "Completar {count} colecciones en el ala de {wing}",
+          "countPlural=other": "Completar {count} colecciones en el ala de {wing}"
+        }
+      }
+    ],
+    "fr": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Compléter {count} collection dans l’aile {wing}",
+          "countPlural=many": "Compléter {count} collections dans l’aile {wing}",
+          "countPlural=other": "Compléter {count} collections dans l’aile {wing}"
+        }
+      }
+    ],
+    "ko": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=other": "{wing} 전시관의 세트 {count}개 완성"
+        }
+      }
+    ],
+    "ru": [
+      {
+        "declarations": ["input wing", "input count", "local countPlural = count: plural"],
+        "selectors": ["countPlural"],
+        "match": {
+          "countPlural=one": "Собрать {count} коллекцию в крыле «{wing}»",
+          "countPlural=few": "Собрать {count} коллекции в крыле «{wing}»",
+          "countPlural=many": "Собрать {count} коллекций в крыле «{wing}»",
+          "countPlural=other": "Собрать {count} коллекции в крыле «{wing}»"
+        }
+      }
+    ]
+  }
+}

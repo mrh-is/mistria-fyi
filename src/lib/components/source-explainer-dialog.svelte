@@ -7,7 +7,7 @@
     sourceFilterLabel,
     sourceFilterMembersLabel,
   } from "#lib/data/source-filters.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { SourceFilter } from "#lib/data/source-filters.js";

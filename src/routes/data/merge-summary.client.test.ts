@@ -2,8 +2,8 @@ import { render } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { formatNumber, formatPercent } from "#lib/utils/format.js";
 
 import MergeSummary from "./merge-summary.svelte";

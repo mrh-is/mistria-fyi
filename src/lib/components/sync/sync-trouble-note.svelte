@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { stopSyncing } from "#lib/sync/sharing.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import CourierNote from "./courier-note.svelte";

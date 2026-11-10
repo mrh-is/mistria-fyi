@@ -23,7 +23,6 @@
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { emptyProgress, filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
   import {
@@ -35,6 +34,7 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";

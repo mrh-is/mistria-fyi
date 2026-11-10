@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 async function runLoad(): Promise<unknown> {
   vi.resetModules();

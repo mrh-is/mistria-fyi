@@ -2,7 +2,7 @@
   import XIcon from "@tabler/icons-svelte-runes/icons/x";
 
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import * as m from "#lib/ui-messages/messages.js";
 </script>
 
 <!--

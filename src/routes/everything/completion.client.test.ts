@@ -4,10 +4,10 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 import AllPage from "./+page.svelte";

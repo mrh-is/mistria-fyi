@@ -1,0 +1,72 @@
+{
+  "villagers_page_description": {
+    "en": "Track friendship & romance with the villagers of Fields of Mistria.",
+    "ja": "Fields of Mistriaの町の住民との友情や恋愛を記録します。",
+    "zh-Hans": "追踪《Fields of Mistria》中与村民的友情与恋爱进度。",
+    "zh-Hant": "追蹤《Fields of Mistria》中與村民的友情與戀愛進度。",
+    "es": "Sigue la amistad y el romance con los aldeanos de Fields of Mistria.",
+    "fr": "Suivez l'amitié et les romances avec les habitants de Fields of Mistria.",
+    "ko": "Fields of Mistria 마을 주민들과의 우정과 로맨스를 기록하세요.",
+    "ru": "Отслеживайте дружбу и романтические отношения с жителями Fields of Mistria."
+  },
+  "villagers_roster_aria": {
+    "en": "Villager roster",
+    "ja": "町の住民の名簿",
+    "zh-Hans": "村民名册",
+    "zh-Hant": "村民名冊",
+    "es": "Lista de aldeanos",
+    "fr": "Liste des habitants",
+    "ko": "마을 주민 명부",
+    "ru": "Список жителей"
+  },
+  "villagers_break_ups_hint": {
+    "en": "Match this to your game’s setting before you get engaged.",
+    "ja": "婚約する前に、ゲーム内の設定に合わせてね。",
+    "zh-Hans": "订婚前，记得将这里的选项与游戏中的设置保持一致。",
+    "zh-Hant": "訂婚前，記得將這裡的選項與遊戲中的設定保持一致。",
+    "es": "Haz que coincida con el ajuste de tu partida antes de comprometerte.",
+    "fr": "Fais correspondre ce choix au réglage de ta partie avant tes fiançailles.",
+    "ko": "약혼하기 전에 게임 속 설정과 맞춰 주세요.",
+    "ru": "До помолвки выбери тот же вариант, что и в настройках игры."
+  },
+  "villagers_break_ups_disabled": {
+    "en": "Break-ups disabled",
+    "ja": "別れは無効",
+    "zh-Hans": "已禁用分手",
+    "zh-Hant": "已停用分手",
+    "es": "Rupturas desactivadas",
+    "fr": "Ruptures désactivées",
+    "ko": "이별 비활성화됨",
+    "ru": "Расставания отключены"
+  },
+  "villagers_break_ups_enabled": {
+    "en": "Break-ups enabled",
+    "ja": "別れは有効",
+    "zh-Hans": "已启用分手",
+    "zh-Hant": "已啟用分手",
+    "es": "Rupturas activadas",
+    "fr": "Ruptures activées",
+    "ko": "이별 활성화됨",
+    "ru": "Расставания включены"
+  },
+  "villagers_alphabet_aria": {
+    "en": "Villager alphabet",
+    "ja": "町の住民の五十音索引",
+    "zh-Hans": "村民字母索引",
+    "zh-Hant": "村民字母索引",
+    "es": "Índice alfabético de aldeanos",
+    "fr": "Index alphabétique des habitants",
+    "ko": "마을 주민 자모 색인",
+    "ru": "Алфавитный указатель жителей"
+  },
+  "villagers_jump_to_initial_aria": {
+    "en": "Jump to {initial}, first villager record",
+    "ja": "{initial}へジャンプ、最初の町の住民の記録",
+    "zh-Hans": "跳转到{initial}，第一个村民记录",
+    "zh-Hant": "跳至{initial}，第一個村民記錄",
+    "es": "Ir a {initial}, primer registro de aldeano",
+    "fr": "Aller à {initial}, premier habitant",
+    "ko": "{initial}(으)로 이동, 첫 번째 마을 주민 기록",
+    "ru": "Перейти к {initial}, первая запись жителя"
+  }
+}

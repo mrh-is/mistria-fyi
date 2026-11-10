@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { Window } from "happy-dom";
 
+import { readUiMessageSources } from "../../../scripts/lib/ui-message-sources.js";
 import { escapeHtml, OFFLINE_FONTS_SLOT } from "../pwa/offline-page.js";
 import { LOCALE_CODES } from "../types/locale.js";
 
@@ -18,7 +19,7 @@ export const OFFLINE_PAGE_MODULE = "virtual:mfg/offline-page";
 const RESOLVED_OFFLINE_PAGE_MODULE = `\0${OFFLINE_PAGE_MODULE}`;
 
 /**
- * A template slot the worker fills per locale: `%m.<key>%` for a Paraglide message,
+ * A template slot the worker fills per locale: `%m.<key>%` for a keyed UI message,
  * `%offline.lang%` & `%offline.dir%` for `<html>`, and the font stylesheet's link. Captured, so
  * splitting the template on it alternates parts & slots.
  */
@@ -27,7 +28,7 @@ const LOCALE_SLOT = /%(m\.[a-z][a-z0-9_]*|offline\.(?:lang|dir|fonts))%/;
 /** Each locale's parsed `messages/<locale>.json`. */
 export type LocaleMessages = Readonly<Record<LocaleCode, Readonly<Record<string, unknown>>>>;
 
-/** Paraglide's `baseLocale`, whose text a locale's missing message falls back to. */
+/** The app's base locale, whose text a locale's missing message falls back to. */
 const BASE_LOCALE: LocaleCode = "en";
 
 // Top-level rules in app.css: the selector at the start of a line, the closing brace alone on one.
@@ -64,7 +65,7 @@ function requireRule(css: string, rule: RegExp, selector: string): string {
 }
 
 /**
- * `locale`'s text direction, as Paraglide's `getTextDirection` reads it, so `dir` matches the
+ * `locale`'s text direction, from the app locale runtime, so `dir` matches the
  * app's `<html dir>`. Read from `Intl` because the build can't import the runtime it compiles.
  */
 function textDirection(locale: LocaleCode): "ltr" | "rtl" {
@@ -72,7 +73,7 @@ function textDirection(locale: LocaleCode): "ltr" | "rtl" {
 }
 
 /**
- * `key`'s text in `locale`, falling back to the base locale's as Paraglide's compiled messages do.
+ * `key`'s text in `locale`, falling back to the base locale's.
  * Throws for a message that isn't plain text: the page has no runtime to fill placeholders.
  */
 function messageText(messages: LocaleMessages, locale: LocaleCode, key: string): string {
@@ -148,7 +149,7 @@ export function renderOfflinePage(
 /**
  * Serves `src/service-worker/offline.html`, rendered, as {@link OFFLINE_PAGE_MODULE}, in dev & build
  * alike. The service worker bundles the page (#226), so it shares no stylesheet with the app, and
- * has no Paraglide runtime; this hands it the app's fonts, colours & saved theme, and every
+ * has no app message runtime; this hands it the app's fonts, colours & saved theme, and every
  * locale's text from `messages/` (#206).
  */
 export function offlinePagePlugin(): Plugin {
@@ -165,11 +166,10 @@ export function offlinePagePlugin(): Plugin {
         this.addWatchFile(source);
         return readFileSync(source, "utf8");
       };
-      const messages = Object.fromEntries(
-        LOCALE_CODES.map((locale) => [
-          locale,
-          JSON.parse(read(`messages/${locale}.json`)) as Record<string, unknown>,
-        ]),
+      const messages = readUiMessageSources(
+        path.join(root, "messages"),
+        LOCALE_CODES,
+        (file) =>{  this.addWatchFile(file); },
       ) as LocaleMessages;
       const page = renderOfflinePage(
         read("src/service-worker/offline.html"),

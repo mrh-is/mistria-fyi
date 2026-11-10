@@ -1,0 +1,32 @@
+{
+  "all_page_title": {
+    "en": "Checklist of everything",
+    "ja": "すべてのチェックリスト",
+    "zh-Hans": "全部清单",
+    "zh-Hant": "全部清單",
+    "es": "Lista de todo",
+    "fr": "Liste de tout",
+    "ko": "전체 체크리스트",
+    "ru": "Список всего"
+  },
+  "all_page_description": {
+    "en": "View & track every Fields of Mistria completion category in one checklist.",
+    "ja": "Fields of Mistriaのすべてのコンプリート項目を1つのチェックリストで確認・記録できます。",
+    "zh-Hans": "在同一份清单中查看并追踪《Fields of Mistria》的所有完成度类别。",
+    "zh-Hant": "在同一份清單中查看並追蹤《Fields of Mistria》的所有完成度類別。",
+    "es": "Consulta y sigue todas las categorías de completado de Fields of Mistria en una sola lista.",
+    "fr": "Consultez et suivez chaque catégorie de complétion de Fields of Mistria dans une seule liste.",
+    "ko": "Fields of Mistria의 모든 달성 카테고리를 하나의 체크리스트에서 확인하고 기록하세요.",
+    "ru": "Просматривайте и отслеживайте все категории прохождения Fields of Mistria в одном списке."
+  },
+  "all_completed_message": {
+    "en": "You’re all done! You can admire everything under Completed.",
+    "ja": "ぜんぶ終わりました！「完了済み」でじっくり眺められます。",
+    "zh-Hans": "全部完成啦！可以去“已完成”里好好欣赏一番。",
+    "zh-Hant": "全部完成啦！可以去「已完成」裡好好欣賞一番。",
+    "es": "¡Lo has terminado todo! Puedes admirarlo todo en Completado.",
+    "fr": "Tout est fait ! Vous pouvez tout admirer dans Terminé.",
+    "ko": "다 끝냈어요! 완료에서 전부 감상할 수 있어요.",
+    "ru": "Всё готово! Любуйтесь всем этим в разделе «Выполнено»."
+  }
+}

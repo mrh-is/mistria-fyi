@@ -7,11 +7,11 @@ import { getName } from "#lib/data/names.js";
 import * as celebration from "#lib/effects/celebrate.js";
 import { getMaxMineFloor, getMaxRenownLevel, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
-import * as m from "#lib/paraglide/messages.js";
 import * as questSections from "#lib/presentation/quest-sections.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 import CompletionLists from "./completion-lists.test-harness.svelte";

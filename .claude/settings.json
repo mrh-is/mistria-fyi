@@ -24,7 +24,7 @@
       "Bash(pnpm run build *)",
       "Bash(pnpm run fonts:check *)",
       "Bash(pnpm run fonts:lint *)",
-      "Bash(pnpm run paraglide:compile *)",
+      "Bash(pnpm run messages:compile *)",
       "Bash(pnpm run sprites:manifest *)",
       "Bash(pnpm run preview *)",
       "Bash(pnpm run verify *)",

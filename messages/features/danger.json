@@ -1,0 +1,62 @@
+{
+  "danger_zone_title": {
+    "en": "Danger zone",
+    "ja": "危険な操作",
+    "zh-Hans": "危险区域",
+    "zh-Hant": "危險區域",
+    "es": "Zona de peligro",
+    "fr": "Zone de danger",
+    "ko": "위험 구역",
+    "ru": "Опасная зона"
+  },
+  "danger_zone_summary": {
+    "en": "Erase all tracked progress.",
+    "ja": "追跡した進捗をすべて消去します。",
+    "zh-Hans": "清除所有已追踪的进度。",
+    "zh-Hant": "清除所有已追蹤的進度。",
+    "es": "Borra todo el progreso registrado.",
+    "fr": "Effacer toute la progression suivie.",
+    "ko": "추적한 모든 진행 상황을 삭제합니다.",
+    "ru": "Стереть весь отслеженный прогресс."
+  },
+  "danger_zone_reset_action": {
+    "en": "Reset all progress",
+    "ja": "すべての進捗をリセット",
+    "zh-Hans": "重置所有进度",
+    "zh-Hant": "重設所有進度",
+    "es": "Reiniciar todo el progreso",
+    "fr": "Réinitialiser toute la progression",
+    "ko": "모든 진행 상황 초기화",
+    "ru": "Сбросить весь прогресс"
+  },
+  "danger_zone_confirm_title": {
+    "en": "Reset all progress?",
+    "ja": "すべての進捗をリセットしますか?",
+    "zh-Hans": "重置所有进度？",
+    "zh-Hant": "重設所有進度？",
+    "es": "¿Reiniciar todo el progreso?",
+    "fr": "Réinitialiser toute la progression ?",
+    "ko": "모든 진행 상황을 초기화할까요?",
+    "ru": "Сбросить весь прогресс?"
+  },
+  "danger_zone_confirm_description": {
+    "en": "This will erase all your tracked progress. This cannot be undone.",
+    "ja": "追跡したすべての進捗が消去されます。この操作は取り消せません。",
+    "zh-Hans": "这将清除你所有已追踪的进度。此操作无法撤销。",
+    "zh-Hant": "這將清除你所有已追蹤的進度。此操作無法復原。",
+    "es": "Esto borrará todo tu progreso registrado. Esta acción no se puede deshacer.",
+    "fr": "Cela effacera toute votre progression suivie. Cette action est irréversible.",
+    "ko": "추적한 모든 진행 상황이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "ru": "Это удалит весь ваш отслеженный прогресс. Это действие нельзя отменить."
+  },
+  "danger_zone_confirm_action": {
+    "en": "Yes, reset everything",
+    "ja": "はい、すべてリセットします",
+    "zh-Hans": "是的，重置全部",
+    "zh-Hant": "是的，重設全部",
+    "es": "Sí, reiniciar todo",
+    "fr": "Oui, tout réinitialiser",
+    "ko": "네, 모두 초기화합니다",
+    "ru": "Да, сбросить всё"
+  }
+}

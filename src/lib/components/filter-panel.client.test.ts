@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import FilterPanel from "#lib/components/filter-panel.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 

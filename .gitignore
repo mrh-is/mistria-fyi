@@ -47,11 +47,8 @@ pipeline/output
 # Browser-suite copy of the hosted Satoshi (scripts/playwright-satoshi.ts)
 /tests/browser/fixtures/local/
 
-# Paraglide (generated) and inlang project state — each has its own nested .gitignore too, but
-# ESLint's flat-config ignore only reads this root file.
-/src/lib/paraglide/
-/project.inlang/*
-!/project.inlang/settings.json
+# Generated UI messages
+/src/lib/ui-messages/
 
 # Locale font build inputs/outputs (scripts/locale-fonts)
 /scripts/locale-fonts/input/

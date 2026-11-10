@@ -2,8 +2,8 @@
   import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import WelcomeCard from "#lib/components/welcome-card.svelte";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
 </script>
 
 <Dialog.Root

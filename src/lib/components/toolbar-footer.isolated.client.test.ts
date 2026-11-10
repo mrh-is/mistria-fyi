@@ -6,10 +6,10 @@ import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.sv
 import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 

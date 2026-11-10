@@ -1,0 +1,62 @@
+{
+  "transfer_card_title": {
+    "en": "Transfer to another device",
+    "ja": "他の端末へ転送",
+    "zh-Hans": "传输到其他设备",
+    "zh-Hant": "傳輸到其他裝置",
+    "es": "Transferir a otro dispositivo",
+    "fr": "Transférer vers un autre appareil",
+    "ko": "다른 기기로 전송",
+    "ru": "Перенос на другое устройство"
+  },
+  "transfer_card_summary": {
+    "en": "Take your progress to another device.",
+    "ja": "進行状況を別の端末に持っていきましょう。",
+    "zh-Hans": "把你的进度带到另一台设备上。",
+    "zh-Hant": "把你的進度帶到另一台裝置上。",
+    "es": "Lleva tu progreso a otro dispositivo.",
+    "fr": "Emportez votre progression sur un autre appareil.",
+    "ko": "진행 상황을 다른 기기로 가져가세요.",
+    "ru": "Возьмите свой прогресс на другое устройство."
+  },
+  "transfer_sync_guidance": {
+    "en": "With sync, your other device gets your gaming computer’s save file.",
+    "ja": "同期を使うと、別の端末がゲーム用パソコンのセーブファイルを受け取ります。",
+    "zh-Hans": "开启同步后，你的另一台设备会收到游戏电脑上的存档。",
+    "zh-Hant": "開啟同步後，你的另一台裝置會收到遊戲電腦上的存檔。",
+    "es": "Con la sincronización, tu otro dispositivo recibe la partida guardada de tu ordenador de juego.",
+    "fr": "Avec la synchronisation, votre autre appareil reçoit la sauvegarde de votre ordinateur de jeu.",
+    "ko": "동기화를 쓰면 다른 기기가 게임용 컴퓨터의 세이브 파일을 받아요.",
+    "ru": "С синхронизацией ваше другое устройство получает сохранение с игрового компьютера."
+  },
+  "transfer_sync_action": {
+    "en": "Set up sync",
+    "ja": "同期を設定",
+    "zh-Hans": "设置同步",
+    "zh-Hant": "設定同步",
+    "es": "Configurar sincronización",
+    "fr": "Configurer la synchronisation",
+    "ko": "동기화 설정",
+    "ru": "Настроить синхронизацию"
+  },
+  "transfer_open_backup_action": {
+    "en": "Go to Backup & restore",
+    "ja": "バックアップと復元へ",
+    "zh-Hans": "前往备份与恢复",
+    "zh-Hant": "前往備份與還原",
+    "es": "Ir a Copia de seguridad y restauración",
+    "fr": "Aller à Sauvegarde et restauration",
+    "ko": "백업 및 복원으로 이동",
+    "ru": "Перейти к резервному копированию"
+  },
+  "transfer_backup_guidance": {
+    "en": "To move anything you check off by hand, export a backup here, send the file to your other device, and restore it there. Restoring replaces that device’s tracker progress.",
+    "ja": "手動でチェックした内容を移すには、ここでバックアップを書き出し、別の端末にファイルを送って復元してください。復元すると、その端末の記録は置き換わります。",
+    "zh-Hans": "要转移手动勾选的内容，请在这里导出备份，将文件发送到其他设备，再在那里恢复。恢复会替换该设备上的图鉴进度。",
+    "zh-Hant": "要轉移手動勾選的內容，請在這裡匯出備份，將檔案傳送到其他裝置，再在那裡還原。還原會取代該裝置上的圖鑑進度。",
+    "es": "Para mover lo que marques a mano, exporta aquí una copia de seguridad, envíala a tu otro dispositivo y restáurala allí. Esto reemplaza el progreso del registro de ese dispositivo.",
+    "fr": "Pour déplacer ce que vous cochez à la main, exportez une copie ici, envoyez le fichier à votre autre appareil et restaurez-le là-bas. Cela remplace la progression du guide sur cet appareil.",
+    "ko": "직접 체크한 내용을 옮기려면 여기서 백업을 내보내고 다른 기기로 파일을 보내 복원하세요. 복원하면 그 기기의 기록이 교체돼요.",
+    "ru": "Чтобы перенести ручные отметки, экспортируйте здесь резервную копию, отправьте файл на другое устройство и восстановите его там. Восстановление заменяет прогресс справочника на том устройстве."
+  }
+}

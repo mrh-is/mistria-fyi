@@ -1,8 +1,8 @@
 import { toast } from "svelte-sonner";
 
 import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { RecipeId } from "#lib/types/tracker-data.js";

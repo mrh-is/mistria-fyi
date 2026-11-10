@@ -1,0 +1,22 @@
+{
+  "page_header_back_to_home": {
+    "en": "Back to home",
+    "ja": "ホームに戻る",
+    "zh-Hans": "返回首页",
+    "zh-Hant": "返回首頁",
+    "es": "Volver al inicio",
+    "fr": "Retour à l’accueil",
+    "ko": "홈으로 돌아가기",
+    "ru": "Назад на главную"
+  },
+  "page_header_progress": {
+    "en": "{completed} of {total} completed",
+    "ja": "{total}件中{completed}件完了",
+    "zh-Hans": "已完成 {completed}/{total}",
+    "zh-Hant": "已完成 {completed}/{total}",
+    "es": "{completed} de {total} completados",
+    "fr": "{completed} sur {total} terminés",
+    "ko": "{total}개 중 {completed}개 완료",
+    "ru": "Выполнено {completed} из {total}"
+  }
+}

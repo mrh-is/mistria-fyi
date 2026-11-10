@@ -4,8 +4,9 @@ import path from "node:path";
 import { Window } from "happy-dom";
 import { describe, expect, it } from "vitest";
 
-import * as m from "../paraglide/messages.js";
-import { getTextDirection } from "../paraglide/runtime.js";
+import { readUiMessageSources } from "../../../scripts/lib/ui-message-sources.js";
+import * as m from "../ui-messages/messages.js";
+import { getTextDirection } from "../i18n/locale-runtime.js";
 import { offlinePageHtml } from "../pwa/offline-page.js";
 import { inlineScriptHashes } from "../security/inline-scripts.js";
 import { LOCALE_CODES } from "../types/locale.js";
@@ -16,12 +17,7 @@ import type { LocaleMessages } from "./offline-page.js";
 const root = path.resolve(import.meta.dirname, "../../..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-const REAL_MESSAGES = Object.fromEntries(
-  LOCALE_CODES.map((locale) => [
-    locale,
-    JSON.parse(read(`messages/${locale}.json`)) as Record<string, unknown>,
-  ]),
-) as LocaleMessages;
+const REAL_MESSAGES = readUiMessageSources(path.join(root, "messages"), LOCALE_CODES) as LocaleMessages;
 
 /** `messages` for every locale, each one's own text overriding `en`'s. */
 function messagesFor(
@@ -146,7 +142,7 @@ describe("renderOfflinePage", () => {
 
     const ja = render(APP_CSS, APP_HTML, "ja");
     expect(ja).toMatch(/^<html lang="ja" dir="ltr">/);
-    // ja has no retry message of its own, so it takes English's, as Paraglide does.
+    // ja has no retry message of its own, so it takes English's.
     expect(ja).toContain("<h1>オフラインです</h1><a>Try &lt;again&gt;</a>");
   });
 

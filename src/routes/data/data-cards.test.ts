@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import BackupCard from "./backup-card.svelte";
 import DangerZoneCard from "./danger-zone-card.svelte";

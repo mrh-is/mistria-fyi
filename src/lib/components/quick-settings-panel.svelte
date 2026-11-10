@@ -9,8 +9,8 @@
   import QuickSettingsThemePicker from "#lib/components/quick-settings-theme-picker.svelte";
   import TagDialog from "#lib/components/tag-dialog.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   let confirmSpoilers = $state(false);

@@ -11,13 +11,13 @@
     downloadProgressBackup,
     trackingReminders,
   } from "#lib/controllers/tracking-reminders.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { currentDevice } from "#lib/sync/device.js";
   import { parseFollowLink } from "#lib/sync/follow.js";
   import { syncNotice } from "#lib/sync/notice.svelte.js";
   import { browserGivesHandles } from "#lib/sync/save-source.js";
   import { followCode, retryPendingRetires, stopSyncing, switchCode } from "#lib/sync/sharing.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { goto, replaceState } from "$app/navigation";
   import { page } from "$app/state";

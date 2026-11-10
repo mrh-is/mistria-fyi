@@ -4,10 +4,10 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import AlmanacContent from "#lib/components/almanac-content.svelte";
 import { getAlmanacEntryNames, getName } from "#lib/data/names.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 // Finishing a section fires confetti, which needs a canvas happy-dom doesn't provide.

@@ -12,9 +12,9 @@
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
   import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { building } from "$app/env";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";

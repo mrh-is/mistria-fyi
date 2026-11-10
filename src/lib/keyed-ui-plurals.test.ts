@@ -1,0 +1,82 @@
+import { describe, expect, it } from "vitest";
+
+import { LOCALE_CODES } from "#lib/types/locale.js";
+import * as m from "#lib/ui-messages/messages.js";
+
+import type { LocaleCode } from "#lib/types/locale.js";
+
+describe("plural messages", () => {
+  it("covers every plural category Intl.PluralRules reports for each locale", () => {
+    for (const locale of LOCALE_CODES) {
+      const categories = new Intl.PluralRules(locale).resolvedOptions().pluralCategories;
+      for (const count of [0, 1, 2, 3, 4, 5, 11, 21, 22, 25]) {
+        const category = new Intl.PluralRules(locale).select(count);
+        expect(categories).toContain(category);
+
+        const result = m.search_results_count({ count }, { locale });
+        expect(result).not.toBe("search_results_count");
+        expect(result).toContain(count.toString());
+
+        const questRecipesResult = m.quest_marked_completed_with_recipes(
+          { count, name: "Copper Sword" },
+          { locale },
+        );
+        expect(questRecipesResult).not.toBe("quest_marked_completed_with_recipes");
+        expect(questRecipesResult).toContain(count.toString());
+
+        for (const message of [
+          m.merge_label_mine_floor,
+          m.merge_label_heart_levels,
+          m.merge_label_renown,
+          m.merge_label_skill_levels,
+        ]) {
+          const messageResult = message({ count, countText: count.toString() }, { locale });
+          expect(messageResult).toContain(count.toString());
+        }
+      }
+    }
+  });
+
+  it("resolves all four Russian plural categories to distinct grammatical forms", () => {
+    const locale: LocaleCode = "ru";
+
+    expect(m.search_results_count({ count: 1 }, { locale })).toBe("1 результат");
+    expect(m.search_results_count({ count: 21 }, { locale })).toBe("21 результат");
+
+    expect(m.search_results_count({ count: 2 }, { locale })).toBe("2 результата");
+    expect(m.search_results_count({ count: 22 }, { locale })).toBe("22 результата");
+
+    expect(m.search_results_count({ count: 5 }, { locale })).toBe("5 результатов");
+    expect(m.search_results_count({ count: 11 }, { locale })).toBe("11 результатов");
+    expect(m.search_results_count({ count: 0 }, { locale })).toBe("0 результатов");
+  });
+
+  it("interpolates the item name alongside the recipe-count plural", () => {
+    expect(
+      m.quest_marked_completed_with_recipes({ count: 1, name: "Copper Sword" }, { locale: "en" }),
+    ).toBe("Checked off “Copper Sword” and unlocked 1 recipe");
+    expect(
+      m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "en" }),
+    ).toBe("Checked off “Copper Sword” and unlocked 3 recipes");
+    expect(
+      m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
+    ).toBe("«Copper Sword» отмечено, разблокировано 3 рецепта");
+  });
+
+  it("resolves all four Russian plural categories for the mine-floor merge-count label", () => {
+    const locale: LocaleCode = "ru";
+
+    expect(m.merge_label_mine_floor({ count: 1, countText: "1" }, { locale })).toBe(
+      "Шахтный этаж: +1 этаж",
+    );
+    expect(m.merge_label_mine_floor({ count: 3, countText: "3" }, { locale })).toBe(
+      "Шахтный этаж: +3 этажа",
+    );
+    expect(m.merge_label_mine_floor({ count: 5, countText: "5" }, { locale })).toBe(
+      "Шахтный этаж: +5 этажей",
+    );
+    expect(m.merge_label_mine_floor({ count: 11, countText: "11" }, { locale })).toBe(
+      "Шахтный этаж: +11 этажей",
+    );
+  });
+});

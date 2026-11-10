@@ -2,9 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/sv
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 // The receiver's surfaces, against a following device that has every reason to show them.
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));

@@ -11,10 +11,10 @@
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { searchAllCategories } from "#lib/engine/search.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { Attachment } from "svelte/attachments";

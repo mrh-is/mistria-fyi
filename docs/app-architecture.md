@@ -33,8 +33,8 @@ these types; the store owns the mutable instance.
 
 Pure functions with no side effects. They accept explicit inputs and return computed values.
 oxlint's `no-restricted-imports` enforces the layering: engine modules and their tests can't import
-from `src/lib/stores/`, `src/lib/components/`, or `src/lib/paraglide/`, even for types. Engine tests
-build their inputs directly rather than driving the store. Service-worker cache code & update
+from `src/lib/stores/`, `src/lib/components/`, or `src/lib/ui-messages/`, even for types. Engine
+tests build their inputs directly rather than driving the store. Service-worker cache code & update
 plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src/lib/presentation/`.
 
 ### Other `src/lib/` layers
@@ -618,8 +618,8 @@ treat each as an API. See
 - **Stored progress & backups:** whatever any earlier build stored or exported keeps loading in
   every later build, and a build never overwrites or quarantines data a newer build wrote (see
   [localStorage](#localstorage)).
-- **Locale cookie:** `mistria-fyi-locale`, set explicitly in `src/lib/i18n/paraglide-options.ts` so
-  a library change can't silently reset every player's language.
+- **Locale cookie:** `mistria-fyi-locale`, defined in `src/lib/i18n/locale-runtime.ts` so a library
+  change can't silently reset every player's language.
 - **PWA identity:** the manifest's `id: "/"` & `start_url: "/"`. Changing the `id` orphans every
   installed copy.
 - **Service-worker messages:** `mfg:cache-locales`, `mfg:client-version`, & `mfg:skip-waiting`. An

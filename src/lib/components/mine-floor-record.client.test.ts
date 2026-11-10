@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import MineFloorRecordHarness from "#lib/components/mine-floor-record.test-harness.svelte";
-import * as m from "#lib/paraglide/messages.js";
+import * as m from "#lib/ui-messages/messages.js";
 
 import type { MinesBiome, MinesBiomeId } from "#lib/types/tracker-data.js";
 

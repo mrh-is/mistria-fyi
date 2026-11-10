@@ -12,12 +12,12 @@
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import { getName } from "#lib/data/names.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { retireStatus } from "#lib/sync/retire-status.svelte.js";
   import { guessPlatform } from "#lib/sync/save-folders.js";
   import { makeNewCode, resumeStoppedRetires, stopSyncing } from "#lib/sync/sharing.js";
+  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
