@@ -61,41 +61,18 @@ shared build artifact.
 The `accessibility` job in `.github/workflows/ci.yml` runs in parallel shards against the `build`
 job's output, inside the official Playwright image for the locked Playwright version. It runs for
 pull requests that touch `src/`, `static/`, `tests/`, or their configs, main pushes, 03:17 UTC
-nightly, and manual dispatch. `scripts/playwright-allocation.ts` balances shards using the measured
-durations in `tests/accessibility/duration-weights.json`, so keep any single test well under a
-shard's runtime; split a long loop into one test per locale or route. Pull-request jobs have
-read-only repository access. Failed shards upload `accessibility-report-<index>`, containing the
-HTML and JSON reports, traces, and screenshots. A trusted scheduled job has narrowly scoped
-issue-write permission and synchronizes one open GitHub issue for accessibility-test failures. Setup
-failures remain workflow failures and do not create misleading regression issues. Recovery adds a
-comment and closes the automated issue.
+nightly, and manual dispatch. Playwright splits individual tests across two shards with
+`--shard=1/2` and `--shard=2/2` in fully parallel mode. The workflow test checks that the two shards
+cover every accessibility test exactly once. Pull-request jobs have read-only repository access.
+Failed shards upload `accessibility-report-<index>`, containing the HTML and JSON reports, traces,
+and screenshots. A trusted scheduled job has narrowly scoped issue-write permission and synchronizes
+one open GitHub issue for accessibility-test failures. Setup failures remain workflow failures and
+do not create misleading regression issues. Recovery adds a comment and closes the automated issue.
 
 The initial local measurement and the GitHub Actions median are recorded in the pull request. The
 approved budget is no more than two minutes of additional merge-ready wall time. If the measured
 GitHub Actions median exceeds that budget, pull requests use the stable `@critical` contract while
 the complete route-and-theme matrix remains nightly and manually dispatchable.
-
-### Duration weights
-
-`tests/accessibility/duration-weights.json` holds each test’s median passing duration from CI jobs
-on `ubuntu-latest`, with retries excluded. Its `source` block names the runs. The allocator gives a
-test with no weight the default, so a new or renamed test still runs exactly once. Each job’s
-`allocation.json` lists those tests as `fallbackTests`.
-
-To refresh the file, pick recent completed CI runs with `accessibility-timings-*` artifacts, which
-expire after 14 days, and pass their IDs:
-
-```sh
-pnpm exec tsx scripts/playwright-allocation-weights.ts <run-id> <run-id> <run-id>
-```
-
-The script keeps only tests that Playwright lists today, and it fails if one has no passing sample.
-
-Balanced weights don’t guarantee equal shards. Across 41 jobs measured on November 1, 2026, the same
-tests ran from 0.65 to 1.25 times their median duration depending on the job, and that spread
-appears to account for most of the gap between two shards. Its cause isn’t known. The refresh that
-day left a median gap of 10.5 s, down from 12.9 s over five runs each, so don’t expect one to close
-the gap ([#396](https://github.com/mrh-is/mistria-fyi/pull/396)).
 
 ### Initial local measurement
 

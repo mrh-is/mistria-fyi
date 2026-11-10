@@ -131,7 +131,6 @@ const plainNodeProject = { cacheDir: projectListingCacheDir, resolve: { alias: l
  * changes can break them. They run on every pull request.
  */
 const alwaysRunScriptTests = [
-  "scripts/playwright-allocation.test.ts",
   "scripts/playwright-satoshi.test.ts",
   "scripts/sprites/sprite-manifest.test.ts",
 ];
