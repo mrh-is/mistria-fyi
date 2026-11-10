@@ -5014,13 +5014,13 @@
           "itemIds": [
             "dingy_flooring_v1"
           ],
-          "variant": "orange"
+          "variant": "brown"
         },
         {
           "itemIds": [
             "dingy_flooring_v2"
           ],
-          "variant": "sage"
+          "variant": "gray"
         },
         {
           "itemIds": [
@@ -5987,7 +5987,7 @@
           "itemIds": [
             "dingy_garbage_bag_v1"
           ],
-          "variant": "brown"
+          "variant": "black"
         },
         {
           "itemIds": [
@@ -7222,7 +7222,7 @@
           "itemIds": [
             "dingy_string_lights_v1"
           ],
-          "variant": "orange"
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -7845,7 +7845,7 @@
           "itemIds": [
             "dingy_pile_of_newspapers_v2"
           ],
-          "variant": "pink"
+          "variant": "gray"
         },
         {
           "itemIds": [
@@ -8537,7 +8537,7 @@
           "itemIds": [
             "dingy_table_v2"
           ],
-          "variant": "orange"
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -9409,7 +9409,7 @@
           "itemIds": [
             "dingy_rug_v2"
           ],
-          "variant": "orange"
+          "variant": "red"
         },
         {
           "itemIds": [

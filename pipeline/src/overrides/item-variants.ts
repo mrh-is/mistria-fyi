@@ -332,9 +332,9 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
     named: {
       dingy_flooring_v1: {
         description: "This tiled floor has seen better days.",
-        variant: "orange",
+        variant: "brown",
       },
-      dingy_flooring_v2: { description: "This tiled floor has seen better days.", variant: "sage" },
+      dingy_flooring_v2: { description: "This tiled floor has seen better days.", variant: "gray" },
     },
   },
   {
@@ -408,7 +408,7 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
   {
     name: "Garbage Bag",
     named: {
-      dingy_garbage_bag_v1: { description: "A full bag of garbage.", variant: "brown" },
+      dingy_garbage_bag_v1: { description: "A full bag of garbage.", variant: "black" },
       dingy_garbage_bag_v2: { description: "A full bag of garbage.", variant: "green" },
     },
   },
@@ -688,7 +688,7 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
     named: {
       dingy_string_lights_v1: {
         description: "These stringlights are nearly useless.",
-        variant: "orange",
+        variant: "brown",
       },
       dingy_string_lights_v2: {
         description: "These stringlights are nearly useless.",
@@ -926,7 +926,7 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
       },
       dingy_pile_of_newspapers_v2: {
         description: "A pile of very old newspapers.",
-        variant: "pink",
+        variant: "gray",
       },
     },
   },
@@ -983,7 +983,7 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
       },
       dingy_table_v2: {
         description: "A table with one leg that's shorter than the others.",
-        variant: "orange",
+        variant: "brown",
       },
     },
   },
@@ -1208,7 +1208,7 @@ export const ITEM_VARIANT_SETS: readonly ItemVariantSet[] = [
     name: "Tattered Rug",
     named: {
       dingy_rug_v1: { description: "A threadbare and tattered rug.", variant: "blue" },
-      dingy_rug_v2: { description: "A threadbare and tattered rug.", variant: "orange" },
+      dingy_rug_v2: { description: "A threadbare and tattered rug.", variant: "red" },
     },
   },
   {
