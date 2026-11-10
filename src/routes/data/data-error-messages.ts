@@ -1,5 +1,4 @@
 import { getLocale } from "#lib/i18n/locale-runtime.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { formatNumber } from "#lib/utils/format.js";
 
 import type { SaveImportWarning } from "#lib/engine/import-save.js";
@@ -11,24 +10,15 @@ import type { SavArchiveErrorDetail } from "#lib/engine/parse-sav.js";
 export function formatSavArchiveError(detail: SavArchiveErrorDetail): string {
   switch (detail.code) {
     case "corrupt":
-      return m.import_error_sav_corrupt({ tryAutosave: m.import_error_try_autosave() });
+      return `Hmm, we can’t read this as a Fields of Mistria save. It might be damaged, or a different file. Try the newest file that ends in “autosave”.`;
     case "decompressed-too-large":
-      return m.import_error_sav_decompressed_too_large({
-        max: formatBytes(detail.maxBytes),
-        tryAutosave: m.import_error_try_autosave(),
-      });
+      return `This file unpacks to more than ${formatBytes(detail.maxBytes)}, which is way bigger than a real save. It might be damaged. Try the newest file that ends in “autosave”.`;
     case "invalid-entry":
-      return m.import_error_sav_invalid_entry({
-        entry: detail.entry,
-        tryAutosave: m.import_error_try_autosave(),
-      });
+      return `We couldn’t read the ${detail.entry} part of this save, so it might be damaged. Try the newest file that ends in “autosave”.`;
     case "no-save-data":
-      return m.import_error_sav_no_save_data({ tryAutosave: m.import_error_try_autosave() });
+      return `We couldn’t find any progress in this file. Try the newest file that ends in “autosave”.`;
     case "too-large":
-      return m.import_error_sav_too_large({
-        max: formatBytes(detail.maxBytes),
-        size: formatBytes(detail.sizeBytes),
-      });
+      return `Mamma mia, that’s a big file. This app can only read save files up to ${formatBytes(detail.maxBytes)}, and that file is ${formatBytes(detail.sizeBytes)}. Maybe double-check you picked the right one?`;
   }
 }
 
@@ -37,18 +27,15 @@ export function formatSaveImportWarning(warning: SaveImportWarning): string {
     case "level":
       return formatLevelWarning(warning);
     case "not-a-list":
-      return m.import_warning_not_a_list({ path: warning.path });
+      return `${warning.path} isn’t a list; skipped`;
     case "not-an-object":
-      return m.import_warning_not_an_object({ path: warning.path });
+      return `${warning.path} isn’t an object; skipped`;
     case "unknown-id":
-      return m.import_warning_unknown_id({ id: warning.id, path: warning.path });
+      return `${warning.path}: unrecognized ID ${warning.id}; skipped`;
     case "unreadable-entries":
-      return m.import_warning_unreadable_entries({
-        count: formatNumber(warning.count, getLocale()),
-        path: warning.path,
-      });
+      return `${warning.path}: unreadable entries skipped (${formatNumber(warning.count, getLocale())})`;
     case "unrecognized-player":
-      return m.import_warning_unrecognized_player({ file: warning.file });
+      return `${warning.file} has no recognized progress fields; skipped`;
   }
 }
 
@@ -72,14 +59,10 @@ function formatLevelWarning(warning: Extract<SaveImportWarning, { code: "level" 
   const { key, value } = warning;
   switch (warning.issue) {
     case "above-max":
-      return m.import_warning_level_above_max({
-        key,
-        max: formatNumber(warning.max, getLocale()),
-        value,
-      });
+      return `${key} is ${value}, above the maximum of ${formatNumber(warning.max, getLocale())}; imported as ${formatNumber(warning.max, getLocale())}`;
     case "negative":
-      return m.import_warning_level_negative({ key, value });
+      return `${key} is ${value}, which is negative; skipped`;
     case "not-a-number":
-      return m.import_warning_level_not_a_number({ key, value });
+      return `${key} is ${value}, which isn’t a number; skipped`;
   }
 }

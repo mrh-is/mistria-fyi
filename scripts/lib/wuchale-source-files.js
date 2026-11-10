@@ -40,6 +40,7 @@ export const sharedSvelteFiles = [
   "src/lib/components/shelf-explainer.svelte",
   "src/lib/components/shelf-heading.svelte",
   "src/lib/components/skills-content.svelte",
+  "src/lib/components/skip-link.svelte",
   "src/lib/components/source-explainer-dialog.svelte",
   "src/lib/components/source-segment-text.svelte",
   "src/lib/components/spoiler.svelte",
@@ -58,6 +59,12 @@ export const sharedSvelteFiles = [
   "src/lib/components/villagers-content.svelte",
   "src/lib/components/welcome-card.svelte",
   "src/routes/sync/code-area.svelte",
+];
+
+export const sharedScriptFiles = [
+  "src/lib/controllers/tracking-reminders.svelte.ts",
+  "src/lib/presentation/shelves.ts",
+  "src/routes/data/data-error-messages.ts",
 ];
 
 export const routeSvelteFiles = [

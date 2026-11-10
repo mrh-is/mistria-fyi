@@ -13,6 +13,7 @@
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import RouteMain from "#lib/components/route-main.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
+  import SkipLink from "#lib/components/skip-link.svelte";
   import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.js";
@@ -26,7 +27,6 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { keepRetiring } from "#lib/sync/sharing.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
@@ -112,12 +112,7 @@
       : ''}"
     inert={overlayActive ? true : undefined}
   >
-    <a
-      class="sr-only focus:not-sr-only focus:absolute focus:z-[var(--z-dialog)] focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
-      href="#main-content"
-    >
-      {m.skip_to_main_content()}
-    </a>
+    <SkipLink />
     <RouteMain>
       {@render children()}
     </RouteMain>

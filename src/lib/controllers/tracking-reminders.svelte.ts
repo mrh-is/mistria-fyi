@@ -4,7 +4,6 @@ import { shouldNudgeInstall, shouldSuggestBackup } from "#lib/engine/tracking-re
 import { progressBackup } from "#lib/progress/index.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { currentDevice } from "#lib/sync/device.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
 
 import type { InstallNudgeMoment } from "#lib/engine/tracking-reminders.js";
@@ -60,10 +59,13 @@ export const trackingReminders = {
       }
       const count = userState.factCount;
       if (await userState.updateReminders((current) => ({ ...current, backupFacts: count }))) {
-        backupToast = toast(m.tracking_backup_body(), {
-          action: { label: m.backup_export_action(), onClick: downloadProgressBackup },
-          duration: 15_000,
-        });
+        backupToast = toast(
+          "You’ve been busy! Download a backup so your hard work has a safe copy.",
+          {
+            action: { label: "Export backup", onClick: downloadProgressBackup },
+            duration: 15_000,
+          },
+        );
       }
     });
   },

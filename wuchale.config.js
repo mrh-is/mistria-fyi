@@ -7,6 +7,7 @@ import {
   aboutSvelteFiles,
   routeMetadataFiles,
   routeSvelteFiles,
+  sharedScriptFiles,
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
 import { partitionedStorage } from "./scripts/lib/wuchale-storage.js";
@@ -14,6 +15,7 @@ import { ROUTE_UI_GROUPS } from "./src/lib/i18n/route-ui-groups.ts";
 import { LOCALE_CODES } from "./src/lib/types/locale.ts";
 
 const aboutStorage = partitionedStorage(["about"], () => "about");
+const sharedStorage = partitionedStorage(["shared"], () => "shared");
 const instanceRuntime = {
   // A module script can run before the route loads its catalog. Only instances read it.
   initReactive: (
@@ -71,7 +73,12 @@ export default defineConfig({
       files: sharedSvelteFiles,
       loader: "custom",
       runtime: instanceRuntime,
-      storage: partitionedStorage(["shared"], () => "shared"),
+      storage: sharedStorage,
+    }),
+    "shared-script": scriptAdapter({
+      files: sharedScriptFiles,
+      loader: "custom",
+      storage: sharedStorage,
     }),
   },
   dev: "read",

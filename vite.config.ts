@@ -18,6 +18,7 @@ import {
   aboutSvelteFiles,
   routeMetadataFiles,
   routeSvelteFiles,
+  sharedScriptFiles,
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
 import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
@@ -238,6 +239,7 @@ export default defineConfig(({ command }) => ({
       ...aboutSvelteFiles,
       ...routeMetadataFiles,
       ...routeSvelteFiles,
+      ...sharedScriptFiles,
       ...sharedSvelteFiles,
       "scripts/lib/offline-copy.ts",
     ]),
