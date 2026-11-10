@@ -20,7 +20,7 @@ import {
   routeSvelteFiles,
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
-import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
+import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import {
   configureVitestWranglerEnv,
@@ -138,7 +138,6 @@ const plainNodeProject = { cacheDir: projectListingCacheDir, resolve: { alias: l
  * changes can break them. They run on every pull request.
  */
 const alwaysRunScriptTests = [
-  "scripts/playwright-allocation.test.ts",
   "scripts/playwright-satoshi.test.ts",
   "scripts/sprites/sprite-manifest.test.ts",
 ];
@@ -408,8 +407,8 @@ export default defineConfig(({ command }) => ({
     ],
     restoreMocks: true,
     retry,
-    // With no relay tests outside CI, let the CLI select Vitest's built-in shuffle sequencer.
-    sequence: { sequencer: relayChanged || process.env.CI ? RelayFirstSequencer : undefined },
+    // Outside CI, the CLI can select Vitest’s built-in shuffle sequencer.
+    sequence: { sequencer: process.env.CI ? SharedClientSequencer : undefined },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,

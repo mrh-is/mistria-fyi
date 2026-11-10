@@ -1,9 +1,10 @@
 /* oxlint-disable no-template-curly-in-string -- these tests assert literal GitHub Actions `${{ }}` expression text */
 import playwrightPackage from "@playwright/test/package.json";
-import { spawnSync } from "node:child_process";
+import { execFile, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 
@@ -50,6 +51,7 @@ interface WorkflowStep {
 const workflow = parse(readFileSync(".github/workflows/ci.yml", "utf8")) as Workflow;
 const jobs = workflow.jobs ?? {};
 const browserJobs = ["accessibility", "pwa"] as const;
+const playwrightCli = join(import.meta.dirname, "../node_modules/@playwright/test/cli.js");
 // Scheduled housekeeping: it reports on the repository rather than deciding whether code can merge.
 const unrequiredJobs = ["nightly-report"];
 
@@ -66,6 +68,7 @@ describe("browser selection", () => {
         expect(config.use).toMatchObject({ defaultBrowserType: "chromium" });
         expect(config.use).not.toHaveProperty("channel");
       }
+      expect(accessibility.default.fullyParallel).toBe(true);
     } finally {
       vi.unstubAllEnvs();
       vi.resetModules();
@@ -75,6 +78,29 @@ describe("browser selection", () => {
 
 function runCommands(job: undefined | WorkflowJob): string[] {
   return job?.steps?.flatMap((step) => (step.run === undefined ? [] : [step.run])) ?? [];
+}
+
+interface PlaywrightSuite {
+  specs?: { id: string; tests: { projectName: string }[] }[];
+  suites?: PlaywrightSuite[];
+}
+
+function listedTestIds(suite: PlaywrightSuite): string[] {
+  return [
+    ...(suite.specs ?? []).flatMap(({ id, tests }) =>
+      tests.map(({ projectName }) => JSON.stringify([projectName, id])),
+    ),
+    ...(suite.suites ?? []).flatMap((child) => listedTestIds(child)),
+  ];
+}
+
+async function listAccessibilityTests(args: string[] = []): Promise<string[]> {
+  const { stdout } = await promisify(execFile)(
+    process.execPath,
+    [playwrightCli, "test", "--list", "--reporter=json", ...args],
+    { encoding: "utf8", env: { ...process.env, CI: "true" } },
+  );
+  return listedTestIds(JSON.parse(stdout) as PlaywrightSuite);
 }
 
 /** The `run` text of a job step that starts a verify step with no extra arguments. */
@@ -226,7 +252,7 @@ describe("CI workflow jobs", () => {
     [["stylelint.config.js"], false, true],
     [["playwright.pwa.config.ts"], false, true],
     [["scripts/vitest-wrangler-env.ts"], true, true],
-    [["scripts/vitest-relay-sequencer.ts"], true, true],
+    [["scripts/vitest-client-sequencer.ts"], false, true],
     [["src/app.css"], false, false],
     [["docs/styling.md"], false, false],
     [["tests/accessibility/home.spec.ts"], false, false],
@@ -358,6 +384,9 @@ describe("CI workflow browser suites", () => {
     "wuchale.config.js",
     "_headers",
     "scripts/playwright-preview.ts",
+    "scripts/playwright-preview-owner.ts",
+    "scripts/playwright-satoshi.ts",
+    "scripts/playwright-new-helper.ts",
     "playwright.config.ts",
     "svelte.config.js",
     "vite.config.ts",
@@ -369,12 +398,15 @@ describe("CI workflow browser suites", () => {
     expect(detectChanges("pull_request", file).browser).toBe("true");
   });
 
-  it.each(["docs/styling.md", "AGENTS.md", "scripts/verify.ts", "pipeline/src/main.ts"])(
-    "skips a pull request that only changes %s",
-    (file) => {
-      expect(detectChanges("pull_request", file).browser).toBe("false");
-    },
-  );
+  it.each([
+    "docs/styling.md",
+    "AGENTS.md",
+    "scripts/verify.ts",
+    "pipeline/src/main.ts",
+    "scripts/playwright-preview.test.ts",
+  ])("skips a pull request that only changes %s", (file) => {
+    expect(detectChanges("pull_request", file).browser).toBe("false");
+  });
 
   it.each(["push", "schedule", "workflow_dispatch"])("always runs for %s", (event) => {
     expect(detectChanges(event, "docs/styling.md").browser).toBe("true");
@@ -388,7 +420,7 @@ describe("CI workflow browser suites", () => {
     }
   });
 
-  // Each shard allocates across the total its own entry names & runs only its share, so a missing
+  // Each shard splits across the total its own entry names & runs only its share, so a missing
   // entry would silently skip that share of the tests.
   it("runs every accessibility shard", () => {
     const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
@@ -398,6 +430,22 @@ describe("CI workflow browser suites", () => {
       Array.from({ length: total }, (_, index) => `${String(index + 1)}/${String(total)}`),
     );
   });
+
+  it("runs every unsharded accessibility test exactly once across the CI shards", async () => {
+    const step = jobs.accessibility.steps?.find(({ id }) => id === "accessibility-tests");
+    expect(step?.run).toBe(
+      "pnpm run verify -- --step=test:accessibility --shard=${{ matrix.shard }}",
+    );
+    const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
+    const [unsharded, ...listed] = await Promise.all([
+      listAccessibilityTests(),
+      ...shards.map((shard) => listAccessibilityTests([`--shard=${shard}`])),
+    ]);
+    const selected = listed.flat();
+    expect(unsharded.length).toBeGreaterThan(0);
+    expect(selected.toSorted()).toEqual(unsharded.toSorted());
+    expect(new Set(selected).size).toBe(unsharded.length);
+  }, 90_000);
 
   it("runs browser suites in the matching pinned image without browser or apt installation", () => {
     for (const jobName of browserJobs) {

@@ -146,9 +146,9 @@ if (process.argv.at(-1) === "lint") {
     expect(status).toBe(0);
     expect(calls).toEqual(["run check:i18n|false"]);
 
-    const forwarded = runVerify(["--step=test:accessibility", "--test-list=x.txt"]);
+    const forwarded = runVerify(["--step=test:accessibility", "--shard=1/2"]);
     expect(forwarded.status).toBe(0);
-    expect(forwarded.calls).toEqual(["run test:accessibility --test-list=x.txt|true"]);
+    expect(forwarded.calls).toEqual(["run test:accessibility --shard=1/2|true"]);
 
     const audit = runVerify(["--step=audit"]);
     expect(audit.calls).toEqual(["audit --audit-level=moderate|false"]);
