@@ -220,9 +220,10 @@ relationship.
 
 Some almanac rows share a name within a category: six “Animated Clouds Window” rows differ only in
 color. The game names none of its colorways, so `pipeline/src/overrides/item-variants.ts` names each
-such row, and the almanac extractor throws until every set is reviewed. It also throws when a
-reviewed set gains or loses a row, or when a row’s English description changes. The error lists each
-uncovered set with a proposal from `proposeItemVariants` (`pipeline/src/extract/item-variants.ts`).
+such row, and the almanac extractor requires a distinct variant for every row in every set. It also
+throws when a reviewed set gains or loses a row, or when a row’s English description changes. The
+error lists each uncovered set with a proposal from `proposeItemVariants`
+(`pipeline/src/extract/item-variants.ts`).
 
 For each set, the agent running the update proposes an entry:
 
@@ -240,19 +241,22 @@ For each set, the agent running the update proposes an entry:
    - When colors alone don’t distinguish the item, add its shape, but no size: the Ruins Pots read
      “White goblet”, “Orange gourd”, & “Cracked purple” (from “A small cracked purple clay pot”).
 4. When only one row names a difference, give the other row its natural counterpart: “Plain” against
-   “Gold accents”, “Single” against `starter_stone_path_double`’s “Double”. Leave a set unnamed only
-   when no row has a differentiator, or when the IDs differ only by a bare version number. Never
-   invent ordinals such as “Style 1”.
-5. Compare each proposal with the variant names on the
-   [Fields of Mistria wiki](https://fieldsofmistria.wiki.gg/), where its editors have named them.
-   The wiki is a reference, not a source: keep the game-derived name and flag a mismatch for review.
-6. Commit entries it’s confident in, recording each row’s English description as evidence. Unnamed
-   sets record theirs too, so a reworded description that adds a differentiator gets reviewed.
+   “Gold accents”, “Single” against `starter_stone_path_double`’s “Double”. Treat bare version
+   numbers as a cue to look for more evidence. Never invent ordinals such as “Style 1”.
+5. Consult the variant names on the [Fields of Mistria wiki](https://fieldsofmistria.wiki.gg/),
+   where its editors have named them. Keep the game-derived name when it distinguishes the row, and
+   flag a mismatch for review. If the descriptions & IDs give no distinct names, use the wiki’s
+   variant names when they can be matched to the game IDs. If the wiki has no variant names, compare
+   its full-size sprites via the [wiki API](mistria-wiki-api.md). Name the feature that
+   distinguishes each sprite at a glance, such as the color, shape, or orientation.
+6. Commit entries it’s confident in, recording each row’s English description so that changes
+   trigger a new review. When names come from sprites, record the visible differences in the PR.
 7. Present these cases to a human instead of deciding them:
    - descriptions that differ in more than one phrase (the proposal says so),
    - a differentiator that isn’t yet an `ITEM_VARIANTS` key,
    - a counterpart word under rule 4,
    - a wiki name that disagrees with the proposal,
+   - sprites that are unavailable, indistinguishable, or ambiguous to match to game IDs,
    - a candidate merge of near-synonyms (“white” & “off-white” stay distinct by default).
 
 A new key goes in `ITEM_VARIANTS` (`src/lib/types/tracker-data.ts`), as a `variant_<key>` message in
