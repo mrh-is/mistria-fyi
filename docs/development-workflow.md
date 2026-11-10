@@ -314,19 +314,19 @@ them as a session baseline.
 CI runs the `test:budgets` step (`node scripts/vitest-timings.ts`) over every asset-independent
 project. Pull requests skip two groups of tests that they can’t affect:
 
-| Tests                                | A pull request runs them when it changes                                                                                                                                         |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `relay/**`                           | `relay/**`, the relay test’s Vitest setup in `scripts/`, or a shared input                                                                                                       |
-| `scripts/**`, except the three below | `scripts/**`, `pipeline/**`, `.github/workflows/**`, `.husky/**`, `.claude/settings.json`, `.codex/hooks.json`, `playwright*.config.ts`, `stylelint.config.*`, or a shared input |
+| Tests                              | A pull request runs them when it changes                                                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `relay/**`                         | `relay/**`, the relay test’s Vitest setup in `scripts/`, or a shared input                                                                                                       |
+| `scripts/**`, except the two below | `scripts/**`, `pipeline/**`, `.github/workflows/**`, `.husky/**`, `.claude/settings.json`, `.codex/hooks.json`, `playwright*.config.ts`, `stylelint.config.*`, or a shared input |
 
 The shared inputs are `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.node-version`,
 `vite.config.*`, `tsconfig*`, & `.github/workflows/ci.yml`. Pipeline tests always run, since
-pipeline code imports from `scripts/`. Three `scripts/` tests load the browser suites’ specs,
-fixtures, or app modules, so they always run too: `playwright-allocation`, `playwright-satoshi`, &
-`sprites/sprite-manifest`. Main pushes, scheduled runs, & manual dispatches run both groups. The
-change detector sets `VITEST_RELAY_CHANGED` & `VITEST_SCRIPTS_CHANGED`, and `vite.config.ts` drops a
-group only when its variable is `false`. A new `scripts/` test that reads app or test files needs
-those paths in the filter or a place in the always-run list.
+pipeline code imports from `scripts/`. The `playwright-satoshi` & `sprites/sprite-manifest` tests
+load browser fixtures or app modules, so they always run too. Main pushes, scheduled runs, & manual
+dispatches run both groups. The change detector sets `VITEST_RELAY_CHANGED` &
+`VITEST_SCRIPTS_CHANGED`, and `vite.config.ts` drops a group only when its variable is `false`. A
+new `scripts/` test that reads app or test files needs those paths in the filter or a place in the
+always-run list.
 
 Direct local runs include every gated test, so test-only edits can be verified with the focused
 command. The `test:budgets` step publishes all per-file test & hook durations, slowest first, in the
