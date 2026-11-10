@@ -45,6 +45,7 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  chipped: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
   chocolate: {
     evidence: "counter_cake_double_chocolate",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
@@ -55,12 +56,14 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  cracked: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
   cracked_purple: {
     evidence: "ruins_pot5",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
   cream: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
+  crossed_tape: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
   dark_brown: {
     evidence: "deluxe_storage_chest_dark_brown",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
@@ -215,6 +218,7 @@ export const ITEM_VARIANT_TERMS: Readonly<Record<ItemVariant, ItemVariantTermSou
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],
     machine: [],
   },
+  striped_tape: { game: [], machine: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"] },
   walnut: {
     evidence: "counter_cabin_walnut",
     game: ["fr", "es", "ru", "ja", "ko", "zh-Hans", "zh-Hant"],

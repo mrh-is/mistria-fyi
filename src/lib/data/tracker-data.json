@@ -3720,17 +3720,20 @@
         {
           "itemIds": [
             "bonsai_accessory_plant_v1"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "bonsai_accessory_plant_v2"
-          ]
+          ],
+          "variant": "purple"
         },
         {
           "itemIds": [
             "bonsai_accessory_plant_v3"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
@@ -4206,12 +4209,14 @@
         {
           "itemIds": [
             "dingy_broken_bottle_v1"
-          ]
+          ],
+          "variant": "orange"
         },
         {
           "itemIds": [
             "dingy_broken_bottle_v2"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
@@ -4229,32 +4234,38 @@
         {
           "itemIds": [
             "dingy_broken_plate_v1"
-          ]
+          ],
+          "variant": "cracked"
         },
         {
           "itemIds": [
             "dingy_broken_plate_v2"
-          ]
+          ],
+          "variant": "chipped"
         },
         {
           "itemIds": [
             "dingy_couch_v1"
-          ]
+          ],
+          "variant": "gold"
         },
         {
           "itemIds": [
             "dingy_couch_v2"
-          ]
+          ],
+          "variant": "light_brown"
         },
         {
           "itemIds": [
             "dingy_window_v1"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "dingy_window_v2"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -4390,12 +4401,14 @@
         {
           "itemIds": [
             "dingy_chair_v1"
-          ]
+          ],
+          "variant": "striped_tape"
         },
         {
           "itemIds": [
             "dingy_chair_v2"
-          ]
+          ],
+          "variant": "crossed_tape"
         },
         {
           "itemIds": [
@@ -4585,12 +4598,14 @@
         {
           "itemIds": [
             "dingy_chipped_cup_v1"
-          ]
+          ],
+          "variant": "white"
         },
         {
           "itemIds": [
             "dingy_chipped_cup_v2"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
@@ -4998,12 +5013,14 @@
         {
           "itemIds": [
             "dingy_flooring_v1"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "dingy_flooring_v2"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
@@ -5969,12 +5986,14 @@
         {
           "itemIds": [
             "dingy_garbage_bag_v1"
-          ]
+          ],
+          "variant": "black"
         },
         {
           "itemIds": [
             "dingy_garbage_bag_v2"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
@@ -7202,12 +7221,14 @@
         {
           "itemIds": [
             "dingy_string_lights_v1"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "dingy_string_lights_v2"
-          ]
+          ],
+          "variant": "sage"
         },
         {
           "itemIds": [
@@ -7225,12 +7246,14 @@
         {
           "itemIds": [
             "dingy_mouse_hole_v1"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "dingy_mouse_hole_v2"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
@@ -7731,12 +7754,14 @@
         {
           "itemIds": [
             "dingy_wallpaper_v1"
-          ]
+          ],
+          "variant": "cream"
         },
         {
           "itemIds": [
             "dingy_wallpaper_v2"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
@@ -7801,22 +7826,26 @@
         {
           "itemIds": [
             "dingy_pile_of_laundry_v1"
-          ]
+          ],
+          "variant": "yellow"
         },
         {
           "itemIds": [
             "dingy_pile_of_laundry_v2"
-          ]
+          ],
+          "variant": "green"
         },
         {
           "itemIds": [
             "dingy_pile_of_newspapers_v1"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
             "dingy_pile_of_newspapers_v2"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
@@ -8501,12 +8530,14 @@
         {
           "itemIds": [
             "dingy_table_v1"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "dingy_table_v2"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -9247,12 +9278,14 @@
         {
           "itemIds": [
             "strange_garden_stone_v1"
-          ]
+          ],
+          "variant": "gray"
         },
         {
           "itemIds": [
             "strange_garden_stone_v2"
-          ]
+          ],
+          "variant": "brown"
         },
         {
           "itemIds": [
@@ -9369,12 +9402,14 @@
         {
           "itemIds": [
             "dingy_rug_v1"
-          ]
+          ],
+          "variant": "blue"
         },
         {
           "itemIds": [
             "dingy_rug_v2"
-          ]
+          ],
+          "variant": "red"
         },
         {
           "itemIds": [

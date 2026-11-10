@@ -112,20 +112,11 @@ describe("resolveItemVariants", () => {
     );
   });
 
-  it("returns nothing for a set reviewed as unnamed", () => {
-    const unnamed: ItemVariantSet[] = [
-      { name: "Cobweb Left", reason: "test", unnamed: cobwebs.descriptions },
-    ];
-    expect(resolveItemVariants([cobwebs.set], cobwebs.descriptions, unnamed).size).toBe(0);
-  });
-
-  it("throws when an unnamed set’s description changes", () => {
-    const unnamed: ItemVariantSet[] = [
-      { name: "Cobweb Left", reason: "test", unnamed: cobwebs.descriptions },
-    ];
-    const reworded = { ...cobwebs.descriptions, cobweb_left_dark: "A dark purple cobweb." };
-    expect(() => resolveItemVariants([cobwebs.set], reworded, unnamed)).toThrow(
-      /Reviewed description for “cobweb_left_dark” changed/,
+  it("throws when no variant can be inferred for an uncovered set", () => {
+    const set = { ids: ["bottle_v1", "bottle_v2"], name: "Broken Bottle" };
+    const descriptions = { bottle_v1: "A broken bottle.", bottle_v2: "A broken bottle." };
+    expect(() => resolveItemVariants([set], descriptions, [])).toThrow(
+      /“Broken Bottle”.*aren’t in the reviewed table; proposal: .*"kind":"unnamed"/,
     );
   });
 
@@ -133,6 +124,22 @@ describe("resolveItemVariants", () => {
     expect(() => resolveItemVariants([cobwebs.set], cobwebs.descriptions, [])).toThrow(
       /“Cobweb Left”.*aren’t in the reviewed table; proposal: .*"cobweb_left_dark":"purple"/,
     );
+  });
+
+  it("throws when overlapping sets give a row conflicting variants", () => {
+    const third = "cobweb_left_gold";
+    const descriptions = { ...cobwebs.descriptions, [third]: "A gold cobweb." };
+    const overlap = { ...cobwebs.set, ids: ["cobweb_left_dark", third] };
+    const conflicting: ItemVariantSet = {
+      name: overlap.name,
+      named: {
+        cobweb_left_dark: { description: descriptions.cobweb_left_dark, variant: "white" },
+        [third]: { description: descriptions[third], variant: "gold" },
+      },
+    };
+    expect(() =>
+      resolveItemVariants([cobwebs.set, overlap], descriptions, [...reviewed, conflicting]),
+    ).toThrow(/“cobweb_left_dark” has conflicting variants “purple” and “white”/);
   });
 
   it("throws on a reviewed set that no longer occurs", () => {
