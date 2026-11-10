@@ -392,9 +392,7 @@ jobs:
       - id: accessibility-tests
         name: Run accessibility tests
         continue-on-error: true
-        run: |
-          pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}
-          pnpm run verify -- --step=test:accessibility --test-list=.playwright-artifacts/test-list.txt
+        run: pnpm run verify -- --step=test:accessibility --shard=${{ matrix.shard }}
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
       - if: >-
