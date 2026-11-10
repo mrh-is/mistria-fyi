@@ -45,14 +45,12 @@ encoding; the relay checks the pinned protocol & counter syntax but cannot inspe
 Give only `relay/worker.test.ts` a 30-second file budget in the existing timing check. The measured
 local runtime suite takes 21 seconds, including five-second eviction waits & a ten-second socket
 close wait. It exercises actual SQLite persistence & hibernation rather than replacing the runtime
-with fakes. Ordinary file ceilings & the suite’s wall-time budget stay unchanged; synthetic tests
-prove that this file still fails above 30 seconds & that other files retain their existing ceiling.
+with fakes. Synthetic tests prove that this file still fails above 30 seconds & that other files
+retain their existing ceiling.
 
-Start the relay integration first within its Vitest pool, retaining the default sequencer’s order
-for every other file. Its runtime waits can then overlap ordinary tests, including on a cold timing
-cache. Even so, four-CPU CI runs reached 95 & then 125 seconds, against `main`’s own 45–99 seconds,
-so both runner classes share a 150-second wall ceiling until #13 shortens the suite. Worker counts
-stay unchanged.
+Use Vitest’s default order for the relay integration. CI uses a seeded shuffle for shared client
+files and keeps two workers on four-vCPU runners. The CI timing spike (#554) supported removing
+relay priority after the per-file timing policy (#322) removed the suite-wide wall-time ceiling.
 
 ## Alternatives
 
@@ -68,8 +66,9 @@ stay unchanged.
    lifecycle & secrets independent of the application build.
 5. Omitting runtime eviction checks to fit ordinary unit-test timing would leave a required
    persistence boundary untested. Raising every file’s ceiling would hide unrelated regressions.
-6. Relying on Vitest’s timing cache to start the relay early does not cover a new file’s first CI
-   run. Explicitly prioritizing this one integration file keeps the existing suite budget intact.
+6. Relay-first ordering overlapped the integration test’s runtime waits with other tests, even on a
+   cold cache. The CI timing spike (#554) superseded that choice after the wall-time ceiling was
+   removed.
 7. Preserving public reads during a pause leaves mailbox quota exposed to the reported attack.
    Disconnecting existing sockets would require a broader control mechanism; blocked uploads &
    handshakes stop new data & connections without it.
@@ -79,3 +78,5 @@ stay unchanged.
 Cloudflare adds longer binding windows; legitimate users hit the caps; address-linked pseudonyms
 become inconsistent with the published privacy policy; the independent review rejects this
 adaptation; or real usage approaches Workers Free’s request, storage, or row-write limits.
+
+Revisit test ordering if CI restores a suite-wide wall-time ceiling.
