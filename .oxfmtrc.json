@@ -26,6 +26,7 @@
     "pipeline/input/",
     "pipeline/output/",
     "src/lib/data/tracker-data.json",
+    "docs/design/field-guide/round-ten.html",
     "src/lib/paraglide/",
     "project.inlang/*",
     "!project.inlang/settings.json",
