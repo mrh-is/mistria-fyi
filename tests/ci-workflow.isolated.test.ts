@@ -226,7 +226,7 @@ describe("CI workflow jobs", () => {
     [["stylelint.config.js"], false, true],
     [["playwright.pwa.config.ts"], false, true],
     [["scripts/vitest-wrangler-env.ts"], true, true],
-    [["scripts/vitest-relay-sequencer.ts"], true, true],
+    [["scripts/vitest-client-sequencer.ts"], false, true],
     [["src/app.css"], false, false],
     [["docs/styling.md"], false, false],
     [["tests/accessibility/home.spec.ts"], false, false],

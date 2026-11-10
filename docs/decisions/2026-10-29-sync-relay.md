@@ -54,6 +54,10 @@ cache. Even so, four-CPU CI runs reached 95 & then 125 seconds, against `main`â€
 so both runner classes share a 150-second wall ceiling until #13 shortens the suite. Worker counts
 stay unchanged.
 
+[#554](https://github.com/mrh-is/mistria-fyi/issues/554) revisited this test-ordering decision after
+#322 removed the wall-time ceiling. The CI trials supported dropping relay priority while keeping
+the seeded shuffle for shared client files.
+
 ## Alternatives
 
 1. A rate binding with a 3,600-second period is invalid. A minute-only cap permits 180 creations an

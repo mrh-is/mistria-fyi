@@ -12,7 +12,7 @@ import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
-import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
+import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import {
   configureVitestWranglerEnv,
@@ -379,8 +379,8 @@ export default defineConfig(({ command }) => ({
     ],
     restoreMocks: true,
     retry,
-    // With no relay tests outside CI, let the CLI select Vitest's built-in shuffle sequencer.
-    sequence: { sequencer: relayChanged || process.env.CI ? RelayFirstSequencer : undefined },
+    // Outside CI, the CLI can select Vitest’s built-in shuffle sequencer.
+    sequence: { sequencer: process.env.CI ? SharedClientSequencer : undefined },
     testTimeout: loadTolerantTimeoutMs,
     unstubEnvs: true,
     unstubGlobals: true,
