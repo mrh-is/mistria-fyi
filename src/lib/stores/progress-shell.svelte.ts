@@ -2,6 +2,7 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "#lib/data/index.js";
 import { createDefaultProgress } from "#lib/engine/progress-fields.js";
+import { createProgressContext } from "#lib/engine/progress.js";
 import { progressFacts } from "#lib/engine/provenance.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
@@ -137,11 +138,9 @@ export function createProgressShell(): ProgressShell {
       ? deriveProgressionState(state.progress, trackerData, false)
       : progressionState,
   );
-  const progressContext: ProgressContext = $derived({
-    progress: state.progress,
-    progressionState: availabilityProgressionState,
-    worldState: state.worldState,
-  });
+  const progressContext = $derived(
+    createProgressContext(state.progress, availabilityProgressionState, state.worldState),
+  );
   const facts = $derived(progressFacts(state.progress));
 
   // Effects observe runes; the repository owns debounce, storage, & event handling.

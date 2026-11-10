@@ -8,13 +8,17 @@ import { trackerData } from "#lib/data/index.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries, recordValues } from "#lib/utils/record.js";
 
+import { isSourceDoable } from "./availability.js";
 import { extractSave, extractSaveProgress } from "./import-save.js";
 import { SAVE_OBSERVATIONS } from "./import-save.observations.js";
 import { parseSavArchive } from "./parse-sav.js";
+import { createProgressContext } from "./progress.js";
 import { readSaveIdentity } from "./save-identity.js";
 import { applySync } from "./sync-apply.js";
+import { deriveProgressionState } from "./visibility.js";
+import { applySaveDay } from "./world-state.js";
 
-import type { VillagerId } from "#lib/types/tracker-data.js";
+import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
 
 import type { SaveBundle, SaveExtraction } from "./import-save.js";
 import type { GameObservation } from "./import-save.observations.js";
@@ -121,10 +125,41 @@ describe.each(SAVE_FILES)("real save %s", (name) => {
   });
 
   it("reads the day the save was made on", () => {
-    const { season, weather } = extractSave(bundle).day;
+    const { day, season, weather } = extractSave(bundle).day;
 
+    expect(day).toBe(name === "game-1315159680-autosave.sav" ? 2 : 1);
     expect(season.completeness).toBe("complete");
     expect(weather.completeness).toBe("complete");
+  });
+
+  it("uses the save's museum, mine, and festival progress for To do", () => {
+    const late = name === "game-1315159680-autosave.sav";
+    const { completed, day } = extractSaveProgress(bundle);
+    const progress = makeCompletedState(completed);
+    const world = applySaveDay({ season: "spring", weather: "calm" }, day);
+    const ctx = createProgressContext(
+      progress,
+      deriveProgressionState(progress, trackerData, false),
+      world,
+    );
+    const sources = recordValues(trackerData.items).flatMap((item) => item.sources);
+    const replicas = sources.filter((source) => source.type === "artifact_replicator");
+    expect(replicas.length).toBeGreaterThan(0);
+    expect(replicas.some((source) => isSourceDoable(source, ctx))).toBe(late);
+
+    const voidPowder = trackerData.items["void_powder" as ItemId].sources;
+    expect(voidPowder.some((source) => source.type === "monster")).toBe(true);
+    expect(
+      voidPowder.some((source) => source.type === "monster" && isSourceDoable(source, ctx)),
+    ).toBe(late);
+
+    const festivals = sources.filter(
+      (source) =>
+        (source.type === "festival" || source.type === "festival_activity") &&
+        trackerData.festivals[source.festivalId].date.season === world.season,
+    );
+    expect(festivals.length).toBeGreaterThan(0);
+    expect(festivals.some((source) => isSourceDoable(source, ctx))).toBe(false);
   });
 
   it("holds no unrecognized IDs, so every field it fully records is complete", () => {

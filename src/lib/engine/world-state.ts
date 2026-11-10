@@ -2,20 +2,28 @@ import type { Season, Weather } from "#lib/types/tracker-data.js";
 
 /** The in-game day: what the clock sets, & what availability reads. */
 export interface WorldDay {
+  day?: number;
   season: Season;
   weather: Weather;
 }
 
 /** What a save says about the day. A value it couldn't read is `undefined`, never a guess. */
 export interface SaveDay {
+  day?: number;
   season: Season | undefined;
   weather: undefined | Weather;
 }
 
+export function withoutRecordedDay({ season, weather }: WorldDay): WorldDay {
+  return { season, weather };
+}
+
 /** Only fields the tab changed take precedence over the clock read under the lock. */
 export function rebaseWorldDay(stored: WorldDay, before: WorldDay, after: WorldDay): WorldDay {
+  const date = before.season === after.season && before.day === after.day ? stored : after;
   return {
-    season: before.season === after.season ? stored.season : after.season,
+    ...(date.day === undefined ? {} : { day: date.day }),
+    season: date.season,
     weather: before.weather === after.weather ? stored.weather : after.weather,
   };
 }
@@ -27,7 +35,12 @@ export function rebaseWorldDay(stored: WorldDay, before: WorldDay, after: WorldD
 export function applySaveDay(world: WorldDay, day: SaveDay): WorldDay {
   const season = day.season ?? world.season;
   const weather = day.weather ?? world.weather;
-  return { season, weather: isWeatherInSeason(weather, season) ? weather : "calm" };
+  const dayNumber = day.day ?? (season === world.season ? world.day : undefined);
+  return {
+    ...(dayNumber === undefined ? {} : { day: dayNumber }),
+    season,
+    weather: isWeatherInSeason(weather, season) ? weather : "calm",
+  };
 }
 
 export function isWeatherInSeason(weather: Weather, season: Season): boolean {

@@ -250,9 +250,15 @@ describe("restoreBackup validation", () => {
 });
 
 describe("mergeFromSave day", () => {
-  it("sets the season & weather from the save, and a clock change holds afterwards", async () => {
-    await userState.mergeFromSave({}, { day: { season: "fall", weather: "special" } });
-    expect(userState.state.worldState).toEqual({ season: "fall", weather: "special" });
+  it("sets the date & weather from the save, and clears the day when the season changes", async () => {
+    await userState.mergeFromSave({}, { day: { day: 10, season: "fall", weather: "special" } });
+    expect(userState.state.worldState).toEqual({ day: 10, season: "fall", weather: "special" });
+    const backup = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
+    expect(backup.worldState).toEqual({
+      day: 10,
+      season: "fall",
+      weather: "special",
+    });
 
     userState.setSeason("winter");
     expect(userState.state.worldState).toEqual({ season: "winter", weather: "calm" });

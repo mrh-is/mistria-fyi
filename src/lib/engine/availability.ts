@@ -1,8 +1,9 @@
 import { evaluateAvailabilityCondition, extractDisplayBadges } from "./availability-condition.js";
 import { isConditionVisible } from "./visibility.js";
 
+import type { WorldDay } from "#lib/engine/world-state.js";
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
-import type { Season, Weather } from "#lib/types/tracker-data.js";
+import type { TrackerData } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 import type { AvailabilityContext, DisplayBadges } from "./availability-condition.js";
@@ -10,9 +11,16 @@ import type { UserProgressionState } from "./visibility.js";
 
 /** What decides whether a row is doable: today's season & weather, & the player's recorded progress. */
 export interface DayContext {
+  acquiredItems?: AvailabilityContext["acquiredItems"];
+  festivals?: Partial<TrackerData["festivals"]>;
+  mines?: {
+    biomes: TrackerData["mines"]["biomes"];
+    monsters: Partial<TrackerData["mines"]["monsters"]>;
+  };
   /** Derived without "Show spoilers", which only changes what the spoiler UI reveals. */
   progressionState: UserProgressionState;
-  worldState: { season: Season; weather: Weather };
+  replicatorUnlocked?: boolean;
+  worldState: WorldDay;
 }
 
 /** A row whose availability is decided by its sources & its own spoiler gate. */
@@ -54,7 +62,52 @@ export function isRowShown(
  */
 export function isSourceDoable(source: Source, ctx: DayContext): boolean {
   if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return false;
+  const mineFloor = sourceMineFloor(source, ctx.mines);
+  if (mineFloor !== undefined && ctx.progressionState.mineFloor < mineFloor) return false;
+  if (source.type === "festival" || source.type === "festival_activity") {
+    const date = ctx.festivals?.[source.festivalId]?.date;
+    if (
+      date &&
+      (date.season !== ctx.worldState.season ||
+        (ctx.worldState.day !== undefined && date.day !== ctx.worldState.day))
+    ) {
+      return false;
+    }
+  }
+  if (source.type === "artifact_replicator") {
+    if (ctx.replicatorUnlocked === false) return false;
+    const acquired = isAvailabilityDoable(
+      { type: "itemAcquired", itemId: source.originalItemId },
+      ctx,
+      { acquiredItems: ctx.acquiredItems },
+    );
+    if (!acquired) return false;
+  }
   return isAvailabilityDoable(getAvailabilityCondition(source), ctx);
+}
+
+function sourceMineFloor(source: Source, mines: DayContext["mines"]): number | undefined {
+  if (!mines) return undefined;
+  const { biomes, monsters } = mines;
+  if (source.type === "monster") {
+    const spawnBiomes = monsters[source.monsterId]?.biomes;
+    if (spawnBiomes) return biomes.find(({ id }) => spawnBiomes.includes(id))?.floors.start;
+    // These two Clods have drop records but no confirmed spawn biome (#622).
+    if (
+      source.monsterId === "any" ||
+      source.monsterId === "mistrilclod" ||
+      source.monsterId === "rockclod_purple"
+    ) {
+      return biomes.at(0)?.floors.start;
+    }
+    return undefined;
+  }
+  if (source.type === "mine" || source.type === "mine_fish") {
+    return source.biomeId === undefined
+      ? biomes.at(0)?.floors.start
+      : biomes.find(({ id }) => id === source.biomeId)?.floors.start;
+  }
+  return undefined;
 }
 
 /** Evaluate row-level requirements with the same day policy as acquisition sources. */

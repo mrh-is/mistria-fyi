@@ -14,11 +14,13 @@ import type {
   SyncLane,
   TrackingLane,
 } from "#lib/sync/lane-state.js";
+import type { FarmIdentity } from "#lib/types/save-identity.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 interface SyncShell {
   readonly canStartTrackingByHand: boolean;
   chooseSync: () => void;
+  readonly clockFarm: FarmIdentity | null;
   emptyProgress: () => Omit<LoadedProgress, "local">;
   readonly laneChoiceNeeded: boolean;
   readonly local: DeviceLocalState;
@@ -122,6 +124,7 @@ export function createSyncFacade(
       repository.enableAfterReplace();
       const written = await repository.write({
         clockBase: repository.clockBase,
+        clockFarm: $state.snapshot(shell.clockFarm),
         day: { ...save.day },
         guard: stillWanted,
         kind: "staged",
