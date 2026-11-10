@@ -1,6 +1,7 @@
 import { progressFacts } from "#lib/engine/provenance.js";
+import { compareFarms } from "#lib/engine/save-identity.js";
 import { applySync, receiptCovers } from "#lib/engine/sync-apply.js";
-import { applySaveDay, rebaseWorldDay } from "#lib/engine/world-state.js";
+import { applySaveDay, rebaseWorldDay, withoutRecordedDay } from "#lib/engine/world-state.js";
 import { stampedLocal, startLaneLocal } from "#lib/sync/lane-operations.js";
 
 import {
@@ -20,6 +21,7 @@ import type {
   SyncApplyStamp,
   SyncLane,
 } from "#lib/sync/lane-state.js";
+import type { FarmIdentity } from "#lib/types/save-identity.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 import type { LoadedProgress, ProgressReadResult, ProgressSnapshot } from "./progress-storage.js";
@@ -92,6 +94,7 @@ export function planLocalPatch(
 
 export interface StagedLaneStart {
   clockBase: null | string;
+  clockFarm: FarmIdentity | null;
   day: SaveDay;
   lane: SyncLane;
   staged: Omit<LoadedProgress, "local">;
@@ -100,7 +103,7 @@ export interface StagedLaneStart {
 
 /** Layers the clock edits captured at lane start, then the save, over the stored clock. */
 export function planLaneStart(
-  { clockBase, day, lane, staged, stamp }: StagedLaneStart,
+  { clockBase, clockFarm, day, lane, staged, stamp }: StagedLaneStart,
   stored: LoadedProgress | undefined,
   liveLocal: DeviceLocalState,
 ): { json: string; loaded: LoadedProgress } {
@@ -110,8 +113,17 @@ export function planLaneStart(
   const clock = stored
     ? rebaseWorldDay(stored.worldState, baseClock, staged.worldState)
     : staged.worldState;
+  const incoming = staged.lastImport?.identity;
+  const farmChanged =
+    incoming &&
+    (compareFarms(clockFarm, incoming) === "different" ||
+      compareFarms(stored?.lastImport?.identity ?? null, incoming) === "different");
   const local = startLaneLocal(stored?.local ?? liveLocal, lane, stamp);
-  const loaded = { ...staged, local, worldState: applySaveDay(clock, day) };
+  const loaded = {
+    ...staged,
+    local,
+    worldState: applySaveDay(farmChanged ? withoutRecordedDay(clock) : clock, day),
+  };
   return { json: serializeStoredProgress(loaded, local), loaded };
 }
 
@@ -174,6 +186,7 @@ export function planSyncApply(
     }
   }
 
+  const clock = result.farmSwitch ? withoutRecordedDay(base.worldState) : base.worldState;
   const next: ProgressSnapshot = {
     history: result.state.history,
     // Declining a rollback keeps both the current farm's names and its clock.
@@ -183,8 +196,7 @@ export function planSyncApply(
         : { ...request.metadata, identity: result.state.farm ?? request.metadata.identity },
     progress: result.state.progress,
     retained: result.farmSwitch ? fresh.retained : base.retained,
-    worldState:
-      result.rollback === "declined" ? base.worldState : applySaveDay(base.worldState, request.day),
+    worldState: result.rollback === "declined" ? base.worldState : applySaveDay(clock, request.day),
   };
   const nextLocal = { ...local, ...stampedLocal(local.syncFreshness, request) };
   const built = result.farmSwitch

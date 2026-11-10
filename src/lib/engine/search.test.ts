@@ -383,22 +383,17 @@ describe("cross-category ranking", () => {
   });
 
   it("breaks ties alphabetically within the same rank tier", () => {
-    // "ade" prefix-matches Villager "Adeline" and several other items. Among the
-    // substring-only matches, results should be sorted alphabetically by name.
+    // "ade" also matches inside names. Alphabetical order applies within an availability tier.
     const results = search("ade");
-    const substringOnly = results.filter((r) => {
-      const name = (r.fullName ?? r.name).toLowerCase();
-      return !name.startsWith("ade");
-    });
-    expect(substringOnly.length).toBeGreaterThanOrEqual(2);
-
-    for (let i = 1; i < substringOnly.length; i++) {
-      const prev = (substringOnly[i - 1].fullName ?? substringOnly[i - 1].name).toLowerCase();
-      const curr = (substringOnly[i].fullName ?? substringOnly[i].name).toLowerCase();
-      expect(
-        prev.localeCompare(curr),
-        `"${prev}" should sort before or equal "${curr}"`,
-      ).toBeLessThanOrEqual(0);
+    const tiers = [true, false].map((available) =>
+      results
+        .filter((result) => result.available === available)
+        .map((result) => (result.fullName ?? result.name).toLowerCase())
+        .filter((name) => name.includes("ade") && !name.startsWith("ade")),
+    );
+    expect(tiers.some((names) => names.length >= 2)).toBe(true);
+    for (const names of tiers) {
+      expect(names).toEqual(names.toSorted((a, b) => a.localeCompare(b)));
     }
   });
 

@@ -59977,6 +59977,182 @@
         "id": "ancient_ruins"
       }
     ],
+    "monsters": {
+      "sapling": {
+        "biomes": [
+          "upper_mines"
+        ]
+      },
+      "mushroom": {
+        "biomes": [
+          "upper_mines"
+        ]
+      },
+      "rockclod": {
+        "biomes": [
+          "upper_mines"
+        ]
+      },
+      "enchantern": {
+        "biomes": [
+          "upper_mines"
+        ]
+      },
+      "sapling_cool": {
+        "biomes": [
+          "upper_mines"
+        ]
+      },
+      "copperclod": {
+        "biomes": [
+          "upper_mines"
+        ]
+      },
+      "mimic": {
+        "biomes": [
+          "upper_mines",
+          "tide_caverns",
+          "deep_earth",
+          "lava_caves",
+          "ancient_ruins"
+        ]
+      },
+      "sapling_blue": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "mushroom_green": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "rockclod_blue": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "enchantern_blue": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "ironclod": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "stalagmite": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "bat": {
+        "biomes": [
+          "tide_caverns"
+        ]
+      },
+      "sapling_purple": {
+        "biomes": [
+          "deep_earth"
+        ]
+      },
+      "mushroom_blue": {
+        "biomes": [
+          "deep_earth"
+        ]
+      },
+      "rockclod_green": {
+        "biomes": [
+          "deep_earth"
+        ]
+      },
+      "silverclod": {
+        "biomes": [
+          "deep_earth"
+        ]
+      },
+      "stalagmite_green": {
+        "biomes": [
+          "deep_earth"
+        ]
+      },
+      "bat_blue": {
+        "biomes": [
+          "deep_earth"
+        ]
+      },
+      "spirit": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "cat": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "sapling_orange": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "mushroom_purple": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "rockclod_red": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "goldclod": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "stalagmite_purple": {
+        "biomes": [
+          "lava_caves"
+        ]
+      },
+      "rock_stack": {
+        "biomes": [
+          "ancient_ruins"
+        ]
+      },
+      "sapling_pink": {
+        "biomes": [
+          "ancient_ruins"
+        ]
+      },
+      "spirit_purple": {
+        "biomes": [
+          "ancient_ruins"
+        ]
+      },
+      "tome": {
+        "biomes": [
+          "ancient_ruins"
+        ]
+      },
+      "cat_void": {
+        "biomes": [
+          "ancient_ruins"
+        ]
+      },
+      "griffin_statue": {
+        "biomes": [
+          "ancient_ruins"
+        ]
+      },
+      "sapling_orange_mini": {
+        "biomes": [
+          "lava_caves"
+        ]
+      }
+    },
     "seals": [
       {
         "floor": 20,

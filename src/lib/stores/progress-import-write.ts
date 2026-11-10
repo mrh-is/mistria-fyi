@@ -7,7 +7,7 @@ import {
   mergeFarmIdentity,
 } from "#lib/engine/save-identity.js";
 import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
-import { applySaveDay, rebaseWorldDay } from "#lib/engine/world-state.js";
+import { applySaveDay, rebaseWorldDay, withoutRecordedDay } from "#lib/engine/world-state.js";
 import { isRecord, recordEntries } from "#lib/utils/record.js";
 
 import {
@@ -84,6 +84,8 @@ export function planManualImport(
   const incomingFarm = metadata?.identity ?? null;
   const question = manualFarmQuestion(capturedFarm, storedFarm, incomingFarm);
   if (question && question.farm !== confirmedFarm) return question;
+  const farmChanged =
+    manualFarmsDiffer(capturedFarm, incomingFarm) || manualFarmsDiffer(storedFarm, incomingFarm);
 
   const result = applyAdditiveSave(captured.progress, captured.history, imported, playtime);
   if (metadata) captured.lastImport = importMetadata(storedFarm ?? capturedFarm, metadata);
@@ -104,7 +106,7 @@ export function planManualImport(
       createDefaultWorldState())
     : capturedClock;
   const clock = rebaseWorldDay(storedClock, clockBase, capturedClock);
-  loaded.worldState = resolveImportDay(storedClock, clock, day);
+  loaded.worldState = resolveImportDay(storedClock, clock, day, farmChanged);
   // A manual import chooses its lane in the same durable write as its progress.
   loaded.local.trackingLane ??= loaded.local.syncLane ? "sync" : "manual";
   const json = serializeStoredProgress(loaded, loaded.local);
@@ -129,7 +131,7 @@ export function planManualImport(
   }
   const laterBase = readImportSnapshot(edits.clockBase)?.worldState ?? capturedClock;
   const liveClock = rebaseWorldDay(clock, laterBase, edits.clock);
-  live.worldState = resolveImportDay(storedClock, liveClock, day);
+  live.worldState = resolveImportDay(storedClock, liveClock, day, farmChanged);
   return { json, kind: "write", live, local: loaded.local, result };
 }
 
@@ -349,9 +351,25 @@ function readImportSnapshot(json: null | string | undefined): LoadedProgress | u
 }
 
 /** Apply the save & normalize once, after all clock edits have been combined. */
-function resolveImportDay(stored: WorldState, clock: WorldState, day?: SaveDay): WorldState {
-  if (!day && clock.season === stored.season && clock.weather === stored.weather) return stored;
-  return applySaveDay(clock, day ?? { season: undefined, weather: undefined });
+function resolveImportDay(
+  stored: WorldState,
+  clock: WorldState,
+  day: SaveDay | undefined,
+  farmChanged: boolean,
+): WorldState {
+  if (
+    !day &&
+    !farmChanged &&
+    clock.season === stored.season &&
+    clock.weather === stored.weather &&
+    clock.day === stored.day
+  ) {
+    return stored;
+  }
+  return applySaveDay(
+    farmChanged ? withoutRecordedDay(clock) : clock,
+    day ?? { season: undefined, weather: undefined },
+  );
 }
 
 function rebaseFields(

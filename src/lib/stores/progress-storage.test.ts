@@ -161,6 +161,14 @@ const MIGRATED_FIXTURE_HISTORY = {
 };
 
 describe("migration table", () => {
+  it.each(POLICIES)("preserves a known day and leaves older clocks undated (%s)", (policy) => {
+    const older = readOk(JSON.stringify(fixture(9)), policy);
+    expect(older.worldState.day).toBeUndefined();
+    const dated = readOk(JSON.stringify(fixture(10)), policy);
+    expect(dated.worldState.day).toBe(17);
+    expect(readOk(serializeProgress(dated), policy).worldState).toEqual(dated.worldState);
+  });
+
   it("has one contiguous step per version up to this build's", () => {
     const versions = Object.keys(MIGRATIONS).map(Number);
     expect(versions).toEqual(

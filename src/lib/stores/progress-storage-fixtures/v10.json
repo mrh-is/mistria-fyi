@@ -1,0 +1,23 @@
+{
+  "progress": {
+    "almanac": ["turnip"],
+    "almanacRecipes": [],
+    "animalCosmetics": {},
+    "animals": {},
+    "cosmetics": [],
+    "mineFloor": 0,
+    "mountAppearances": [],
+    "museum": [],
+    "petCosmetics": [],
+    "petSkins": [],
+    "renown": 0,
+    "spells": [],
+    "unlockedPerks": []
+  },
+  "version": 10,
+  "worldState": {
+    "day": 17,
+    "season": "spring",
+    "weather": "calm"
+  }
+}

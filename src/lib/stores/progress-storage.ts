@@ -20,6 +20,7 @@ import { SvelteSet } from "svelte/reactivity";
 import * as v from "valibot";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { DAYS_PER_SEASON } from "#lib/engine/game-calendar.js";
 import { trackedPerkIds } from "#lib/engine/perk-ids.js";
 import {
   PROGRESS_FIELD_SPECS,
@@ -48,6 +49,7 @@ import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type { ProgressField, ProgressListField } from "#lib/engine/progress-fields.js";
 import type { ProgressHistory, ResolutionRecord } from "#lib/engine/provenance.js";
+import type { WorldDay } from "#lib/engine/world-state.js";
 import type { DeviceLocalState } from "#lib/sync/lane-state.js";
 import type { SaveImportMetadata } from "#lib/types/save-identity.js";
 import type {
@@ -55,10 +57,8 @@ import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
-  Season,
   VillagerId,
   VillagerRelationship,
-  Weather,
 } from "#lib/types/tracker-data.js";
 import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
@@ -77,6 +77,8 @@ export type Migration = (document: StoredDocument) => StoredDocument;
  */
 export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
+  // Earlier clocks recorded the season but have no day number to backfill.
+  10: (document) => document,
   // Earlier builds recorded neither an identity nor an import timestamp. Do not invent either.
   2: (document) => ({ ...document, lastImport: null }),
   // Version 3 adds provenance & resolutions. Every fact a version 2 blob holds predates provenance,
@@ -281,6 +283,8 @@ const ResolutionSchema = v.object({
   saveValue: v.custom<unknown>((value) => value !== undefined),
 });
 
+const ClockDaySchema = v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(DAYS_PER_SEASON));
+
 const StrictBlobSchema = v.object({
   lastImport: v.optional(LastImportSchema, null),
   progress: v.object({
@@ -303,7 +307,11 @@ const StrictBlobSchema = v.object({
     villagerRelationships: v.optional(v.record(v.string(), RelationshipSchema)),
   } satisfies StoredProgressEntries),
   version: VersionSchema,
-  worldState: v.object({ season: v.picklist(SEASONS), weather: v.picklist(WEATHERS) }),
+  worldState: v.object({
+    day: v.optional(ClockDaySchema),
+    season: v.picklist(SEASONS),
+    weather: v.picklist(WEATHERS),
+  }),
 });
 
 const RepairBlobSchema = v.object({
@@ -332,6 +340,7 @@ const RepairBlobSchema = v.object({
   } satisfies StoredProgressEntries),
   version: VersionSchema,
   worldState: v.object({
+    day: v.fallback(v.optional(ClockDaySchema), undefined),
     season: v.fallback(v.picklist(SEASONS), "spring"),
     weather: v.fallback(v.picklist(WEATHERS), "calm"),
   }),
@@ -355,10 +364,7 @@ const SCHEMAS = {
 
 // ─── Reading ────────────────────────────────────────────────────────
 
-export interface WorldState {
-  season: Season;
-  weather: Weather;
-}
+export type WorldState = WorldDay;
 
 export function createDefaultWorldState(): WorldState {
   return { season: "spring", weather: "calm" };
@@ -887,6 +893,10 @@ function serializedState({
       ...ordered,
     },
     version: CURRENT_SERIALIZATION_VERSION,
-    worldState: { season: worldState.season, weather: worldState.weather },
+    worldState: {
+      ...(worldState.day === undefined ? {} : { day: worldState.day }),
+      season: worldState.season,
+      weather: worldState.weather,
+    },
   };
 }
