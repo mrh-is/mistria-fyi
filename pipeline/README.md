@@ -373,6 +373,11 @@ history stays unknown. Other reviewed game predicates remain explicit `gamePredi
 quest shelves treat as met. Unrecognized predicates throw, even when newly declared in
 `requirements.toml`.
 
+The game starts each town-rank quest on reaching the previous rank, as
+`gml/scripts/GameplaySystems/Player/RenownUtils.gml` & `Ari.gml` show. The pipeline uses the
+preceding extracted rank boundary as its spoiler-visibility gate. Copper therefore appears at level
+10, not on a fresh save. Existing story prerequisites still apply.
+
 Quest shelves evaluate start conditions in addition to spoiler gates and existing fetch/cooking item
 sources. An obtained quest has already passed its start conditions. The app doesn't infer inventory
 counts, calendar day, or letter receipt from incomplete progress.

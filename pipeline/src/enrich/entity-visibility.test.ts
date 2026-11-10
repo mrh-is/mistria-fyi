@@ -1142,6 +1142,74 @@ describe("assignEntityVisibility — quests", () => {
       questId: "prior_quest",
     });
   });
+
+  it("reveals rank quests at the preceding rank while retaining other prerequisites", () => {
+    const starts = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const ids = [
+      "copper",
+      "ruby",
+      "iron",
+      "sapphire",
+      "silver",
+      "emerald",
+      "gold",
+      "diamond",
+      "mistril",
+    ];
+    const story = Object.fromEntries(
+      ids.map((id, index) => [`reach_${id}`, { sources: [], townRankLevel: starts[index + 2] }]),
+    );
+    const trackerData = makeTrackerData({
+      quests: { story },
+      townRanks: starts.map((start, index) => ({
+        levels: { start, end: starts[index + 1] === undefined ? start : starts[index + 1] - 1 },
+      })),
+    });
+    const chains = makeQuestChains({
+      story: { reach_ruby: { prerequisites: ["prior_quest" as QuestId] } } as never,
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), chains);
+
+    expect(Object.keys(trackerData.quests.story)).toHaveLength(9);
+    for (const [index, id] of ids.entries()) {
+      const gate = { type: "renownLevel", level: starts[index + 1] };
+      expect(trackerData.quests.story[`reach_${id}` as QuestId].visibility).toEqual(
+        id === "ruby"
+          ? {
+              type: "and",
+              conditions: [{ type: "questCompleted", questId: "prior_quest" }, gate],
+            }
+          : gate,
+      );
+    }
+  });
+
+  it("uses the preceding rank boundary even when rank widths differ", () => {
+    const trackerData = makeTrackerData({
+      quests: { story: { rank_quest: { sources: [], townRankLevel: 20 } } },
+      townRanks: [
+        { levels: { start: 0, end: 6 } },
+        { levels: { start: 7, end: 19 } },
+        { levels: { start: 20, end: 20 } },
+      ],
+    });
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    expect(trackerData.quests.story["rank_quest" as QuestId].visibility).toEqual({
+      type: "renownLevel",
+      level: 7,
+    });
+  });
+
+  it.each([0, 15])("rejects a rank quest with no preceding rank at level %i", (level) => {
+    const trackerData = makeTrackerData({
+      quests: { story: { rank_quest: { sources: [], townRankLevel: level } } },
+      townRanks: [{ levels: { start: 0, end: 9 } }, { levels: { start: 10, end: 19 } }],
+    });
+    expect(() => {
+      assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    }).toThrow(/rank_quest.*preceding.*rank/);
+  });
 });
 
 describe("assignEntityVisibility — mount appearances", () => {
