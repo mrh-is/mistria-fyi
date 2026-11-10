@@ -16,6 +16,8 @@ import { compileUiMessages } from "./scripts/compile-ui-messages.js";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
+  errorMetadataFile,
+  errorSvelteFile,
   routeMetadataFiles,
   routeSvelteFiles,
   sharedLocaleFiles,
@@ -239,6 +241,8 @@ export default defineConfig(({ command }) => ({
     svelteCssCachePlugin([
       aboutMetadataFile,
       ...aboutSvelteFiles,
+      errorMetadataFile,
+      errorSvelteFile,
       ...routeMetadataFiles,
       ...routeSvelteFiles,
       ...sharedLocaleFiles,

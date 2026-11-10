@@ -5,6 +5,8 @@ import { adapter as scriptAdapter } from "wuchale/adapter-vanilla";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
+  errorMetadataFile,
+  errorSvelteFile,
   routeMetadataFiles,
   routeSvelteFiles,
   sharedLocaleFiles,
@@ -17,6 +19,7 @@ import { ROUTE_UI_GROUPS } from "./src/lib/i18n/route-ui-groups.ts";
 import { LOCALE_CODES } from "./src/lib/types/locale.ts";
 
 const aboutStorage = partitionedStorage(["about"], () => "about");
+const errorStorage = partitionedStorage(["errors"], () => "errors");
 const sharedStorage = partitionedStorage(["shared"], () => "shared");
 const instanceRuntime = {
   // A module script can run before the route loads its catalog. Only instances read it.
@@ -50,6 +53,21 @@ export default defineConfig({
       // This opt-in file has one function with a runtime parameter supplied by the page load.
       runtime: { plain: { wrapInit: () => "_runtime" } },
       storage: aboutStorage,
+    }),
+    errors: adapter({
+      files: errorSvelteFile,
+      loader: "custom",
+      // Error copy must render even when the route's catalog failed to load.
+      loading: { direct: true },
+      runtime: instanceRuntime,
+      storage: errorStorage,
+    }),
+    "errors-metadata": scriptAdapter({
+      files: errorMetadataFile,
+      loader: "custom",
+      loading: { direct: true },
+      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, ", _locale)") } },
+      storage: errorStorage,
     }),
     metadata: scriptAdapter({
       // Route-group directory names contain literal parentheses in SvelteKit.

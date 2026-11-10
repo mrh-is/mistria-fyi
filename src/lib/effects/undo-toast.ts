@@ -1,8 +1,9 @@
 import { toast } from "svelte-sonner";
 
 import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
+import plural from "#lib/i18n/catalogs/plural.js";
+import { getLocale } from "#lib/i18n/locale-runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { RecipeId } from "#lib/types/tracker-data.js";
@@ -23,18 +24,21 @@ export function questToastMessage(
   name: string,
   state: QuestState,
   newlyAdded: readonly RecipeId[],
-  locale: LocaleCode,
+  _locale: LocaleCode,
 ): string {
-  if (state === "obtained") return m.quest_marked_obtained({ name }, { locale });
-  if (state === "none") return m.quest_reset({ name }, { locale });
+  if (state === "obtained") return `Started “${name}”`;
+  if (state === "none") return `Reset “${name}”`;
   if (newlyAdded.length === 1) {
-    const [recipe] = recipeDisplayNames([...newlyAdded], locale);
-    return m.quest_marked_completed_with_recipe({ name, recipe }, { locale });
+    const [recipe] = recipeDisplayNames([...newlyAdded], _locale);
+    return `Checked off “${name}” and unlocked “${recipe}”`;
   }
   if (newlyAdded.length > 1) {
-    return m.quest_marked_completed_with_recipes({ count: newlyAdded.length, name }, { locale });
+    return plural(newlyAdded.length, [
+      `Checked off “${name}” and unlocked ${newlyAdded.length} recipe`,
+      `Checked off “${name}” and unlocked ${newlyAdded.length} recipes`,
+    ]);
   }
-  return m.quest_marked_completed({ name }, { locale });
+  return `Checked off “${name}”`;
 }
 
 /**
@@ -55,10 +59,13 @@ export function showQuestToast(
  * Show a toast with an "Undo" action for check-off state changes. Toasts for different items
  * stack; a second toast for the same item replaces its first.
  */
-export function showUndoToast(itemName: string, completed: boolean, onUndo: () => void): void {
-  const message = completed
-    ? m.undo_marked_complete({ name: itemName })
-    : m.undo_unmarked({ name: itemName });
+export function showUndoToast(
+  itemName: string,
+  completed: boolean,
+  onUndo: () => void,
+  _locale = getLocale(),
+): void {
+  const message = completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
   showStackedUndoToast(`item:${itemName}`, message, onUndo);
 }
 
@@ -67,9 +74,10 @@ export function showStarterItemsToast(
   count: number,
   undo: () => void,
   dismiss: () => void,
+  _locale = getLocale(),
 ): () => void {
-  const id = toast(m.onboarding_starter_items({ count }), {
-    cancel: { label: m.onboarding_undo_starter_items(), onClick: undo },
+  const id = toast(`We checked off your starter items (${count})`, {
+    cancel: { label: "Undo starter checks", onClick: undo },
     duration: 30_000,
     onAutoClose: dismiss,
     onDismiss: dismiss,
@@ -83,7 +91,12 @@ export function clearUndoToasts(): void {
   undoToasts.clear();
 }
 
-function showStackedUndoToast(key: string, message: string, onUndo: () => void): void {
+function showStackedUndoToast(
+  key: string,
+  message: string,
+  onUndo: () => void,
+  _locale = getLocale(),
+): void {
   // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
   if (userState.trackingLaneNeeded) return;
   const previous = undoToasts.get(key);
@@ -106,7 +119,7 @@ function showStackedUndoToast(key: string, message: string, onUndo: () => void):
   };
   const id = toast(message, {
     cancel: {
-      label: m.action_undo(),
+      label: "Undo",
       onClick: () => {
         forget();
         onUndo();

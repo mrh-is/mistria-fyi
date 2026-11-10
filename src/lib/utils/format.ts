@@ -1,6 +1,5 @@
 import localeManifest from "#lib/data/locales.json";
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { LocaleCode, LocaleManifest } from "#lib/types/locale.js";
 import type {
@@ -18,10 +17,10 @@ import type {
 } from "#lib/types/tracker-data.js";
 
 const SEASON_LABEL_ABBR: Record<Season, () => string> = {
-  fall: m.season_fall_abbr,
-  spring: m.season_spring_abbr,
-  summer: m.season_summer_abbr,
-  winter: m.season_winter_abbr,
+  fall: () => /* @wc-include */ "FAL",
+  spring: () => /* @wc-include */ "SPR",
+  summer: () => /* @wc-include */ "SUM",
+  winter: () => /* @wc-include */ "WIN",
 };
 
 /** Season-specific weather display names */
@@ -30,16 +29,16 @@ const WEATHER_LABEL_BY_SEASON: Record<Season, Partial<Record<Weather, () => stri
   spring: {},
   summer: {},
   winter: {
-    heavy_inclement: m.weather_winter_heavy_inclement,
-    inclement: m.weather_winter_inclement,
+    heavy_inclement: () => "Blizzard",
+    inclement: () => "Snow",
   },
 };
 
 const WEATHER_LABEL: Record<Weather, () => string> = {
-  calm: m.weather_calm,
-  heavy_inclement: m.weather_heavy_inclement,
-  inclement: m.weather_inclement,
-  special: m.weather_special,
+  calm: () => "Sun",
+  heavy_inclement: () => "Storm",
+  inclement: () => "Rain",
+  special: () => "Breeze",
 };
 
 export type NameLookup<T> = Partial<Record<keyof T, string>>;
@@ -102,7 +101,7 @@ export function composeDescriptorName(
   locale: LocaleCode,
 ): string {
   const infusion = LOCALE_ENTRIES_BY_TAG.get(locale)?.infusion;
-  if (!infusion || infusion.order === "Adjective") {
+  if (!infusion || infusion.order === /* @wc-ignore */ "Adjective") {
     return `${descriptor}${infusion?.space ?? " "}${base}`;
   }
   return `${base}${infusion.space}${descriptor}`;

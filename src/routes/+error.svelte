@@ -2,7 +2,6 @@
   import IconHome from "@tabler/icons-svelte-runes/icons/home";
 
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
@@ -13,9 +12,9 @@
   <span class="text-6xl font-bold text-muted-foreground/50">{page.status}</span>
   <p class="text-lg text-muted-foreground">
     {#if page.status === 404}
-      {m.error_not_found()}
+      This page doesn’t exist. Maybe it wandered off to tend the fields.
     {:else}
-      {m.error_generic()}
+      Something went wrong on our end, but your progress is safe.
     {/if}
   </p>
   <a
@@ -23,15 +22,16 @@
     href={localizedHref("")}
   >
     <IconHome class="size-4" />
-    {m.error_back_home()}
+    <!-- @wc-context: error back home -->Back to home
   </a>
   {#if page.status !== 404}
     <button
       class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
       type="button"
-      onclick={() => feedbackContext.reportError(m.error_generic())}
+      onclick={() =>
+        feedbackContext.reportError("Something went wrong on our end, but your progress is safe.")}
     >
-      {m.error_report_action()}
+      Report this error
     </button>
   {/if}
 </div>

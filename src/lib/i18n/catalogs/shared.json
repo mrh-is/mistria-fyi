@@ -1,6 +1,35 @@
 [
   {
     "translations": {
+      "en": ", {0}",
+      "ja": "、{0}",
+      "zh-Hans": "，{0}",
+      "zh-Hant": "，{0}",
+      "es": ", {0}",
+      "fr": ", {0}",
+      "ko": ", {0}",
+      "ru": ", {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "clause"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "1. Download a backup of your progress first.",
       "ja": "1. まず進み具合のバックアップをダウンロードしてね。",
       "zh-Hans": "1. 先下载一份进度备份。",
@@ -602,6 +631,86 @@
   },
   {
     "translations": {
+      "en": "Almanac: +{0}",
+      "ja": "アルマナック：+{0}",
+      "zh-Hans": "年鉴：+{0}",
+      "zh-Hant": "年鑑：+{0}",
+      "es": "Almanaque: +{0}",
+      "fr": "Almanach : +{0}",
+      "ko": "알마낙: +{0}",
+      "ru": "Альманах: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Already tracking on another device? Scan its QR code to bring your progress here.",
+      "ja": "別の端末ですでに記録していますか？その端末のQRコードをスキャンして、進捗をこちらに転送できます。",
+      "zh-Hans": "已经在其他设备上记录进度？扫描该设备的二维码，将进度转移到这里。",
+      "zh-Hant": "已經在其他裝置上記錄進度？掃描該裝置的 QR code，將進度轉移到這裡。",
+      "es": "¿Ya registras tu progreso en otro dispositivo? Escanea su código QR para traerlo aquí.",
+      "fr": "Vous suivez déjà votre progression sur un autre appareil ? Scannez son code QR pour la récupérer ici.",
+      "ko": "다른 기기에서 이미 기록하고 있나요? 그 기기의 QR 코드를 스캔해 진행 상황을 가져오세요.",
+      "ru": "Уже ведёте учёт на другом устройстве? Отсканируйте его QR-код, чтобы перенести прогресс сюда."
+    },
+    "references": [
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Animal cosmetics: +{0}",
+      "ja": "動物のコスメ：+{0}",
+      "zh-Hans": "动物装饰：+{0}",
+      "zh-Hant": "動物裝飾：+{0}",
+      "es": "Cosméticos de animales: +{0}",
+      "fr": "Cosmétiques d’animaux : +{0}",
+      "ko": "동물 코스메틱: +{0}",
+      "ru": "Косметика животных: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Animal products",
       "ja": "畜産物",
       "zh-Hans": "动物产品",
@@ -616,6 +725,35 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Animal variants: +{0}",
+      "ja": "動物のバリエーション：+{0}",
+      "zh-Hans": "动物变体：+{0}",
+      "zh-Hant": "動物變體：+{0}",
+      "es": "Variantes de animales: +{0}",
+      "fr": "Variantes d’animaux : +{0}",
+      "ko": "동물 변형: +{0}",
+      "ru": "Варианты животных: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -780,6 +918,28 @@
     "references": [
       {
         "file": "src/lib/components/quick-settings-theme-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Available from the start",
+      "ja": "最初から入手可能",
+      "zh-Hans": "初始即可获得",
+      "zh-Hant": "初始即可獲得",
+      "es": "Disponible desde el principio",
+      "fr": "Disponible dès le début",
+      "ko": "처음부터 사용 가능",
+      "ru": "Доступно с самого начала"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
         "refs": [
           null
         ]
@@ -1045,6 +1205,28 @@
   },
   {
     "translations": {
+      "en": "Blizzard",
+      "ja": "吹雪",
+      "zh-Hans": "暴风雪",
+      "zh-Hant": "暴風雪",
+      "es": "Ventisca",
+      "fr": "Blizzard",
+      "ko": "눈보라",
+      "ru": "Метель"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Blue",
       "ja": "青",
       "zh-Hans": "蓝色",
@@ -1126,6 +1308,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -1145,6 +1333,28 @@
     "references": [
       {
         "file": "src/lib/components/villagers-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Breed",
+      "ja": "繁殖させる",
+      "zh-Hans": "繁殖",
+      "zh-Hant": "繁殖",
+      "es": "Criar",
+      "fr": "Faire se reproduire",
+      "ko": "번식",
+      "ru": "Разведение"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
         "refs": [
           null
         ]
@@ -1199,6 +1409,28 @@
   },
   {
     "translations": {
+      "en": "Breeze",
+      "ja": "そよ風",
+      "zh-Hans": "微风",
+      "zh-Hant": "微風",
+      "es": "Brisa",
+      "fr": "Brise",
+      "ko": "산들바람",
+      "ru": "Ветерок"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Brown",
       "ja": "茶色",
       "zh-Hans": "棕色",
@@ -1235,6 +1467,39 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Buy at the Horse Statue ({0} essence) once you have the {1}",
+      "ja": "{1}の入手後、馬の像で購入（エッセンス{0}）",
+      "zh-Hans": "获得{1}后，在马雕像处购买（{0}精华）",
+      "zh-Hant": "獲得{1}後，在馬雕像處購買（{0}精華）",
+      "es": "Comprar en la estatua del caballo ({0} de esencia) cuando tengas a {1}",
+      "fr": "Acheter à la statue de cheval ({0} d’essence) une fois que vous avez {1}",
+      "ko": "{1} 획득 후 말 조각상에서 구매 (정수 {0})",
+      "ru": "Купить у статуи лошади ({0} эссенции) после получения: {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "String(source.cost)"
+              ],
+              [
+                "1",
+                "mount"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -1323,6 +1588,214 @@
         "file": "src/lib/components/sync/save-drop.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Catch",
+      "ja": "捕まえる",
+      "zh-Hans": "捕捉",
+      "zh-Hant": "捕捉",
+      "es": "Atrapar",
+      "fr": "Attraper",
+      "ko": "잡기",
+      "ru": "Поймать"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Catch at {0}",
+      "ja": "{0}で捕まえる",
+      "zh-Hans": "在{0}捕捉",
+      "zh-Hant": "在{0}捕捉",
+      "es": "Atrapar en {0}",
+      "fr": "Attraper à : {0}",
+      "ko": "{0}에서 잡기",
+      "ru": "Поймать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "locations"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Catch in a fish trap (requires bait)",
+      "ja": "お魚トラップで捕まえる（エサが必要）",
+      "zh-Hans": "用捕鱼笼捕获（需要鱼饵）",
+      "zh-Hant": "用捕魚籠捕獲（需要魚餌）",
+      "es": "Atrapar con una nasa (requiere cebo)",
+      "fr": "Attraper dans une nasse (appât requis)",
+      "ko": "물고기 덫으로 잡기 (미끼 필요)",
+      "ru": "Поймать в верше (нужна наживка)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Catch in {0}",
+      "ja": "{0}で釣る",
+      "zh-Hans": "在{0}钓取",
+      "zh-Hant": "在{0}釣取",
+      "es": "Pescar en {0}",
+      "fr": "Pêcher : {0}",
+      "ko": "{0}에서 낚기",
+      "ru": "Поймать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "waters"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Catch while fishing",
+      "ja": "釣りで入手",
+      "zh-Hans": "钓鱼获得",
+      "zh-Hant": "釣魚獲得",
+      "es": "Pescar",
+      "fr": "Pêcher",
+      "ko": "낚시로 잡기",
+      "ru": "Поймать на рыбалке"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Catch with bait",
+      "ja": "エサを使って釣る",
+      "zh-Hans": "用鱼饵钓取",
+      "zh-Hant": "用魚餌釣取",
+      "es": "Pescar con cebo",
+      "fr": "Pêcher avec un appât",
+      "ko": "미끼로 낚기",
+      "ru": "Поймать на наживку"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Chance to dig up at dig sites on {0} after unlocking any date, until you unlock the {1}",
+      "ja": "デートを解放した後、{1}を解放するまで{0}の発掘ポイントで掘り出せることがある",
+      "zh-Hans": "解锁任意约会后、解锁{1}前，有几率在{0}的挖掘点挖到",
+      "zh-Hant": "解鎖任意約會後、解鎖{1}前，有機率在{0}的挖掘點挖到",
+      "es": "Posibilidad de desenterrar en los puntos de excavación de {0} tras desbloquear una cita, hasta desbloquear: {1}",
+      "fr": "Chance de déterrer sur les sites de fouille de : {0}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {1}",
+      "ko": "데이트를 해금한 뒤 {1} 해금 전까지 {0}의 발굴 지점에서 확률로 발굴",
+      "ru": "Шанс выкопать на местах раскопок ({0}) после открытия любого свидания, пока не открыто: {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "location"
+              ],
+              [
+                "1",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Chance to find in Mines chests after unlocking any date, until you unlock the {0}",
+      "ja": "デートを解放した後、{0}を解放するまで鉱坑の宝箱で見つかることがある",
+      "zh-Hans": "解锁任意约会后、解锁{0}前，有几率在矿洞宝箱中找到",
+      "zh-Hant": "解鎖任意約會後、解鎖{0}前，有機率在礦洞寶箱中找到",
+      "es": "Posibilidad de encontrar en cofres de las Minas tras desbloquear una cita, hasta desbloquear: {0}",
+      "fr": "Chance de trouver dans les coffres des Mines, après avoir débloqué un rendez-vous et jusqu’à débloquer : {0}",
+      "ko": "데이트를 해금한 뒤 {0} 해금 전까지 광산 상자에서 확률로 발견",
+      "ru": "Шанс найти в сундуках шахт после открытия любого свидания, пока не открыто: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "date"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -1474,6 +1947,141 @@
   },
   {
     "translations": {
+      "en": "Checked off “{0}”",
+      "ja": "「{0}」をチェックしました",
+      "zh-Hans": "已勾选“{0}”",
+      "zh-Hant": "已勾選「{0}」",
+      "es": "«{0}» marcado",
+      "fr": "« {0} » coché",
+      "ko": "“{0}”을(를) 체크했습니다",
+      "ru": "«{0}» отмечено"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "itemName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "Checked off “{0}” and unlocked {1} recipe",
+        "Checked off “{0}” and unlocked {1} recipes"
+      ],
+      "ja": [
+        "「{0}」をチェックし、レシピを{1}件解放しました"
+      ],
+      "zh-Hans": [
+        "已勾选“{0}”，并解锁了 {1} 个配方"
+      ],
+      "zh-Hant": [
+        "已勾選「{0}」，並解鎖 {1} 項食譜"
+      ],
+      "es": [
+        "«{0}» marcado y se desbloqueó {1} receta",
+        "«{0}» marcado y se desbloquearon {1} recetas",
+        "«{0}» marcado y se desbloquearon {1} recetas"
+      ],
+      "fr": [
+        "« {0} » coché, débloquant {1} recette",
+        "« {0} » coché, débloquant {1} recettes",
+        "« {0} » coché, débloquant {1} recettes"
+      ],
+      "ko": [
+        "“{0}”을(를) 체크하고 레시피 {1}개를 해제했습니다"
+      ],
+      "ru": [
+        "«{0}» отмечено, разблокирован {1} рецепт",
+        "«{0}» отмечено, разблокировано {1} рецепта",
+        "«{0}» отмечено, разблокировано {1} рецептов",
+        "«{0}» отмечено, разблокировано {1} рецепта"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "newlyAdded.length"
+              ],
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "newlyAdded.length"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Checked off “{0}” and unlocked “{1}”",
+      "ja": "「{0}」をチェックし、「{1}」を解放しました",
+      "zh-Hans": "已勾选“{0}”，并解锁了“{1}”",
+      "zh-Hant": "已勾選「{0}」，並解鎖「{1}」",
+      "es": "«{0}» marcado y se desbloqueó «{1}»",
+      "fr": "« {0} » coché, débloquant « {1} »",
+      "ko": "“{0}”을(를) 체크하고 “{1}”을(를) 해제했습니다",
+      "ru": "«{0}» отмечено, разблокирован рецепт «{1}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "recipe"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Cherry",
       "ja": "サクラ材",
       "zh-Hans": "樱桃木",
@@ -1531,6 +2139,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Child choice updated",
+      "ja": "子供の選択を更新しました",
+      "zh-Hans": "已更新孩子的选择",
+      "zh-Hant": "已更新孩子的選擇",
+      "es": "Elección del hijo actualizada",
+      "fr": "Choix de l’enfant mis à jour",
+      "ko": "자녀 선택 업데이트됨",
+      "ru": "Выбор ребёнка обновлён"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
         "refs": [
           null
         ]
@@ -1950,6 +2580,35 @@
   },
   {
     "translations": {
+      "en": "Collect from {0}",
+      "ja": "{0}から採取",
+      "zh-Hans": "从{0}处收集",
+      "zh-Hant": "從{0}處收集",
+      "es": "Obtener de: {0}",
+      "fr": "Récolter sur : {0}",
+      "ko": "{0}에게서 채집",
+      "ru": "Получить от: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "animal"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Collections & donations",
       "ja": "コレクションと寄贈",
       "zh-Hans": "收藏与捐赠",
@@ -1964,6 +2623,253 @@
         "file": "src/lib/data/categories.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Complete the Crown Request for {0}",
+      "ja": "ロイヤルリクエスト「{0}」を完了する",
+      "zh-Hans": "完成皇家委托“{0}”",
+      "zh-Hant": "完成皇室請求「{0}」",
+      "es": "Completar el encargo de la corona: {0}",
+      "fr": "Terminer la requête royale : {0}",
+      "ko": "왕실 의뢰 '{0}' 완료",
+      "ru": "Выполнить заказ Короны: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(subjectSegment)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Complete the {0} cooking challenge",
+      "ja": "料理チャレンジ「{0}」を完了する",
+      "zh-Hans": "完成烹饪挑战“{0}”",
+      "zh-Hant": "完成烹飪挑戰「{0}」",
+      "es": "Completar el desafío culinario: {0}",
+      "fr": "Terminer le défi culinaire : {0}",
+      "ko": "요리 도전 '{0}' 완료",
+      "ru": "Выполнить кулинарное испытание: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(nameSegment)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Complete the {0} mission",
+      "ja": "ミッション「{0}」を完了する",
+      "zh-Hans": "完成使命“{0}”",
+      "zh-Hant": "完成使命「{0}」",
+      "es": "Completar la misión: {0}",
+      "fr": "Terminer la mission : {0}",
+      "ko": "미션 '{0}' 완료",
+      "ru": "Выполнить миссию: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(nameSegment)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Complete the {0} quest",
+      "ja": "クエスト「{0}」を完了する",
+      "zh-Hans": "完成任务“{0}”",
+      "zh-Hant": "完成任務「{0}」",
+      "es": "Completar la misión: {0}",
+      "fr": "Terminer la quête : {0}",
+      "ko": "퀘스트 '{0}' 완료",
+      "ru": "Выполнить задание: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(nameSegment)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "Complete {0} set in the {1} wing",
+        "Complete {0} sets in the {1} wing"
+      ],
+      "ja": [
+        "{1}の展示セットを{0}個完成させる"
+      ],
+      "zh-Hans": [
+        "在{1}展区完成{0}套收藏"
+      ],
+      "zh-Hant": [
+        "在{1}展區完成{0}套收藏"
+      ],
+      "es": [
+        "Completar {0} colección en el ala de {1}",
+        "Completar {0} colecciones en el ala de {1}",
+        "Completar {0} colecciones en el ala de {1}"
+      ],
+      "fr": [
+        "Compléter {0} collection dans l’aile {1}",
+        "Compléter {0} collections dans l’aile {1}",
+        "Compléter {0} collections dans l’aile {1}"
+      ],
+      "ko": [
+        "{1} 전시관의 세트 {0}개 완성"
+      ],
+      "ru": [
+        "Собрать {0} коллекцию в крыле «{1}»",
+        "Собрать {0} коллекции в крыле «{1}»",
+        "Собрать {0} коллекций в крыле «{1}»",
+        "Собрать {0} коллекции в крыле «{1}»"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "source.setCount"
+              ],
+              [
+                "1",
+                "wing"
+              ],
+              [
+                "0",
+                "source.setCount"
+              ],
+              [
+                "1",
+                "wing"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Complete {0}’s request for {1}",
+      "ja": "{0}の依頼「{1}」を完了する",
+      "zh-Hans": "完成{0}的委托“{1}”",
+      "zh-Hant": "完成{0}的委託「{1}」",
+      "es": "Completar el encargo de {0}: {1}",
+      "fr": "Terminer la demande de {0} : {1}",
+      "ko": "{0}의 의뢰 '{1}' 완료",
+      "ru": "Выполнить просьбу ({0}): {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(villagerSegment)"
+              ],
+              [
+                "1",
+                "slot(itemSegment)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Complete {0}’s {1} quest",
+      "ja": "{0}のクエスト「{1}」を完了する",
+      "zh-Hans": "完成{0}的任务“{1}”",
+      "zh-Hant": "完成{0}的任務「{1}」",
+      "es": "Completar la misión de {0}: {1}",
+      "fr": "Terminer la quête de {0} : {1}",
+      "ko": "{0}의 퀘스트 '{1}' 완료",
+      "ru": "Выполнить задание ({0}): {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(villagerSegment)"
+              ],
+              [
+                "1",
+                "slot(questSegment)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -2010,6 +2916,35 @@
         "file": "src/lib/components/rank-record.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cook via {0}",
+      "ja": "{0}で料理する",
+      "zh-Hans": "通过{0}烹饪",
+      "zh-Hant": "透過{0}烹飪",
+      "es": "Cocinar mediante {0}",
+      "fr": "Cuisiner via : {0}",
+      "ko": "{0}(으)로 요리",
+      "ru": "Приготовить по рецепту: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "recipe"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -2134,6 +3069,35 @@
   },
   {
     "translations": {
+      "en": "Cosmetics: +{0}",
+      "ja": "コスメ：+{0}",
+      "zh-Hans": "装饰：+{0}",
+      "zh-Hant": "裝飾：+{0}",
+      "es": "Cosméticos: +{0}",
+      "fr": "Cosmétiques : +{0}",
+      "ko": "코스메틱: +{0}",
+      "ru": "Косметика: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Cracked purple",
       "ja": "ひびの入った紫色",
       "zh-Hans": "有裂纹的紫色",
@@ -2148,6 +3112,64 @@
         "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Craft at the Ritual Chamber with {0}",
+      "ja": "{0}を習得した状態で、儀式の間で作る",
+      "zh-Hans": "拥有{0}时，在仪式室制作",
+      "zh-Hant": "擁有{0}時，在儀式室製作",
+      "es": "Fabricar en la cámara ritual con {0}",
+      "fr": "Fabriquer dans la chambre rituelle avec {0}",
+      "ko": "{0} 보유 시 의식의 방에서 제작",
+      "ru": "Изготовить в ритуальном зале с {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(perkLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Craft via {0}",
+      "ja": "{0}で作る",
+      "zh-Hans": "通过{0}制作",
+      "zh-Hant": "透過{0}製作",
+      "es": "Fabricar mediante {0}",
+      "fr": "Fabriquer via : {0}",
+      "ko": "{0}(으)로 제작",
+      "ru": "Изготовить по рецепту: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "recipe"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -2212,6 +3234,12 @@
     "references": [
       {
         "file": "src/lib/data/categories.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
         "refs": [
           null
         ]
@@ -2522,6 +3550,170 @@
   },
   {
     "translations": {
+      "en": "Dig up at an artifact dig site",
+      "ja": "遺物の発掘ポイントで掘り出す",
+      "zh-Hans": "在文物挖掘点挖掘",
+      "zh-Hant": "在文物挖掘點挖掘",
+      "es": "Desenterrar en una excavación de artefactos",
+      "fr": "Déterrer dans un site de fouilles",
+      "ko": "유물 발굴지에서 발굴",
+      "ru": "Выкопать на месте раскопок"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dig up at {0}",
+      "ja": "{0}で掘り出す",
+      "zh-Hans": "在{0}挖掘",
+      "zh-Hant": "在{0}挖掘",
+      "es": "Desenterrar en {0}",
+      "fr": "Déterrer à : {0}",
+      "ko": "{0}에서 발굴",
+      "ru": "Выкопать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "locations"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dig up in {0}",
+      "ja": "{0}で掘り出す",
+      "zh-Hans": "在{0}挖掘",
+      "zh-Hant": "在{0}挖掘",
+      "es": "Desenterrar en {0}",
+      "fr": "Déterrer : {0}",
+      "ko": "{0}에서 발굴",
+      "ru": "Выкопать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(biomeLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dig up in {0}, with {1}",
+      "ja": "{1}を習得した状態で、{0}で掘り出す",
+      "zh-Hans": "拥有{1}时，在{0}挖掘",
+      "zh-Hant": "擁有{1}時，在{0}挖掘",
+      "es": "Desenterrar en {0}, con {1}",
+      "fr": "Déterrer : {0}, avec {1}",
+      "ko": "{1} 보유 시 {0}에서 발굴",
+      "ru": "Выкопать: {0}, с {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(biomeLabel)"
+              ],
+              [
+                "1",
+                "perk"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dive",
+      "ja": "潜る",
+      "zh-Hans": "潜水",
+      "zh-Hant": "潛水",
+      "es": "Bucear",
+      "fr": "Plonger",
+      "ko": "잠수",
+      "ru": "Нырять"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dive in {0}",
+      "ja": "{0}で潜る",
+      "zh-Hans": "在{0}潜水",
+      "zh-Hant": "在{0}潛水",
+      "es": "Bucear en {0}",
+      "fr": "Plonger : {0}",
+      "ko": "{0}에서 잠수",
+      "ru": "Нырять: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "waters"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Diving",
       "ja": "ダイビング",
       "zh-Hans": "潜水",
@@ -2632,6 +3824,35 @@
   },
   {
     "translations": {
+      "en": "Dragon Forge via {0}",
+      "ja": "{0}でドラゴンの炉を使う",
+      "zh-Hans": "通过{0}使用龙之熔炉",
+      "zh-Hant": "透過{0}使用龍之熔爐",
+      "es": "Forja del dragón mediante {0}",
+      "fr": "Forge du dragon via : {0}",
+      "ko": "{0}(으)로 용의 대장간 제작",
+      "ru": "Драконья кузня по рецепту: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "recipe"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Drop it in again and we’re back in business.",
       "ja": "もう一度ドロップしてもらえれば、また動き出します。",
       "zh-Hans": "再拖进来一次，我们就能继续了。",
@@ -2669,6 +3890,35 @@
         "refs": [
           null,
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Dropped by {0}",
+      "ja": "{0}がドロップ",
+      "zh-Hans": "由{0}掉落",
+      "zh-Hant": "由{0}掉落",
+      "es": "Soltado por: {0}",
+      "fr": "Lâché par : {0}",
+      "ko": "{0}이(가) 드롭",
+      "ru": "Выпадает из: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monsterName(source.monsterId, lookups)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -2852,6 +4102,28 @@
   },
   {
     "translations": {
+      "en": "Expand your farm",
+      "ja": "農場を拡張する",
+      "zh-Hans": "扩建农场",
+      "zh-Hant": "擴建農場",
+      "es": "Ampliar tu granja",
+      "fr": "Agrandir votre ferme",
+      "ko": "농장 확장",
+      "ru": "Расширить ферму"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Export backup",
       "ja": "バックアップをエクスポート",
       "zh-Hans": "导出备份",
@@ -2870,6 +4142,28 @@
       },
       {
         "file": "src/lib/controllers/tracking-reminders.svelte.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "FAL",
+      "ja": "秋",
+      "zh-Hans": "秋",
+      "zh-Hant": "秋",
+      "es": "OTO",
+      "fr": "AUT",
+      "ko": "가을",
+      "ru": "ОСЕ"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
         "refs": [
           null
         ]
@@ -2916,6 +4210,35 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Feed {0}",
+      "ja": "{0}にエサをあげる",
+      "zh-Hans": "喂食{0}",
+      "zh-Hant": "餵食{0}",
+      "es": "Alimentar a: {0}",
+      "fr": "Nourrir : {0}",
+      "ko": "{0}에게 먹이 주기",
+      "ru": "Покормить: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "monsterName(source.monsterId, lookups)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3056,6 +4379,159 @@
   },
   {
     "translations": {
+      "en": "Find in a Treasure Chest in {0}",
+      "ja": "{0}の宝箱から入手",
+      "zh-Hans": "在{0}的宝箱中找到",
+      "zh-Hant": "在{0}的寶箱中找到",
+      "es": "Encontrar en un cofre del tesoro en {0}",
+      "fr": "Trouver dans un coffre au trésor : {0}",
+      "ko": "{0}의 보물 상자에서 발견",
+      "ru": "Найти в сундуке: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(biomeLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Find in a Treasure Chest in {0}, with {1}",
+      "ja": "{1}を習得した状態で、{0}の宝箱から入手",
+      "zh-Hans": "拥有{1}时，在{0}的宝箱中找到",
+      "zh-Hant": "擁有{1}時，在{0}的寶箱中找到",
+      "es": "Encontrar en un cofre del tesoro en {0}, con {1}",
+      "fr": "Trouver dans un coffre au trésor : {0}, avec {1}",
+      "ko": "{1} 보유 시 {0}의 보물 상자에서 발견",
+      "ru": "Найти в сундуке: {0}, с {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(biomeLabel)"
+              ],
+              [
+                "1",
+                "slot(perkLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Find in the Gold Treasure Chest in the {0}",
+      "ja": "{0}にある金の宝箱から入手",
+      "zh-Hans": "在{0}的金宝箱中找到",
+      "zh-Hant": "在{0}的金寶箱中找到",
+      "es": "Encontrar en el cofre del tesoro dorado de {0}",
+      "fr": "Trouver dans le coffre au trésor en or de : {0}",
+      "ko": "{0}의 황금 보물 상자에서 발견",
+      "ru": "Найти в золотом сундуке ({0})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "location"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Find the {0}",
+      "ja": "{0}を見つける",
+      "zh-Hans": "找到{0}",
+      "zh-Hant": "找到{0}",
+      "es": "Encontrar: {0}",
+      "fr": "Trouver : {0}",
+      "ko": "{0} 찾기",
+      "ru": "Найти: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "item"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Find when you catch a fish at {0} after unlocking any date, until you unlock the {1}",
+      "ja": "デートを解放した後、{1}を解放するまで{0}で魚を釣ると見つかる",
+      "zh-Hans": "解锁任意约会后、解锁{1}前，在{0}钓到鱼时找到",
+      "zh-Hant": "解鎖任意約會後、解鎖{1}前，在{0}釣到魚時找到",
+      "es": "Encontrar al pescar en {0} tras desbloquear una cita, hasta desbloquear: {1}",
+      "fr": "Trouver en pêchant à : {0}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {1}",
+      "ko": "데이트를 해금한 뒤 {1} 해금 전까지 {0}에서 물고기를 낚으면 발견",
+      "ru": "Найти при ловле рыбы ({0}) после открытия любого свидания, пока не открыто: {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "location"
+              ],
+              [
+                "1",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Fish",
       "ja": "魚",
       "zh-Hans": "鱼",
@@ -3078,6 +4554,57 @@
   },
   {
     "translations": {
+      "en": "Fish in the Mines",
+      "ja": "鉱坑で釣る",
+      "zh-Hans": "在矿洞钓鱼",
+      "zh-Hant": "在礦洞釣魚",
+      "es": "Pescar en las minas",
+      "fr": "Pêcher dans les mines",
+      "ko": "광산에서 낚시",
+      "ru": "Рыбачить в шахтах"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Fish in {0}",
+      "ja": "{0}で釣る",
+      "zh-Hans": "在{0}钓鱼",
+      "zh-Hant": "在{0}釣魚",
+      "es": "Pescar en {0}",
+      "fr": "Pêcher : {0}",
+      "ko": "{0}에서 낚시",
+      "ru": "Рыбачить: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(biomeLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Fish traps",
       "ja": "お魚トラップ",
       "zh-Hans": "捕鱼笼",
@@ -3092,6 +4619,35 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Fish up {0}",
+      "ja": "{0}を釣り上げる",
+      "zh-Hans": "钓起{0}",
+      "zh-Hant": "釣起{0}",
+      "es": "Pescar: {0}",
+      "fr": "Pêcher : {0}",
+      "ko": "{0} 낚아 올리기",
+      "ru": "Выловить: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "withIndefiniteArticle(name, locale)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3239,6 +4795,57 @@
   },
   {
     "translations": {
+      "en": "Forage at {0}",
+      "ja": "{0}で採集",
+      "zh-Hans": "在{0}采集",
+      "zh-Hant": "在{0}採集",
+      "es": "Recolectar en {0}",
+      "fr": "Cueillir à : {0}",
+      "ko": "{0}에서 채집",
+      "ru": "Собрать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "locations"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Forage in the wild",
+      "ja": "野外で採集",
+      "zh-Hans": "在野外采集",
+      "zh-Hant": "在野外採集",
+      "es": "Recolectar en la naturaleza",
+      "fr": "Cueillir dans la nature",
+      "ko": "야생에서 채집",
+      "ru": "Собрать в дикой природе"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Foraging",
       "ja": "採集物",
       "zh-Hans": "野生采集",
@@ -3276,6 +4883,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -3297,6 +4910,64 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Get married to {0}",
+      "ja": "{0}と結婚する",
+      "zh-Hans": "与{0}结婚",
+      "zh-Hant": "與{0}結婚",
+      "es": "Casarse con {0}",
+      "fr": "Épouser {0}",
+      "ko": "{0}와(과) 결혼",
+      "ru": "Вступить в брак: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "villager"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Get the town rank to level {0}",
+      "ja": "タウンランクをレベル{0}にする",
+      "zh-Hans": "将城镇等级提升至{0}级",
+      "zh-Hant": "將城鎮段位提升至{0}級",
+      "es": "Subir la categoría de la aldea al nivel {0}",
+      "fr": "Porter le classement de la ville au niveau {0}",
+      "ko": "마을 등급을 레벨 {0}까지 올리기",
+      "ru": "Поднять ранг города до уровня {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "String(source.level)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3610,6 +5281,64 @@
   },
   {
     "translations": {
+      "en": "Grow from {0}",
+      "ja": "{0}から育てる",
+      "zh-Hans": "由{0}种植",
+      "zh-Hant": "由{0}種植",
+      "es": "Cultivar a partir de {0}",
+      "fr": "Cultiver à partir de : {0}",
+      "ko": "{0}에서 재배",
+      "ru": "Вырастить из: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "seed"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Grow in the greenhouse from {0}",
+      "ja": "温室で{0}から育てる",
+      "zh-Hans": "在温室中由{0}种植",
+      "zh-Hant": "在溫室中由{0}種植",
+      "es": "Cultivar en el invernadero a partir de {0}",
+      "fr": "Cultiver dans la serre à partir de : {0}",
+      "ko": "온실에서 {0} 재배",
+      "ru": "Вырастить в теплице из: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "seed"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Hair",
       "ja": "髪型",
       "zh-Hans": "发型",
@@ -3624,6 +5353,35 @@
         "file": "src/lib/components/cosmetics-content.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Harvest from {0}",
+      "ja": "{0}から収穫",
+      "zh-Hans": "从{0}收获",
+      "zh-Hant": "從{0}收穫",
+      "es": "Cosechar de: {0}",
+      "fr": "Récolter sur : {0}",
+      "ko": "{0}에서 수확",
+      "ru": "Собрать с дерева: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "sapling"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3946,6 +5704,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Import your Fields of Mistria save to fill in your progress automatically.",
+      "ja": "Fields of Mistriaのセーブデータを読み込むと、進捗を自動で反映できます。",
+      "zh-Hans": "导入你的《Fields of Mistria》存档，自动填写进度。",
+      "zh-Hant": "匯入你的《Fields of Mistria》存檔，自動填入進度。",
+      "es": "Importa tu partida de Fields of Mistria para completar tu progreso automáticamente.",
+      "fr": "Importez votre sauvegarde de Fields of Mistria pour renseigner automatiquement votre progression.",
+      "ko": "Fields of Mistria 저장 파일을 불러와 진행 상황을 자동으로 채우세요.",
+      "ru": "Импортируйте сохранение Fields of Mistria, чтобы автоматически заполнить прогресс."
+    },
+    "references": [
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
         "refs": [
           null
         ]
@@ -4849,6 +6629,35 @@
   },
   {
     "translations": {
+      "en": "Mill via {0}",
+      "ja": "{0}で製粉する",
+      "zh-Hans": "通过{0}研磨",
+      "zh-Hant": "透過{0}研磨",
+      "es": "Moler mediante {0}",
+      "fr": "Moudre via : {0}",
+      "ko": "{0}(으)로 제분",
+      "ru": "Смолоть по рецепту: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "recipe"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Mind letting us read your save file again?",
       "ja": "セーブデータをもう一度読ませてもらえますか？",
       "zh-Hans": "能让我们再读取一次你的存档吗？",
@@ -4948,6 +6757,92 @@
   },
   {
     "translations": {
+      "en": [
+        "Mine floor: +{0} floor",
+        "Mine floor: +{0} floors"
+      ],
+      "ja": [
+        "鉱坑の階層：+{0}階"
+      ],
+      "zh-Hans": [
+        "矿洞楼层：+{0}层"
+      ],
+      "zh-Hant": [
+        "礦洞樓層：+{0}層"
+      ],
+      "es": [
+        "Piso de mina: +{0} piso",
+        "Piso de mina: +{0} pisos",
+        "Piso de mina: +{0} pisos"
+      ],
+      "fr": [
+        "Étage de mine : +{0} étage",
+        "Étage de mine : +{0} étages",
+        "Étage de mine : +{0} étages"
+      ],
+      "ko": [
+        "광산 층: +{0}층"
+      ],
+      "ru": [
+        "Шахтный этаж: +{0} этаж",
+        "Шахтный этаж: +{0} этажа",
+        "Шахтный этаж: +{0} этажей",
+        "Шахтный этаж: +{0} этажа"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ],
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Mine in {0}",
+      "ja": "{0}で採掘",
+      "zh-Hans": "在{0}采矿",
+      "zh-Hant": "在{0}採礦",
+      "es": "Picar en {0}",
+      "fr": "Miner : {0}",
+      "ko": "{0}에서 채굴",
+      "ru": "Добыть: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(biomeLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Mines",
       "ja": "鉱坑",
       "zh-Hans": "矿洞",
@@ -5010,6 +6905,12 @@
     "references": [
       {
         "file": "src/lib/components/og-share-card.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
         "refs": [
           null
         ]
@@ -5084,6 +6985,64 @@
         "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Mount appearances: +{0}",
+      "ja": "マウントの外見：+{0}",
+      "zh-Hans": "坐骑外观：+{0}",
+      "zh-Hant": "坐騎外觀：+{0}",
+      "es": "Apariencias de montura: +{0}",
+      "fr": "Apparences de monture : +{0}",
+      "ko": "탈 것 외형: +{0}",
+      "ru": "Облики ездовых животных: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Museum donations: +{0}",
+      "ja": "博物館への寄贈：+{0}",
+      "zh-Hans": "博物馆捐赠：+{0}",
+      "zh-Hant": "博物館捐贈：+{0}",
+      "es": "Donaciones al museo: +{0}",
+      "fr": "Dons au musée : +{0}",
+      "ko": "박물관 기증: +{0}",
+      "ru": "Пожертвования музею: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -5551,6 +7510,170 @@
   },
   {
     "translations": {
+      "en": "Obtain at the {0}",
+      "ja": "{0}で入手",
+      "zh-Hans": "在{0}获得",
+      "zh-Hant": "在{0}獲得",
+      "es": "Obtener en la {0}",
+      "fr": "Obtenir pendant la {0}",
+      "ko": "{0}에서 획득",
+      "ru": "Получить на празднике «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "festival"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Obtain at the {0} ({1})",
+      "ja": "{0}（{1}）で入手",
+      "zh-Hans": "在{0}（{1}）获得",
+      "zh-Hant": "在{0}（{1}）獲得",
+      "es": "Obtener en la {0} ({1})",
+      "fr": "Obtenir pendant la {0} ({1})",
+      "ko": "{0}({1})에서 획득",
+      "ru": "Получить на празднике «{0}» ({1})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "festival"
+              ],
+              [
+                "1",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Obtain from the Chicken Statue ({0} beads)",
+      "ja": "ニワトリ像から入手（ビーズ{0}個）",
+      "zh-Hans": "从小鸡雕像处获得（{0}颗珠子）",
+      "zh-Hant": "從小雞雕像處獲得（{0}顆珠子）",
+      "es": "Obtener de la estatua del pollo ({0} cuentas)",
+      "fr": "Obtenir auprès de la statue de poule ({0} perles)",
+      "ko": "닭 조각상에서 획득 (구슬 {0}개)",
+      "ru": "Получить у статуи курицы ({0} бус.)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "String(source.cost)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Obtain from the Chicken Statue after breeding every chicken tier",
+      "ja": "すべてのランクのニワトリを繁殖させた後、ニワトリ像から入手",
+      "zh-Hans": "繁殖出所有等级的鸡后，从小鸡雕像处获得",
+      "zh-Hant": "繁殖出所有等級的雞後，從小雞雕像處獲得",
+      "es": "Obtener de la estatua del pollo tras criar todos los niveles de pollo",
+      "fr": "Obtenir auprès de la statue de poule après avoir élevé tous les niveaux de poule",
+      "ko": "모든 등급의 닭을 번식시킨 후 닭 조각상에서 획득",
+      "ru": "Получить у статуи курицы после разведения кур всех уровней"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Obtain from the Lost and Found chest",
+      "ja": "落とし物箱から入手",
+      "zh-Hans": "从失物招领箱获得",
+      "zh-Hant": "從失物招領箱獲得",
+      "es": "Obtener del cofre de objetos perdidos",
+      "fr": "Obtenir dans le coffre des objets trouvés",
+      "ko": "분실물 상자에서 획득",
+      "ru": "Получить из сундука бюро находок"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Obtain from the Wishing Well ({0}t)",
+      "ja": "願いの井戸から入手（{0}t）",
+      "zh-Hans": "从许愿井获得（{0}t）",
+      "zh-Hant": "從許願井獲得（{0}t）",
+      "es": "Obtener del pozo de los deseos ({0} t)",
+      "fr": "Obtenir au puits à souhaits ({0} t)",
+      "ko": "소원의 우물에서 획득 ({0}t)",
+      "ru": "Получить из колодца желаний ({0} т)"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "String(source.cost)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Obtainable",
       "ja": "入手可能",
       "zh-Hans": "可获取",
@@ -5778,6 +7901,28 @@
   },
   {
     "translations": {
+      "en": "Or start manually to check off the items you begin the game with.",
+      "ja": "または手動で始めると、ゲーム開始時から所持しているアイテムにチェックが入ります。",
+      "zh-Hans": "也可以手动开始，勾选游戏开始时已拥有的物品。",
+      "zh-Hant": "也可以手動開始，勾選遊戲開始時已擁有的物品。",
+      "es": "O empieza manualmente para marcar los objetos con los que comienzas la partida.",
+      "fr": "Ou commencez manuellement pour cocher les objets disponibles au début du jeu.",
+      "ko": "또는 수동으로 시작해 게임 시작 시 보유한 아이템을 체크하세요.",
+      "ru": "Или начните вручную, чтобы отметить предметы, доступные в начале игры."
+    },
+    "references": [
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Orange",
       "ja": "オレンジ色",
       "zh-Hans": "橙色",
@@ -5836,6 +7981,35 @@
         "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Participate in an activity at the {0}",
+      "ja": "{0}のイベントに参加する",
+      "zh-Hans": "参加{0}的活动",
+      "zh-Hant": "參加{0}的活動",
+      "es": "Participar en una actividad de la {0}",
+      "fr": "Participer à une activité de la {0}",
+      "ko": "{0}의 활동에 참여",
+      "ru": "Участвовать в развлечении на празднике «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "festival"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -5956,6 +8130,35 @@
   },
   {
     "translations": {
+      "en": "Perks: +{0}",
+      "ja": "スキルボーナス：+{0}",
+      "zh-Hans": "技能特长：+{0}",
+      "zh-Hant": "技能特長：+{0}",
+      "es": "Dones de habilidad: +{0}",
+      "fr": "Bonus de compétences : +{0}",
+      "ko": "스킬 특성: +{0}",
+      "ru": "Навыки: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Pet cosmetics",
       "ja": "ペットのコスメ",
       "zh-Hans": "宠物装饰",
@@ -5978,6 +8181,35 @@
   },
   {
     "translations": {
+      "en": "Pet cosmetics: +{0}",
+      "ja": "ペットのコスメ：+{0}",
+      "zh-Hans": "宠物装饰：+{0}",
+      "zh-Hant": "寵物裝飾：+{0}",
+      "es": "Cosméticos de mascotas: +{0}",
+      "fr": "Cosmétiques d’animaux de compagnie : +{0}",
+      "ko": "펫 코스메틱: +{0}",
+      "ru": "Косметика питомцев: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Pet skins",
       "ja": "ペットのスキン",
       "zh-Hans": "宠物皮肤",
@@ -5992,6 +8224,35 @@
         "file": "src/lib/components/pet-collectibles-section.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Pet skins: +{0}",
+      "ja": "ペットのスキン：+{0}",
+      "zh-Hans": "宠物皮肤：+{0}",
+      "zh-Hant": "寵物外觀：+{0}",
+      "es": "Pieles de mascotas: +{0}",
+      "fr": "Apparences d’animaux de compagnie : +{0}",
+      "ko": "펫 스킨: +{0}",
+      "ru": "Скины питомцев: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6155,6 +8416,35 @@
   },
   {
     "translations": {
+      "en": "Process at {0}",
+      "ja": "{0}で加工",
+      "zh-Hans": "在{0}加工",
+      "zh-Hant": "在{0}加工",
+      "es": "Procesar en: {0}",
+      "fr": "Transformer : {0}",
+      "ko": "{0}에서 가공",
+      "ru": "Переработать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "station"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Progress",
       "ja": "進捗",
       "zh-Hans": "进度",
@@ -6238,6 +8528,237 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Propose to {0}",
+      "ja": "{0}にプロポーズする",
+      "zh-Hans": "向{0}求婚",
+      "zh-Hant": "向{0}求婚",
+      "es": "Pedir matrimonio a {0}",
+      "fr": "Demander {0} en mariage",
+      "ko": "{0}에게 청혼",
+      "ru": "Сделать предложение: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "villager"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purchase from {0}",
+      "ja": "{0}で購入",
+      "zh-Hans": "在{0}购买",
+      "zh-Hant": "在{0}購買",
+      "es": "Comprar en {0}",
+      "fr": "Acheter à : {0}",
+      "ko": "{0}에서 구매",
+      "ru": "Купить: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(storeName)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purchase from {0} ({1})",
+      "ja": "{1}、{0}で購入",
+      "zh-Hans": "{1}，在{0}购买",
+      "zh-Hant": "{1}，在{0}購買",
+      "es": "Comprar en {0} ({1})",
+      "fr": "Acheter à : {0} ({1})",
+      "ko": "{1} {0}에서 구매",
+      "ru": "Купить: {0} ({1})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(storeName)"
+              ],
+              [
+                "1",
+                "slot(qualifier)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purchase from {0} at the {1}",
+      "ja": "{1}の{0}で購入",
+      "zh-Hans": "在{1}的{0}购买",
+      "zh-Hant": "在{1}的{0}購買",
+      "es": "Comprar en {0} durante la {1}",
+      "fr": "Acheter à : {0}, pendant la {1}",
+      "ko": "{1}의 {0}에서 구매",
+      "ru": "Купить: {0}, на празднике «{1}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "store"
+              ],
+              [
+                "1",
+                "festival"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purchase from {0} at the {1} ({2})",
+      "ja": "{1}（{2}）の{0}で購入",
+      "zh-Hans": "在{1}（{2}）的{0}购买",
+      "zh-Hant": "在{1}（{2}）的{0}購買",
+      "es": "Comprar en {0} durante la {1} ({2})",
+      "fr": "Acheter à : {0}, pendant la {1} ({2})",
+      "ko": "{1}({2})의 {0}에서 구매",
+      "ru": "Купить: {0}, на празднике «{1}» ({2})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "store"
+              ],
+              [
+                "1",
+                "festival"
+              ],
+              [
+                "2",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purchase the {0} from {1}",
+      "ja": "{1}で{0}を購入",
+      "zh-Hans": "在{1}购买{0}",
+      "zh-Hant": "在{1}購買{0}",
+      "es": "Comprar {0} en {1}",
+      "fr": "Acheter : {0}, à : {1}",
+      "ko": "{1}에서 {0} 구매",
+      "ru": "Купить: {0}, место: {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(bundleSegment)"
+              ],
+              [
+                "1",
+                "slot(storeName)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Purchase the {0} from {1} ({2})",
+      "ja": "{2}、{1}で{0}を購入",
+      "zh-Hans": "{2}，在{1}购买{0}",
+      "zh-Hant": "{2}，在{1}購買{0}",
+      "es": "Comprar {0} en {1} ({2})",
+      "fr": "Acheter : {0}, à : {1} ({2})",
+      "ko": "{2} {1}에서 {0} 구매",
+      "ru": "Купить: {0}, место: {1} ({2})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(bundleSegment)"
+              ],
+              [
+                "1",
+                "slot(storeName)"
+              ],
+              [
+                "2",
+                "slot(qualifier)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6368,6 +8889,35 @@
   },
   {
     "translations": {
+      "en": "Quests: +{0}",
+      "ja": "クエスト：+{0}",
+      "zh-Hans": "任务：+{0}",
+      "zh-Hant": "任務：+{0}",
+      "es": "Misiones: +{0}",
+      "fr": "Quêtes : +{0}",
+      "ko": "퀘스트: +{0}",
+      "ru": "Задания: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Quick settings",
       "ja": "クイック設定",
       "zh-Hans": "快速设置",
@@ -6391,6 +8941,28 @@
   },
   {
     "translations": {
+      "en": "Rain",
+      "ja": "雨",
+      "zh-Hans": "雨",
+      "zh-Hant": "雨",
+      "es": "Lluvia",
+      "fr": "Pluie",
+      "ko": "비",
+      "ru": "Дождь"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Raindrop",
       "ja": "雨粒",
       "zh-Hans": "雨滴",
@@ -6405,6 +8977,35 @@
         "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Random drop with {0}",
+      "ja": "{0}でランダムにドロップ",
+      "zh-Hans": "拥有{0}时随机掉落",
+      "zh-Hant": "擁有{0}時隨機掉落",
+      "es": "Obtención aleatoria con {0}",
+      "fr": "Butin aléatoire avec {0}",
+      "ko": "{0} 보유 시 무작위 드롭",
+      "ru": "Случайная добыча с {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(perkLabel)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6457,6 +9058,254 @@
   },
   {
     "translations": {
+      "en": "Receive after getting married",
+      "ja": "結婚した後に受け取る",
+      "zh-Hans": "结婚后获得",
+      "zh-Hant": "結婚後獲得",
+      "es": "Recibir tras casarse",
+      "fr": "Recevoir après le mariage",
+      "ko": "결혼 후 받기",
+      "ru": "Получить после свадьбы"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive during {0}’s dating tutorial",
+      "ja": "{0}のデートのチュートリアルで受け取る",
+      "zh-Hans": "在{0}的约会教程中获得",
+      "zh-Hant": "在{0}的約會教學中獲得",
+      "es": "Recibir durante el tutorial de citas de {0}",
+      "fr": "Recevoir pendant le tutoriel des rendez-vous de {0}",
+      "ko": "{0}의 데이트 튜토리얼에서 받기",
+      "ru": "Получить во время обучения свиданиям ({0})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "villager"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive from Elsie after getting to 10 hearts with a dateable villager",
+      "ja": "デート可能な町の住民とハートが10になった後、エルシーから受け取る",
+      "zh-Hans": "与可约会的村民达到10颗心后从艾尔西处获得",
+      "zh-Hant": "與可約會的村民好感度達到10心後從愛爾西處獲得",
+      "es": "Recibir de Elsie tras alcanzar 10 corazones con un aldeano con el que se pueda salir",
+      "fr": "Recevoir d’Elsie après avoir atteint 10 cœurs avec un habitant avec qui sortir",
+      "ko": "데이트 가능한 마을 주민과 하트 10개 달성 후 엘시에게서 받기",
+      "ru": "Получить от Элси после 10 сердец с жителем, с которым можно встречаться"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive in a birthday letter",
+      "ja": "誕生日の手紙で受け取る",
+      "zh-Hans": "通过生日来信获得",
+      "zh-Hant": "透過生日來信獲得",
+      "es": "Recibir en una carta de cumpleaños",
+      "fr": "Recevoir dans une lettre d’anniversaire",
+      "ko": "생일 편지로 받기",
+      "ru": "Получить в письме на день рождения"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive in a cutscene after you marry",
+      "ja": "結婚後のイベントで受け取る",
+      "zh-Hans": "婚后在剧情中获得",
+      "zh-Hant": "婚後在劇情中獲得",
+      "es": "Recibir en una escena tras casarte",
+      "fr": "Recevoir lors d’une cinématique après votre mariage",
+      "ko": "결혼 후 이벤트에서 받기",
+      "ru": "Получить в сценке после свадьбы"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive in a letter",
+      "ja": "手紙で受け取る",
+      "zh-Hans": "通过来信获得",
+      "zh-Hant": "透過來信獲得",
+      "es": "Recibir en una carta",
+      "fr": "Recevoir dans une lettre",
+      "ko": "편지로 받기",
+      "ru": "Получить в письме"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive in a letter after donating {0}",
+      "ja": "{0}を寄贈した後に手紙で受け取る",
+      "zh-Hans": "捐赠{0}后通过信件获得",
+      "zh-Hant": "捐贈{0}後透過信件獲得",
+      "es": "Recibir por carta tras donar: {0}",
+      "fr": "Recevoir par lettre après avoir fait don de : {0}",
+      "ko": "{0}을(를) 기증한 후 편지로 받기",
+      "ru": "Получить письмом после пожертвования: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "item"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive in a letter after reaching {0}",
+      "ja": "{0}になった後に手紙で受け取る",
+      "zh-Hans": "到达{0}后通过信件获得",
+      "zh-Hant": "到達{0}後透過信件獲得",
+      "es": "Recibir por carta al llegar al {0}",
+      "fr": "Recevoir par lettre après avoir atteint le {0}",
+      "ko": "{0}이 된 후 편지로 받기",
+      "ru": "Получить письмом после наступления даты: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "date"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive in a letter after shipping {0}",
+      "ja": "{0}を出荷した後に手紙で受け取る",
+      "zh-Hans": "出货{0}后通过信件获得",
+      "zh-Hant": "出貨{0}後透過信件獲得",
+      "es": "Recibir por carta tras enviar: {0}",
+      "fr": "Recevoir par lettre après avoir expédié : {0}",
+      "ko": "{0}을(를) 출하한 후 편지로 받기",
+      "ru": "Получить письмом после отправки: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "item"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Receive on a date",
+      "ja": "デートで受け取る",
+      "zh-Hans": "在约会中获得",
+      "zh-Hant": "在約會中獲得",
+      "es": "Recibir en una cita",
+      "fr": "Recevoir lors d’un rendez-vous",
+      "ko": "데이트에서 받기",
+      "ru": "Получить на свидании"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Recipes",
       "ja": "レシピ",
       "zh-Hans": "食谱",
@@ -6477,6 +9326,35 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Recipes: +{0}",
+      "ja": "レシピ：+{0}",
+      "zh-Hans": "食谱：+{0}",
+      "zh-Hant": "食譜：+{0}",
+      "es": "Recetas: +{0}",
+      "fr": "Recettes : +{0}",
+      "ko": "레시피: +{0}",
+      "ru": "Рецепты: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6624,6 +9502,63 @@
   },
   {
     "translations": {
+      "en": [
+        "Renown: +{0} level",
+        "Renown: +{0} levels"
+      ],
+      "ja": [
+        "名声：+{0}レベル"
+      ],
+      "zh-Hans": [
+        "声望：+{0}级"
+      ],
+      "zh-Hant": [
+        "聲望：+{0}級"
+      ],
+      "es": [
+        "Reputación: +{0} nivel",
+        "Reputación: +{0} niveles",
+        "Reputación: +{0} niveles"
+      ],
+      "fr": [
+        "Renommée : +{0} niveau",
+        "Renommée : +{0} niveaux",
+        "Renommée : +{0} niveaux"
+      ],
+      "ko": [
+        "명성: +{0}레벨"
+      ],
+      "ru": [
+        "Репутация: +{0} уровень",
+        "Репутация: +{0} уровня",
+        "Репутация: +{0} уровней",
+        "Репутация: +{0} уровня"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ],
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Replace it",
       "ja": "置き換える",
       "zh-Hans": "替换",
@@ -6638,6 +9573,35 @@
         "file": "src/lib/components/sync/sync-question-dialog.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Replicate from {0}",
+      "ja": "{0}から複製",
+      "zh-Hans": "由{0}复制",
+      "zh-Hant": "由{0}複製",
+      "es": "Replicar a partir de {0}",
+      "fr": "Répliquer à partir de : {0}",
+      "ko": "{0}에서 복제",
+      "ru": "Воспроизвести из: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "item"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6742,6 +9706,35 @@
   },
   {
     "translations": {
+      "en": "Reset “{0}”",
+      "ja": "「{0}」をリセットしました",
+      "zh-Hans": "已重置“{0}”",
+      "zh-Hant": "已重設「{0}」",
+      "es": "«{0}» restablecido",
+      "fr": "« {0} » réinitialisé",
+      "ko": "“{0}”을(를) 초기화했습니다",
+      "ru": "«{0}» сброшено"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reveal spoiler",
       "ja": "ネタバレを表示",
       "zh-Hans": "显示剧透",
@@ -6798,6 +9791,50 @@
     "references": [
       {
         "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "SPR",
+      "ja": "春",
+      "zh-Hans": "春",
+      "zh-Hant": "春",
+      "es": "PRI",
+      "fr": "PRI",
+      "ko": "봄",
+      "ru": "ВЕС"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "SUM",
+      "ja": "夏",
+      "zh-Hans": "夏",
+      "zh-Hant": "夏",
+      "es": "VER",
+      "fr": "ÉTÉ",
+      "ko": "여름",
+      "ru": "ЛЕТ"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
         "refs": [
           null
         ]
@@ -7197,6 +10234,28 @@
   },
   {
     "translations": {
+      "en": "Season progression updated",
+      "ja": "季節の進行を更新しました",
+      "zh-Hans": "已更新季节进度",
+      "zh-Hant": "已更新季節進度",
+      "es": "Progreso de temporada actualizado",
+      "fr": "Progression de saison mise à jour",
+      "ko": "계절 진행 업데이트됨",
+      "ru": "Прогресс сезона обновлён"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Send",
       "ja": "送信",
       "zh-Hans": "发送",
@@ -7520,6 +10579,63 @@
   },
   {
     "translations": {
+      "en": [
+        "Skills: +{0} skill updated",
+        "Skills: +{0} skills updated"
+      ],
+      "ja": [
+        "スキル：{0}件を更新"
+      ],
+      "zh-Hans": [
+        "技能：已更新{0}项技能"
+      ],
+      "zh-Hant": [
+        "技能：已更新{0}項技能"
+      ],
+      "es": [
+        "Habilidades: +{0} habilidad actualizada",
+        "Habilidades: +{0} habilidades actualizadas",
+        "Habilidades: +{0} habilidades actualizadas"
+      ],
+      "fr": [
+        "Compétences : +{0} compétence mise à jour",
+        "Compétences : +{0} compétences mises à jour",
+        "Compétences : +{0} compétences mises à jour"
+      ],
+      "ko": [
+        "스킬: {0}개 업데이트됨"
+      ],
+      "ru": [
+        "Навыки: +{0} навык обновлён",
+        "Навыки: +{0} навыка обновлено",
+        "Навыки: +{0} навыков обновлено",
+        "Навыки: +{0} навыка обновлено"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ],
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Skip to main content",
       "ja": "メインコンテンツへスキップ",
       "zh-Hans": "跳转到主要内容",
@@ -7532,6 +10648,57 @@
     "references": [
       {
         "file": "src/lib/components/skip-link.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Smith via {0}",
+      "ja": "{0}で鍛冶をする",
+      "zh-Hans": "通过{0}锻造",
+      "zh-Hant": "透過{0}鍛造",
+      "es": "Forjar mediante {0}",
+      "fr": "Forger via : {0}",
+      "ko": "{0}(으)로 대장 작업",
+      "ru": "Выковать по рецепту: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "recipe"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Snow",
+      "ja": "雪",
+      "zh-Hans": "雪",
+      "zh-Hant": "雪",
+      "es": "Nieve",
+      "fr": "Neige",
+      "ko": "눈",
+      "ru": "Снег"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
         "refs": [
           null
         ]
@@ -7625,6 +10792,35 @@
   },
   {
     "translations": {
+      "en": "Spells: +{0}",
+      "ja": "呪文：+{0}",
+      "zh-Hans": "法术：+{0}",
+      "zh-Hant": "法術：+{0}",
+      "es": "Hechizos: +{0}",
+      "fr": "Sorts : +{0}",
+      "ko": "주문: +{0}",
+      "ru": "Заклинания: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Spoilered item",
       "ja": "ネタバレ項目",
       "zh-Hans": "剧透物品",
@@ -7696,6 +10892,35 @@
         "file": "src/lib/components/villager-record.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Started “{0}”",
+      "ja": "クエスト「{0}」を開始しました",
+      "zh-Hans": "已开始任务“{0}”",
+      "zh-Hant": "已開始任務「{0}」",
+      "es": "Misión «{0}» comenzada",
+      "fr": "Quête « {0} » en cours",
+      "ko": "퀘스트 “{0}”을(를) 시작했습니다",
+      "ru": "Задание «{0}» принято"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -7838,6 +11063,28 @@
   },
   {
     "translations": {
+      "en": "Storm",
+      "ja": "嵐",
+      "zh-Hans": "暴风雨",
+      "zh-Hant": "暴風雨",
+      "es": "Tormenta",
+      "fr": "Orage",
+      "ko": "폭풍",
+      "ru": "Гроза"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Story & requests",
       "ja": "ストーリーと依頼",
       "zh-Hans": "剧情与委托",
@@ -7872,6 +11119,28 @@
     "references": [
       {
         "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sun",
+      "ja": "晴れ",
+      "zh-Hans": "晴",
+      "zh-Hant": "晴",
+      "es": "Sol",
+      "fr": "Soleil",
+      "ko": "맑음",
+      "ru": "Солнце"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
         "refs": [
           null
         ]
@@ -8591,6 +11860,141 @@
   },
   {
     "translations": {
+      "en": "Unchecked “{0}”",
+      "ja": "「{0}」のチェックを外しました",
+      "zh-Hans": "已取消勾选“{0}”",
+      "zh-Hant": "已取消勾選「{0}」",
+      "es": "«{0}» desmarcado",
+      "fr": "« {0} » décoché",
+      "ko": "“{0}” 체크를 해제했습니다",
+      "ru": "Отметка с «{0}» снята"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "itemName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Undo",
+      "ja": "元に戻す",
+      "zh-Hans": "撤销",
+      "zh-Hant": "復原",
+      "es": "Deshacer",
+      "fr": "Annuler",
+      "ko": "실행 취소",
+      "ru": "Отменить"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Undo starter checks",
+      "ja": "最初のチェックを取り消す",
+      "zh-Hans": "撤销这些勾选",
+      "zh-Hant": "復原這些勾選",
+      "es": "Deshacer esas marcas",
+      "fr": "Annuler ces coches",
+      "ko": "자동 체크 취소",
+      "ru": "Снять эти отметки"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unlock at the Horse Statue ({0} essence) after starting the {1} quest",
+      "ja": "クエスト「{1}」の開始後、馬の像で解放（エッセンス{0}）",
+      "zh-Hans": "开始任务“{1}”后，在马雕像处解锁（{0}精华）",
+      "zh-Hant": "開始任務「{1}」後，在馬雕像處解鎖（{0}精華）",
+      "es": "Desbloquear en la estatua del caballo ({0} de esencia) tras empezar la misión: {1}",
+      "fr": "Débloquer à la statue de cheval ({0} d’essence) après avoir commencé la quête : {1}",
+      "ko": "퀘스트 '{1}' 시작 후 말 조각상에서 해금 (정수 {0})",
+      "ru": "Открыть у статуи лошади ({0} эссенции) после начала задания: {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "String(source.cost)"
+              ],
+              [
+                "1",
+                "slot(nameSegment)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unlock {0}",
+      "ja": "{0}を習得",
+      "zh-Hans": "解锁{0}",
+      "zh-Hant": "解鎖{0}",
+      "es": "Desbloquear {0}",
+      "fr": "Débloquer {0}",
+      "ko": "{0} 해금",
+      "ru": "Открыть {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(perkLabel)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Unlocks",
       "ja": "解放",
       "zh-Hans": "解锁",
@@ -8635,6 +12039,72 @@
   },
   {
     "translations": {
+      "en": "Upgrade to the adept kitchen",
+      "ja": "熟練のキッチンにアップグレード",
+      "zh-Hans": "升级为熟练厨房",
+      "zh-Hant": "升級為熟練廚房",
+      "es": "Mejorar a la cocina experta",
+      "fr": "Améliorer en cuisine experte",
+      "ko": "숙련된 주방으로 업그레이드",
+      "ru": "Улучшить до кухни мастера"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Upgrade to the cozy kitchen",
+      "ja": "居心地のいいキッチンにアップグレード",
+      "zh-Hans": "升级为舒适厨房",
+      "zh-Hant": "升級為舒適廚房",
+      "es": "Mejorar a la cocina acogedora",
+      "fr": "Améliorer en cuisine douillette",
+      "ko": "아늑한 주방으로 업그레이드",
+      "ru": "Улучшить до уютной кухни"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Upgrade your home a fourth time",
+      "ja": "家を4回目のアップグレードをする",
+      "zh-Hans": "第四次升级房屋",
+      "zh-Hant": "第四次升級房屋",
+      "es": "Mejorar tu casa por cuarta vez",
+      "fr": "Améliorer votre maison une quatrième fois",
+      "ko": "집을 네 번째로 업그레이드",
+      "ru": "Улучшить дом в четвёртый раз"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Upgrades",
       "ja": "アップグレード",
       "zh-Hans": "升级",
@@ -8647,6 +12117,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Upper floor unlocked",
+      "ja": "上階を解放しました",
+      "zh-Hans": "已解锁上层",
+      "zh-Hant": "已解鎖上層",
+      "es": "Piso superior desbloqueado",
+      "fr": "Étage supérieur débloqué",
+      "ko": "위층 해제됨",
+      "ru": "Верхний этаж разблокирован"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
         "refs": [
           null
         ]
@@ -8671,6 +12163,35 @@
         "file": "src/lib/components/sync/sync-question-dialog.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Use {0}",
+      "ja": "{0}を使う",
+      "zh-Hans": "使用{0}",
+      "zh-Hant": "使用{0}",
+      "es": "Usar: {0}",
+      "fr": "Utiliser : {0}",
+      "ko": "{0} 사용",
+      "ru": "Использовать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "item"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -8724,6 +12245,92 @@
   },
   {
     "translations": {
+      "en": [
+        "Villager hearts: +{0} relationship updated",
+        "Villager hearts: +{0} relationships updated"
+      ],
+      "ja": [
+        "町の住民との好感度：{0}件の関係を更新"
+      ],
+      "zh-Hans": [
+        "村民好感度：已更新{0}段关系"
+      ],
+      "zh-Hant": [
+        "村民好感度：已更新{0}段關係"
+      ],
+      "es": [
+        "Corazones de aldeanos: +{0} relación actualizada",
+        "Corazones de aldeanos: +{0} relaciones actualizadas",
+        "Corazones de aldeanos: +{0} relaciones actualizadas"
+      ],
+      "fr": [
+        "Cœurs des habitants : +{0} relation mise à jour",
+        "Cœurs des habitants : +{0} relations mises à jour",
+        "Cœurs des habitants : +{0} relations mises à jour"
+      ],
+      "ko": [
+        "마을 주민 호감도: 관계 {0}개 업데이트됨"
+      ],
+      "ru": [
+        "Симпатия жителей: +{0} отношение обновлено",
+        "Симпатия жителей: +{0} отношения обновлено",
+        "Симпатия жителей: +{0} отношений обновлено",
+        "Симпатия жителей: +{0} отношения обновлено"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ],
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Villager relationships: +{0}",
+      "ja": "町の住民との関係：+{0}",
+      "zh-Hans": "村民关系：+{0}",
+      "zh-Hant": "村民關係：+{0}",
+      "es": "Relaciones con aldeanos: +{0}",
+      "fr": "Relations avec les habitants : +{0}",
+      "ko": "마을 주민 관계: +{0}",
+      "ru": "Отношения с жителями: +{0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/merge-labels.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countText"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Villager roster",
       "ja": "町の住民の名簿",
       "zh-Hans": "村民名册",
@@ -8758,6 +12365,28 @@
     "references": [
       {
         "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "WIN",
+      "ja": "冬",
+      "zh-Hans": "冬",
+      "zh-Hant": "冬",
+      "es": "INV",
+      "fr": "HIV",
+      "ko": "겨울",
+      "ru": "ЗИМ"
+    },
+    "references": [
+      {
+        "file": "src/lib/utils/format.ts",
         "refs": [
           null
         ]
@@ -8992,6 +12621,35 @@
         "file": "src/lib/components/persistence-warning.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We checked off your starter items ({0})",
+      "ja": "最初から持っているものにチェックを入れたよ（{0}件）",
+      "zh-Hans": "我们勾选了你一开始就有的项目（{0} 项）",
+      "zh-Hant": "我們勾選了你一開始就有的項目（{0} 項）",
+      "es": "Marcamos lo que tienes al empezar ({0})",
+      "fr": "On a coché ce que tu as dès le départ ({0})",
+      "ko": "처음부터 갖고 있는 항목을 체크했어요({0}개)",
+      "ru": "Мы отметили то, что у тебя есть с самого начала ({0})"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -9372,6 +13030,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Welcome, farmer!",
+      "ja": "農家さん、ようこそ！",
+      "zh-Hans": "欢迎你，农场主！",
+      "zh-Hant": "歡迎你，農場主！",
+      "es": "¡Te damos la bienvenida!",
+      "fr": "Bienvenue à la ferme !",
+      "ko": "농부님, 환영해요!",
+      "ru": "Добро пожаловать, фермер!"
+    },
+    "references": [
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
         "refs": [
           null
         ]
@@ -10204,6 +13884,28 @@
   },
   {
     "translations": {
+      "en": "Your farm",
+      "ja": "あなたの農場",
+      "zh-Hans": "你的农场",
+      "zh-Hant": "你的農場",
+      "es": "Tu granja",
+      "fr": "Votre ferme",
+      "ko": "내 농장",
+      "ru": "Ваша ферма"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/sync/sync-question-copy.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Your farm as of {0}. We’ll keep up from here.",
       "ja": "{0} 時点のあなたの農場です。ここからは自動で追いかけます。",
       "zh-Hans": "这是你的农场截至 {0} 的样子。之后我们会自动跟上。",
@@ -10636,6 +14338,278 @@
   },
   {
     "translations": {
+      "en": "after completing {0}",
+      "ja": "「{0}」の完了後",
+      "zh-Hans": "完成“{0}”后",
+      "zh-Hant": "完成「{0}」後",
+      "es": "tras completar {0}",
+      "fr": "après avoir terminé {0}",
+      "ko": "'{0}' 완료 후",
+      "ru": "после выполнения: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "quest"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "after one of: {0}",
+      "ja": "次のいずれかの後：{0}",
+      "zh-Hans": "满足以下任一条件后：{0}",
+      "zh-Hant": "滿足以下任一條件後：{0}",
+      "es": "tras una de estas condiciones: {0}",
+      "fr": "après l’une de ces conditions : {0}",
+      "ko": "다음 중 하나 이후: {0}",
+      "ru": "после одного из условий: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "options"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "after reaching Mines floor {0}",
+      "ja": "鉱坑{0}階に到達した後",
+      "zh-Hans": "到达矿洞第{0}层后",
+      "zh-Hant": "到達礦洞第{0}層後",
+      "es": "tras llegar al piso {0} de las minas",
+      "fr": "après avoir atteint l’étage {0} des mines",
+      "ko": "광산 {0}층 도달 후",
+      "ru": "после достижения {0}-го этажа шахт"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "floor"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "after reaching {0}",
+      "ja": "{0}になった後",
+      "zh-Hans": "到达{0}后",
+      "zh-Hant": "到達{0}後",
+      "es": "tras llegar a {0}",
+      "fr": "après avoir atteint : {0}",
+      "ko": "{0}이 된 후",
+      "ru": "после наступления сезона «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "season"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "after repairing",
+      "ja": "修理後",
+      "zh-Hans": "修复后",
+      "zh-Hant": "修復後",
+      "es": "tras la reparación",
+      "fr": "après la réparation",
+      "ko": "수리 후",
+      "ru": "после ремонта"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "after upgrading",
+      "ja": "アップグレード後",
+      "zh-Hans": "升级后",
+      "zh-Hant": "升級後",
+      "es": "tras la mejora",
+      "fr": "après l’amélioration",
+      "ko": "업그레이드 후",
+      "ru": "после улучшения"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "after upgrading your home",
+      "ja": "家をアップグレードした後",
+      "zh-Hans": "升级房屋后",
+      "zh-Hant": "升級房屋後",
+      "es": "tras mejorar tu casa",
+      "fr": "après avoir amélioré votre maison",
+      "ko": "집 업그레이드 후",
+      "ru": "после улучшения дома"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "any monster",
+      "ja": "すべてのモンスター",
+      "zh-Hans": "任意怪物",
+      "zh-Hant": "任意怪物",
+      "es": "cualquier monstruo",
+      "fr": "n’importe quel monstre",
+      "ko": "모든 몬스터",
+      "ru": "любого монстра"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "at {0} hearts with {1}",
+      "ja": "{1}とのハートが{0}以上",
+      "zh-Hans": "与{1}达到{0}颗心",
+      "zh-Hant": "與{1}的好感度達到{0}心",
+      "es": "con {0} corazones con {1}",
+      "fr": "à {0} cœurs avec {1}",
+      "ko": "{1}와(과) 하트 {0}개 이상",
+      "ru": "при {0} сердцах с жителем {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "level"
+              ],
+              [
+                "1",
+                "villager"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "at {0} level {1}",
+      "ja": "{0}レベル{1}以上",
+      "zh-Hans": "{0}达到{1}级",
+      "zh-Hant": "{0}達到{1}級",
+      "es": "con {0} al nivel {1}",
+      "fr": "avec {0} au niveau {1}",
+      "ko": "{0} 레벨 {1} 이상",
+      "ru": "при навыке «{0}» уровня {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "skill"
+              ],
+              [
+                "1",
+                "level"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "can’t connect",
       "ja": "接続できません",
       "zh-Hans": "无法连接",
@@ -10672,6 +14646,35 @@
         "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "completing {0}",
+      "ja": "「{0}」の完了",
+      "zh-Hans": "完成“{0}”",
+      "zh-Hant": "完成「{0}」",
+      "es": "completar {0}",
+      "fr": "terminer {0}",
+      "ko": "'{0}' 완료",
+      "ru": "выполнение: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "quest"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -10791,6 +14794,35 @@
   },
   {
     "translations": {
+      "en": "once {0} is available",
+      "ja": "「{0}」が受注可能になった後",
+      "zh-Hans": "“{0}”可接取后",
+      "zh-Hant": "「{0}」可接取後",
+      "es": "cuando {0} esté disponible",
+      "fr": "une fois {0} disponible",
+      "ko": "'{0}' 수락 가능 시",
+      "ru": "когда станет доступно: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "quest"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "paused",
       "ja": "一時停止中",
       "zh-Hans": "已暂停",
@@ -10805,6 +14837,64 @@
         "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "reaching Mines floor {0}",
+      "ja": "鉱坑{0}階に到達",
+      "zh-Hans": "到达矿洞第{0}层",
+      "zh-Hant": "到達礦洞第{0}層",
+      "es": "llegar al piso {0} de las minas",
+      "fr": "atteindre l’étage {0} des mines",
+      "ko": "광산 {0}층 도달",
+      "ru": "достижение {0}-го этажа шахт"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "floor"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "reaching {0}",
+      "ja": "{0}になる",
+      "zh-Hans": "到达{0}",
+      "zh-Hant": "到達{0}",
+      "es": "llegar a {0}",
+      "fr": "atteindre : {0}",
+      "ko": "{0} 도달",
+      "ru": "наступление сезона «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "season"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -10849,6 +14939,75 @@
         "file": "src/lib/sources/source-names.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "the {0} perk ({1} tier {2})",
+      "ja": "スキルボーナス「{0}」（{1}ランク{2}）",
+      "zh-Hans": "技能特长“{0}”（{1}第{2}阶）",
+      "zh-Hant": "技能特長「{0}」（{1}第{2}階）",
+      "es": "el don de habilidad {0} ({1}, nivel {2})",
+      "fr": "le bonus de compétence {0} ({1}, niveau {2})",
+      "ko": "스킬 특성 '{0}' ({1} {2}단계)",
+      "ru": "навык «{0}» ({1}, уровень {2})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(SPOILERED)"
+              ],
+              [
+                "1",
+                "skill"
+              ],
+              [
+                "2",
+                "tier"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "perk.name"
+              ],
+              [
+                "1",
+                "skill"
+              ],
+              [
+                "2",
+                "tier"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "perk.name"
+              ],
+              [
+                "1",
+                "skill"
+              ],
+              [
+                "2",
+                "String(perk.tier)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -11050,6 +15209,57 @@
   },
   {
     "translations": {
+      "en": "while dating someone",
+      "ja": "誰かと交際中",
+      "zh-Hans": "与某人交往期间",
+      "zh-Hant": "與某人交往期間",
+      "es": "mientras sales con alguien",
+      "fr": "en fréquentant quelqu’un",
+      "ko": "누군가와 교제 중",
+      "ru": "во время отношений"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "with {0}",
+      "ja": "{0}を習得済み",
+      "zh-Hans": "拥有{0}",
+      "zh-Hant": "擁有{0}",
+      "es": "con {0}",
+      "fr": "avec {0}",
+      "ko": "{0} 보유 시",
+      "ru": "с {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "perk"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "you@example.com",
       "ja": "you@example.com",
       "zh-Hans": "you@example.com",
@@ -11108,6 +15318,59 @@
         "file": "src/lib/sources/source-names.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} (Mines floors {1}–{2})",
+      "ja": "{0}（鉱坑{1}～{2}階）",
+      "zh-Hans": "{0}（矿洞第{1}–{2}层）",
+      "zh-Hant": "{0}（礦洞第{1}–{2}層）",
+      "es": "{0} (pisos {1}–{2} de las minas)",
+      "fr": "{0} (étages {1} à {2} des mines)",
+      "ko": "{0} (광산 {1}~{2}층)",
+      "ru": "{0} (этажи шахт {1}–{2})"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(SPOILERED)"
+              ],
+              [
+                "1",
+                "slot(SPOILERED)"
+              ],
+              [
+                "2",
+                "slot(SPOILERED)"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatBiomeName(biomeId, lookups.biomes, lookups.locale)"
+              ],
+              [
+                "1",
+                "start"
+              ],
+              [
+                "2",
+                "end"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -11646,6 +15909,68 @@
   },
   {
     "translations": {
+      "en": "{0} hearts with {1}",
+      "ja": "{1}とのハートが{0}",
+      "zh-Hans": "与{1}达到{0}颗心",
+      "zh-Hant": "與{1}的好感度達到{0}心",
+      "es": "{0} corazones con {1}",
+      "fr": "{0} cœurs avec {1}",
+      "ko": "{1}와(과) 하트 {0}개",
+      "ru": "{0} сердец с жителем {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "level"
+              ],
+              [
+                "1",
+                "villager"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} is available",
+      "ja": "「{0}」が受注可能",
+      "zh-Hans": "“{0}”可接取",
+      "zh-Hant": "「{0}」可接取",
+      "es": "{0} está disponible",
+      "fr": "{0} est disponible",
+      "ko": "'{0}' 수락 가능",
+      "ru": "доступно: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "quest"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} is {1}, above the maximum of {2}; imported as {3}",
       "ja": "{0} は {1} で、最大値 {2} を超えています（{3} としてインポートしました）",
       "zh-Hans": "{0} 为 {1}，超过最大值 {2}，已按 {3} 导入",
@@ -11837,6 +16162,39 @@
               [
                 "0",
                 "name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} level {1}",
+      "ja": "{0}レベル{1}",
+      "zh-Hans": "{0}{1}级",
+      "zh-Hant": "{0}{1}級",
+      "es": "{0} al nivel {1}",
+      "fr": "{0} au niveau {1}",
+      "ko": "{0} 레벨 {1}",
+      "ru": "навык «{0}» уровня {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "skill"
+              ],
+              [
+                "1",
+                "level"
               ]
             ]
           }
@@ -12414,6 +16772,39 @@
   },
   {
     "translations": {
+      "en": "{0} {1}",
+      "ja": "{0}{1}日",
+      "zh-Hans": "{0}{1}日",
+      "zh-Hant": "{0}{1}日",
+      "es": "{1} de {0}",
+      "fr": "{1} {0}",
+      "ko": "{0} {1}일",
+      "ru": "{1}-й день сезона «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "seasonNames[season]"
+              ],
+              [
+                "1",
+                "String(day)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": [
         "{0} {1} item is being filtered out.",
         "{0} {1} items are being filtered out."
@@ -12525,6 +16916,27 @@
               [
                 "2",
                 "String(date.year)"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "lookups.seasonNames[season]"
+              ],
+              [
+                "1",
+                "String(day)"
+              ],
+              [
+                "2",
+                "String(year)"
               ]
             ]
           }
@@ -12683,6 +17095,114 @@
               [
                 "2",
                 "formatNumber(total, locale)"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/routes/dev/fonts/+page.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "getName(\"ui\", \"museum\", page.data.locale)"
+              ],
+              [
+                "1",
+                "12"
+              ],
+              [
+                "2",
+                "48"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.",
+      "ja": "{0}：セーブデータがこの端末の内容と一致せず、どちらが新しいか分かりません。",
+      "zh-Hans": "{0}：存档和这台设备上的内容不一致，我们无法判断哪个更新。",
+      "zh-Hant": "{0}：存檔和這台裝置上的內容不一致，我們無法判斷哪個較新。",
+      "es": "{0}: tu partida guardada no coincide con lo que hay en este dispositivo y no sabemos qué es más reciente.",
+      "fr": "{0} : votre sauvegarde ne correspond pas à cet appareil, et on ne sait pas laquelle est la plus récente.",
+      "ko": "{0}: 세이브 파일이 이 기기의 내용과 달라서 어느 쪽이 최신인지 알 수 없어요.",
+      "ru": "{0}: сохранение не совпадает с данными на этом устройстве, и мы не знаем, что новее."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/sync/sync-question-copy.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "field"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}: Your save file has lower levels than this device.",
+      "ja": "{0}：セーブデータのレベルがこの端末より低くなっています。",
+      "zh-Hans": "{0}：存档里的等级比这台设备上的低。",
+      "zh-Hant": "{0}：存檔裡的等級比這台裝置上的低。",
+      "es": "{0}: tu partida guardada tiene niveles más bajos que este dispositivo.",
+      "fr": "{0} : votre sauvegarde a des niveaux plus bas que cet appareil.",
+      "ko": "{0}: 세이브 파일의 레벨이 이 기기보다 낮아요.",
+      "ru": "{0}: в сохранении уровни ниже, чем на этом устройстве."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/sync/sync-question-copy.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "field"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
+      "ja": "{0}：セーブデータが一度に多くの項目を取り消そうとしています。ゲームの更新後に起こることがあるので確認させてください。",
+      "zh-Hans": "{0}：存档会一次撤销很多内容。游戏更新后可能出现这种情况，所以想先确认一下。",
+      "zh-Hant": "{0}：存檔會一次撤銷很多內容。遊戲更新後可能出現這種情況，所以想先確認一下。",
+      "es": "{0}: tu partida guardada quitaría muchas cosas de golpe. Puede pasar tras una actualización del juego, así que queríamos confirmarlo.",
+      "fr": "{0} : votre sauvegarde retirerait beaucoup de choses d’un coup. Ça peut arriver après une mise à jour du jeu, alors on préfère vérifier.",
+      "ko": "{0}: 세이브 파일이 한 번에 많은 항목을 되돌리려고 해요. 게임 업데이트 후 그럴 수 있어서 확인하고 싶어요.",
+      "ru": "{0}: сохранение отменит сразу многое. Такое бывает после обновления игры, поэтому мы решили уточнить."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/sync/sync-question-copy.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "field"
               ]
             ]
           }

@@ -15,6 +15,7 @@ import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.ts";
 import noRawInternalHref from "./eslint-rules/no-raw-internal-href.ts";
 import noUntokenedClasses from "./eslint-rules/no-untokened-classes.ts";
 import {
+  errorSvelteFile,
   routeSvelteFiles,
   sharedLocaleSvelteFiles,
   sharedSvelteFiles,
@@ -115,6 +116,7 @@ export default defineConfig(
       "src/lib/components/ui/**",
       "src/routes/dev/**",
       "**/*.test-harness.svelte",
+      errorSvelteFile,
       ...routeSvelteFiles,
       ...sharedLocaleSvelteFiles,
       ...sharedSvelteFiles,

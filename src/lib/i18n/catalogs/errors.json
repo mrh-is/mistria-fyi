@@ -1,0 +1,114 @@
+[
+  {
+    "translations": {
+      "en": "Back to home",
+      "ja": "ホームに戻る",
+      "zh-Hans": "返回首页",
+      "zh-Hant": "返回首頁",
+      "es": "Volver al inicio",
+      "fr": "Retour à l’accueil",
+      "ko": "홈으로 돌아가기",
+      "ru": "На главную"
+    },
+    "context": "error back home",
+    "references": [
+      {
+        "file": "src/routes/+error.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Report this error",
+      "ja": "このエラーを報告",
+      "zh-Hans": "报告此错误",
+      "zh-Hant": "回報此錯誤",
+      "es": "Informar de este error",
+      "fr": "Signaler cette erreur",
+      "ko": "이 오류 신고하기",
+      "ru": "Сообщить об этой ошибке"
+    },
+    "references": [
+      {
+        "file": "src/routes/+error.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Something went wrong on our end, but your progress is safe.",
+      "ja": "こちら側で問題が起きましたが、進行状況は無事です。",
+      "zh-Hans": "我们这边出了点问题，不过你的进度很安全。",
+      "zh-Hant": "我們這邊出了點問題，不過你的進度很安全。",
+      "es": "Algo ha fallado por nuestra parte, pero tu progreso está a salvo.",
+      "fr": "Quelque chose a mal tourné de notre côté, mais votre progression est en sécurité.",
+      "ko": "저희 쪽에서 문제가 생겼지만 진행 상황은 안전해요.",
+      "ru": "У нас что-то пошло не так, но ваш прогресс в безопасности."
+    },
+    "references": [
+      {
+        "file": "src/routes/+error.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The requested Fields of Mistria tracker page could not be found.",
+      "ja": "リクエストされたFields of Mistriaのトラッカーページが見つかりませんでした。",
+      "zh-Hans": "找不到所请求的《Fields of Mistria》追踪页面。",
+      "zh-Hant": "找不到所請求的《Fields of Mistria》追蹤頁面。",
+      "es": "No se encontró la página solicitada del tracker de Fields of Mistria.",
+      "fr": "La page demandée du suivi de Fields of Mistria est introuvable.",
+      "ko": "요청하신 Fields of Mistria 트래커 페이지를 찾을 수 없습니다.",
+      "ru": "Запрошенная страница трекера Fields of Mistria не найдена."
+    },
+    "references": [
+      {
+        "file": "src/lib/data/page-metadata.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "This page doesn’t exist. Maybe it wandered off to tend the fields.",
+      "ja": "このページは存在しません。畑の世話に出かけてしまったのかもしれません。",
+      "zh-Hans": "此页面不存在。也许它跑去照料农田了。",
+      "zh-Hant": "此頁面不存在。也許它跑去照料農田了。",
+      "es": "Esta página no existe. Quizá se haya ido a cuidar los campos.",
+      "fr": "Cette page n’existe pas. Elle est peut-être partie s’occuper des champs.",
+      "ko": "이 페이지는 존재하지 않습니다. 밭을 가꾸러 나갔나 봅니다.",
+      "ru": "Такой страницы нет. Может, она ушла ухаживать за полями."
+    },
+    "references": [
+      {
+        "file": "src/routes/+error.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

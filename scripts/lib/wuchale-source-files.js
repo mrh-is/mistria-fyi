@@ -5,6 +5,9 @@ export const aboutSvelteFiles = [
 
 export const aboutMetadataFile = "src/routes/about/about-metadata.ts";
 
+export const errorSvelteFile = "src/routes/+error.svelte";
+export const errorMetadataFile = "src/lib/data/page-metadata.ts";
+
 /** Svelte components using native extraction during the migration. */
 export const sharedSvelteFiles = [
   "src/lib/components/all-completed.svelte",
@@ -68,22 +71,28 @@ export const sharedSvelteFiles = [
   "src/lib/components/villager-search-result.svelte",
   "src/lib/components/villagers-content.svelte",
   "src/lib/components/welcome-card.svelte",
+  "src/routes/dev/fonts/+page.svelte",
   "src/routes/sync/code-area.svelte",
 ];
 
 export const sharedScriptFiles = [
   "src/lib/controllers/tracking-reminders.svelte.ts",
   "src/lib/presentation/shelves.ts",
+  "src/lib/utils/format.ts",
   "src/routes/data/data-error-messages.ts",
 ];
 
 export const sharedLocaleFiles = [
+  "src/lib/components/sync/sync-question-copy.ts",
   "src/lib/data/categories.ts",
   "src/lib/data/item-variants.ts",
   "src/lib/data/source-filters.ts",
+  "src/lib/effects/undo-toast.ts",
+  "src/lib/presentation/merge-labels.ts",
   "src/lib/presentation/quest-sections.ts",
   "src/lib/presentation/source-labels.ts",
   "src/lib/sources/source-names.ts",
+  "src/lib/sources/source-segments.ts",
 ];
 
 export const sharedLocaleSvelteFiles = [
