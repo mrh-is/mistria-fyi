@@ -138,6 +138,11 @@ session limits) belong in each contributor’s user config.
   directly, and keep its MIT notice in `THIRD-PARTY-NOTICES.md`.
 - Pipeline extractors throw on unexpected source data. Never invent fallback display text to cover a
   missing or unrecognized value.
+- Never commit Satoshi or game art (sprites, portraits, & extracted assets), including base64 copies
+  inside HTML, CSS, or JSON. The repository is public, and the font license & game copyright forbid
+  redistributing them. Load them from `assets.mistria.fyi`, or bake them into a gitignored file.
+  `scripts/check-vendored-assets.ts` fails lint on fonts & long inline images; the
+  [font](docs/font-assets.md) & [sprite](docs/sprite-assets.md) guides say where each asset lives.
 - `src/lib/engine/` holds pure domain logic. Side effects belong at the store or component boundary.
 - `src/lib/stores/user-state.svelte.ts` owns mutable progress & its localStorage persistence.
 - Save import & backup restore are different flows, so don’t substitute one for the other:

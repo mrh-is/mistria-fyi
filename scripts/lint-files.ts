@@ -24,13 +24,14 @@ export function lintCommands(files: string[] | undefined, fix: boolean): string[
   ];
   const stylelint = ["exec", "stylelint", ...(fix ? ["--fix"] : ["--max-warnings=0"])];
   const directives = ["exec", "node", "scripts/check-lint-directives.ts"];
+  const vendoredAssets = ["exec", "node", "scripts/check-vendored-assets.ts"];
   if (files === undefined) {
     return [
       format,
       oxlint,
       [...eslint, "**/*.svelte", "**/*.svelte.{js,ts}"],
       [...stylelint, "src/**/*.{css,svelte}"],
-      ...(fix ? [] : [directives, ["run", "lint:shell"]]),
+      ...(fix ? [] : [directives, vendoredAssets, ["run", "lint:shell"]]),
     ];
   }
   if (files.length === 0) {
@@ -48,6 +49,7 @@ export function lintCommands(files: string[] | undefined, fix: boolean): string[
     ...(svelteFiles.length > 0 ? [[...eslint, "--", ...svelteFiles]] : []),
     ...(styleFiles.length > 0 ? [[...stylelint, "--", ...styleFiles]] : []),
     ...(!fix && scriptFiles.length > 0 ? [[...directives, "--", ...scriptFiles]] : []),
+    ...(fix ? [] : [[...vendoredAssets, "--", ...files]]),
     ...(!fix && files.some((file) => file.endsWith(".sh")) ? [["run", "lint:shell"]] : []),
   ];
 }
