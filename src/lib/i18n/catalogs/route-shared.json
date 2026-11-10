@@ -18,6 +18,12 @@
         ]
       },
       {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/routes/data/sync-card.svelte",
         "refs": [
           null
@@ -139,6 +145,34 @@
       },
       {
         "file": "src/routes/sync/computer-setup.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "or",
+      "ja": "または",
+      "zh-Hans": "或",
+      "zh-Hant": "或",
+      "es": "o",
+      "fr": "ou",
+      "ko": "또는",
+      "ru": "или"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/sync/where-choice.svelte",
         "refs": [
           null
         ]

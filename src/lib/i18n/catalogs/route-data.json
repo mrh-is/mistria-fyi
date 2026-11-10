@@ -349,6 +349,50 @@
   },
   {
     "translations": {
+      "en": "Child-free",
+      "ja": "子供なし",
+      "zh-Hans": "无孩子",
+      "zh-Hant": "無孩子",
+      "es": "Sin hijos",
+      "fr": "Sans enfants",
+      "ko": "자녀 없음",
+      "ru": "Без детей"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Choose a .sav file.",
+      "ja": ".sav ファイルを選んでください。",
+      "zh-Hans": "请选择一个 .sav 文件。",
+      "zh-Hant": "請選擇一個 .sav 檔案。",
+      "es": "Elige un archivo .sav.",
+      "fr": "Choisissez un fichier .sav.",
+      "ko": ".sav 파일을 골라 주세요.",
+      "ru": "Выберите файл .sav."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Choose a backup file to restore",
       "ja": "復元するバックアップファイルを選択",
       "zh-Hans": "选择要恢复的备份文件",
@@ -371,6 +415,72 @@
   },
   {
     "translations": {
+      "en": "Choose save files to import",
+      "ja": "インポートするセーブファイルを選択",
+      "zh-Hans": "选择要导入的存档文件",
+      "zh-Hant": "選擇要匯入的存檔檔案",
+      "es": "Elegir archivos de guardado para importar",
+      "fr": "Choisir les fichiers de sauvegarde à importer",
+      "ko": "가져올 저장 파일 선택",
+      "ru": "Выбрать файлы сохранения для импорта"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Choose the .sav file you copied over from your gaming computer. Your iPhone shows every file here, so look for one ending in .sav.",
+      "ja": "ゲーム用パソコンからコピーした .sav ファイルを選んでください。iPhone ではここにすべてのファイルが表示されるので、.sav で終わるものを探してください。",
+      "zh-Hans": "请选择你从游戏电脑复制过来的 .sav 文件。iPhone 会在这里显示所有文件，所以请找以 .sav 结尾的那个。",
+      "zh-Hant": "請選擇你從遊戲電腦複製過來的 .sav 檔案。iPhone 會在這裡顯示所有檔案，所以請找以 .sav 結尾的那個。",
+      "es": "Elige el archivo .sav que copiaste desde tu ordenador de juego. Tu iPhone muestra aquí todos los archivos, así que busca uno que termine en .sav.",
+      "fr": "Choisissez le fichier .sav copié depuis votre ordinateur de jeu. Votre iPhone affiche ici tous les fichiers, alors cherchez-en un qui se termine par .sav.",
+      "ko": "게임용 컴퓨터에서 복사해 온 .sav 파일을 고르세요. iPhone은 여기에 모든 파일을 보여 주니 .sav로 끝나는 파일을 찾아 주세요.",
+      "ru": "Выберите файл .sav, который вы скопировали с игрового компьютера. iPhone показывает здесь все файлы, так что ищите тот, что заканчивается на .sav."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Copy path",
+      "ja": "パスをコピー",
+      "zh-Hans": "复制路径",
+      "zh-Hant": "複製路徑",
+      "es": "Copiar ruta",
+      "fr": "Copier le chemin",
+      "ko": "경로 복사",
+      "ru": "Скопировать путь"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Danger zone",
       "ja": "危険な操作",
       "zh-Hans": "危险区域",
@@ -383,6 +493,50 @@
     "references": [
       {
         "file": "src/routes/data/danger-zone-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Drag the file ending in <0/> onto the drop zone above.",
+      "ja": "末尾が <0/> のファイルを上のドロップゾーンにドラッグします。",
+      "zh-Hans": "将文件名以 <0/> 结尾的文件拖到上方的放置区域。",
+      "zh-Hant": "將檔名以 <0/> 結尾的檔案拖到上方的放置區域。",
+      "es": "Arrastra el archivo que termina en <0/> hasta la zona de destino de arriba.",
+      "fr": "Faites glisser le fichier se terminant par <0/> sur la zone de dépôt ci-dessus.",
+      "ko": "파일 이름이 <0/> 로 끝나는 파일을 위의 드롭 영역으로 드래그하세요.",
+      "ru": "Перетащите файл, заканчивающийся на <0/> в область для перетаскивания выше."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Drag your save file here",
+      "ja": "セーブファイルをここにドラッグ",
+      "zh-Hans": "将存档文件拖到此处",
+      "zh-Hant": "將存檔檔案拖到此處",
+      "es": "Arrastra aquí tu archivo de guardado",
+      "fr": "Déposez votre fichier de sauvegarde ici",
+      "ko": "저장 파일을 여기로 드래그하세요",
+      "ru": "Перетащите файл сохранения сюда"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -459,6 +613,117 @@
   },
   {
     "translations": {
+      "en": "FYI, you had recorded that you are married to {0}, but the save file said you married {1}. We’ve kept {2} as your spouse, and skipped the imported child choice.",
+      "ja": "ご参考までに、あなたは{0}と結婚していると記録されていましたが、セーブファイルでは{1}と結婚したことになっていました。配偶者は{2}のまま維持し、インポートされた子供の選択はスキップしました。",
+      "zh-Hans": "提示：你之前记录的配偶是{0}，但存档文件显示你与{1}结婚。我们保留了{2}作为你的配偶，并跳过了导入的孩子选择。",
+      "zh-Hant": "提示：你之前記錄的配偶是{0}，但存檔檔案顯示你與{1}結婚。我們保留了{2}作為你的配偶，並跳過了匯入的孩子選擇。",
+      "es": "Ten en cuenta que tenías registrado que estás casado/a con {0}, pero el archivo de guardado decía que te casaste con {1}. Hemos mantenido a {2} como tu cónyuge y hemos omitido la elección de hijos importada.",
+      "fr": "Pour info, vous aviez enregistré que vous êtes marié(e) à {0}, mais le fichier de sauvegarde indiquait que vous vous étiez marié(e) à {1}. Nous avons conservé {2} comme conjoint(e) et ignoré le choix d’enfant importé.",
+      "ko": "참고로, {0}와(과) 결혼한 것으로 기록되어 있었지만 저장 파일에는 {1}와(과) 결혼한 것으로 되어 있었습니다. 배우자는 {2}로 유지했으며, 가져온 자녀 선택은 건너뛰었습니다.",
+      "ru": "К вашему сведению: у вас было записано, что вы состоите в браке с {0}, но в файле сохранения указано, что вы вступили в брак с {1}. Мы сохранили {2} в качестве супруга(и) и пропустили импортированный выбор по поводу детей."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "getName(\"villagers\", conflict.localVillagerId, page.data.locale)"
+              ],
+              [
+                "1",
+                "getName(\"villagers\", conflict.incomingVillagerId, page.data.locale)"
+              ],
+              [
+                "2",
+                "getName(\"villagers\", conflict.localVillagerId, page.data.locale)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "FYI, you had recorded that you are {0} with {1}, but the save file said {2}. We’ve kept your recorded status.",
+      "ja": "ご参考までに、あなたは{1}と{0}と記録されていましたが、セーブファイルでは{2}となっていました。記録されていた状態を維持しました。",
+      "zh-Hans": "提示：你之前记录的是与{1}的关系为{0}，但存档文件显示为{2}。我们保留了你记录的状态。",
+      "zh-Hant": "提示：你之前記錄的是與{1}的關係為{0}，但存檔檔案顯示為{2}。我們保留了你記錄的狀態。",
+      "es": "Ten en cuenta que tenías registrado que estás {0} con {1}, pero el archivo de guardado decía {2}. Hemos mantenido tu estado registrado.",
+      "fr": "Pour info, vous aviez enregistré que vous êtes {0} avec {1}, mais le fichier de sauvegarde indiquait {2}. Nous avons conservé votre statut enregistré.",
+      "ko": "참고로, {1}와(과) {0} 관계로 기록되어 있었지만 저장 파일에는 {2}(으)로 되어 있었습니다. 기록된 상태를 유지했습니다.",
+      "ru": "К вашему сведению: у вас было записано, что вы {0} с {1}, но в файле сохранения указано {2}. Мы сохранили ваш записанный статус."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "relationshipLabel( conflict.localRelationship as Exclude<VillagerRelationship, \"undecided\">, )"
+              ],
+              [
+                "1",
+                "getName(\"villagers\", conflict.villagerId, page.data.locale)"
+              ],
+              [
+                "2",
+                "relationshipLabel( conflict.incomingRelationship as Exclude<VillagerRelationship, \"undecided\">, )"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "FYI, you had recorded {0} with {1}, but the save file said {2}. We’ve kept your recorded choice.",
+      "ja": "ご参考までに、{1}との間で{0}と記録されていましたが、セーブファイルでは{2}となっていました。記録されていた選択を維持しました。",
+      "zh-Hans": "提示：你之前记录的与{1}的选择是{0}，但存档文件显示为{2}。我们保留了你记录的选择。",
+      "zh-Hant": "提示：你之前記錄的與{1}的選擇是{0}，但存檔檔案顯示為{2}。我們保留了你記錄的選擇。",
+      "es": "Ten en cuenta que tenías registrado {0} con {1}, pero el archivo de guardado decía {2}. Hemos mantenido tu elección registrada.",
+      "fr": "Pour info, vous aviez enregistré {0} avec {1}, mais le fichier de sauvegarde indiquait {2}. Nous avons conservé votre choix enregistré.",
+      "ko": "참고로, {1}와(과) {0}(으)로 기록되어 있었지만 저장 파일에는 {2}(으)로 되어 있었습니다. 기록된 선택을 유지했습니다.",
+      "ru": "К вашему сведению: у вас было записано {0} с {1}, но в файле сохранения указано {2}. Мы сохранили ваш записанный выбор."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "childChoiceLabel(conflict.localChildChoice)"
+              ],
+              [
+                "1",
+                "getName(\"villagers\", conflict.villagerId, page.data.locale)"
+              ],
+              [
+                "2",
+                "childChoiceLabel(conflict.incomingChildChoice)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Farm",
       "ja": "農場",
       "zh-Hans": "农场",
@@ -525,6 +790,28 @@
   },
   {
     "translations": {
+      "en": "Fields of Mistria saves are stored in your Windows user folder.",
+      "ja": "Fields of Mistriaのセーブデータは、Windowsのユーザーフォルダーに保存されています。",
+      "zh-Hans": "Fields of Mistria 的存档保存在你的 Windows 用户文件夹中。",
+      "zh-Hant": "Fields of Mistria 的存檔儲存在你的 Windows 使用者資料夾中。",
+      "es": "Las partidas de Fields of Mistria se guardan en tu carpeta de usuario de Windows.",
+      "fr": "Les sauvegardes de Fields of Mistria sont stockées dans votre dossier utilisateur Windows.",
+      "ko": "Fields of Mistria 저장 파일은 Windows 사용자 폴더에 저장되어 있습니다.",
+      "ru": "Сохранения Fields of Mistria хранятся в папке пользователя Windows."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Fields of Mistria v{0} · Field Guide v{1}",
       "ja": "Fields of Mistria v{0}・Field Guide v{1}",
       "zh-Hans": "Fields of Mistria v{0} · 田野指南 v{1}",
@@ -550,6 +837,50 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Finding your save file",
+      "ja": "セーブファイルの探し方",
+      "zh-Hans": "查找你的存档文件",
+      "zh-Hant": "尋找你的存檔檔案",
+      "es": "Encontrar tu archivo de guardado",
+      "fr": "Trouver votre fichier de sauvegarde",
+      "ko": "저장 파일 찾기",
+      "ru": "Поиск файла сохранения"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Fix this by hand",
+      "ja": "手動で直す",
+      "zh-Hans": "手动修正",
+      "zh-Hant": "手動修正",
+      "es": "Corregirlo a mano",
+      "fr": "Corriger à la main",
+      "ko": "직접 고치기",
+      "ru": "Исправить вручную"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          null
         ]
       }
     ],
@@ -602,6 +933,169 @@
   },
   {
     "translations": {
+      "en": "Got it",
+      "ja": "了解",
+      "zh-Hans": "知道了",
+      "zh-Hant": "知道了",
+      "es": "Entendido",
+      "fr": "Compris",
+      "ko": "확인",
+      "ru": "Понятно"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "If you merge it, we’ll mix its progress in with what you’ve already tracked here. Nothing you’ve tracked gets removed.",
+      "ja": "統合すると、このセーブの進行状況をここで記録済みの内容に合わせます。記録済みの内容は何も消えません。",
+      "zh-Hans": "如果合并，我们会把它的进度和你在这里已记录的内容合在一起。你已记录的内容一项都不会被移除。",
+      "zh-Hant": "如果合併，我們會把它的進度和你在這裡已記錄的內容合在一起。你已記錄的內容一項都不會被移除。",
+      "es": "Si la combinas, mezclaremos su progreso con lo que ya has registrado aquí. No se quitará nada de lo que has registrado.",
+      "fr": "Si vous la fusionnez, on mélangera sa progression avec ce que vous avez déjà suivi ici. Rien de ce que vous avez suivi ne sera retiré.",
+      "ko": "합치면 이 세이브의 진행 상황을 여기서 이미 기록한 내용에 섞어 넣어요. 기록한 내용은 하나도 지워지지 않아요.",
+      "ru": "Если объединить, мы добавим его прогресс к тому, что вы уже отметили здесь. Ничего из отмеченного не пропадёт."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Import completed.",
+      "ja": "インポートが完了しました。",
+      "zh-Hans": "导入完成。",
+      "zh-Hant": "匯入完成。",
+      "es": "Importación completada.",
+      "fr": "Importation terminée.",
+      "ko": "가져오기가 완료되었습니다.",
+      "ru": "Импорт завершён."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Import from save file",
+      "ja": "セーブファイルからインポート",
+      "zh-Hans": "从存档文件导入",
+      "zh-Hant": "從存檔檔案匯入",
+      "es": "Importar desde archivo de guardado",
+      "fr": "Importer depuis un fichier de sauvegarde",
+      "ko": "저장 파일에서 가져오기",
+      "ru": "Импорт из файла сохранения"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Import progress from a Fields of Mistria save.",
+      "ja": "Fields of Mistriaのセーブから進捗をインポートします。",
+      "zh-Hans": "从 Fields of Mistria 存档导入进度。",
+      "zh-Hant": "從 Fields of Mistria 存檔匯入進度。",
+      "es": "Importa progreso desde una partida guardada de Fields of Mistria.",
+      "fr": "Importez votre progression depuis une sauvegarde de Fields of Mistria.",
+      "ko": "Fields of Mistria 저장 파일에서 진행 상황을 가져옵니다.",
+      "ru": "Импортируйте прогресс из сохранения Fields of Mistria."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Imported from {0}",
+      "ja": "{0}からインポートしました",
+      "zh-Hans": "已从 {0} 导入",
+      "zh-Hant": "已從 {0} 匯入",
+      "es": "Importado desde {0}",
+      "fr": "Importé depuis {0}",
+      "ko": "{0}에서 가져왔습니다",
+      "ru": "Импортировано из {0}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "filesUsed.join(\", \")"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Importing…",
+      "ja": "インポート中…",
+      "zh-Hans": "导入中…",
+      "zh-Hant": "匯入中…",
+      "es": "Importando…",
+      "fr": "Importation…",
+      "ko": "가져오는 중…",
+      "ru": "Импорт…"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "In-game date",
       "ja": "ゲーム内の日付",
       "zh-Hans": "游戏内日期",
@@ -614,6 +1108,28 @@
     "references": [
       {
         "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Is this the farm you’ve been tracking?",
+      "ja": "これは記録していた農場ですか？",
+      "zh-Hans": "这是你一直在记录的农场吗？",
+      "zh-Hant": "這是你一直在記錄的農場嗎？",
+      "es": "¿Es esta la granja que has estado siguiendo?",
+      "fr": "Est-ce la ferme que vous suiviez ?",
+      "ko": "지금까지 기록하던 농장이 맞나요?",
+      "ru": "Это та ферма, которую вы отслеживали?"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -691,6 +1207,57 @@
   },
   {
     "translations": {
+      "en": "Kids",
+      "ja": "子供あり",
+      "zh-Hans": "有孩子",
+      "zh-Hant": "有孩子",
+      "es": "Con hijos",
+      "fr": "Avec enfants",
+      "ko": "자녀 있음",
+      "ru": "С детьми"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Last imported {0}",
+      "ja": "最終インポート：{0}",
+      "zh-Hans": "上次导入：{0}",
+      "zh-Hant": "上次匯入：{0}",
+      "es": "Última importación: {0}",
+      "fr": "Dernière importation : {0}",
+      "ko": "마지막 가져오기: {0}",
+      "ru": "Последний импорт: {0}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/last-import.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "age"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Last save file",
       "ja": "最新のセーブデータ",
       "zh-Hans": "最新存档",
@@ -736,6 +1303,28 @@
   },
   {
     "translations": {
+      "en": "Merge progress",
+      "ja": "進み具合を合わせる",
+      "zh-Hans": "合并进度",
+      "zh-Hant": "合併進度",
+      "es": "Combinar el progreso",
+      "fr": "Fusionner les progrès",
+      "ko": "진행 상황 합치기",
+      "ru": "Объединить прогресс"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Never mind",
       "ja": "やめておく",
       "zh-Hans": "算了",
@@ -772,6 +1361,116 @@
     "references": [
       {
         "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "No new data to import",
+      "ja": "インポートする新しいデータはありません",
+      "zh-Hans": "没有新数据可导入",
+      "zh-Hant": "沒有新資料可匯入",
+      "es": "No hay datos nuevos para importar",
+      "fr": "Aucune nouvelle donnée à importer",
+      "ko": "가져올 새 데이터가 없습니다",
+      "ru": "Нет новых данных для импорта"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "No new data to import.",
+      "ja": "インポートする新しいデータはありません.",
+      "zh-Hans": "没有新数据可导入.",
+      "zh-Hant": "沒有新資料可匯入.",
+      "es": "No hay datos nuevos para importar.",
+      "fr": "Aucune nouvelle donnée à importer.",
+      "ko": "가져올 새 데이터가 없습니다.",
+      "ru": "Нет новых данных для импорта."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Paste this path and press Enter: <0/>",
+      "ja": "このパスを貼り付けてEnterキーを押します: <0/>",
+      "zh-Hans": "粘贴此路径并按 Enter： <0/>",
+      "zh-Hant": "貼上此路徑並按 Enter： <0/>",
+      "es": "Pega esta ruta y pulsa Intro: <0/>",
+      "fr": "Collez ce chemin et appuyez sur Entrée : <0/>",
+      "ko": "이 경로를 붙여넣고 Enter를 누르세요: <0/>",
+      "ru": "Вставьте этот путь и нажмите Enter: <0/>"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Playing on your phone?",
+      "ja": "スマートフォンでプレイしていますか?",
+      "zh-Hans": "在手机上游玩？",
+      "zh-Hant": "在手機上遊玩？",
+      "es": "¿Juegas desde tu teléfono?",
+      "fr": "Vous jouez sur votre téléphone ?",
+      "ko": "휴대폰으로 플레이하시나요?",
+      "ru": "Играете на телефоне?"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Press <0/> + <1/> to open the Run dialog",
+      "ja": "<0/> + <1/> を押してファイル名を指定して実行ダイアログを開く",
+      "zh-Hans": "按 <0/> + <1/> 打开运行对话框",
+      "zh-Hant": "按 <0/> + <1/> 開啟執行對話方塊",
+      "es": "Pulsa <0/> + <1/> para abrir el cuadro de diálogo Ejecutar",
+      "fr": "Appuyez sur <0/> + <1/> pour ouvrir la boîte de dialogue Exécuter",
+      "ko": "<0/> + <1/> 를 눌러 실행 대화 상자를 엽니다",
+      "ru": "Нажмите <0/> + <1/> чтобы открыть диалог «Выполнить»"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -937,6 +1636,61 @@
   },
   {
     "translations": {
+      "en": "Save #{0} · Created in {1}",
+      "ja": "セーブ番号 {0} · 作成時のバージョン {1}",
+      "zh-Hans": "存档编号 {0} · 创建版本 {1}",
+      "zh-Hant": "存檔編號 {0} · 建立版本 {1}",
+      "es": "Partida n.º {0} · Creada en {1}",
+      "fr": "Sauvegarde n° {0} · Créée en {1}",
+      "ko": "저장 번호 {0} · 생성 버전 {1}",
+      "ru": "Сохранение №{0} · Создано в версии {1}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/last-import.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "metadata.identity.saveNumber ?? unknownNumber"
+              ],
+              [
+                "1",
+                "versionDisplay"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Save details",
+      "ja": "セーブの詳細",
+      "zh-Hans": "存档详情",
+      "zh-Hant": "存檔詳情",
+      "es": "Detalles de la partida",
+      "fr": "Détails de la sauvegarde",
+      "ko": "저장 파일 세부 정보",
+      "ru": "Сведения о сохранении"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/last-import.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Save file",
       "ja": "セーブデータ",
       "zh-Hans": "存档",
@@ -999,6 +1753,28 @@
       },
       {
         "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "See what’s left",
+      "ja": "残りを見てみる",
+      "zh-Hans": "看看还剩什么",
+      "zh-Hant": "看看還剩什麼",
+      "es": "Ver lo que queda",
+      "fr": "Voir ce qu’il reste",
+      "ko": "남은 항목 보기",
+      "ru": "Посмотреть, что осталось"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -1209,6 +1985,35 @@
   },
   {
     "translations": {
+      "en": "Technical details: {0}",
+      "ja": "技術的な詳細：{0}",
+      "zh-Hans": "技术细节：{0}",
+      "zh-Hant": "技術細節：{0}",
+      "es": "Detalles técnicos: {0}",
+      "fr": "Détails techniques : {0}",
+      "ko": "기술 정보: {0}",
+      "ru": "Технические подробности: {0}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "importErrorReportDetails"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "This backup is missing some data, so we left your progress as it was. It might be damaged, or from a different app.",
       "ja": "このバックアップには足りないデータがあるため、進行状況はそのままにしてあります。壊れているか、別のアプリのものかもしれません。",
       "zh-Hans": "这个备份缺少一些数据，所以你的进度保持原样。它可能已损坏，或者来自别的应用。",
@@ -1253,6 +2058,28 @@
   },
   {
     "translations": {
+      "en": "This device already syncs your save file, so there’s nothing to import! To import by hand instead, stop syncing first.",
+      "ja": "このデバイスはすでにセーブファイルを同期しているので、インポートするものはありません！手動でインポートしたい場合は、先に同期を止めてください。",
+      "zh-Hans": "这台设备已经在同步你的存档了，所以没什么可导入的！如果想手动导入，请先停止同步。",
+      "zh-Hant": "這台裝置已經在同步你的存檔了，所以沒什麼可匯入的！如果想手動匯入，請先停止同步。",
+      "es": "Este dispositivo ya sincroniza tu partida guardada, ¡así que no hay nada que importar! Para importar a mano, deja de sincronizar primero.",
+      "fr": "Cet appareil synchronise déjà votre sauvegarde, donc il n’y a rien à importer ! Pour importer à la main, arrêtez d’abord la synchronisation.",
+      "ko": "이 기기는 이미 세이브 파일을 동기화하고 있어서 가져올 게 없어요! 직접 가져오려면 먼저 동기화를 멈춰 주세요.",
+      "ru": "Это устройство уже синхронизирует ваше сохранение, так что импортировать нечего! Чтобы импортировать вручную, сначала остановите синхронизацию."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "This doesn’t look like a backup file, so we left your progress as it was. Make sure you picked one you downloaded from here.",
       "ja": "これはバックアップファイルではないようなので、進行状況はそのままにしてあります。ここからダウンロードしたものを選んでいるか確認してください。",
       "zh-Hans": "这看起来不像备份文件，所以你的进度保持原样。请确认你选的是从这里下载的备份。",
@@ -1265,6 +2092,28 @@
     "references": [
       {
         "file": "src/routes/data/backup-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "This save is for a different farm",
+      "ja": "別の農場のセーブデータです",
+      "zh-Hans": "这是另一个农场的存档",
+      "zh-Hant": "這是另一座農場的存檔",
+      "es": "Este archivo es de otra granja",
+      "fr": "Cette sauvegarde vient d’une autre ferme",
+      "ko": "다른 농장의 저장 파일이에요",
+      "ru": "Это сохранение другой фермы"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -1341,6 +2190,29 @@
   },
   {
     "translations": {
+      "en": "Try the newest file that ends in “autosave”.",
+      "ja": "「autosave」で終わるいちばん新しいファイルを試してください。",
+      "zh-Hans": "试试以“autosave”结尾的最新文件。",
+      "zh-Hant": "試試以「autosave」結尾的最新檔案。",
+      "es": "Prueba con el archivo más reciente que termine en «autosave».",
+      "fr": "Essayez le fichier le plus récent qui se termine par « autosave ».",
+      "ko": "“autosave”로 끝나는 가장 최신 파일을 시도해 보세요.",
+      "ru": "Попробуйте самый новый файл, который заканчивается на «autosave»."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Turning off your old code…",
       "ja": "古いコードを無効にしています…",
       "zh-Hans": "正在停用你的旧代码…",
@@ -1355,6 +2227,72 @@
         "file": "src/routes/data/sync-card.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unpacking save file…",
+      "ja": "セーブファイルを展開中…",
+      "zh-Hans": "正在解包存档文件…",
+      "zh-Hant": "正在解包存檔檔案…",
+      "es": "Descomprimiendo archivo de guardado…",
+      "fr": "Extraction du fichier de sauvegarde…",
+      "ko": "저장 파일 압축 해제 중…",
+      "ru": "Распаковка файла сохранения…"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Use sync or a backup on your other device →",
+      "ja": "別の端末で同期やバックアップを使う →",
+      "zh-Hans": "在其他设备上使用同步或备份 →",
+      "zh-Hant": "在其他裝置上使用同步或備份 →",
+      "es": "Usa la sincronización o una copia en tu otro dispositivo →",
+      "fr": "Utiliser la synchronisation ou une copie sur votre autre appareil →",
+      "ko": "다른 기기에서 동기화 또는 백업 사용 →",
+      "ru": "Использовать синхронизацию или копию на другом устройстве →"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We can’t tell which farm this save belongs to. If you merge it, we’ll add its progress to what you’ve already tracked.",
+      "ja": "このセーブデータがどの農場のものか分かりません。取り込むと、これまでの記録にこのセーブデータの進み具合が追加されます。",
+      "zh-Hans": "我们无法确定这个存档属于哪个农场。如果合并，我们会把存档中的进度加到你已有的记录中。",
+      "zh-Hant": "我們無法確定這個存檔是哪個農場的。如果你選擇合併，我們會把存檔中的進度加到你已有的紀錄裡。",
+      "es": "No sabemos de qué granja es esta partida guardada. Si la combinas, añadiremos su progreso al que ya has registrado.",
+      "fr": "On ne sait pas à quelle ferme appartient cette sauvegarde. Si vous la fusionnez, on ajoutera sa progression à ce que vous avez déjà enregistré.",
+      "ko": "이 저장 파일이 어느 농장의 것인지 알 수 없어요. 합치면 지금까지 기록한 내용에 이 파일의 진행 상황이 추가돼요.",
+      "ru": "Не удалось определить, к какой ферме относится это сохранение. Если объединить данные, прогресс из сохранения добавится к уже записанному."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
           null
         ]
       }
@@ -1408,6 +2346,73 @@
   },
   {
     "translations": {
+      "en": "We couldn’t read that save file. {0} If that one doesn’t work either, {1} and we’ll look into it.",
+      "ja": "そのセーブファイルを読み込めませんでした。{0}それでもだめなら、{1}。こちらで調べます。",
+      "zh-Hans": "没能读取那个存档。{0}如果还是不行，请{1}，我们会查一查。",
+      "zh-Hant": "沒能讀取那個存檔。{0}如果還是不行，請{1}，我們會查一查。",
+      "es": "No hemos podido leer esa partida guardada. {0} Si ese tampoco funciona, {1} y lo investigaremos.",
+      "fr": "Impossible de lire cette sauvegarde. {0} Si celui-là ne marche pas non plus, {1} et on regardera ça.",
+      "ko": "그 세이브 파일을 읽지 못했어요. {0} 그래도 안 되면 {1}. 저희가 살펴볼게요.",
+      "ru": "Не удалось прочитать это сохранение. {0} Если и он не подойдёт, {1}, и мы разберёмся."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "\"Try the newest file that ends in “autosave”.\""
+              ],
+              [
+                "1",
+                "\"send us feedback\""
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "\"Try the newest file that ends in “autosave”.\""
+              ],
+              [
+                "1",
+                "slot(\"feedback\")"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t store this import. Check your settings to make sure your browser’s storage isn’t full or turned off, then try again.",
+      "ja": "このインポートを保存できませんでした。設定で、ブラウザのストレージがいっぱいになっていないか、オフになっていないか確認してから、もう一度お試しください。",
+      "zh-Hans": "没能存储这次导入。请在设置中确认浏览器的存储空间没有满，也没有被关闭，然后再试一次。",
+      "zh-Hant": "沒能儲存這次匯入。請在設定中確認瀏覽器的儲存空間沒有滿，也沒有被關閉，然後再試一次。",
+      "es": "No hemos podido guardar esta importación. Revisa los ajustes para asegurarte de que el almacenamiento del navegador no esté lleno ni desactivado y vuelve a intentarlo.",
+      "fr": "Impossible de stocker cette importation. Vérifiez dans vos réglages que le stockage du navigateur n’est ni plein ni désactivé, puis réessayez.",
+      "ko": "이번 가져오기를 저장하지 못했어요. 설정에서 브라우저 저장 공간이 가득 찼거나 꺼져 있지 않은지 확인한 뒤 다시 시도해 주세요.",
+      "ru": "Не удалось сохранить этот импорт. Проверьте в настройках, не заполнено ли хранилище браузера и не отключено ли оно, и попробуйте ещё раз."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "We couldn’t turn off your old code yet. We’ll try again next time you’re here.",
       "ja": "古いコードをまだ無効にできていません。次に開いたときにもう一度試します。",
       "zh-Hans": "我们还没能停用你的旧代码。下次你来时会再试一次。",
@@ -1420,6 +2425,95 @@
     "references": [
       {
         "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Well, that import didn’t go as planned. Your progress here is safe, so give it another try.",
+      "ja": "おっと、インポートがうまくいきませんでした。ここの進行状況は無事なので、もう一度試してみてください。",
+      "zh-Hans": "唔，这次导入没按计划进行。你在这里的进度很安全，再试一次吧。",
+      "zh-Hant": "唔，這次匯入沒有照計畫進行。你在這裡的進度很安全，再試一次吧。",
+      "es": "Vaya, esa importación no ha salido como esperábamos. Tu progreso de aquí está a salvo, así que inténtalo otra vez.",
+      "fr": "Bon, cette importation ne s’est pas passée comme prévu. Votre progression ici est en sécurité, alors réessayez.",
+      "ko": "이런, 가져오기가 생각대로 되지 않았어요. 여기 진행 상황은 안전하니 다시 시도해 보세요.",
+      "ru": "Что ж, импорт пошёл не по плану. Ваш прогресс здесь в безопасности, так что попробуйте ещё раз."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We’re still working on your last import! Give it one second, then try that file again.",
+      "ja": "前回のインポートをまだ処理中です！1秒だけ待ってから、そのファイルをもう一度試してください。",
+      "zh-Hans": "我们还在处理你上一次的导入！稍等一秒，再用那个文件试一次。",
+      "zh-Hant": "我們還在處理你上一次的匯入！稍等一秒，再用那個檔案試一次。",
+      "es": "¡Todavía estamos con tu última importación! Dale un segundo y vuelve a probar con ese archivo.",
+      "fr": "On travaille encore sur votre dernière importation ! Laissez-nous une seconde, puis réessayez avec ce fichier.",
+      "ko": "아직 지난번 가져오기를 처리하고 있어요! 딱 1초만 기다렸다가 그 파일을 다시 시도해 주세요.",
+      "ru": "Мы всё ещё обрабатываем ваш прошлый импорт! Подождите секундочку и попробуйте этот файл снова."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "What we added",
+      "ja": "追加した内容",
+      "zh-Hans": "我们添加了什么",
+      "zh-Hant": "我們新增了什麼",
+      "es": "Lo que hemos añadido",
+      "fr": "Ce qu’on a ajouté",
+      "ko": "추가된 내용",
+      "ru": "Что мы добавили"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Where is my save file?",
+      "ja": "セーブファイルはどこにありますか?",
+      "zh-Hans": "我的存档文件在哪里？",
+      "zh-Hant": "我的存檔檔案在哪裡？",
+      "es": "¿Dónde está mi archivo de guardado?",
+      "fr": "Où se trouve mon fichier de sauvegarde ?",
+      "ko": "저장 파일은 어디에 있나요?",
+      "ru": "Где найти файл сохранения?"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -1444,6 +2538,39 @@
         "file": "src/routes/data/transfer-card.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your field guide is {0} complete, with {1} left to go.",
+      "ja": "フィールドガイドの達成率は{0}。残りは{1}件だよ。",
+      "zh-Hans": "你的田野指南已完成 {0}，还有 {1} 项等你完成。",
+      "zh-Hant": "你的田野指南已完成 {0}，還有 {1} 項等你完成。",
+      "es": "Tu guía está completada al {0}. Te quedan {1} por completar.",
+      "fr": "Ton guide est rempli à {0}. Il t’en reste {1} à compléter.",
+      "ko": "필드 가이드를 {0} 완성했어요. 앞으로 {1}개 남았어요.",
+      "ru": "Твой путеводитель заполнен на {0}. Осталось выполнить: {1}."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/merge-summary.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatPercent(percent, page.data.locale)"
+              ],
+              [
+                "1",
+                "formatNumber(overall.total - overall.completed, page.data.locale)"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -1486,6 +2613,28 @@
     "references": [
       {
         "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
+      "ja": "進行状況は無事です！新しいバージョンのフィールドガイドで保存されたものなので、このページを再読み込みして最新版にしてください。",
+      "zh-Hans": "你的进度很安全！它是由更新版本的田野指南保存的，请重新加载此页面以获取最新版本。",
+      "zh-Hant": "你的進度很安全！它是由較新版本的田野指南儲存的，請重新載入此頁面以取得最新版本。",
+      "es": "¡Tu progreso está a salvo! Lo guardó una versión más reciente de la guía de campo, así que recarga esta página para tener la última actualización.",
+      "fr": "Votre progression est en sécurité ! Une version plus récente du guide de terrain l’a enregistrée, alors rechargez cette page pour obtenir la dernière mise à jour.",
+      "ko": "진행 상황은 안전해요! 더 새로운 버전의 필드 가이드가 저장한 것이니, 이 페이지를 새로고침해서 최신 업데이트를 받아 주세요.",
+      "ru": "Ваш прогресс в безопасности! Его сохранила более новая версия справочника, так что перезагрузите эту страницу, чтобы получить последнее обновление."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
         "refs": [
           null
         ]
@@ -1554,6 +2703,152 @@
         "file": "src/routes/data/danger-zone-card.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "browse files",
+      "ja": "ファイルを選択",
+      "zh-Hans": "浏览文件",
+      "zh-Hant": "瀏覽檔案",
+      "es": "explorar archivos",
+      "fr": "parcourir les fichiers",
+      "ko": "파일 찾아보기",
+      "ru": "выбрать файлы"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "send us feedback",
+      "ja": "フィードバックを送ってください",
+      "zh-Hans": "给我们发送反馈",
+      "zh-Hant": "傳送意見回饋給我們",
+      "es": "envíanos tus comentarios",
+      "fr": "envoyez-nous un commentaire",
+      "ko": "피드백을 보내 주세요",
+      "ru": "напишите нам"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "unknown",
+      "ja": "不明",
+      "zh-Hans": "未知",
+      "zh-Hant": "未知",
+      "es": "desconocido",
+      "fr": "inconnu",
+      "ko": "알 수 없음",
+      "ru": "неизвестно"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/last-import.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "unknown version",
+      "ja": "不明",
+      "zh-Hans": "未知",
+      "zh-Hant": "未知",
+      "es": "versión desconocida",
+      "fr": "version inconnue",
+      "ko": "알 수 없는 버전",
+      "ru": "неизвестно"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/last-import.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} warnings",
+      "ja": "警告{0}件",
+      "zh-Hans": "{0} 条警告",
+      "zh-Hant": "{0} 則警告",
+      "es": "{0} avisos",
+      "fr": "{0} avertissements",
+      "ko": "경고 {0}개",
+      "ru": "Предупреждений: {0}"
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "importResult.warnings.length"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} warnings found.",
+      "ja": "{0}件の警告が見つかりました。",
+      "zh-Hans": "发现 {0} 条警告。",
+      "zh-Hant": "發現 {0} 則警告。",
+      "es": "Se encontraron {0} avisos.",
+      "fr": "{0} avertissements trouvés.",
+      "ko": "경고 {0}개가 발견되었습니다.",
+      "ru": "Найдено предупреждений: {0}."
+    },
+    "references": [
+      {
+        "file": "src/routes/data/import-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "importResult.warnings.length"
+              ]
+            ]
+          }
         ]
       }
     ],

@@ -2,27 +2,26 @@
   import IconArrowRight from "@tabler/icons-svelte-runes/icons/arrow-right";
 
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
 
   /** Sits after a page's rows: an extra tool for a search the page didn't answer. */
-  let { locale }: { locale: LocaleCode } = $props();
+  let { locale: _locale }: { locale: LocaleCode } = $props();
 
   let query = $derived(toolbarState.searchQuery.trim());
 </script>
 
 {#if query}
   <p class="search-guide">
-    {m.search_guide_prompt({}, { locale })}
+    Don’t see what you’re looking for?
     <a
-      href={localizedHref("", { locale })}
+      href={localizedHref("", { locale: _locale })}
       onclick={() => {
         toolbarState.carrySearchToNextPage();
       }}
     >
-      {m.search_guide_link({ query }, { locale })}
+      {`Search the entire Field Guide for “${query}”`}
       <IconArrowRight class="size-4 shrink-0" aria-hidden="true" />
     </a>
   </p>

@@ -23,6 +23,28 @@
   },
   {
     "translations": {
+      "en": "Done",
+      "ja": "完了",
+      "zh-Hans": "已完成",
+      "zh-Hant": "已完成",
+      "es": "Completado",
+      "fr": "Terminé",
+      "ko": "완료",
+      "ru": "Готово"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/source-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Group by",
       "ja": "グループ分け",
       "zh-Hans": "分组方式",
@@ -60,6 +82,39 @@
         "file": "src/routes/everything/+page.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} · {1}",
+      "ja": "{0} · {1}",
+      "zh-Hans": "{0} · {1}",
+      "zh-Hant": "{0} · {1}",
+      "es": "{0} · {1}",
+      "fr": "{0} · {1}",
+      "ko": "{0} · {1}",
+      "ru": "{0} · {1}"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/source-content.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "section.state === /* @wc-ignore */ \"done\" ? \"Done\" : shelfLabel(stateShelf(section.state))"
+              ]
+            ]
+          }
         ]
       }
     ],

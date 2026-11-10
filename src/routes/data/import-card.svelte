@@ -18,7 +18,6 @@
   import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { progressImport } from "#lib/progress/index.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { isIosDevice } from "#lib/utils/ios-device.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { messageParts } from "#lib/utils/message-parts.js";
@@ -98,7 +97,7 @@
   function importErrorReport(error: string): string {
     return importErrorReportDetails === undefined
       ? error
-      : `${error}\n\n${m.import_error_feedback_details({ details: importErrorReportDetails })}`;
+      : `${error}\n\n${`Technical details: ${importErrorReportDetails}`}`;
   }
 
   function copyPath() {
@@ -142,12 +141,12 @@
     try {
       const savFile = files[0];
       if (!savFile || files.some((file) => !isSavFile(file))) {
-        importError = m.import_error_choose_sav();
+        importError = "Choose a .sav file.";
         return;
       }
 
       let bundle;
-      importStatus = m.import_status_unpacking();
+      importStatus = "Unpacking save file…";
       try {
         bundle = await unpackSavFile(savFile);
       } catch (error) {
@@ -155,10 +154,7 @@
         const known = error instanceof SavArchiveError;
         importError = known
           ? formatSavArchiveError(error.detail)
-          : m.import_error_parse_failed({
-              feedback: m.import_error_feedback_link(),
-              tryAutosave: m.import_error_try_autosave(),
-            });
+          : `We couldn’t read that save file. ${"Try the newest file that ends in “autosave”."} If that one doesn’t work either, ${"send us feedback"} and we’ll look into it.`;
         importErrorOffersFeedback = !known;
         if (!known) importErrorReportDetails = describeErrorForReport(error);
         return;
@@ -166,7 +162,7 @@
 
       filesUsed = [savFile.name];
 
-      importStatus = m.import_status_importing();
+      importStatus = "Importing…";
       const { completed, day, playtime, warnings } = extractSaveProgress(bundle);
       await applyImport(
         {
@@ -178,7 +174,8 @@
         warnings,
       );
     } catch {
-      importError = m.import_error_unexpected();
+      importError =
+        "Well, that import didn’t go as planned. Your progress here is safe, so give it another try.";
     } finally {
       importing = false;
       importStatus = "";
@@ -212,16 +209,20 @@
         importResult = { ...outcome.result, warnings };
         break;
       case "busy":
-        importError = m.import_error_busy();
+        importError =
+          "We’re still working on your last import! Give it one second, then try that file again.";
         break;
       case "newer-data":
-        importError = m.persistence_warning_newer_data();
+        importError =
+          "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.";
         break;
       case "sync-active":
-        importError = m.import_error_sync_active();
+        importError =
+          "This device already syncs your save file, so there’s nothing to import! To import by hand instead, stop syncing first.";
         break;
       case "write-failed":
-        importError = m.import_error_write();
+        importError =
+          "We couldn’t store this import. Check your settings to make sure your browser’s storage isn’t full or turned off, then try again.";
         break;
     }
   }
@@ -234,7 +235,8 @@
     try {
       await applyImport(save, warnings, farm);
     } catch {
-      importError = m.import_error_unexpected();
+      importError =
+        "Well, that import didn’t go as planned. Your progress here is safe, so give it another try.";
     } finally {
       importing = false;
     }
@@ -254,18 +256,22 @@
   let totalImported = $derived(importResult ? totalMergeCounts(importResult.counts) : 0);
 </script>
 
-<DataCard bind:open title={m.import_card_title()} summary={m.import_card_summary()}>
+<DataCard
+  bind:open
+  title="Import from save file"
+  summary="Import progress from a Fields of Mistria save."
+>
   <div>
     {#if progressImport.lastImport}
       <LastImport metadata={progressImport.lastImport} locale={page.data.locale} />
     {/if}
     <div class="sr-only" role="status" aria-live="polite">
       {#if importing}
-        {importStatus || m.import_status_importing()}
+        {importStatus || "Importing…"}
       {:else if importResult}
-        {#if totalImported > 0}{m.import_status_completed()}{:else}{m.data_no_new_data_import()}.{/if}
+        {#if totalImported > 0}Import completed.{:else}No new data to import.{/if}
         {#if importResult.warnings.length > 0}
-          {m.import_status_warnings_found({ count: importResult.warnings.length })}
+          {`${importResult.warnings.length} warnings found.`}
         {/if}
       {/if}
     </div>
@@ -274,7 +280,7 @@
     <input
       bind:this={fileInput}
       type="file"
-      aria-label={m.import_file_input_aria()}
+      aria-label="Choose save files to import"
       accept={acceptSaveTypes}
       disabled={importing || farmPrompt !== null}
       class="hidden"
@@ -294,53 +300,52 @@
       aria-busy={importing}
     >
       {#if importing}
-        <p class="text-sm text-muted-foreground">{importStatus || m.import_status_importing()}</p>
+        <p class="text-sm text-muted-foreground">{importStatus || "Importing…"}</p>
       {:else}
         <IconUpload class="size-6 text-muted-foreground" />
-        <p class="text-sm text-muted-foreground">{m.import_drag_here()}</p>
-        <p class="text-xs text-muted-foreground">{m.import_or()}</p>
+        <p class="text-sm text-muted-foreground">Drag your save file here</p>
+        <p class="text-xs text-muted-foreground">or</p>
         <button
           class="text-sm font-medium text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80"
           onclick={() => fileInput?.click()}
         >
-          {m.import_browse_files()}
+          browse files
         </button>
       {/if}
     </div>
 
     {#if onIos}
       <p class="mt-1.5 text-center text-xs text-muted-foreground" data-testid="ios-picker-hint">
-        {m.import_ios_picker_hint()}
+        Choose the .sav file you copied over from your gaming computer. Your iPhone shows every file
+        here, so look for one ending in .sav.
       </p>
     {/if}
 
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>
-        <Dialog.Trigger class="underline decoration-dotted"
-          >{m.import_where_is_save()}</Dialog.Trigger
-        >
+        <Dialog.Trigger class="underline decoration-dotted">Where is my save file?</Dialog.Trigger>
         <Dialog.Content class="max-w-sm" showCloseButton={false}>
           <Dialog.Header>
-            <Dialog.Title>{m.import_finding_save_title()}</Dialog.Title>
+            <Dialog.Title>Finding your save file</Dialog.Title>
             <Dialog.Description>
-              {m.import_finding_save_description()}
+              Fields of Mistria saves are stored in your Windows user folder.
             </Dialog.Description>
           </Dialog.Header>
           <ol class="mt-2 list-decimal space-y-2 pl-5 text-sm marker:text-muted-foreground">
             <li>
-              {m.import_step_press_prefix()}
-              <kbd class="rounded border px-1 font-mono text-xs">Win</kbd>
-              + <kbd class="rounded border px-1 font-mono text-xs">R</kbd>
-              {m.import_step_press_suffix()}
+              Press
+              <kbd class="rounded border px-1 font-mono text-xs"><!-- @wc-ignore -->Win</kbd>
+              + <kbd class="rounded border px-1 font-mono text-xs"><!-- @wc-ignore -->R</kbd>
+              to open the Run dialog
             </li>
             <li>
-              {m.import_step_paste_path()}
+              Paste this path and press Enter:
               <div class="mt-1 flex items-center gap-2 rounded-md border bg-muted px-3 py-2">
                 <code class="flex-1 text-xs break-all">{SAV_PATH}</code>
                 <button
                   onclick={copyPath}
                   class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={m.import_copy_path_aria()}
+                  aria-label="Copy path"
                 >
                   {#if copied}
                     <IconCheck class="size-4 text-(--color-status-success)" />
@@ -351,14 +356,14 @@
               </div>
             </li>
             <li>
-              {m.import_step_drag_autosave_before()} <code>-autosave.sav</code>
-              {m.import_step_drag_autosave_after()}
+              Drag the file ending in <code>-autosave.sav</code>
+              onto the drop zone above.
             </li>
           </ol>
           <Dialog.Footer class="mt-2">
             <Dialog.Close>
               {#snippet child({ props })}
-                <Button variant="outline" {...props}>{m.source_explainer_dismiss()}</Button>
+                <Button variant="outline" {...props}>Got it</Button>
               {/snippet}
             </Dialog.Close>
           </Dialog.Footer>
@@ -371,13 +376,13 @@
       <StatusNote class="mt-3 text-base" tone="error">
         {#if importErrorOffersFeedback}
           <p>
-            {#each messageParts( (slot) => m.import_error_parse_failed( { feedback: slot("feedback"), tryAutosave: m.import_error_try_autosave() } ) ) as part, index (index)}
+            {#each messageParts((slot) => `We couldn’t read that save file. ${"Try the newest file that ends in “autosave”."} If that one doesn’t work either, ${slot("feedback")} and we’ll look into it.`) as part, index (index)}
               {#if typeof part === "string"}{part}{:else}<button
                   type="button"
                   class="cursor-pointer underline underline-offset-2"
                   onclick={() => {
                     if (importError) feedbackContext.reportError(importErrorReport(importError));
-                  }}>{m.import_error_feedback_link()}</button
+                  }}>send us feedback</button
                 >{/if}
             {/each}
           </p>
@@ -396,21 +401,23 @@
       <Dialog.Content class="sm:max-w-sm" showCloseButton={false}>
         <Dialog.Header>
           <Dialog.Title>
-            {unnumberedFarmPrompt ? m.sync_farm_question_title() : m.import_farm_title()}
+            {unnumberedFarmPrompt
+              ? "Is this the farm you’ve been tracking?"
+              : "This save is for a different farm"}
           </Dialog.Title>
           <Dialog.Description>
             {unnumberedFarmPrompt
-              ? m.import_farm_unnumbered_description()
-              : m.import_farm_description()}
+              ? "We can’t tell which farm this save belongs to. If you merge it, we’ll add its progress to what you’ve already tracked."
+              : "If you merge it, we’ll mix its progress in with what you’ve already tracked here. Nothing you’ve tracked gets removed."}
           </Dialog.Description>
         </Dialog.Header>
         <Dialog.Footer>
           <Dialog.Close>
             {#snippet child({ props })}
-              <Button variant="outline" {...props}>{m.import_farm_cancel()}</Button>
+              <Button variant="outline" {...props}>Cancel</Button>
             {/snippet}
           </Dialog.Close>
-          <Button onclick={() => void confirmFarm()}>{m.import_farm_merge()}</Button>
+          <Button onclick={() => void confirmFarm()}>Merge progress</Button>
         </Dialog.Footer>
       </Dialog.Content>
     </Dialog.Root>
@@ -423,7 +430,7 @@
           <Separator class="my-2" />
           <details class="text-sm">
             <summary class="text-muted-foreground">
-              {m.import_warnings_summary({ count: importResult.warnings.length })}
+              {`${importResult.warnings.length} warnings`}
             </summary>
             <ul class="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-muted-foreground">
               {#each importResult.warnings as warning, index (index)}
@@ -434,9 +441,7 @@
         {/if}
       </StatusNote>
 
-      <Button class="mt-3" href={localizedHref("everything")}>
-        {m.import_view_progress()}
-      </Button>
+      <Button class="mt-3" href={localizedHref("everything")}>See what’s left</Button>
 
       {#if isDesktop && onScrollToTransfer}
         <button
@@ -445,11 +450,9 @@
         >
           <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-(--color-status-info)" />
           <div>
-            <p class="text-base font-medium text-foreground">
-              {m.import_playing_on_phone()}
-            </p>
+            <p class="text-base font-medium text-foreground">Playing on your phone?</p>
             <p class="mt-0.5 text-sm text-muted-foreground">
-              {m.import_transfer_to_mobile()}
+              Use sync or a backup on your other device →
             </p>
           </div>
         </button>

@@ -12,8 +12,8 @@
   import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { recordKeys } from "#lib/utils/record.js";
 
   import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -66,9 +66,9 @@
   let available = $derived(perks.filter((perk) => perk.tier.reached || perk.unlocked).length);
   let locked = $derived(perks.length - available);
   let toggleLabel = $derived.by(() => {
-    if (available === 0) return m.skill_perks_toggle_aria_locked({ locked, name });
-    if (locked === 0) return m.skill_perks_toggle_aria({ available, count: unlocked, name });
-    return m.skill_perks_toggle_aria_more_locked({ available, count: unlocked, locked, name });
+    if (available === 0) return `${name} perks, ${locked} locked`;
+    if (locked === 0) return `${name} perks, ${unlocked} of ${available} unlocked`;
+    return `${name} perks, ${unlocked} of ${available} unlocked, ${locked} more locked`;
   });
 
   /** What a perk unlocks, one note per kind. Plain text until rows can be linked directly. */
@@ -80,17 +80,26 @@
       {
         count: recipes.length,
         id: "recipes",
-        label: m.skill_perk_unlocks_recipes({ count: recipes.length }),
+        label: plural(recipes.length, [
+          `unlocks ${recipes.length} recipe`,
+          `unlocks ${recipes.length} recipes`,
+        ]),
       },
       {
         count: almanac.length,
         id: "almanac",
-        label: m.skill_perk_unlocks_almanac({ count: almanac.length }),
+        label: plural(almanac.length, [
+          `unlocks ${almanac.length} almanac item`,
+          `unlocks ${almanac.length} almanac items`,
+        ]),
       },
       {
         count: cosmetics.length,
         id: "cosmetics",
-        label: m.skill_perk_unlocks_cosmetics({ count: cosmetics.length }),
+        label: plural(cosmetics.length, [
+          `unlocks ${cosmetics.length} cosmetic`,
+          `unlocks ${cosmetics.length} cosmetics`,
+        ]),
       },
     ].filter(({ count }) => count > 0);
   }
@@ -127,15 +136,15 @@
         ? 'rotate-90'
         : ''}"
     />
-    <span class="skill-perks__label">{m.skill_perks_label()}</span>
+    <span class="skill-perks__label">Perks</span>
     <span class="skill-perks__summary" aria-hidden="true">
       {#if available > 0}
-        <span>{m.skill_perks_unlocked({ available, count: unlocked })}</span>
+        <span>{`${unlocked} / ${available} unlocked`}</span>
         {#if locked > 0}
-          <span class="skill-perks__locked">{m.skill_perks_more_locked({ count: locked })}</span>
+          <span class="skill-perks__locked">{`${locked} more locked`}</span>
         {/if}
       {:else}
-        <span>{m.skill_perks_locked({ count: locked })}</span>
+        <span>{`${locked} locked`}</span>
       {/if}
     </span>
   </button>
@@ -153,17 +162,11 @@
               >{getName("ui", `tier_${tier.number.toString()}`, locale)}</span
             >
             <span class="skill-perks__tier-rule"></span>
-            <span class="skill-perks__tier-level"
-              >{m.skill_perk_tier_level({ level: tier.level })}</span
-            >
+            <span class="skill-perks__tier-level">{`Level ${tier.level}`}</span>
           </span>
           <ul
             class="skill-perks__perks"
-            aria-label={m.skill_perk_tier_aria({
-              level: tier.level,
-              name,
-              tier: getName("ui", `tier_${tier.number.toString()}`, locale),
-            })}
+            aria-label={`${name} perks, ${getName("ui", `tier_${tier.number.toString()}`, locale)}, level ${tier.level}`}
           >
             {#each tier.perks as perk (perk.id)}
               {@const covered = perk.spoilered && !revealed.has(perk.id)}
@@ -173,10 +176,10 @@
                   provenance={userState.provenanceOf(factKey("unlockedPerks", perk.id))}
                   state={perk.unlocked ? "checked" : "unchecked"}
                   label={perk.unlocked
-                    ? m.tracker_row_uncheck({ name: perk.name })
+                    ? `Uncheck ${perk.name}`
                     : covered
-                      ? m.tracker_row_check_spoilered()
-                      : m.tracker_row_check({ name: perk.name })}
+                      ? "Check spoilered item"
+                      : `Check ${perk.name}`}
                   onclick={() => {
                     togglePerk({ ...perk, tier });
                   }}

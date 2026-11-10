@@ -2,8 +2,6 @@
   import IconX from "@tabler/icons-svelte-runes/icons/x";
   import { tick } from "svelte";
 
-  import * as m from "#lib/ui-messages/messages.js";
-
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
   import type { ReportTarget } from "#lib/feedback/types.js";
 
@@ -73,13 +71,13 @@
   function handleKeydown(event: KeyboardEvent): void {
     if (!active) return;
 
-    if (event.key === "Escape") {
+    if (event.key === /* @wc-ignore */ "Escape") {
       event.preventDefault();
       feedbackContext.cancel();
       return;
     }
 
-    if (event.key !== "Tab") return;
+    if (event.key !== /* @wc-ignore */ "Tab") return;
     const focusable = [
       cancelButton,
       ...document.querySelectorAll<HTMLButtonElement>("[data-feedback-picker-target]"),
@@ -104,13 +102,13 @@
   <div
     class="pointer-events-none fixed inset-0 z-[var(--z-picker)]"
     role="dialog"
-    aria-label={m.feedback_picker_dialog_title()}
+    aria-label="Pick an item to report"
     aria-modal="true"
   >
     <button
       class="pointer-events-auto fixed inset-0 bg-black/45 motion-safe:transition-opacity"
       type="button"
-      aria-label={m.feedback_picker_cancel_outside_aria()}
+      aria-label="Cancel item picker by clicking outside"
       tabindex="-1"
       style="touch-action: pan-y"
       onclick={() => {
@@ -122,7 +120,7 @@
       <button
         class="pointer-events-auto fixed rounded-md border-2 border-primary bg-primary/10 shadow-[0_0_0_2px_hsl(var(--background))] outline-none focus:border-primary-foreground focus:bg-primary/25 motion-safe:transition-[border-color,background-color]"
         type="button"
-        aria-label={m.feedback_picker_report_about_aria({ name: highlight.metadata.displayName })}
+        aria-label={`Report feedback about ${highlight.metadata.displayName}`}
         data-feedback-picker-target
         style:left={`${highlight.left}px`}
         style:top={`${highlight.top}px`}
@@ -139,14 +137,14 @@
         bind:this={cancelButton}
         class="picker-header__back"
         type="button"
-        aria-label={m.feedback_picker_cancel_aria()}
+        aria-label="Cancel item picker"
         onclick={() => {
           feedbackContext.cancel();
         }}
       >
         <IconX class="size-5" />
       </button>
-      <p class="picker-header__title" aria-live="polite">{m.feedback_picker_dialog_title()}</p>
+      <p class="picker-header__title" aria-live="polite">Pick an item to report</p>
     </div>
   </div>
 {/if}

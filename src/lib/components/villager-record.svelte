@@ -12,7 +12,6 @@
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
   import { relationshipLevelColor } from "#lib/utils/palette.js";
   import { page } from "$app/state";
@@ -46,22 +45,22 @@
     dating: getName("ui", "dating", page.data.locale),
     engaged: getName("ui", "engaged", page.data.locale),
     married: getName("ui", "married", page.data.locale),
-    married_child_free: m.relationship_status_married_child_free(),
-    married_kids: m.relationship_status_married_kids(),
-    path_not_chosen: m.relationship_status_path_not_chosen(),
+    married_child_free: "Married · child-free",
+    married_kids: "Married · kids",
+    path_not_chosen: "Path not chosen",
   });
   let relationshipPromptLabel: Record<RelationshipPrompt, string> = $derived({
-    choose_path: m.relationship_prompt_choose_path(),
-    household: m.relationship_prompt_household(),
-    next_note: m.relationship_prompt_next_note(),
+    choose_path: "Choose path",
+    household: "Household",
+    next_note: "Next note",
   });
   let relationshipActionLabel: Record<RelationshipActionValue, string> = $derived({
-    married: m.relationship_action_married(),
-    no: m.relationship_action_no(),
+    married: "Record marriage",
+    no: "Child-free",
     platonic: getName("ui", "best_friend", page.data.locale),
-    proposed: m.relationship_action_proposed(),
-    romantic: m.relationship_action_romantic(),
-    yes: m.relationship_action_yes(),
+    proposed: "Record proposal",
+    romantic: "Start dating",
+    yes: "Kids",
   });
   let recordElement: HTMLLIElement;
   let spoilerDismissed = $state(false);
@@ -74,7 +73,7 @@
       isSpoilered
         ? {
             category: "villager",
-            displayName: m.villager_spoilered_name(),
+            displayName: "Hidden villager",
             page: page.url.pathname,
           }
         : { category: "villager", displayName: name, entityId: id, page: page.url.pathname },
@@ -94,7 +93,8 @@
     }),
   );
   let completed = $derived(isVillagerComplete(id, userState.state.progress));
-  let visibleName = $derived(isSpoilered ? m.villager_spoilered_name() : name);
+  const hiddenVillager = /* @wc-include */ "hidden villager";
+  let visibleName = $derived(isSpoilered ? "Hidden villager" : name);
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {
     // The roster can unmount this record once the action settles it (completed rows hidden),
@@ -173,37 +173,24 @@
     {#if !isSpoilered}
       <span
         class="villager-birthday"
-        aria-label={m.villager_birthday_aria({
-          day: villager.birthday.day,
-          season: seasonLabel(villager.birthday.season, page.data.locale),
-        })}
+        aria-label={`Birthday: ${seasonLabel(villager.birthday.season, page.data.locale)} ${villager.birthday.day}`}
       >
         <Icon.Season season={villager.birthday.season} class="size-3" aria-hidden="true" />
         {seasonLabelAbbr(villager.birthday.season)}
         {String(villager.birthday.day).padStart(2, "0")}
       </span>
     {:else}
-      <span class="villager-birthday villager-birthday--spoilered"
-        >{m.villager_birthday_spoilered()}</span
-      >
+      <span class="villager-birthday villager-birthday--spoilered">Birthday hidden</span>
     {/if}
   </header>
 
   <Stepper
     accentColor="var(--color-category-villagers)"
     decrementDisabled={isSpoilered || storedLevel <= 0}
-    decrementLabel={m.villager_decrease_hearts({
-      name: isSpoilered ? m.villager_spoilered_name_lower() : name,
-    })}
+    decrementLabel={`Decrease ${isSpoilered ? hiddenVillager : name} hearts`}
     incrementDisabled={isSpoilered || storedLevel >= MAX_HEART_LEVEL}
-    incrementLabel={m.villager_increase_hearts({
-      name: isSpoilered ? m.villager_spoilered_name_lower() : name,
-    })}
-    label={m.villager_relationship_level_aria({
-      level: displayedLevel,
-      max: MAX_HEART_LEVEL,
-      name: visibleName,
-    })}
+    incrementLabel={`Increase ${isSpoilered ? hiddenVillager : name} hearts`}
+    label={`${visibleName} relationship level, ${displayedLevel} of ${MAX_HEART_LEVEL}`}
     onDecrement={() => {
       setLevel(storedLevel - 1);
     }}
@@ -212,11 +199,7 @@
     }}
   >
     <span class="sr-only" role="status">
-      {m.villager_relationship_level_aria({
-        level: displayedLevel,
-        max: MAX_HEART_LEVEL,
-        name: visibleName,
-      })}
+      {`${visibleName} relationship level, ${displayedLevel} of ${MAX_HEART_LEVEL}`}
     </span>
     <span class="villager-marks" aria-hidden="true">
       {#each { length: MAX_HEART_LEVEL } as _, index (index)}
@@ -257,7 +240,7 @@
       </span>
       {#if presentation.showsProposalWarning}
         <small id={warningId} class="relationship-warning">
-          {m.relationship_warning_proposal()}
+          Getting engaged moves everyone else you’re dating to best friends.
         </small>
       {/if}
     </div>

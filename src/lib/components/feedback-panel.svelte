@@ -19,7 +19,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
   import { ensureTurnstileScript } from "#lib/turnstile.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { version } from "$app/env";
 
   import type { Preview } from "#lib/components/feedback/preview-sheet.svelte";
@@ -261,9 +260,11 @@
   async function copyMessage() {
     try {
       await navigator.clipboard.writeText(message);
-      toast(m.feedback_toast_copied());
+      toast("Message copied to clipboard");
     } catch {
-      toast.error(m.feedback_toast_copy_failed());
+      toast.error(
+        "We couldn’t copy that for you. You’ll have to select the text and copy it yourself, sorry!",
+      );
     }
   }
 
@@ -307,7 +308,9 @@
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as null | { message?: string };
         if (generation !== submitGeneration) return;
-        submitError = data?.message ?? m.feedback_error_generic();
+        submitError =
+          data?.message ??
+          "There was a technical error on our end while recording your feedback. Please try again.";
         resetTurnstileWidget();
         return;
       }
@@ -330,19 +333,24 @@
       onClose();
 
       if (data.dryRun) {
-        toast(m.feedback_toast_dry_run(), { duration: 8000 });
-      } else if (data.emailSaved === false) {
-        toast.warning(m.feedback_toast_email_not_saved(), {
-          action: {
-            label: m.feedback_action_view_issue(),
-            onClick: () => window.open(data.issueUrl, "_blank", "noopener"),
-          },
-          duration: 12_000,
+        toast("Preview build: Your feedback passed every check, but nothing was filed.", {
+          duration: 8000,
         });
+      } else if (data.emailSaved === false) {
+        toast.warning(
+          "Your feedback went through, but we couldn’t save your email, so I won’t be able to reply. If you still want a private reply, submit feedback again, and I’ll get it sorted out.",
+          {
+            action: {
+              label: "View issue",
+              onClick: () => window.open(data.issueUrl, "_blank", "noopener"),
+            },
+            duration: 12_000,
+          },
+        );
       } else {
-        toast(m.feedback_toast_thanks(), {
+        toast("Thanks for your feedback!", {
           action: {
-            label: m.feedback_action_view_issue(),
+            label: "View issue",
             onClick: () => window.open(data.issueUrl, "_blank", "noopener"),
           },
           duration: 8000,
@@ -351,9 +359,9 @@
     } catch (error) {
       if (generation !== submitGeneration) return;
       submitError =
-        error instanceof Error && error.name === "AbortError"
-          ? m.feedback_error_timeout()
-          : m.feedback_error_offline();
+        error instanceof Error && error.name === /* @wc-ignore */ "AbortError"
+          ? "There was a technical error on our end while recording your feedback. Please try again."
+          : "We couldn’t send your feedback. Check that you’re online, then please try again.";
       resetTurnstileWidget();
     } finally {
       clearTimeout(timeout);
@@ -400,6 +408,7 @@
       },
     );
   }
+  const emailPlaceholder = /* @wc-include */ "you@example.com";
 </script>
 
 <FeedbackPicker active={pickerActive} {feedbackContext} />
@@ -407,51 +416,49 @@
 {#if visible}
   <PanelOverlay
     focus={manageFocus}
-    closeLabel={m.feedback_close_aria()}
-    label={m.toolbar_send_feedback()}
+    closeLabel="Close feedback"
+    label="Send feedback"
     {onClose}
     scrim
     style={accentColor === undefined
       ? undefined
       : `--primary: ${accentColor}; --ring: ${accentColor};`}
   >
-    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
+    <FoldoutPanel id="feedback-panel" title="Send feedback" isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
           <textarea
             bind:this={messageInput}
             id="feedback-message"
-            aria-label={m.feedback_message_label()}
+            aria-label="Message"
             aria-required="true"
             aria-invalid={messageInvalid}
             aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
             class="feedback-form__message {messageInvalid
               ? 'border-destructive ring-destructive/30'
               : 'border-input'} {submitShake && messageInvalid ? 'motion-safe:animate-shake' : ''}"
-            placeholder={m.feedback_message_placeholder()}
+            placeholder="What’s up? Bugs, ideas, questions, kind words…"
             bind:value={message}
             maxlength={5000}></textarea>
           {#if messageInvalid}
             <p id="feedback-message-error" class="mt-1 text-2xs text-destructive" role="alert">
-              {m.feedback_message_required()}
+              What did you wanna say?
             </p>
           {/if}
           <p class="feedback-form__privacy">
-            <IconUserShield
-              class="size-4 shrink-0"
-              aria-hidden="true"
-            />{m.feedback_privacy_notice()}
+            <IconUserShield class="size-4 shrink-0" aria-hidden="true" />This goes up as a public
+            GitHub issue, so leave out anything personal.
           </p>
         </div>
 
         <div class="feedback-form__extras">
           <div class="feedback-form__extras-heading">
-            <span>{m.feedback_extras_heading()}</span>
+            <span>Optional extras</span>
             <button
               class="feedback-form__extras-info"
               type="button"
               aria-haspopup="dialog"
-              aria-label={m.feedback_extras_info_aria()}
+              aria-label="What the extras send"
               onclick={() => (extrasCardOpen = true)}
               ><IconInfoCircle class="size-3.5" aria-hidden="true" /></button
             >
@@ -460,11 +467,11 @@
             <ExtraRow
               id="include-save-data"
               checked={includeSaveData}
-              description={m.feedback_extra_progress_description()}
-              label={m.feedback_attach_progress_label()}
+              description="What you’ve checked off & your skill levels, so we can see what you’re seeing."
+              label="Attach progress"
               onCheckedChange={(checked) => (includeSaveData = checked)}
               peek={{
-                label: m.feedback_peek_progress_aria(),
+                label: "Peek at my progress",
                 onclick: () => openPreview("progress"),
               }}
               visibility="public"
@@ -473,11 +480,11 @@
               <ExtraRow
                 id="include-sync-log"
                 checked={includeSyncLog}
-                description={m.feedback_extra_sync_log_description()}
-                label={m.feedback_attach_sync_log()}
+                description="Your recent save file syncs from this tab, for when syncing acts up. Names & sync links come out first."
+                label="Attach sync log"
                 onCheckedChange={(checked) => (includeSyncLog = checked)}
                 peek={{
-                  label: m.feedback_peek_sync_log_aria(),
+                  label: "Peek at my sync log",
                   onclick: () => openPreview("syncLog"),
                 }}
                 visibility="public"
@@ -486,8 +493,8 @@
             <ExtraRow
               id="wants-reply"
               checked={wantsReply}
-              description={m.feedback_extra_reply_description()}
-              label={m.feedback_wants_reply_label()}
+              description="We’ll ask for your email so Michael can write back. Nobody else sees it, and it never goes on the issue."
+              label="Email me back"
               onCheckedChange={(checked) => {
                 wantsReply = checked;
                 if (!checked) emailTouched = false;
@@ -496,7 +503,7 @@
             >
               <input
                 id="feedback-email"
-                aria-label={m.feedback_email_aria()}
+                aria-label="Your email"
                 aria-invalid={emailInvalid}
                 aria-describedby={emailInvalid ? "feedback-email-error" : "feedback-email-note"}
                 autocomplete="email"
@@ -507,13 +514,13 @@
                 ]}
                 type="email"
                 name="email"
-                placeholder={m.feedback_email_placeholder()}
+                placeholder={emailPlaceholder}
                 bind:value={email}
                 onblur={() => {
                   emailTouched = true;
                 }}
                 onkeydown={(e: KeyboardEvent) => {
-                  if (e.key === "Enter") {
+                  if (e.key === /* @wc-ignore */ "Enter") {
                     e.preventDefault();
                     handleSubmitClick();
                   }
@@ -525,11 +532,13 @@
                   class="feedback-form__email-note feedback-form__email-note--error"
                   role="alert"
                 >
-                  {emailMissing ? m.feedback_email_missing() : m.feedback_email_invalid()}
+                  {emailMissing
+                    ? "Oops, forgot to put in your email!"
+                    : "Hmmmmmmmmmmmmmm, this doesn’t look like an email…"}
                 </p>
               {:else}
                 <p id="feedback-email-note" class="feedback-form__email-note">
-                  {m.feedback_email_note()}
+                  Only Michael sees this. It never goes on the issue.
                 </p>
               {/if}
             </ExtraRow>
@@ -548,7 +557,7 @@
               onclick={copyMessage}
             >
               <IconCopy class="size-3" />
-              {m.feedback_copy_action()}
+              Copy
             </button>
           </div>
         {/if}
@@ -562,16 +571,16 @@
 
         {#if turnstileError}
           <p class="text-2xs text-muted-foreground">
-            {m.feedback_turnstile_unavailable_intro()}
+            Our bot check isn’t loading right now. You can still
             <a
               class="underline hover:text-foreground"
               href="https://github.com/mrh-is/mistria-fyi/issues/new"
               rel="noopener noreferrer"
               target="_blank"
             >
-              {m.feedback_turnstile_github_action()}</a
+              submit feedback on GitHub</a
             >
-            {m.feedback_turnstile_unavailable_suffix()}
+            directly.
           </p>
         {/if}
 
@@ -581,14 +590,12 @@
               <IconPointer class="size-3.5 shrink-0" />
               <span class="min-w-0 flex-1 truncate">{selectedElement.displayName}</span>
 
-              <button bind:this={pickerButton} type="button" onclick={startPicking}
-                >{m.feedback_change_selection()}</button
-              >
+              <button bind:this={pickerButton} type="button" onclick={startPicking}>Change</button>
 
               <button
                 class="feedback-form__clear"
                 type="button"
-                aria-label={m.feedback_clear_selection_aria()}
+                aria-label="Clear selected item"
                 onclick={() => (selectedElement = undefined)}><IconX class="size-3" /></button
               >
             </div>
@@ -599,7 +606,7 @@
               type="button"
               onclick={startPicking}
             >
-              <IconPointer class="size-3.5" />{m.feedback_pick_action()}
+              <IconPointer class="size-3.5" />Point at something
             </button>
           {/if}
           <button
@@ -608,7 +615,7 @@
             disabled={submitting}
             onclick={handleSubmitClick}
           >
-            {submitting ? m.feedback_sending_action() : m.feedback_send_action()}
+            {submitting ? "Sending…" : "Send"}
           </button>
         </div>
       </div>

@@ -267,6 +267,28 @@
   },
   {
     "translations": {
+      "en": "Camera feed for QR code scanning",
+      "ja": "QRコードスキャン用カメラ映像",
+      "zh-Hans": "用于扫描二维码的摄像头画面",
+      "zh-Hant": "用於掃描 QR code 的攝影機畫面",
+      "es": "Transmisión de la cámara para escanear el código QR",
+      "fr": "Flux caméra pour le scan du QR code",
+      "ko": "QR 코드 스캔용 카메라 화면",
+      "ru": "Видео с камеры для сканирования QR-кода"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/qr-scanner.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Check things off yourself. You can still import a save file now and then.",
       "ja": "自分でチェックをつけます。ときどきセーブデータを取り込むこともできます。",
       "zh-Hans": "自己勾选。你仍然可以偶尔导入存档。",
@@ -279,6 +301,28 @@
     "references": [
       {
         "file": "src/routes/sync/where-choice.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Close camera",
+      "ja": "カメラを閉じる",
+      "zh-Hans": "关闭摄像头",
+      "zh-Hant": "關閉攝影機",
+      "es": "Cerrar cámara",
+      "fr": "Fermer la caméra",
+      "ko": "카메라 닫기",
+      "ru": "Закрыть камеру"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/qr-scanner.svelte",
         "refs": [
           null
         ]
@@ -500,6 +544,29 @@
       {
         "file": "src/routes/sync/follow-setup.svelte",
         "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Hmm, we couldn’t start your camera. If another app is using it, close that app and try again, or paste the link below instead.",
+      "ja": "うーん、カメラを起動できませんでした。ほかのアプリが使っている場合は、そのアプリを閉じてもう一度試すか、下にリンクを貼り付けてください。",
+      "zh-Hans": "嗯，没能启动你的摄像头。如果有别的应用正在使用它，请关闭那个应用再试一次，或者在下方粘贴链接。",
+      "zh-Hant": "嗯，沒能啟動你的相機。如果有別的應用程式正在使用它，請關閉那個應用程式再試一次，或在下方貼上連結。",
+      "es": "Mmm, no hemos podido encender tu cámara. Si otra aplicación la está usando, ciérrala y vuelve a intentarlo, o pega el enlace abajo.",
+      "fr": "Hum, impossible de démarrer votre caméra. Si une autre application l’utilise, fermez-la et réessayez, ou collez plutôt le lien ci-dessous.",
+      "ko": "음, 카메라를 켜지 못했어요. 다른 앱이 카메라를 쓰고 있다면 그 앱을 닫고 다시 시도하거나, 아래에 링크를 붙여 넣어 주세요.",
+      "ru": "Хм, не удалось включить камеру. Если её использует другое приложение, закройте его и попробуйте ещё раз или вставьте ссылку ниже."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/qr-scanner.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -1431,6 +1498,28 @@
   },
   {
     "translations": {
+      "en": "Scan the code",
+      "ja": "コードを読み取る",
+      "zh-Hans": "扫描代码",
+      "zh-Hant": "掃描代碼",
+      "es": "Escanear el código",
+      "fr": "Scanner le code",
+      "ko": "코드 스캔",
+      "ru": "Сканировать код"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/qr-scanner.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Scan the code from your gaming computer",
       "ja": "ゲーム用パソコンのコードを読み取る",
       "zh-Hans": "扫描游戏电脑上的代码",
@@ -1671,6 +1760,28 @@
     "references": [
       {
         "file": "src/routes/sync/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The field guide doesn’t have permission to use your camera. You can allow it in your browser’s settings, or paste the link from your gaming computer below instead.",
+      "ja": "フィールドガイドにカメラの使用が許可されていません。ブラウザの設定で許可するか、ゲーム用パソコンのリンクを下に貼り付けてください。",
+      "zh-Hans": "田野指南没有使用摄像头的权限。你可以在浏览器设置中允许，或者在下方粘贴游戏电脑上的链接。",
+      "zh-Hant": "田野指南沒有使用相機的權限。你可以在瀏覽器設定中允許，或在下方貼上遊戲電腦上的連結。",
+      "es": "La guía de campo no tiene permiso para usar tu cámara. Puedes permitirlo en los ajustes del navegador, o pegar abajo el enlace de tu ordenador de juego.",
+      "fr": "Le guide de terrain n’a pas l’autorisation d’utiliser votre caméra. Vous pouvez l’autoriser dans les réglages de votre navigateur, ou coller plutôt ci-dessous le lien de votre ordinateur de jeu.",
+      "ko": "필드 가이드에 카메라 사용 권한이 없어요. 브라우저 설정에서 허용하거나, 게임용 컴퓨터의 링크를 아래에 붙여 넣어 주세요.",
+      "ru": "У справочника нет разрешения на доступ к камере. Его можно дать в настройках браузера или вставить ниже ссылку с игрового компьютера."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/qr-scanner.svelte",
         "refs": [
           null
         ]
@@ -1979,28 +2090,6 @@
     "references": [
       {
         "file": "src/routes/sync/+page.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "or",
-      "ja": "または",
-      "zh-Hans": "或",
-      "zh-Hant": "或",
-      "es": "o",
-      "fr": "ou",
-      "ko": "또는",
-      "ru": "или"
-    },
-    "references": [
-      {
-        "file": "src/routes/sync/where-choice.svelte",
         "refs": [
           null
         ]

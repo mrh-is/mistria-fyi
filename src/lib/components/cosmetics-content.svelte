@@ -20,7 +20,6 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
 
@@ -78,13 +77,13 @@
    * ones itself; a slot with a single sub-category borrows that sub-category's game label.
    */
   const slotLabels: Partial<Record<CosmeticSlot, () => string>> = {
-    back: m.cosmetic_slot_back,
-    bottom: m.cosmetic_slot_bottom,
-    face_gear: m.cosmetic_slot_face_gear,
-    feet: m.cosmetic_slot_feet,
-    hair: m.cosmetic_slot_hair,
-    head_gear: m.cosmetic_slot_head_gear,
-    top: m.cosmetic_slot_top,
+    back: () => "Back",
+    bottom: () => "Bottoms",
+    face_gear: () => "Face gear",
+    feet: () => "Shoes",
+    hair: () => "Hair",
+    head_gear: () => "Head gear",
+    top: () => "Tops",
   };
 
   let groups = $derived((): SlotGroup[] => {

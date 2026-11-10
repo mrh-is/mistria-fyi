@@ -67,6 +67,28 @@
   },
   {
     "translations": {
+      "en": "<0/> Copy",
+      "ja": "<0/> コピー",
+      "zh-Hans": "<0/> 复制",
+      "zh-Hant": "<0/> 複製",
+      "es": "<0/> Copiar",
+      "fr": "<0/> Copier",
+      "ko": "<0/> 복사",
+      "ru": "<0/> Копировать"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "<0/> Drop in your latest save file",
       "ja": "<0/> 最新のセーブデータをドロップ",
       "zh-Hans": "<0/> 拖入你最新的存档",
@@ -221,6 +243,28 @@
   },
   {
     "translations": {
+      "en": "<0/>Point at something",
+      "ja": "<0/>対象を指定する",
+      "zh-Hans": "<0/>指向某个项目",
+      "zh-Hant": "<0/>指向某個項目",
+      "es": "<0/>Señalar un elemento",
+      "fr": "<0/>Désigner un élément",
+      "ko": "<0/>항목 지정하기",
+      "ru": "<0/>Указать на элемент"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "<0/>Private",
       "ja": "<0/>非公開",
       "zh-Hans": "<0/>私密",
@@ -299,6 +343,28 @@
     "references": [
       {
         "file": "src/lib/components/quick-settings-theme-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "<0/>This goes up as a public GitHub issue, so leave out anything personal.",
+      "ja": "<0/>GitHubの公開Issueとして投稿されるので、個人的な情報は書かないでください。",
+      "zh-Hans": "<0/>这会作为公开议题发布到 GitHub，所以别写个人信息。",
+      "zh-Hant": "<0/>這會作為公開議題發布到 GitHub，所以別寫個人資訊。",
+      "es": "<0/>Esto se publica como una incidencia pública en GitHub, así que no pongas nada personal.",
+      "fr": "<0/>Ceci devient un ticket public sur GitHub, alors n’y mettez rien de personnel.",
+      "ko": "<0/>GitHub에 공개 이슈로 올라가니 개인적인 내용은 빼 주세요.",
+      "ru": "<0/>Это станет публичной задачей на GitHub, так что не пишите ничего личного."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -418,6 +484,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Active",
+      "ja": "アクティブ",
+      "zh-Hans": "使用中",
+      "zh-Hant": "使用中",
+      "es": "Activo",
+      "fr": "Actif",
+      "ko": "활성",
+      "ru": "Активно"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          null
         ]
       }
     ],
@@ -635,6 +723,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/feedback/preview-sheet.svelte",
         "refs": [
           null
@@ -656,6 +750,12 @@
       "ru": "Прикрепить журнал синхронизации"
     },
     "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/feedback/preview-sheet.svelte",
         "refs": [
@@ -680,6 +780,28 @@
     "references": [
       {
         "file": "src/lib/components/quick-settings-theme-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Back",
+      "ja": "背中",
+      "zh-Hans": "背部",
+      "zh-Hant": "背部",
+      "es": "Espalda",
+      "fr": "Dos",
+      "ko": "등",
+      "ru": "Спина"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
         "refs": [
           null
         ]
@@ -824,6 +946,83 @@
   },
   {
     "translations": {
+      "en": "Beta translation",
+      "ja": "ベータ翻訳",
+      "zh-Hans": "测试版翻译",
+      "zh-Hant": "測試版翻譯",
+      "es": "Traducción beta",
+      "fr": "Traduction bêta",
+      "ko": "베타 번역",
+      "ru": "Бета-перевод"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/quick-settings-language-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Birthday hidden",
+      "ja": "誕生日は非表示",
+      "zh-Hans": "生日已隐藏",
+      "zh-Hant": "生日已隱藏",
+      "es": "Cumpleaños oculto",
+      "fr": "Anniversaire masqué",
+      "ko": "생일 숨김",
+      "ru": "День рождения скрыт"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Birthday: {0} {1}",
+      "ja": "誕生日：{0}{1}日",
+      "zh-Hans": "生日：{0}{1}日",
+      "zh-Hant": "生日：{0}{1}日",
+      "es": "Cumpleaños: {1} de {0}",
+      "fr": "Anniversaire : {1} {0}",
+      "ko": "생일: {0} {1}일",
+      "ru": "День рождения: {1} {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "seasonLabel(villager.birthday.season, page.data.locale)"
+              ],
+              [
+                "1",
+                "villager.birthday.day"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Black",
       "ja": "黒",
       "zh-Hans": "黑色",
@@ -880,6 +1079,28 @@
     "references": [
       {
         "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Bottoms",
+      "ja": "ボトムス",
+      "zh-Hans": "下装",
+      "zh-Hant": "下裝",
+      "es": "Partes de abajo",
+      "fr": "Bas",
+      "ko": "하의",
+      "ru": "Низ"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
         "refs": [
           null
         ]
@@ -1044,6 +1265,50 @@
   },
   {
     "translations": {
+      "en": "Cancel item picker",
+      "ja": "項目選択をキャンセル",
+      "zh-Hans": "取消项目选择",
+      "zh-Hant": "取消項目選擇",
+      "es": "Cancelar el selector de elementos",
+      "fr": "Annuler la sélection de l'élément",
+      "ko": "항목 선택 취소",
+      "ru": "Отменить выбор элемента"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Cancel item picker by clicking outside",
+      "ja": "外側をクリックして項目選択をキャンセル",
+      "zh-Hans": "点击外部区域取消项目选择",
+      "zh-Hant": "點選外部區域取消項目選擇",
+      "es": "Cancelar el selector de elementos haciendo clic fuera",
+      "fr": "Annuler la sélection en cliquant à l'extérieur",
+      "ko": "바깥쪽을 클릭해 항목 선택 취소",
+      "ru": "Отменить выбор элемента, нажав снаружи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Can’t drag?",
       "ja": "ドラッグできない？",
       "zh-Hans": "拖不了？",
@@ -1056,6 +1321,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/save-drop.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Change",
+      "ja": "変更",
+      "zh-Hans": "更改",
+      "zh-Hant": "變更",
+      "es": "Cambiar",
+      "fr": "Modifier",
+      "ko": "변경",
+      "ru": "Изменить"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -1106,6 +1393,76 @@
               [
                 "0",
                 "subject.name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Check spoilered item",
+      "ja": "ネタバレ項目をチェック",
+      "zh-Hans": "勾选剧透物品",
+      "zh-Hant": "勾選爆雷項目",
+      "es": "Marcar elemento con spoiler",
+      "fr": "Cocher l'élément spoilé",
+      "ko": "스포일러 항목 선택",
+      "ru": "Отметить заспойлеренный предмет"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Check {0}",
+      "ja": "{0}をチェック",
+      "zh-Hans": "勾选{0}",
+      "zh-Hant": "勾選{0}",
+      "es": "Marcar {0}",
+      "fr": "Cocher {0}",
+      "ko": "{0} 선택",
+      "ru": "Отметить «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "perk.name"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "checkboxName"
               ]
             ]
           }
@@ -1184,6 +1541,28 @@
   },
   {
     "translations": {
+      "en": "Child-free",
+      "ja": "子供なし",
+      "zh-Hans": "无孩子",
+      "zh-Hant": "無孩子",
+      "es": "Sin hijos",
+      "fr": "Sans enfants",
+      "ko": "자녀 없음",
+      "ru": "Без детей"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Chocolate",
       "ja": "チョコレート",
       "zh-Hans": "巧克力",
@@ -1196,6 +1575,50 @@
     "references": [
       {
         "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Choose language",
+      "ja": "言語を選択",
+      "zh-Hans": "选择语言",
+      "zh-Hant": "選擇語言",
+      "es": "Elegir idioma",
+      "fr": "Choisir la langue",
+      "ko": "언어 선택",
+      "ru": "Выбрать язык"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/quick-settings-language-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Choose path",
+      "ja": "関係を選択",
+      "zh-Hans": "选择关系",
+      "zh-Hant": "選擇關係",
+      "es": "Elegir camino",
+      "fr": "Choisir une voie",
+      "ko": "관계 선택",
+      "ru": "Выбрать путь"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
         "refs": [
           null
         ]
@@ -1240,6 +1663,28 @@
     "references": [
       {
         "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Clear selected item",
+      "ja": "選択した項目をクリア",
+      "zh-Hans": "清除所选项目",
+      "zh-Hant": "清除所選項目",
+      "es": "Borrar elemento seleccionado",
+      "fr": "Effacer l'élément sélectionné",
+      "ko": "선택한 항목 지우기",
+      "ru": "Очистить выбранный элемент"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -1400,6 +1845,28 @@
       },
       {
         "file": "src/lib/components/feedback/preview-sheet.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Close feedback",
+      "ja": "フィードバックを閉じる",
+      "zh-Hans": "关闭反馈",
+      "zh-Hant": "關閉回饋",
+      "es": "Cerrar comentarios",
+      "fr": "Fermer le retour",
+      "ko": "피드백 닫기",
+      "ru": "Закрыть форму обратной связи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -1953,6 +2420,64 @@
   },
   {
     "translations": {
+      "en": "Decrease {0} hearts",
+      "ja": "{0}のハートを減らす",
+      "zh-Hans": "减少{0}的好感度",
+      "zh-Hant": "減少{0}的愛心",
+      "es": "Reducir corazones de {0}",
+      "fr": "Diminuer les cœurs de {0}",
+      "ko": "{0}의 하트 줄이기",
+      "ru": "Уменьшить количество сердец «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "isSpoilered ? hiddenVillager : name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Decrease {0} level",
+      "ja": "{0}レベルを下げる",
+      "zh-Hans": "降低{0}等级",
+      "zh-Hant": "降低{0}等級",
+      "es": "Reducir nivel de {0}",
+      "fr": "Diminuer le niveau de {0}",
+      "ko": "{0} 레벨 낮추기",
+      "ru": "Понизить уровень «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Default",
       "ja": "初期",
       "zh-Hans": "初始",
@@ -2063,6 +2588,28 @@
   },
   {
     "translations": {
+      "en": "Don’t see what you’re looking for? <0/>",
+      "ja": "お探しのものが見つかりませんか？ <0/>",
+      "zh-Hans": "没有找到想要的内容？ <0/>",
+      "zh-Hant": "沒有找到想要的內容？ <0/>",
+      "es": "¿No ves lo que buscas? <0/>",
+      "fr": "Vous ne trouvez pas ce que vous cherchez ? <0/>",
+      "ko": "찾는 항목이 없나요? <0/>",
+      "ru": "Не нашли, что искали? <0/>"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/search-guide-link.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Double",
       "ja": "ダブル",
       "zh-Hans": "双块",
@@ -2142,6 +2689,65 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Edit {0} level, currently {1} of {2}",
+      "ja": "{0}レベルを編集、現在{2}中{1}",
+      "zh-Hans": "编辑{0}等级，当前为{2}级中的{1}级",
+      "zh-Hant": "編輯{0}等級，目前為{2}級中的{1}級",
+      "es": "Editar nivel de {0}, actualmente {1} de {2}",
+      "fr": "Modifier le niveau de {0}, actuellement {1} sur {2}",
+      "ko": "{0} 레벨 편집, 현재 {2}중 {1}",
+      "ru": "Изменить уровень «{0}», сейчас {1} из {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "level"
+              ],
+              [
+                "2",
+                "MAX_SKILL_LEVEL"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Email me back",
+      "ja": "メールで返信してほしい",
+      "zh-Hans": "发邮件回复我",
+      "zh-Hant": "寄信回覆我",
+      "es": "Respóndeme por correo",
+      "fr": "Me répondre par e-mail",
+      "ko": "이메일로 답장 받기",
+      "ru": "Ответьте мне по почте"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -2264,6 +2870,28 @@
       },
       {
         "file": "src/lib/controllers/tracking-reminders.svelte.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Face gear",
+      "ja": "顔装備",
+      "zh-Hans": "面部装备",
+      "zh-Hant": "面部裝備",
+      "es": "Accesorios faciales",
+      "fr": "Accessoires de visage",
+      "ko": "얼굴 장비",
+      "ru": "Аксессуары для лица"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
         "refs": [
           null
         ]
@@ -2677,6 +3305,28 @@
   },
   {
     "translations": {
+      "en": "Getting engaged moves everyone else you’re dating to best friends.",
+      "ja": "婚約すると、ほかの交際相手は全員親友になります。",
+      "zh-Hans": "订婚后，其他所有交往对象都会变成挚友。",
+      "zh-Hant": "訂婚後，其他所有交往對象都會變成摯友。",
+      "es": "Al comprometerte, las demás personas con las que sales pasan a ser tus mejores amigos.",
+      "fr": "Les fiançailles font de toutes les autres personnes que vous fréquentez vos meilleurs amis.",
+      "ko": "약혼하면 다른 교제 상대는 모두 절친이 됩니다.",
+      "ru": "После помолвки все остальные, с кем вы встречаетесь, станут лучшими друзьями."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Getting started",
       "ja": "はじめに",
       "zh-Hans": "开始使用",
@@ -2757,6 +3407,35 @@
         "file": "src/lib/components/mine-floor-record.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Go online to download the {0} text, then try again.",
+      "ja": "{0}のテキストをダウンロードするには、オンラインにしてからもう一度お試しください。",
+      "zh-Hans": "请联网下载{0}文本，然后重试。",
+      "zh-Hant": "請連上網路下載{0}文字，然後再試一次。",
+      "es": "Conéctate a internet para descargar el texto en {0} y vuelve a intentarlo.",
+      "fr": "Connectez-vous à Internet pour télécharger le texte en {0}, puis réessayez.",
+      "ko": "{0} 텍스트를 다운로드하려면 온라인에 연결한 후 다시 시도하세요.",
+      "ru": "Подключитесь к интернету, чтобы загрузить текст на языке «{0}», и повторите попытку."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/quick-settings-language-picker.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "languageNames.of(unavailableLocale) ?? unavailableLocale"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -2931,6 +3610,28 @@
   },
   {
     "translations": {
+      "en": "Hair",
+      "ja": "髪型",
+      "zh-Hans": "发型",
+      "zh-Hant": "髮型",
+      "es": "Pelo",
+      "fr": "Cheveux",
+      "ko": "헤어",
+      "ru": "Причёски"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Haven’t heard from your game in {0} days",
       "ja": "{0}日間ゲームから連絡がありません",
       "zh-Hans": "已经 {0} 天没有游戏的消息了",
@@ -2989,6 +3690,28 @@
   },
   {
     "translations": {
+      "en": "Head gear",
+      "ja": "頭装備",
+      "zh-Hans": "头部装备",
+      "zh-Hant": "頭部裝備",
+      "es": "Accesorios de cabeza",
+      "fr": "Accessoires de tête",
+      "ko": "머리 장비",
+      "ru": "Головные уборы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Hidden",
       "ja": "非表示",
       "zh-Hans": "已隐藏",
@@ -3024,6 +3747,29 @@
       {
         "file": "src/lib/data/source-filters.ts",
         "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Hidden villager",
+      "ja": "非表示の町の住民",
+      "zh-Hans": "隐藏的村民",
+      "zh-Hant": "隱藏的村民",
+      "es": "Aldeano oculto",
+      "fr": "Habitant masqué",
+      "ko": "숨겨진 마을 주민",
+      "ru": "Скрытый житель"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -3099,6 +3845,28 @@
   },
   {
     "translations": {
+      "en": "Hmmmmmmmmmmmmmm, this doesn’t look like an email…",
+      "ja": "うーん、これはメールアドレスに見えません…",
+      "zh-Hans": "嗯……这看起来不像是邮箱地址……",
+      "zh-Hant": "嗯……這看起來不像是信箱地址……",
+      "es": "Mmmmmmmmmmmmmm, esto no parece un correo electrónico…",
+      "fr": "Hmmmmmmmmmmmmmm, cela ne ressemble pas à un e-mail…",
+      "ko": "흐으으으음, 이메일처럼 보이지 않아요…",
+      "ru": "Хмммммммм, это не похоже на email…"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Horse statue",
       "ja": "馬の像",
       "zh-Hans": "马雕像",
@@ -3111,6 +3879,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Household",
+      "ja": "家庭",
+      "zh-Hans": "家庭",
+      "zh-Hant": "家庭",
+      "es": "Hogar",
+      "fr": "Foyer",
+      "ko": "가정",
+      "ru": "Семья"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
         "refs": [
           null
         ]
@@ -3202,6 +3992,64 @@
         "file": "src/lib/components/renown-current-record.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Increase {0} hearts",
+      "ja": "{0}のハートを増やす",
+      "zh-Hans": "增加{0}的好感度",
+      "zh-Hant": "增加{0}的愛心",
+      "es": "Aumentar corazones de {0}",
+      "fr": "Augmenter les cœurs de {0}",
+      "ko": "{0}의 하트 늘리기",
+      "ru": "Увеличить количество сердец «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "isSpoilered ? hiddenVillager : name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Increase {0} level",
+      "ja": "{0}レベルを上げる",
+      "zh-Hans": "提高{0}等级",
+      "zh-Hant": "提高{0}等級",
+      "es": "Aumentar nivel de {0}",
+      "fr": "Augmenter le niveau de {0}",
+      "ko": "{0} 레벨 올리기",
+      "ru": "Повысить уровень «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3393,6 +4241,50 @@
   },
   {
     "translations": {
+      "en": "Kids",
+      "ja": "子供あり",
+      "zh-Hans": "有孩子",
+      "zh-Hant": "有孩子",
+      "es": "Con hijos",
+      "fr": "Avec enfants",
+      "ko": "자녀 있음",
+      "ru": "С детьми"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Languages",
+      "ja": "言語一覧",
+      "zh-Hans": "语言列表",
+      "zh-Hant": "語言清單",
+      "es": "Idiomas",
+      "fr": "Langues",
+      "ko": "언어 목록",
+      "ru": "Языки"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/quick-settings-language-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Last save file",
       "ja": "最新のセーブデータ",
       "zh-Hans": "最新存档",
@@ -3525,6 +4417,57 @@
   },
   {
     "translations": {
+      "en": "Level",
+      "ja": "レベル",
+      "zh-Hans": "等级",
+      "zh-Hant": "等級",
+      "es": "Nivel",
+      "fr": "Niveau",
+      "ko": "레벨",
+      "ru": "Уровень"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Level {0}",
+      "ja": "レベル{0}",
+      "zh-Hans": "{0}级",
+      "zh-Hant": "{0}級",
+      "es": "Nivel {0}",
+      "fr": "Niveau {0}",
+      "ko": "레벨 {0}",
+      "ru": "Уровень {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "tier.level"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Light",
       "ja": "ライト",
       "zh-Hans": "浅色",
@@ -3603,6 +4546,28 @@
     "references": [
       {
         "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Loading search…",
+      "ja": "検索を読み込み中…",
+      "zh-Hans": "正在加载搜索…",
+      "zh-Hant": "正在載入搜尋…",
+      "es": "Cargando la búsqueda…",
+      "fr": "Chargement de la recherche…",
+      "ko": "검색 불러오는 중…",
+      "ru": "Загрузка поиска…"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/search-results.svelte",
         "refs": [
           null
         ]
@@ -3752,6 +4717,50 @@
   },
   {
     "translations": {
+      "en": "Married · child-free",
+      "ja": "結婚・子供なし",
+      "zh-Hans": "已结婚·无孩子",
+      "zh-Hant": "已結婚·無孩子",
+      "es": "Casados · sin hijos",
+      "fr": "Mariés · sans enfants",
+      "ko": "결혼 · 자녀 없음",
+      "ru": "Женаты · без детей"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Married · kids",
+      "ja": "結婚・子供あり",
+      "zh-Hans": "已结婚·有孩子",
+      "zh-Hant": "已結婚·有孩子",
+      "es": "Casados · con hijos",
+      "fr": "Mariés · avec enfants",
+      "ko": "결혼 · 자녀 있음",
+      "ru": "Женаты · с детьми"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Match this to your game’s setting before you get engaged.",
       "ja": "婚約する前に、ゲーム内の設定に合わせてね。",
       "zh-Hans": "订婚前，记得将这里的选项与游戏中的设置保持一致。",
@@ -3786,6 +4795,50 @@
     "references": [
       {
         "file": "src/lib/components/renown-current-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Message",
+      "ja": "メッセージ",
+      "zh-Hans": "留言",
+      "zh-Hant": "留言",
+      "es": "Mensaje",
+      "fr": "Message",
+      "ko": "메시지",
+      "ru": "Сообщение"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Message copied to clipboard",
+      "ja": "メッセージをクリップボードにコピーしました",
+      "zh-Hans": "留言已复制到剪贴板",
+      "zh-Hant": "留言已複製到剪貼簿",
+      "es": "Mensaje copiado al portapapeles",
+      "fr": "Message copié dans le presse-papiers",
+      "ko": "메시지를 클립보드에 복사했습니다",
+      "ru": "Сообщение скопировано в буфер обмена"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -4158,6 +5211,58 @@
   },
   {
     "translations": {
+      "en": "Next note",
+      "ja": "次のメモ",
+      "zh-Hans": "下一张便条",
+      "zh-Hant": "下一張便條",
+      "es": "Siguiente nota",
+      "fr": "Note suivante",
+      "ko": "다음 메모",
+      "ru": "Следующая заметка"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "No items found",
+      "ja": "アイテムが見つかりません",
+      "zh-Hans": "未找到任何物品",
+      "zh-Hant": "找不到任何物品",
+      "es": "No se encontraron elementos",
+      "fr": "Aucun élément trouvé",
+      "ko": "항목을 찾을 수 없습니다",
+      "ru": "Ничего не найдено"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/search-results.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "No types",
       "ja": "種類なし",
       "zh-Hans": "无类型",
@@ -4262,6 +5367,43 @@
         "file": "src/lib/components/shelf-explainer.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Nothing matches {0}.",
+      "ja": "{0}に一致するものはありません。",
+      "zh-Hans": "没有符合{0}的内容。",
+      "zh-Hant": "沒有符合{0}的內容。",
+      "es": "No hay nada que coincida con {0}.",
+      "fr": "Rien ne correspond à {0}.",
+      "ko": "{0}에 맞는 항목이 없어요.",
+      "ru": "Под {0} ничего не подходит."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/tracker-empty-state.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "slot(\"filters\")"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "\"your current filters\""
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -4497,6 +5639,28 @@
   },
   {
     "translations": {
+      "en": "Only Michael sees this. It never goes on the issue.",
+      "ja": "見るのはMichaelだけです。Issueには載りません。",
+      "zh-Hans": "只有 Michael 能看到。它绝不会出现在议题里。",
+      "zh-Hant": "只有 Michael 看得到。它絕不會出現在議題裡。",
+      "es": "Solo Michael lo ve. Nunca aparece en la incidencia.",
+      "fr": "Seul Michael le voit. Il n’apparaît jamais dans le ticket.",
+      "ko": "Michael만 볼 수 있어요. 이슈에는 절대 올라가지 않아요.",
+      "ru": "Его видит только Michael. В задачу он не попадает."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Only one farm backup fits",
       "ja": "農場のバックアップは1つだけです",
       "zh-Hans": "农场备份只能存一份",
@@ -4570,6 +5734,50 @@
   },
   {
     "translations": {
+      "en": "Oops, forgot to put in your email!",
+      "ja": "あっ、メールアドレスの入力を忘れています!",
+      "zh-Hans": "哎呀，忘记填写邮箱了！",
+      "zh-Hant": "哎呀，忘記填寫信箱了！",
+      "es": "¡Vaya, olvidaste escribir tu correo electrónico!",
+      "fr": "Oups, vous avez oublié de saisir votre e-mail !",
+      "ko": "이런, 이메일 입력을 잊으셨네요!",
+      "ru": "Ой, вы забыли указать email!"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Optional extras",
+      "ja": "追加オプション",
+      "zh-Hans": "可选附加",
+      "zh-Hant": "選填附加",
+      "es": "Extras opcionales",
+      "fr": "Extras facultatifs",
+      "ko": "선택 항목",
+      "ru": "Дополнительно"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Orange",
       "ja": "オレンジ色",
       "zh-Hans": "橙色",
@@ -4614,6 +5822,50 @@
   },
   {
     "translations": {
+      "en": "Our bot check isn’t loading right now. You can still <0>submit feedback on GitHub</0> directly.",
+      "ja": "いまボット確認が読み込めません。それでも、 <0>GitHubでフィードバックを送信する</0> ことができます。",
+      "zh-Hans": "我们的人机验证现在加载不出来。你仍然可以 <0>在 GitHub 上提交反馈</0> 。",
+      "zh-Hant": "我們的人機驗證現在載入不了。你仍然可以 <0>在 GitHub 上提交回饋</0> 。",
+      "es": "Nuestra comprobación antibots no carga ahora mismo. Aun así, puedes <0>enviar comentarios en GitHub</0> directamente.",
+      "fr": "Notre vérification anti-robot ne se charge pas pour l’instant. Vous pouvez quand même <0>envoyer un retour sur GitHub</0> directement.",
+      "ko": "지금은 봇 확인이 로드되지 않아요. 그래도 <0>GitHub에서 피드백을 보낼</0> 수 있습니다.",
+      "ru": "Наша проверка на ботов сейчас не загружается. Но вы всё равно можете <0>отправить отзыв через GitHub</0> напрямую."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Path not chosen",
+      "ja": "未選択",
+      "zh-Hans": "尚未选择关系",
+      "zh-Hant": "尚未選擇關係",
+      "es": "Camino no elegido",
+      "fr": "Voie non choisie",
+      "ko": "관계 미선택",
+      "ru": "Путь не выбран"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Peek at my progress",
       "ja": "自分の進捗をのぞく",
       "zh-Hans": "看看我的进度",
@@ -4624,6 +5876,12 @@
       "ru": "Глянуть на мой прогресс"
     },
     "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/feedback/extras-card.svelte",
         "refs": [
@@ -4646,6 +5904,12 @@
       "ru": "Глянуть на журнал синхронизации"
     },
     "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/feedback/extras-card.svelte",
         "refs": [
@@ -4670,6 +5934,12 @@
     "references": [
       {
         "file": "src/lib/components/mount-appearances-section.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           null
         ]
@@ -4721,6 +5991,29 @@
       {
         "file": "src/lib/components/pet-collectibles-section.svelte",
         "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Pick an item to report",
+      "ja": "報告する項目を選択",
+      "zh-Hans": "选择要报告的项目",
+      "zh-Hant": "選擇要回報的項目",
+      "es": "Elige un elemento para reportar",
+      "fr": "Choisissez un élément à signaler",
+      "ko": "신고할 항목 선택",
+      "ru": "Выберите элемент, чтобы сообщить о нём"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-picker.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -4830,6 +6123,28 @@
     "references": [
       {
         "file": "src/lib/sources/source-names.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Preview build: Your feedback passed every check, but nothing was filed.",
+      "ja": "プレビュー版のため、フィードバックは確認済みですが送信されていません。",
+      "zh-Hans": "预览版本：反馈已通过所有检查，但未提交任何内容。",
+      "zh-Hant": "預覽版本：回饋已通過所有檢查，但未提交任何內容。",
+      "es": "Versión de prueba: tus comentarios superaron todas las comprobaciones, pero no se envió nada.",
+      "fr": "Version de prévisualisation : votre retour a passé toutes les vérifications, mais rien n'a été envoyé.",
+      "ko": "미리보기 빌드: 피드백이 모든 확인을 통과했지만 아무것도 제출되지 않았습니다.",
+      "ru": "Предварительная сборка: отзыв прошёл все проверки, но ничего не отправлено."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -5170,6 +6485,50 @@
   },
   {
     "translations": {
+      "en": "Record marriage",
+      "ja": "結婚を記録",
+      "zh-Hans": "记录结婚",
+      "zh-Hant": "記錄結婚",
+      "es": "Registrar boda",
+      "fr": "Enregistrer le mariage",
+      "ko": "결혼 기록하기",
+      "ru": "Отметить свадьбу"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Record proposal",
+      "ja": "プロポーズを記録",
+      "zh-Hans": "记录求婚",
+      "zh-Hant": "記錄求婚",
+      "es": "Registrar propuesta",
+      "fr": "Enregistrer la demande en mariage",
+      "ko": "청혼 기록하기",
+      "ru": "Отметить предложение"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Red",
       "ja": "赤",
       "zh-Hans": "红色",
@@ -5323,6 +6682,35 @@
         "file": "src/lib/components/feedback/extras-card.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Report feedback about {0}",
+      "ja": "{0}についてフィードバックを報告",
+      "zh-Hans": "报告关于{0}的反馈",
+      "zh-Hant": "回報關於{0}的意見",
+      "es": "Reportar sobre {0}",
+      "fr": "Signaler un problème concernant {0}",
+      "ko": "{0}에 대해 신고하기",
+      "ru": "Сообщить о {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-picker.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "highlight.metadata.displayName"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -5669,6 +7057,35 @@
   },
   {
     "translations": {
+      "en": "Search the entire Field Guide for “{0}”",
+      "ja": "フィールドガイド全体から「{0}」を検索",
+      "zh-Hans": "在整本田野指南中搜索“{0}”",
+      "zh-Hant": "在整本田野指南中搜尋「{0}」",
+      "es": "Buscar “{0}” en toda la guía de campo",
+      "fr": "Chercher « {0} » dans tout le guide de terrain",
+      "ko": "필드 가이드 전체에서 “{0}” 검색",
+      "ru": "Искать «{0}» во всём полевом справочнике"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/search-guide-link.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "query"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Season",
       "ja": "季節",
       "zh-Hans": "季节",
@@ -5780,6 +7197,28 @@
   },
   {
     "translations": {
+      "en": "Send",
+      "ja": "送信",
+      "zh-Hans": "发送",
+      "zh-Hant": "傳送",
+      "es": "Enviar",
+      "fr": "Envoyer",
+      "ko": "보내기",
+      "ru": "Отправить"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Send feedback",
       "ja": "フィードバックを送信",
       "zh-Hans": "发送反馈",
@@ -5791,7 +7230,36 @@
     },
     "references": [
       {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sending…",
+      "ja": "送信中…",
+      "zh-Hans": "发送中…",
+      "zh-Hant": "傳送中…",
+      "es": "Enviando…",
+      "fr": "Envoi…",
+      "ko": "보내는 중…",
+      "ru": "Отправка…"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -5868,6 +7336,28 @@
   },
   {
     "translations": {
+      "en": "Shoes",
+      "ja": "靴",
+      "zh-Hans": "鞋子",
+      "zh-Hant": "鞋子",
+      "es": "Calzado",
+      "fr": "Chaussures",
+      "ko": "신발",
+      "ru": "Обувь"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Shops",
       "ja": "ショップ",
       "zh-Hans": "商店",
@@ -5912,6 +7402,28 @@
   },
   {
     "translations": {
+      "en": "Show anyway",
+      "ja": "それでも表示",
+      "zh-Hans": "仍然显示",
+      "zh-Hant": "仍然顯示",
+      "es": "Mostrar igualmente",
+      "fr": "Afficher quand même",
+      "ko": "그래도 표시",
+      "ru": "Всё равно показать"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Show spoilers?",
       "ja": "ネタバレを表示しますか？",
       "zh-Hans": "显示剧透吗？",
@@ -5927,6 +7439,35 @@
         "refs": [
           null,
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Show {0} in color",
+      "ja": "{0}をカラーで表示",
+      "zh-Hans": "以彩色显示{0}",
+      "zh-Hant": "以彩色顯示{0}",
+      "es": "Mostrar {0} a color",
+      "fr": "Afficher {0} en couleur",
+      "ko": "{0} 컬러로 보기",
+      "ru": "Показать «{0}» в цвете"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6099,6 +7640,13 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          null,
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -6124,6 +7672,28 @@
       },
       {
         "file": "src/lib/presentation/source-labels.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Start dating",
+      "ja": "交際を始める",
+      "zh-Hans": "开始恋爱",
+      "zh-Hant": "開始戀愛",
+      "es": "Empezar a salir",
+      "fr": "Commencer à sortir ensemble",
+      "ko": "연애 시작하기",
+      "ru": "Начать встречаться"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
         "refs": [
           null
         ]
@@ -6434,6 +8004,28 @@
   },
   {
     "translations": {
+      "en": "Thanks for your feedback!",
+      "ja": "フィードバックをありがとうございます!",
+      "zh-Hans": "感谢你的反馈！",
+      "zh-Hant": "感謝你的回饋！",
+      "es": "¡Gracias por tu comentario!",
+      "fr": "Merci pour votre retour !",
+      "ko": "피드백 감사합니다!",
+      "ru": "Спасибо за ваш отзыв!"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "The source types shown in the filter panel.",
       "ja": "フィルターパネルに表示される入手方法の種類。",
       "zh-Hans": "筛选面板中显示的来源类型。",
@@ -6491,6 +8083,29 @@
       {
         "file": "src/lib/components/welcome-card.svelte",
         "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "There was a technical error on our end while recording your feedback. Please try again.",
+      "ja": "フィードバックの記録中に、こちら側で技術的なエラーが起きました。もう一度お試しください。",
+      "zh-Hans": "记录你的反馈时，我们这边出了技术错误。请再试一次。",
+      "zh-Hant": "記錄你的意見回饋時，我們這邊發生了技術錯誤。請再試一次。",
+      "es": "Ha habido un error técnico por nuestra parte al registrar tus comentarios. Vuelve a intentarlo, por favor.",
+      "fr": "Une erreur technique de notre côté a empêché l’enregistrement de votre commentaire. Réessayez, s’il vous plaît.",
+      "ko": "피드백을 기록하는 중에 저희 쪽에서 기술적인 오류가 생겼어요. 다시 시도해 주세요.",
+      "ru": "При сохранении вашего отзыва у нас произошла техническая ошибка. Попробуйте ещё раз, пожалуйста."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -6736,6 +8351,28 @@
   },
   {
     "translations": {
+      "en": "Tops",
+      "ja": "トップス",
+      "zh-Hans": "上装",
+      "zh-Hant": "上裝",
+      "es": "Partes de arriba",
+      "fr": "Hauts",
+      "ko": "상의",
+      "ru": "Верх"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Town rank register",
       "ja": "タウンランク台帳",
       "zh-Hans": "城镇等级名册",
@@ -6847,6 +8484,29 @@
   {
     "translations": {
       "en": "Try again",
+      "ja": "再試行",
+      "zh-Hans": "重试",
+      "zh-Hant": "重試",
+      "es": "Reintentar",
+      "fr": "Réessayer",
+      "ko": "다시 시도",
+      "ru": "Повторить"
+    },
+    "context": "action retry",
+    "references": [
+      {
+        "file": "src/lib/components/search-results.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Try again",
       "ja": "もう一度試す",
       "zh-Hans": "重试",
       "zh-Hant": "重試",
@@ -6881,6 +8541,48 @@
         "refs": [
           null,
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Uncheck {0}",
+      "ja": "{0}のチェックを外す",
+      "zh-Hans": "取消勾选{0}",
+      "zh-Hant": "取消勾選{0}",
+      "es": "Desmarcar {0}",
+      "fr": "Décocher {0}",
+      "ko": "{0} 선택 해제",
+      "ru": "Снять отметку с «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "perk.name"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "checkboxName"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -6968,6 +8670,29 @@
       {
         "file": "src/lib/components/sync/sync-question-dialog.svelte",
         "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "View issue",
+      "ja": "issueを見る",
+      "zh-Hans": "查看 issue",
+      "zh-Hant": "查看 issue",
+      "es": "Ver issue",
+      "fr": "Voir l'issue",
+      "ko": "issue 보기",
+      "ru": "Посмотреть issue"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -7275,6 +9000,28 @@
   },
   {
     "translations": {
+      "en": "We couldn’t copy that for you. You’ll have to select the text and copy it yourself, sorry!",
+      "ja": "コピーできませんでした。すみませんが、テキストを選択して手動でコピーしてください！",
+      "zh-Hans": "没能帮你复制。只能请你自己选中文字再复制了，抱歉！",
+      "zh-Hant": "沒能幫你複製。只能請你自己選取文字再複製了，抱歉！",
+      "es": "No hemos podido copiarlo. Tendrás que seleccionar el texto y copiarlo tú, ¡lo siento!",
+      "fr": "On n’a pas pu le copier. Il faudra sélectionner le texte et le copier vous-même, désolé !",
+      "ko": "복사하지 못했어요. 죄송하지만 텍스트를 선택해서 직접 복사해 주세요!",
+      "ru": "Не получилось скопировать. Придётся выделить текст и скопировать его самостоятельно, извините!"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "We couldn’t find any progress in this file. Try the newest file that ends in “autosave”.",
       "ja": "このファイルに進行状況が見つかりませんでした。「autosave」で終わるいちばん新しいファイルを試してください。",
       "zh-Hans": "这个文件里没有找到任何进度。试试以“autosave”结尾的最新文件。",
@@ -7287,6 +9034,28 @@
     "references": [
       {
         "file": "src/routes/data/data-error-messages.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t load search. Check that you’re online, then try again.",
+      "ja": "検索を読み込めませんでした。オンラインになっているか確認して、もう一度お試しください。",
+      "zh-Hans": "没能加载搜索。请确认你已联网，然后再试一次。",
+      "zh-Hant": "沒能載入搜尋。請確認你已連上網路，然後再試一次。",
+      "es": "No hemos podido cargar la búsqueda. Comprueba que tienes conexión e inténtalo de nuevo.",
+      "fr": "Impossible de charger la recherche. Vérifiez que vous êtes en ligne, puis réessayez.",
+      "ko": "검색을 불러오지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
+      "ru": "Не удалось загрузить поиск. Проверьте подключение к интернету и попробуйте ещё раз."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/search-results.svelte",
         "refs": [
           null
         ]
@@ -7338,6 +9107,28 @@
     "references": [
       {
         "file": "src/lib/components/persistence-warning.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We couldn’t send your feedback. Check that you’re online, then please try again.",
+      "ja": "フィードバックを送信できませんでした。オンラインになっているか確認して、もう一度お試しください。",
+      "zh-Hans": "没能发送你的反馈。请确认你已联网，然后再试一次。",
+      "zh-Hant": "沒能送出你的意見回饋。請確認你已連上網路，然後再試一次。",
+      "es": "No hemos podido enviar tus comentarios. Comprueba que tienes conexión y vuelve a intentarlo, por favor.",
+      "fr": "Impossible d’envoyer votre commentaire. Vérifiez que vous êtes en ligne, puis réessayez, s’il vous plaît.",
+      "ko": "피드백을 보내지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
+      "ru": "Не удалось отправить отзыв. Проверьте подключение к интернету и попробуйте ещё раз, пожалуйста."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -7602,6 +9393,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/feedback/extras-card.svelte",
         "refs": [
           null
@@ -7691,6 +9488,28 @@
   },
   {
     "translations": {
+      "en": "What did you wanna say?",
+      "ja": "何を伝えたかったですか？",
+      "zh-Hans": "你想说点什么？",
+      "zh-Hant": "你想說些什麼？",
+      "es": "¿Qué querías decir?",
+      "fr": "Vous vouliez dire quoi ?",
+      "ko": "무슨 말을 하고 싶으셨어요?",
+      "ru": "Что вы хотели сказать?"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "What each shelf holds, & the day it’s sorted for.",
       "ja": "それぞれの棚の内容と、並べ替えの基準になる日です。",
       "zh-Hans": "每个架子的内容，以及排序所依据的日子。",
@@ -7723,6 +9542,12 @@
       "ru": "Что отправляют дополнения"
     },
     "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/feedback/extras-card.svelte",
         "refs": [
@@ -7768,7 +9593,35 @@
     },
     "references": [
       {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/feedback/extras-card.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "What’s up? Bugs, ideas, questions, kind words…",
+      "ja": "どうしました?不具合、アイデア、質問、うれしい一言など",
+      "zh-Hans": "怎么了？问题、点子、疑问、夸夸都行…",
+      "zh-Hant": "怎麼了？問題、點子、疑問、誇誇都行…",
+      "es": "¿Qué tal? Errores, ideas, preguntas, palabras bonitas…",
+      "fr": "Quoi de neuf ? Bugs, idées, questions, petits mots gentils…",
+      "ko": "무슨 일이에요? 버그, 아이디어, 질문, 따뜻한 한마디…",
+      "ru": "Что случилось? Ошибки, идеи, вопросы, добрые слова…"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
         "refs": [
           null
         ]
@@ -8329,6 +10182,28 @@
   },
   {
     "translations": {
+      "en": "Your email",
+      "ja": "あなたのメールアドレス",
+      "zh-Hans": "你的邮箱",
+      "zh-Hant": "你的信箱",
+      "es": "Tu correo electrónico",
+      "fr": "Votre e-mail",
+      "ko": "이메일",
+      "ru": "Ваш email"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Your farm as of {0}. We’ll keep up from here.",
       "ja": "{0} 時点のあなたの農場です。ここからは自動で追いかけます。",
       "zh-Hans": "这是你的农场截至 {0} 的样子。之后我们会自动跟上。",
@@ -8350,6 +10225,73 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your feedback went through, but we couldn’t save your email, so I won’t be able to reply. If you still want a private reply, submit feedback again, and I’ll get it sorted out.",
+      "ja": "フィードバックは届きましたが、メールアドレスを保存できなかったため返信できません。非公開の返信が必要な場合は、もう一度フィードバックを送ってください。こちらで対応します。",
+      "zh-Hans": "你的反馈已送达，但我们没能保存你的邮箱，所以我没法回复你。如果你仍需要私下回复，请再提交一次反馈，我会处理好的。",
+      "zh-Hant": "你的意見回饋已送達，但我們沒能儲存你的電子郵件，所以我沒辦法回覆你。如果你仍需要私下回覆，請再送出一次回饋，我會處理好的。",
+      "es": "Tus comentarios se han enviado, pero no hemos podido guardar tu correo, así que no podré responderte. Si aún quieres una respuesta privada, vuelve a enviar tus comentarios y lo solucionaré.",
+      "fr": "Votre commentaire est bien parti, mais on n’a pas pu enregistrer votre e-mail, donc je ne pourrai pas vous répondre. Si vous voulez toujours une réponse privée, renvoyez votre commentaire, et je m’en occuperai.",
+      "ko": "피드백은 전달됐지만 이메일을 저장하지 못해서 답장을 드릴 수 없어요. 그래도 비공개 답장이 필요하면 피드백을 다시 보내 주세요. 제가 해결해 둘게요.",
+      "ru": "Ваш отзыв отправлен, но мы не смогли сохранить ваш email, поэтому я не смогу ответить. Если ответ лично вам всё ещё нужен, отправьте отзыв ещё раз, и я со всем разберусь."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your filters are off for this search. <0>Turn them back on</0>",
+      "ja": "この検索ではフィルターがオフです。 <0>フィルターを戻す</0>",
+      "zh-Hans": "本次搜索已关闭筛选条件。 <0>恢复筛选条件</0>",
+      "zh-Hant": "本次搜尋已關閉篩選條件。 <0>恢復篩選條件</0>",
+      "es": "Tus filtros están desactivados para esta búsqueda. <0>Volver a activarlos</0>",
+      "fr": "Vos filtres sont désactivés pour cette recherche. <0>Les réactiver</0>",
+      "ko": "이 검색에서는 필터가 꺼져 있습니다. <0>필터 다시 적용</0>",
+      "ru": "Фильтры отключены для этого поиска. <0>Вернуть фильтры</0>"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your filters leave nothing on this page.",
+      "ja": "フィルターにより、このページには何も表示されません。",
+      "zh-Hans": "筛选后，此页面没有内容了。",
+      "zh-Hant": "篩選後，此頁面沒有內容了。",
+      "es": "Tus filtros no dejan nada en esta página.",
+      "fr": "Tes filtres ne laissent rien sur cette page.",
+      "ko": "필터 때문에 이 페이지에 남은 항목이 없어요.",
+      "ru": "С такими фильтрами на этой странице ничего не осталось."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
+        "refs": [
+          null,
+          null
         ]
       }
     ],
@@ -8544,6 +10486,12 @@
       "ru": "Недавние синхронизации файла сохранения в этой вкладке — пригодится, если синхронизация барахлит. Имена и ссылки синхронизации мы сначала убираем."
     },
     "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/feedback/extras-card.svelte",
         "refs": [
@@ -8777,6 +10725,28 @@
   },
   {
     "translations": {
+      "en": "hidden villager",
+      "ja": "非表示の町の住民",
+      "zh-Hans": "隐藏的村民",
+      "zh-Hant": "隱藏的村民",
+      "es": "aldeano oculto",
+      "fr": "Habitant masqué",
+      "ko": "숨겨진 마을 주민",
+      "ru": "скрытый житель"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "needs a look",
       "ja": "確認が必要",
       "zh-Hans": "需要看一下",
@@ -8887,6 +10857,177 @@
   },
   {
     "translations": {
+      "en": [
+        "unlocks {0} almanac item",
+        "unlocks {0} almanac items"
+      ],
+      "ja": [
+        "図鑑アイテム{0}個を解放"
+      ],
+      "zh-Hans": [
+        "解锁{0}个图鉴物品"
+      ],
+      "zh-Hant": [
+        "解鎖{0}個圖鑑物品"
+      ],
+      "es": [
+        "desbloquea {0} objeto del almanaque",
+        "desbloquea {0} objetos del almanaque",
+        "desbloquea {0} objetos del almanaque"
+      ],
+      "fr": [
+        "débloque {0} objet de l’almanach",
+        "débloque {0} objets de l’almanach",
+        "débloque {0} objets de l’almanach"
+      ],
+      "ko": [
+        "도감 아이템 {0}개 해금"
+      ],
+      "ru": [
+        "открывает {0} предмет альманаха",
+        "открывает {0} предмета альманаха",
+        "открывает {0} предметов альманаха",
+        "открывает {0} предмета альманаха"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "almanac.length"
+              ],
+              [
+                "0",
+                "almanac.length"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "unlocks {0} cosmetic",
+        "unlocks {0} cosmetics"
+      ],
+      "ja": [
+        "コスメ{0}個を解放"
+      ],
+      "zh-Hans": [
+        "解锁{0}个装饰"
+      ],
+      "zh-Hant": [
+        "解鎖{0}個裝飾"
+      ],
+      "es": [
+        "desbloquea {0} cosmético",
+        "desbloquea {0} cosméticos",
+        "desbloquea {0} cosméticos"
+      ],
+      "fr": [
+        "débloque {0} cosmétique",
+        "débloque {0} cosmétiques",
+        "débloque {0} cosmétiques"
+      ],
+      "ko": [
+        "코스메틱 {0}개 해금"
+      ],
+      "ru": [
+        "открывает {0} предмет косметики",
+        "открывает {0} предмета косметики",
+        "открывает {0} предметов косметики",
+        "открывает {0} предмета косметики"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "cosmetics.length"
+              ],
+              [
+                "0",
+                "cosmetics.length"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "unlocks {0} recipe",
+        "unlocks {0} recipes"
+      ],
+      "ja": [
+        "レシピ{0}個を解放"
+      ],
+      "zh-Hans": [
+        "解锁{0}个食谱"
+      ],
+      "zh-Hant": [
+        "解鎖{0}個食譜"
+      ],
+      "es": [
+        "desbloquea {0} receta",
+        "desbloquea {0} recetas",
+        "desbloquea {0} recetas"
+      ],
+      "fr": [
+        "débloque {0} recette",
+        "débloque {0} recettes",
+        "débloque {0} recettes"
+      ],
+      "ko": [
+        "레시피 {0}개 해금"
+      ],
+      "ru": [
+        "открывает {0} рецепт",
+        "открывает {0} рецепта",
+        "открывает {0} рецептов",
+        "открывает {0} рецепта"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "recipes.length"
+              ],
+              [
+                "0",
+                "recipes.length"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "up to date",
       "ja": "最新",
       "zh-Hans": "已是最新",
@@ -8899,6 +11040,50 @@
     "references": [
       {
         "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "you@example.com",
+      "ja": "you@example.com",
+      "zh-Hans": "you@example.com",
+      "zh-Hant": "you@example.com",
+      "es": "tu@ejemplo.com",
+      "fr": "vous@exemple.com",
+      "ko": "you@example.com",
+      "ru": "you@example.com"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "your current filters",
+      "ja": "今のフィルター",
+      "zh-Hans": "当前筛选条件",
+      "zh-Hant": "目前篩選條件",
+      "es": "tus filtros actuales",
+      "fr": "vos filtres actuels",
+      "ko": "현재 필터",
+      "ru": "ваши текущие фильтры"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/tracker-empty-state.svelte",
         "refs": [
           null
         ]
@@ -9341,6 +11526,39 @@
   },
   {
     "translations": {
+      "en": "{0} / {1} unlocked",
+      "ja": "{0}/{1} 解放済み",
+      "zh-Hans": "已解锁 {0}/{1}",
+      "zh-Hant": "已解鎖 {0}/{1}",
+      "es": "{0} / {1} desbloqueados",
+      "fr": "{0} / {1} débloqués",
+      "ko": "{0}/{1} 해금",
+      "ru": "открыто {0} / {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "unlocked"
+              ],
+              [
+                "1",
+                "available"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} Anything you check off by hand on this device stays here.",
       "ja": "{0} この端末で手動でつけたチェックはここに残ります。",
       "zh-Hans": "{0} 你在这台设备上手动勾选的内容会留在这里。",
@@ -9593,6 +11811,134 @@
   },
   {
     "translations": {
+      "en": "{0} level",
+      "ja": "{0}レベル",
+      "zh-Hans": "{0}等级",
+      "zh-Hant": "{0}等級",
+      "es": "Nivel de {0}",
+      "fr": "Niveau de {0}",
+      "ko": "{0} 레벨",
+      "ru": "Уровень «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} locked",
+      "ja": "{0}個未解放",
+      "zh-Hans": "{0}个未解锁",
+      "zh-Hant": "{0}個未解鎖",
+      "es": "{0} bloqueados",
+      "fr": "{0} verrouillés",
+      "ko": "{0}개 잠김",
+      "ru": "закрыто: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "locked"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} more locked",
+      "ja": "ほか{0}個未解放",
+      "zh-Hans": "另有{0}个未解锁",
+      "zh-Hant": "另有{0}個未解鎖",
+      "es": "{0} más bloqueados",
+      "fr": "encore {0} verrouillés",
+      "ko": "{0}개 더 잠김",
+      "ru": "ещё закрыто: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "locked"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} of {1}",
+      "ja": "{1}中{0}",
+      "zh-Hans": "{1}级中的{0}级",
+      "zh-Hant": "{1}級中的{0}級",
+      "es": "{0} de {1}",
+      "fr": "{0} sur {1}",
+      "ko": "{1}중 {0}",
+      "ru": "{0} из {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "level"
+              ],
+              [
+                "1",
+                "MAX_SKILL_LEVEL"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} of {1}",
       "ja": "{1}中{0}",
       "zh-Hans": "{1}级中的{0}级",
@@ -9731,6 +12077,154 @@
   },
   {
     "translations": {
+      "en": "{0} perks, {1} locked",
+      "ja": "{0}のスキルボーナス、{1}個未解放",
+      "zh-Hans": "{0}技能特长，{1}个未解锁",
+      "zh-Hant": "{0}技能特長，{1}個未解鎖",
+      "es": "Dones de habilidad de {0}: {1} bloqueados",
+      "fr": "Bonus de compétences de {0} : {1} verrouillés",
+      "ko": "{0} 스킬 특성, {1}개 잠김",
+      "ru": "Навыки умения «{0}», закрыто: {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "locked"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} perks, {1} of {2} unlocked",
+      "ja": "{0}のスキルボーナス、{2}個中{1}個解放済み",
+      "zh-Hans": "{0}技能特长，已解锁{1}/{2}",
+      "zh-Hant": "{0}技能特長，已解鎖{1}/{2}",
+      "es": "Dones de habilidad de {0}: {1} de {2} desbloqueados",
+      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués",
+      "ko": "{0} 스킬 특성, {2}개 중 {1}개 해금",
+      "ru": "Навыки умения «{0}»: открыто {1} из {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "unlocked"
+              ],
+              [
+                "2",
+                "available"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} perks, {1} of {2} unlocked, {3} more locked",
+      "ja": "{0}のスキルボーナス、{2}個中{1}個解放済み、ほか{3}個未解放",
+      "zh-Hans": "{0}技能特长，已解锁{1}/{2}，另有{3}个未解锁",
+      "zh-Hant": "{0}技能特長，已解鎖{1}/{2}，另有{3}個未解鎖",
+      "es": "Dones de habilidad de {0}: {1} de {2} desbloqueados, {3} más bloqueados",
+      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués, encore {3} verrouillés",
+      "ko": "{0} 스킬 특성, {2}개 중 {1}개 해금, {3}개 더 잠김",
+      "ru": "Навыки умения «{0}»: открыто {1} из {2}, ещё закрыто: {3}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "unlocked"
+              ],
+              [
+                "2",
+                "available"
+              ],
+              [
+                "3",
+                "locked"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} perks, {1}, level {2}",
+      "ja": "{0}のスキルボーナス、{1}、レベル{2}",
+      "zh-Hans": "{0}技能特长，{1}，{2}级",
+      "zh-Hant": "{0}技能特長，{1}，{2}級",
+      "es": "Dones de habilidad de {0}, {1}, nivel {2}",
+      "fr": "Bonus de compétences de {0}, {1}, niveau {2}",
+      "ko": "{0} 스킬 특성, {1}, 레벨 {2}",
+      "ru": "Навыки умения «{0}», {1}, уровень {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "getName(\"ui\", `tier_${tier.number.toString()}`, locale)"
+              ],
+              [
+                "2",
+                "tier.level"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} relationship level, {1} of {2}",
       "ja": "{0}との関係レベル、{2}中{1}",
       "zh-Hans": "与{0}的关系等级，{2}级中的{1}级",
@@ -9741,6 +12235,43 @@
       "ru": "Уровень отношений с «{0}», {1} из {2}"
     },
     "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "visibleName"
+              ],
+              [
+                "1",
+                "displayedLevel"
+              ],
+              [
+                "2",
+                "MAX_HEART_LEVEL"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "visibleName"
+              ],
+              [
+                "1",
+                "displayedLevel"
+              ],
+              [
+                "2",
+                "MAX_HEART_LEVEL"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/villager-search-result.svelte",
         "refs": [
@@ -9757,6 +12288,206 @@
               [
                 "2",
                 "MAX_HEART_LEVEL"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} result",
+        "{0} results"
+      ],
+      "ja": [
+        "{0}件の結果"
+      ],
+      "zh-Hans": [
+        "{0} 个结果"
+      ],
+      "zh-Hant": [
+        "{0} 項結果"
+      ],
+      "es": [
+        "{0} resultado",
+        "{0} resultados",
+        "{0} resultados"
+      ],
+      "fr": [
+        "{0} résultat",
+        "{0} résultats",
+        "{0} résultats"
+      ],
+      "ko": [
+        "결과 {0}개"
+      ],
+      "ru": [
+        "{0} результат",
+        "{0} результата",
+        "{0} результатов",
+        "{0} результата"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count.visible"
+              ],
+              [
+                "0",
+                "count.visible"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/lib/components/search-results.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "results.length"
+              ],
+              [
+                "0",
+                "results.length"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "results.length"
+              ],
+              [
+                "0",
+                "results.length"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} sources",
+      "ja": "{0}の入手先",
+      "zh-Hans": "{0}的获取来源",
+      "zh-Hant": "{0}的取得來源",
+      "es": "Fuentes de {0}",
+      "fr": "Sources de {0}",
+      "ko": "{0} 획득처",
+      "ru": "Источники «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "isSpoilered ? \"Spoilered item\" : name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} {1} item is being filtered out.",
+        "{0} {1} items are being filtered out."
+      ],
+      "ja": [
+        "{1}の項目{0}件がフィルターで非表示になっています。"
+      ],
+      "zh-Hans": [
+        "有 {0} 个“{1}”项目被筛选隐藏了。"
+      ],
+      "zh-Hant": [
+        "有 {0} 個「{1}」項目被篩選隱藏了。"
+      ],
+      "es": [
+        "Se está filtrando {0} elemento de {1}.",
+        "Se están filtrando {0} elementos de {1}.",
+        "Se están filtrando {0} elementos de {1}."
+      ],
+      "fr": [
+        "{0} élément {1} est masqué par les filtres.",
+        "{0} éléments {1} sont masqués par les filtres.",
+        "{0} éléments {1} sont masqués par les filtres."
+      ],
+      "ko": [
+        "{1} 항목 {0}개가 필터로 숨겨져 있어요."
+      ],
+      "ru": [
+        "Фильтры скрывают {0} элемент полки «{1}».",
+        "Фильтры скрывают элементы полки «{1}»: {0}.",
+        "Фильтры скрывают элементы полки «{1}»: {0}.",
+        "Фильтры скрывают элементы полки «{1}»: {0}."
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "note.count"
+              ],
+              [
+                "1",
+                "shelfLabel(note.shelf)"
+              ],
+              [
+                "0",
+                "note.count"
+              ],
+              [
+                "1",
+                "shelfLabel(note.shelf)"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "note.count"
+              ],
+              [
+                "1",
+                "slot(\"shelf\")"
+              ],
+              [
+                "0",
+                "note.count"
+              ],
+              [
+                "1",
+                "slot(\"shelf\")"
               ]
             ]
           }
@@ -9827,6 +12558,39 @@
               [
                 "1",
                 "rewardRecipeName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}, {1}",
+      "ja": "{0}（{1}）",
+      "zh-Hans": "{0}，{1}",
+      "zh-Hant": "{0}，{1}",
+      "es": "{0}, {1}",
+      "fr": "{0}, {1}",
+      "ko": "{0}({1})",
+      "ru": "{0}, {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/tracker-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "variant"
               ]
             ]
           }

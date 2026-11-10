@@ -8,7 +8,6 @@
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -69,8 +68,8 @@
   }
 
   function handleEditKeydown(event: KeyboardEvent): void {
-    if (event.key === "Enter") commitEdit();
-    if (event.key === "Escape") editing = false;
+    if (event.key === /* @wc-ignore */ "Enter") commitEdit();
+    if (event.key === /* @wc-ignore */ "Escape") editing = false;
   }
 
   function segmentFill(segment: { start: number; end: number }): number {
@@ -110,7 +109,7 @@
 
     {#if editing}
       <Input
-        aria-label={m.skill_level_label({ name })}
+        aria-label={`${name} level`}
         bind:ref={editInputRef}
         class="h-8 w-16 shrink-0 text-center font-mono text-xs"
         type="number"
@@ -127,11 +126,11 @@
       <button
         class="skill-count"
         type="button"
-        aria-label={m.skill_edit_level_aria({ level, max: MAX_SKILL_LEVEL, name })}
+        aria-label={`Edit ${name} level, currently ${level} of ${MAX_SKILL_LEVEL}`}
         onclick={startEditing}
       >
         <span class="skill-count__text">
-          <span class="skill-count__label">{m.skill_level_heading()}</span>
+          <span class="skill-count__label">Level</span>
           <span class="skill-count__value">{level}</span>
           <span>/ {MAX_SKILL_LEVEL}</span>
         </span>
@@ -143,10 +142,10 @@
     accentColor="var(--color-category-skills)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= MAX_SKILL_LEVEL}
-    decrementLabel={m.skill_decrease_level({ name })}
-    incrementLabel={m.skill_increase_level({ name })}
-    label={m.skill_level_label({ name })}
-    value={m.stepper_level_progress({ level, max: MAX_SKILL_LEVEL })}
+    decrementLabel={`Decrease ${name} level`}
+    incrementLabel={`Increase ${name} level`}
+    label={`${name} level`}
+    value={`${level} of ${MAX_SKILL_LEVEL}`}
     onDecrement={() => {
       setLevelWithCelebration(level - 1);
     }}

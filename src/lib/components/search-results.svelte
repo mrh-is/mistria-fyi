@@ -11,10 +11,10 @@
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { searchAllCategories } from "#lib/engine/search.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { Attachment } from "svelte/attachments";
@@ -235,20 +235,20 @@
 
 {#if namesError}
   <div class="search-results__error" role="alert">
-    <p>{m.search_error()}</p>
-    <button type="button" onclick={retryNames}>{m.action_retry()}</button>
+    <p>We couldn’t load search. Check that you’re online, then try again.</p>
+    <button type="button" onclick={retryNames}><!-- @wc-context: action retry -->Try again</button>
   </div>
 {:else if !namesReady}
-  <p class="search-results__loading" role="status" aria-live="polite">{m.search_loading()}</p>
+  <p class="search-results__loading" role="status" aria-live="polite">Loading search…</p>
 {:else}
   <div class="search-results" data-tracker-list>
     <p class="search-results__count">
-      {m.search_results_count({ count: results.length })}
+      {plural(results.length, [`${results.length} result`, `${results.length} results`])}
     </p>
     <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
       {results.length === 0
-        ? m.search_no_results()
-        : m.search_results_count({ count: results.length })}
+        ? "No items found"
+        : plural(results.length, [`${results.length} result`, `${results.length} results`])}
     </p>
 
     <div
@@ -322,7 +322,7 @@
     </div>
 
     {#if results.length === 0}
-      <p class="search-results__empty">{m.search_no_results()}</p>
+      <p class="search-results__empty">No items found</p>
     {/if}
   </div>
 {/if}

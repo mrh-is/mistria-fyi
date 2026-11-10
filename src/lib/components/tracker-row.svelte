@@ -10,7 +10,6 @@
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS } from "#lib/utils/row-timing.js";
   import { page } from "$app/state";
 
@@ -77,7 +76,7 @@
   );
 
   let isCompleted = $derived(display.mode === "completed");
-  let checkboxName = $derived(variant ? m.tracker_row_variant_name({ name, variant }) : name);
+  let checkboxName = $derived(variant ? /* @wc-include */ `${name}, ${variant}` : name);
   let isObtained = $derived(display.mode === "obtained");
   let isSpoilered = $derived(display.mode === "spoilered" && !spoilerDismissed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
@@ -97,7 +96,7 @@
     isSpoilered
       ? {
           category: reportCategory,
-          displayName: m.tracker_row_spoilered_item(),
+          displayName: "Spoilered item",
           page: page.url.pathname,
         }
       : {
@@ -196,10 +195,10 @@
       provenance={userState.provenanceOf(fact)}
       state={checkboxState}
       label={isCompleted
-        ? m.tracker_row_uncheck({ name: checkboxName })
+        ? `Uncheck ${checkboxName}`
         : isSpoilered
-          ? m.tracker_row_check_spoilered()
-          : m.tracker_row_check({ name: checkboxName })}
+          ? "Check spoilered item"
+          : `Check ${checkboxName}`}
       onclick={handleToggle}
     />
 
@@ -208,7 +207,7 @@
         {sprite}
         state={spriteState}
         class={spriteClass}
-        label={m.tracker_row_preview_sprite({ name })}
+        label={`Show ${name} in color`}
       />
     {/if}
 
@@ -229,7 +228,7 @@
     </span>
 
     {#if isObtained}
-      <span class="tracker-row__active-badge">{m.tracker_row_active_badge()}</span>
+      <span class="tracker-row__active-badge">Active</span>
     {/if}
   </TrackerPaper>
 
@@ -237,9 +236,7 @@
     <SourcePaper
       {expanded}
       contentId={sourceContentId}
-      label={m.tracker_row_sources_label({
-        name: isSpoilered ? m.tracker_row_spoilered_item() : name,
-      })}
+      label={`${isSpoilered ? "Spoilered item" : name} sources`}
       {sources}
       {sourceSegments}
       {sourceBadges}
