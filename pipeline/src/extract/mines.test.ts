@@ -77,6 +77,40 @@ describe("extractMines", () => {
     ]);
   });
 
+  it("lists each monster's spawn biomes, including a Sapling's spawned child", () => {
+    const { mines } = extractMines(
+      makeFiddle({
+        dungeons: {
+          dungeons: {
+            biomes: [
+              {
+                floor: 1,
+                name: "Upper Mines",
+                votes: { enemy: [{ object: "mimic" }, { object: "sapling" }] },
+              },
+              {
+                floor: 80,
+                name: "Ancient Ruins",
+                votes: {
+                  enemy: [{ object: "mimic" }, { object: "mimic" }],
+                  mini_boss_enemy: [{ object: "griffin_statue" }],
+                },
+              },
+            ],
+          },
+          misc: { max_floors: 100 },
+        },
+        monsters: { sap: { sapling: { sap_children_species: "mini_sapling" } } },
+      }),
+    );
+    expect(mines.monsters).toEqual({
+      griffin_statue: { biomes: ["ancient_ruins"] },
+      mimic: { biomes: ["upper_mines", "ancient_ruins"] },
+      mini_sapling: { biomes: ["upper_mines"] },
+      sapling: { biomes: ["upper_mines"] },
+    });
+  });
+
   it("generates descriptive biome IDs by stripping leading 'The', lowercasing, and replacing spaces", () => {
     const fiddle = makeFiddle({
       dungeons: {

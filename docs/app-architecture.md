@@ -480,9 +480,10 @@ Progress calculation and UI row visibility are separate concerns.
   without sources is. Any other row needs a doable source among those the filters show, so a hidden
   shop can't keep a spring insect doable in summer. A source isn't doable while it's locked, a
   progress gate the app records is unmet, or it's out of season or weather. Festival sources use the
-  exact festival date when the clock has a day. Mine sources use the first reachable floor for the
-  source. The Artifact Replicator requires a complete Archaeology set & the original artifact in the
-  Almanac. Unevaluable gates count as met, & time of day never counts against a source.
+  exact festival date when the clock has a day. Mine sources use their biome’s first floor, and
+  monster drops use the shallowest biome listed in `mines.monsters`. The Artifact Replicator
+  requires a complete Archaeology set & the original artifact in the Almanac. Unevaluable gates
+  count as met, & time of day never counts against a source.
 - **Availability has no knowledge of spoilers.** `ProgressContext.progressionState` is always
   derived with “Show spoilers” off, so that switch only changes what the spoiler UI reveals. Code
   that masks something reads `userState.progressionState` instead.

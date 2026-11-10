@@ -6,6 +6,7 @@ import { MINE_SEAL_FLOORS, SEALS_OFF_THE_FLOORS } from "../overrides/game-facts.
 import { BIOME_ENGLISH_NAMES } from "../overrides/ordinal-names.js";
 import { sourceFileFor } from "../parse/parse-fiddle.js";
 
+import type { MonsterId } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   MinesBiome,
@@ -17,6 +18,7 @@ import type {
   SpellId,
   TrackerData,
 } from "#lib/types/tracker-data.js";
+import type { NonEmptyArray } from "#lib/utils/record.js";
 
 import type { Localizer } from "../localize/localize.js";
 import type { ParsedGameData } from "../parse/parse-fiddle.js";
@@ -49,6 +51,34 @@ function extractSeals(fiddle: ParsedGameData): MineSeal[] {
     seals.push({ floor, id: id as MineSealId, questId, stage });
   }
   return seals.toSorted((a, b) => a.floor - b.floor);
+}
+
+function extractMonsterBiomes(
+  rawBiomes: Record<string, unknown>[],
+  biomes: MinesBiome[],
+  monsters: ParsedGameData["monsters"],
+): TrackerData["mines"]["monsters"] {
+  const spawns = new Map<MonsterId, { biomes: NonEmptyArray<MinesBiomeId> }>();
+  function add(monster: MonsterId, biome: MinesBiomeId): void {
+    const existing = spawns.get(monster);
+    if (!existing) spawns.set(monster, { biomes: [biome] });
+    else if (!existing.biomes.includes(biome)) existing.biomes.push(biome);
+  }
+
+  for (const [index, biome] of rawBiomes.entries()) {
+    const votes = biome.votes as Record<string, { object: MonsterId }[]> | undefined;
+    for (const kind of ["enemy", "mini_boss_enemy"]) {
+      for (const { object } of votes?.[kind] ?? []) add(object, biomes[index].id);
+    }
+  }
+  const saplings = (
+    monsters as undefined | { sap?: Record<string, { sap_children_species?: MonsterId }> }
+  )?.sap;
+  for (const [parent, { sap_children_species: child }] of Object.entries(saplings ?? {})) {
+    if (!child) continue;
+    for (const biome of spawns.get(parent as MonsterId)?.biomes ?? []) add(child, biome);
+  }
+  return Object.fromEntries(spawns);
 }
 
 export function extractMines(fiddle: ParsedGameData, localizer: Localizer): MinesExtraction {
@@ -139,7 +169,12 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
   );
   return {
     biomeLocaleNames,
-    mines: { biomes, seals: extractSeals(fiddle), spells },
+    mines: {
+      biomes,
+      monsters: extractMonsterBiomes(rawBiomes, biomes, fiddle.monsters),
+      seals: extractSeals(fiddle),
+      spells,
+    },
     spellLocaleNames,
   };
 }

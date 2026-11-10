@@ -1,7 +1,6 @@
 import { mapNonEmpty } from "#lib/utils/record.js";
 
 import { resolveToVisibility } from "../acquisition/requirement-projector.js";
-import { minesBiomeId } from "../extractor-helpers.js";
 import {
   CROWN_QUEST_GATE,
   HAYDENS_BARN_GATE,
@@ -13,7 +12,6 @@ import { getCutsceneRecords } from "../parse/parse-fiddle.js";
 import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
 import { ALWAYS_VISIBLE, simplifyCondition } from "./visibility-condition.js";
 
-import type { Source } from "#lib/types/acquisition.js";
 import type {
   MinesBiomeId,
   QuestId,
@@ -57,8 +55,6 @@ interface FlatPerkInfo {
 
 interface SourceVisibilityContext {
   biomeFloor: (biomeId: MinesBiomeId) => number | undefined;
-  firstMineFloor: number | undefined;
-  monsterFloors: ReadonlyMap<string, number>;
   perks: Record<string, FlatPerkInfo>;
   perkTierLevels: TrackerData["perkTierLevels"];
   storeVisibility: Record<StoreId, VisibilityCondition>;
@@ -70,12 +66,8 @@ export function assignEntityVisibility(
   fiddle: ParsedGameData,
   questChains: QuestChainData,
 ): void {
-  const biomeFloor = (biomeId: MinesBiomeId) =>
-    trackerData.mines.biomes.find((biome) => biome.id === biomeId)?.floors.start;
   const ctx: SourceVisibilityContext = {
-    biomeFloor,
-    firstMineFloor: trackerData.mines.biomes.at(0)?.floors.start,
-    monsterFloors: extractMonsterFloors(fiddle, biomeFloor),
+    biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.floors.start,
     perks: buildFlatPerks(trackerData.skills),
     perkTierLevels: trackerData.perkTierLevels,
     storeVisibility: buildStoreVisibilityMap(trackerData.stores),
@@ -88,63 +80,7 @@ export function assignEntityVisibility(
   assignAnimalVisibility(trackerData, fiddle);
   assignSpellVisibility(trackerData);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
-  for (const petCosmetic of Object.values(trackerData.pets.cosmetics)) {
-    petCosmetic.sources = mapNonEmpty(petCosmetic.sources, (source) =>
-      withMineAvailability(source, ctx),
-    );
-  }
   stripAllAlwaysVisibility(trackerData);
-}
-
-/** Dungeon spawn votes name each monster. Keep the earliest biome when votes recur. */
-function extractMonsterFloors(
-  fiddle: ParsedGameData,
-  biomeFloor: SourceVisibilityContext["biomeFloor"],
-): ReadonlyMap<string, number> {
-  const dungeons = fiddle.dungeons as
-    | undefined
-    | { dungeons?: { biomes?: { name: string; votes?: Record<string, { object: string }[]> }[] } };
-  const floors = new Map<string, number>();
-  for (const biome of dungeons?.dungeons?.biomes ?? []) {
-    const floor = biomeFloor(minesBiomeId(biome.name));
-    if (floor === undefined) continue;
-    for (const kind of ["enemy", "mini_boss_enemy"]) {
-      for (const { object } of biome.votes?.[kind] ?? []) {
-        floors.set(object, Math.min(floor, floors.get(object) ?? floor));
-      }
-    }
-  }
-  const monsters = fiddle.monsters as
-    | Record<string, Record<string, { sap_children_species?: string }>>
-    | undefined;
-  for (const [parent, data] of Object.entries(monsters?.sap ?? {})) {
-    const child = data.sap_children_species;
-    const floor = floors.get(parent);
-    if (child && floor !== undefined) {
-      floors.set(child, Math.min(floor, floors.get(child) ?? floor));
-    }
-  }
-  return floors;
-}
-
-function withMineAvailability(source: Source, ctx: SourceVisibilityContext): Source {
-  if (source.type !== "mine" && source.type !== "mine_fish" && source.type !== "monster") {
-    return source;
-  }
-  const biomeFloor =
-    source.type === "monster"
-      ? ctx.monsterFloors.get(source.monsterId)
-      : source.biomeId && ctx.biomeFloor(source.biomeId);
-  // A source without a known biome still requires access to the mines.
-  const floor = biomeFloor ?? ctx.firstMineFloor;
-  if (floor === undefined) return source;
-  const gate = { type: "mineFloor", floor } as const;
-  return {
-    ...source,
-    availability: source.availability
-      ? { type: "all", conditions: [source.availability, gate] }
-      : gate,
-  };
 }
 
 /** Hardcoded category visibility gates (see pipeline/README.md, reviewed game facts). */
@@ -572,7 +508,7 @@ function assignSourcedEntityVisibility(entity: SourcedEntity, ctx: SourceVisibil
 
   entity.sources = mapNonEmpty(computed, ({ conditions, source }) => {
     const { stockGate: _stockGate, ...publicSource } = source as AcquisitionSource;
-    return { ...withMineAvailability(publicSource, ctx), visibility: conditions.source };
+    return { ...publicSource, visibility: conditions.source };
   });
   entity.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
 }

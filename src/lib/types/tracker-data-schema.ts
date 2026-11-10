@@ -314,7 +314,9 @@ export const TrackerDataSchema = v.strictObject({
   festivals: v.record(id("FestivalId"), FestivalSchema),
   items: v.record(id("ItemId"), ItemSchema),
   mines: v.strictObject({
+    /** In floor order. */
     biomes: v.array(MinesBiomeSchema),
+    monsters: v.record(id("MonsterId"), v.strictObject({ biomes: nonEmpty(id("MinesBiomeId")) })),
     /** In floor order. */
     seals: v.array(MineSealSchema),
     spells: v.record(id("SpellId"), TrackerEntitySchema),

@@ -57,6 +57,7 @@ export function createProgressContext(
       },
     },
     festivals: trackerData.festivals,
+    mines: trackerData.mines,
     progress,
     progressionState,
     // The museum installs the replicator after the first complete Archaeology set.

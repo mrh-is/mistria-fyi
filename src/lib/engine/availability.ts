@@ -13,6 +13,10 @@ import type { UserProgressionState } from "./visibility.js";
 export interface DayContext {
   acquiredItems?: AvailabilityContext["acquiredItems"];
   festivals?: Partial<TrackerData["festivals"]>;
+  mines?: {
+    biomes: TrackerData["mines"]["biomes"];
+    monsters: Partial<TrackerData["mines"]["monsters"]>;
+  };
   /** Derived without "Show spoilers", which only changes what the spoiler UI reveals. */
   progressionState: UserProgressionState;
   replicatorUnlocked?: boolean;
@@ -58,6 +62,8 @@ export function isRowShown(
  */
 export function isSourceDoable(source: Source, ctx: DayContext): boolean {
   if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return false;
+  const mineFloor = sourceMineFloor(source, ctx.mines);
+  if (mineFloor !== undefined && ctx.progressionState.mineFloor < mineFloor) return false;
   if (source.type === "festival" || source.type === "festival_activity") {
     const date = ctx.festivals?.[source.festivalId]?.date;
     if (
@@ -78,6 +84,19 @@ export function isSourceDoable(source: Source, ctx: DayContext): boolean {
     if (!acquired) return false;
   }
   return isAvailabilityDoable(getAvailabilityCondition(source), ctx);
+}
+
+function sourceMineFloor(source: Source, mines: DayContext["mines"]): number | undefined {
+  if (!mines) return undefined;
+  const { biomes, monsters } = mines;
+  if (source.type === "monster") {
+    const spawnBiomes = monsters[source.monsterId]?.biomes;
+    return (biomes.find(({ id }) => spawnBiomes?.includes(id)) ?? biomes.at(0))?.floors.start;
+  }
+  if (source.type === "mine" || source.type === "mine_fish") {
+    return (biomes.find(({ id }) => id === source.biomeId) ?? biomes.at(0))?.floors.start;
+  }
+  return undefined;
 }
 
 /** Evaluate row-level requirements with the same day policy as acquisition sources. */

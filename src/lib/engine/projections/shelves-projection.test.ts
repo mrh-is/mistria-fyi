@@ -12,7 +12,7 @@ import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordValues } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
-import type { MuseumWingId, Season } from "#lib/types/tracker-data.js";
+import type { ItemId, MuseumWingId, Season } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
 function context(season: Season = "spring", overrides?: Partial<ProgressState>): ProgressContext {
@@ -46,6 +46,16 @@ describe("shelves across the real tracker data", () => {
     const firstFloor = context("spring", { mineFloor: 1 });
     expect(isSourceDoable(mimic, context())).toBe(false);
     expect(isSourceDoable(mimic, firstFloor)).toBe(true);
+  });
+
+  it("uses the Ancient Ruins floor range for the Cat Void drop", () => {
+    const source = trackerData.items["void_powder" as ItemId].sources.find(
+      (candidate) => candidate.type === "monster" && candidate.monsterId === "cat_void",
+    );
+    if (!source) throw new Error("Expected a Cat Void drop");
+    expect(source).toEqual({ type: "monster", monsterId: "cat_void" });
+    expect(isSourceDoable(source, context("fall", { mineFloor: 79 }))).toBe(false);
+    expect(isSourceDoable(source, context("fall", { mineFloor: 80 }))).toBe(true);
   });
 
   it("requires both an Archaeology set and the original artifact for a replica", () => {
