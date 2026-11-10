@@ -499,7 +499,8 @@ Progress calculation and UI row visibility are separate concerns.
   note.
 - **The toolbar** gives each page its own `clock` & `filter` flags in `ToolbarConfig`. The clock
   sets `worldState`. A save import or sync overwrites it with the save’s day, and a clock change
-  then holds until the next save arrives.
+  then holds until the next save arrives. Changing the season clears the day number. A save from a
+  different known farm supplies its own day number or leaves it unknown.
 - Mines counts floors as doable down to the first unbroken seal at or below the player's floor, and
   the floors past it wait. Finishing the seal's quest breaks it, and a floor below a seal proves
   that seal is broken. Quests combine spoiler gates, requested-item sources, & each quest's native

@@ -76,6 +76,9 @@ export const progressSync = createSyncFacade(repository, {
     return hand.canStartTrackingByHand;
   },
   chooseSync: hand.chooseSync,
+  get clockFarm() {
+    return shell.state.lastImport?.identity ?? null;
+  },
   emptyProgress: shell.emptyProgress,
   get laneChoiceNeeded() {
     return hand.laneChoiceNeeded;

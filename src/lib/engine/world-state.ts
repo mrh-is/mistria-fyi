@@ -14,6 +14,10 @@ export interface SaveDay {
   weather: undefined | Weather;
 }
 
+export function withoutRecordedDay({ season, weather }: WorldDay): WorldDay {
+  return { season, weather };
+}
+
 /** Only fields the tab changed take precedence over the clock read under the lock. */
 export function rebaseWorldDay(stored: WorldDay, before: WorldDay, after: WorldDay): WorldDay {
   const date = before.season === after.season && before.day === after.day ? stored : after;
