@@ -483,7 +483,9 @@ Progress calculation and UI row visibility are separate concerns.
   exact festival date when the clock has a day. Mine sources use their biome’s first floor, and
   monster drops use the shallowest biome listed in `mines.monsters`. The Artifact Replicator
   requires a complete Archaeology set & the original artifact in the Almanac. Unevaluable gates
-  count as met, & time of day never counts against a source.
+  count as met, & time of day never counts against a source. A fresh tracker starts at mine floor
+  zero. Mine sources wait until the player records access to the mines or imports a save that
+  supplies it.
 - **Availability has no knowledge of spoilers.** `ProgressContext.progressionState` is always
   derived with “Show spoilers” off, so that switch only changes what the spoiler UI reveals. Code
   that masks something reads `userState.progressionState` instead.

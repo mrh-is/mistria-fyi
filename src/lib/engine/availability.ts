@@ -91,10 +91,21 @@ function sourceMineFloor(source: Source, mines: DayContext["mines"]): number | u
   const { biomes, monsters } = mines;
   if (source.type === "monster") {
     const spawnBiomes = monsters[source.monsterId]?.biomes;
-    return (biomes.find(({ id }) => spawnBiomes?.includes(id)) ?? biomes.at(0))?.floors.start;
+    if (spawnBiomes) return biomes.find(({ id }) => spawnBiomes.includes(id))?.floors.start;
+    // These two Clods have drop records but no confirmed spawn biome (#622).
+    if (
+      source.monsterId === "any" ||
+      source.monsterId === "mistrilclod" ||
+      source.monsterId === "rockclod_purple"
+    ) {
+      return biomes.at(0)?.floors.start;
+    }
+    return undefined;
   }
   if (source.type === "mine" || source.type === "mine_fish") {
-    return (biomes.find(({ id }) => id === source.biomeId) ?? biomes.at(0))?.floors.start;
+    return source.biomeId === undefined
+      ? biomes.at(0)?.floors.start
+      : biomes.find(({ id }) => id === source.biomeId)?.floors.start;
   }
   return undefined;
 }

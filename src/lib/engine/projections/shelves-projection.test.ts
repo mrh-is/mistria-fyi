@@ -12,7 +12,8 @@ import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordValues } from "#lib/utils/record.js";
 
 import type { ProgressContext } from "#lib/engine/progress.js";
-import type { ItemId, MuseumWingId, Season } from "#lib/types/tracker-data.js";
+import type { MonsterId } from "#lib/types/acquisition.js";
+import type { ItemId, MinesBiomeId, MuseumWingId, Season } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
 function context(season: Season = "spring", overrides?: Partial<ProgressState>): ProgressContext {
@@ -29,7 +30,13 @@ describe("shelves across the real tracker data", () => {
     (type) => {
       const early = context();
       const late = context("fall", { mineFloor: 100 });
-      const sources = recordValues(trackerData.items)
+      // Check every generated collection that carries these sources so a missing spawn fails CI.
+      const sources = [
+        ...recordValues(trackerData.items),
+        ...recordValues(trackerData.cosmetics),
+        ...recordValues(trackerData.pets.cosmetics),
+        ...recordValues(trackerData.pets.skins),
+      ]
         .flatMap((item) => item.sources)
         .filter((source) => source.type === type);
       expect(sources.length).toBeGreaterThan(0);
@@ -56,6 +63,24 @@ describe("shelves across the real tracker data", () => {
     expect(source).toEqual({ type: "monster", monsterId: "cat_void" });
     expect(isSourceDoable(source, context("fall", { mineFloor: 79 }))).toBe(false);
     expect(isSourceDoable(source, context("fall", { mineFloor: 80 }))).toBe(true);
+  });
+
+  it.each(["any", "mistrilclod", "rockclod_purple"])(
+    "requires mine entry for the reviewed %s fallback",
+    (monsterId) => {
+      const source = { type: "monster", monsterId: monsterId as MonsterId } as const;
+      expect(isSourceDoable(source, context())).toBe(false);
+      expect(isSourceDoable(source, context("spring", { mineFloor: 1 }))).toBe(true);
+    },
+  );
+
+  it("leaves unexpected references unknown instead of assigning them floor one", () => {
+    const early = context();
+    expect(isSourceDoable({ type: "monster", monsterId: "unmapped" as MonsterId }, early)).toBe(
+      true,
+    );
+    expect(isSourceDoable({ type: "mine", biomeId: "unmapped" as MinesBiomeId }, early)).toBe(true);
+    expect(isSourceDoable({ type: "mine_fish" }, early)).toBe(false);
   });
 
   it("requires both an Archaeology set and the original artifact for a replica", () => {

@@ -61,11 +61,9 @@ export function createProgressContext(
     progress,
     progressionState,
     // The museum installs the replicator after the first complete Archaeology set.
-    replicatorUnlocked:
-      archaeology &&
-      recordValues(archaeology.sets).some(({ items }) =>
-        items.every((id) => progress.museum.has(id)),
-      ),
+    replicatorUnlocked: recordValues(archaeology?.sets ?? {}).some(
+      ({ items }) => items.length > 0 && items.every((id) => progress.museum.has(id)),
+    ),
     worldState,
   };
 }
