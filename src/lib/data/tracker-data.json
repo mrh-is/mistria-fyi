@@ -41310,16 +41310,12 @@
         {
           "type": "mine",
           "biomeId": "ancient_ruins"
-        },
-        {
-          "type": "monster",
-          "monsterId": "mistrilclod"
-        },
-        {
-          "type": "monster",
-          "monsterId": "rockclod_purple"
         }
-      ]
+      ],
+      "visibility": {
+        "type": "mineFloor",
+        "floor": 80
+      }
     },
     "tiny_dinosaur_skeleton": {
       "category": "artifacts",
@@ -55898,14 +55894,6 @@
       "category": "materials",
       "sources": [
         {
-          "type": "monster",
-          "monsterId": "mistrilclod"
-        },
-        {
-          "type": "monster",
-          "monsterId": "rockclod_purple"
-        },
-        {
           "type": "store",
           "storeId": "balor"
         }
@@ -55950,12 +55938,12 @@
             "type": "mineFloor",
             "floor": 81
           }
-        },
-        {
-          "type": "monster",
-          "monsterId": "mistrilclod"
         }
-      ]
+      ],
+      "visibility": {
+        "type": "mineFloor",
+        "floor": 81
+      }
     },
     "ore_iron": {
       "category": "materials",
@@ -56037,10 +56025,6 @@
         {
           "type": "monster",
           "monsterId": "rockclod_green"
-        },
-        {
-          "type": "monster",
-          "monsterId": "rockclod_purple"
         },
         {
           "type": "monster",
@@ -58527,10 +58511,6 @@
         },
         {
           "type": "monster",
-          "monsterId": "sapling_orange_mini"
-        },
-        {
-          "type": "monster",
           "monsterId": "sapling_pink"
         },
         {
@@ -58565,10 +58545,6 @@
         {
           "type": "monster",
           "monsterId": "sapling_orange"
-        },
-        {
-          "type": "monster",
-          "monsterId": "sapling_orange_mini"
         },
         {
           "type": "monster",

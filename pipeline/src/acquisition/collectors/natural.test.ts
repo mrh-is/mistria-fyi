@@ -531,6 +531,11 @@ describe("collectNaturalSources", () => {
   describe("monsters", () => {
     it("adds a monster source with the monster ID", () => {
       const fiddle = makeFiddle({
+        dungeons: {
+          dungeons: {
+            biomes: [{ votes: { enemy: [{ object: "blue_slime" }] } }],
+          },
+        },
         monsters: {
           slimes: {
             blue_slime: {
@@ -546,6 +551,41 @@ describe("collectNaturalSources", () => {
       expect(acc.get("slime_goo" as ItemId)).toEqual([
         { type: "monster", monsterId: "blue_slime" },
       ]);
+    });
+
+    it("skips monsters absent from the Mines spawn tables", () => {
+      const fiddle = makeFiddle({
+        dungeons: {
+          dungeons: {
+            biomes: [
+              { votes: { enemy: [{ object: "blue_slime" }] } },
+              { votes: { mini_boss_enemy: [{ object: "mini_boss" }] } },
+            ],
+          },
+        },
+        monsters: {
+          clods: {
+            mini_boss: { drops: [{ item: "mini_boss_drop" }] },
+            mistrilclod: { drops: [{ item: "ore_mistril" }] },
+            rockclod_purple: { drops: [{ item: "perfect_pink_diamond" }] },
+          },
+          slimes: {
+            blue_slime: { drops: [{ item: "slime_goo" }] },
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+
+      expect(acc.get("slime_goo" as ItemId)).toEqual([
+        { type: "monster", monsterId: "blue_slime" },
+      ]);
+      expect(acc.get("mini_boss_drop" as ItemId)).toEqual([
+        { type: "monster", monsterId: "mini_boss" },
+      ]);
+      expect(acc.get("ore_mistril" as ItemId)).toEqual([]);
+      expect(acc.get("perfect_pink_diamond" as ItemId)).toEqual([]);
     });
 
     it("skips default and non-object monsters", () => {

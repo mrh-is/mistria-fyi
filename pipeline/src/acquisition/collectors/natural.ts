@@ -510,6 +510,29 @@ function collectMonsterDropSources(
   cosmeticAccumulator?: CosmeticSourceAccumulator,
   petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
 ): void {
+  const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
+  const dungeonData = dungeons?.dungeons as Record<string, unknown> | undefined;
+  const rawBiomes = dungeonData?.biomes;
+  const spawnedMonsterIds = new Set<string>();
+
+  if (Array.isArray(rawBiomes)) {
+    for (const rawBiome of rawBiomes) {
+      if (typeof rawBiome !== "object" || rawBiome === null) continue;
+      const votes = (rawBiome as Record<string, unknown>).votes;
+      if (typeof votes !== "object" || votes === null) continue;
+
+      for (const [voteKind, candidates] of Object.entries(votes)) {
+        if (!voteKind.endsWith("enemy") || !Array.isArray(candidates)) continue;
+
+        for (const candidate of candidates) {
+          if (typeof candidate !== "object" || candidate === null) continue;
+          const monsterId = (candidate as Record<string, unknown>).object;
+          if (typeof monsterId === "string") spawnedMonsterIds.add(monsterId);
+        }
+      }
+    }
+  }
+
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
   if (!monsters) return;
 
@@ -518,6 +541,7 @@ function collectMonsterDropSources(
 
     for (const [monsterId, monster] of Object.entries(monstersOfType)) {
       if (monsterId === "default" || typeof monster !== "object" || monster === null) continue;
+      if (!spawnedMonsterIds.has(monsterId)) continue;
 
       const monsterData = monster as Record<string, unknown>;
       const drops = Array.isArray(monsterData.drops) ? monsterData.drops : [];
