@@ -67,3 +67,6 @@ pipeline/output
 # Personal agent settings (see CONTRIBUTING.md, Using AI agents)
 /.claude/settings.local.json
 CLAUDE.local.md
+
+# Field guide mockup sprites (baked from assets.mistria.fyi; game art stays out of Git)
+docs/design/field-guide/sprites.js
