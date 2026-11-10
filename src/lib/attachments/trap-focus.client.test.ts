@@ -92,6 +92,24 @@ describe("trapFocus", () => {
     expect(tab().defaultPrevented).toBe(true);
   });
 
+  it("leaves Tab to a modal dialog opened over the panel", () => {
+    const { panel } = mount();
+    const dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.innerHTML = "<button>Inside</button><button>Next</button>";
+    document.body.append(dialog);
+    try {
+      required(dialog, "button").focus();
+      expect(tab().defaultPrevented).toBe(false);
+      expect(tab(true).defaultPrevented).toBe(false);
+      expect(dialog.querySelector("button")).toHaveFocus();
+      expect(panel.contains(document.activeElement)).toBe(false);
+    } finally {
+      dialog.remove();
+    }
+  });
+
   it("closes once on Escape and removes its listener on cleanup", () => {
     const { onClose } = mount();
     escape();

@@ -41,11 +41,7 @@ for (const theme of ["light", "dark"] as const) {
 
     await page.getByRole("button", { name: "Send feedback" }).click();
     const feedback = page.getByRole("dialog", { name: "Send feedback" });
-    for (const name of [
-      "Attach my tracker progress",
-      "Attach my save file sync log",
-      "I’d like a reply",
-    ]) {
+    for (const name of ["Attach progress", "Attach sync log", "Email me back"]) {
       await expectHoverOutline(feedback.getByRole("checkbox", { name }));
     }
   });
