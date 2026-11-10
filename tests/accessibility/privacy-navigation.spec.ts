@@ -1,5 +1,5 @@
 import { expect, test } from "../browser/test.js";
-import { gotoApplication } from "./support/application-state.js";
+import { gotoApplication, waitForRendering } from "./support/application-state.js";
 
 for (const { entry, link, path } of [
   { entry: "About", link: "Privacy", path: "about" },
@@ -31,6 +31,7 @@ for (const { entry, link, path } of [
     await expect(page).toHaveURL(new RegExp(`/en/${path}$`));
     await page.getByRole("link", { name: "Back to home" }).click();
     await expect(page).toHaveURL(/\/en$/);
+    await waitForRendering(page);
   });
 }
 
@@ -41,5 +42,6 @@ for (const query of ["", "?from=https://external.example"]) {
     await gotoApplication(page, `/en/privacy${query}`);
     await page.getByRole("link", { name: "Back to home" }).click();
     await expect(page).toHaveURL(/\/en$/);
+    await waitForRendering(page);
   });
 }
