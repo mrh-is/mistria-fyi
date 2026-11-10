@@ -553,6 +553,43 @@ describe("collectNaturalSources", () => {
       ]);
     });
 
+    it.each([
+      { dungeonData: {}, label: "missing" },
+      { dungeonData: { biomes: {} }, label: "not an array" },
+    ])("throws when the Mines biome table is $label", ({ dungeonData }) => {
+      const fiddle = makeFiddle({
+        dungeons: { dungeons: dungeonData },
+        monsters: {
+          slimes: {
+            blue_slime: { drops: [{ item: "slime_goo" }] },
+          },
+        },
+      });
+
+      expect(() => {
+        collectNaturalSources(fiddle, new ItemSourceAccumulator());
+      }).toThrow("Expected dungeons.dungeons.biomes to be an array");
+    });
+
+    it("throws when Mines biome tables contain no monster IDs", () => {
+      const fiddle = makeFiddle({
+        dungeons: {
+          dungeons: {
+            biomes: [{ votes: { enemy: [] } }],
+          },
+        },
+        monsters: {
+          slimes: {
+            blue_slime: { drops: [{ item: "slime_goo" }] },
+          },
+        },
+      });
+
+      expect(() => {
+        collectNaturalSources(fiddle, new ItemSourceAccumulator());
+      }).toThrow("No monster IDs found in dungeons.dungeons.biomes");
+    });
+
     it("skips monsters absent from the Mines spawn tables", () => {
       const fiddle = makeFiddle({
         dungeons: {
@@ -590,6 +627,11 @@ describe("collectNaturalSources", () => {
 
     it("skips default and non-object monsters", () => {
       const fiddle = makeFiddle({
+        dungeons: {
+          dungeons: {
+            biomes: [{ votes: { enemy: [{ object: "other_monster" }] } }],
+          },
+        },
         monsters: {
           slimes: {
             default: { drops: [{ item: "should_skip" }] },
