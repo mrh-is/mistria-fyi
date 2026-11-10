@@ -386,6 +386,7 @@ describe("CI workflow browser suites", () => {
     "scripts/playwright-preview.ts",
     "scripts/playwright-preview-owner.ts",
     "scripts/playwright-satoshi.ts",
+    "scripts/playwright-new-helper.ts",
     "playwright.config.ts",
     "svelte.config.js",
     "vite.config.ts",
@@ -397,12 +398,15 @@ describe("CI workflow browser suites", () => {
     expect(detectChanges("pull_request", file).browser).toBe("true");
   });
 
-  it.each(["docs/styling.md", "AGENTS.md", "scripts/verify.ts", "pipeline/src/main.ts"])(
-    "skips a pull request that only changes %s",
-    (file) => {
-      expect(detectChanges("pull_request", file).browser).toBe("false");
-    },
-  );
+  it.each([
+    "docs/styling.md",
+    "AGENTS.md",
+    "scripts/verify.ts",
+    "pipeline/src/main.ts",
+    "scripts/playwright-preview.test.ts",
+  ])("skips a pull request that only changes %s", (file) => {
+    expect(detectChanges("pull_request", file).browser).toBe("false");
+  });
 
   it.each(["push", "schedule", "workflow_dispatch"])("always runs for %s", (event) => {
     expect(detectChanges(event, "docs/styling.md").browser).toBe("true");

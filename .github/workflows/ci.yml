@@ -115,9 +115,9 @@ jobs:
                 ;;
             esac
             case "$file" in
+              scripts/playwright-*.test.ts) ;; # Unit tests for the helpers only need Vitest.
               src/* | static/* | tests/* | messages/* | project.inlang/* | _headers | \
-                scripts/playwright-preview.ts | scripts/playwright-preview-owner.ts | \
-                scripts/playwright-satoshi.ts | playwright*.config.ts | svelte.config.* | vite.config.* | \
+                scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
                 package.json | pnpm-lock.yaml | .node-version | .github/workflows/ci.yml)
                 browser=true
                 ;;
@@ -407,11 +407,11 @@ jobs:
             .playwright-results/
           retention-days: 14
           if-no-files-found: ignore
-      - name: Publish accessibility timings
+      - name: Publish accessibility results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: accessibility-timings-${{ strategy.job-index }}
+          name: accessibility-results-${{ strategy.job-index }}
           include-hidden-files: true
           path: .playwright-artifacts/results.json
           retention-days: 14
