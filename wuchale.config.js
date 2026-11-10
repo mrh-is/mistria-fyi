@@ -55,6 +55,11 @@ export default defineConfig({
       runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, "_locale)") } },
       storage: partitionedStorage(["metadata"], () => "metadata"),
     }),
+    offline: scriptAdapter({
+      files: "scripts/lib/offline-copy.ts",
+      loader: "custom",
+      storage: partitionedStorage(["offline"], () => "offline"),
+    }),
     route: adapter({
       files: routeSvelteFiles,
       loader: "custom",

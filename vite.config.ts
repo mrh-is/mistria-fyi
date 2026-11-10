@@ -239,6 +239,7 @@ export default defineConfig(({ command }) => ({
       ...routeMetadataFiles,
       ...routeSvelteFiles,
       ...sharedSvelteFiles,
+      "scripts/lib/offline-copy.ts",
     ]),
   ],
   resolve: { alias: libAlias },

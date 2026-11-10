@@ -4,20 +4,19 @@ import path from "node:path";
 import { Window } from "happy-dom";
 import { describe, expect, it } from "vitest";
 
-import { readUiMessageSources } from "../../../scripts/lib/ui-message-sources.js";
 import * as m from "../ui-messages/messages.js";
 import { getTextDirection } from "../i18n/locale-runtime.js";
 import { offlinePageHtml } from "../pwa/offline-page.js";
 import { inlineScriptHashes } from "../security/inline-scripts.js";
 import { LOCALE_CODES } from "../types/locale.js";
-import { OFFLINE_PAGE_SLOT, renderOfflinePage } from "./offline-page.js";
+import { OFFLINE_PAGE_SLOT, offlineCatalogMessages, renderOfflinePage } from "./offline-page.js";
 
 import type { LocaleMessages } from "./offline-page.js";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-const REAL_MESSAGES = readUiMessageSources(path.join(root, "messages"), LOCALE_CODES) as LocaleMessages;
+const REAL_MESSAGES = offlineCatalogMessages(read("src/lib/i18n/catalogs/offline.json"));
 
 /** `messages` for every locale, each one's own text overriding `en`'s. */
 function messagesFor(

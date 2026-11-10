@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { Window } from "happy-dom";
 
-import { readUiMessageSources } from "../../../scripts/lib/ui-message-sources.js";
+import { offlineSourceCopy } from "../../../scripts/lib/offline-copy.js";
 import { escapeHtml, OFFLINE_FONTS_SLOT } from "../pwa/offline-page.js";
 import { LOCALE_CODES } from "../types/locale.js";
 
@@ -25,8 +25,24 @@ const RESOLVED_OFFLINE_PAGE_MODULE = `\0${OFFLINE_PAGE_MODULE}`;
  */
 const LOCALE_SLOT = /%(m\.[a-z][a-z0-9_]*|offline\.(?:lang|dir|fonts))%/;
 
-/** Each locale's parsed `messages/<locale>.json`. */
+/** Localized copy for the offline template slots. */
 export type LocaleMessages = Readonly<Record<LocaleCode, Readonly<Record<string, unknown>>>>;
+
+interface OfflineCatalogRow {
+  translations: Partial<Record<LocaleCode, string | string[]>>;
+}
+
+export function offlineCatalogMessages(catalog: string): LocaleMessages {
+  const rows = JSON.parse(catalog) as OfflineCatalogRow[];
+  const source = Object.entries(offlineSourceCopy());
+  const bySource = new Map(rows.map(({ translations }) => [translations.en, translations]));
+  return Object.fromEntries(
+    LOCALE_CODES.map((locale) => [
+      locale,
+      Object.fromEntries(source.map(([slot, text]) => [slot, bySource.get(text)?.[locale]])),
+    ]),
+  ) as LocaleMessages;
+}
 
 /** The app's base locale, whose text a locale's missing message falls back to. */
 const BASE_LOCALE: LocaleCode = "en";
@@ -166,11 +182,7 @@ export function offlinePagePlugin(): Plugin {
         this.addWatchFile(source);
         return readFileSync(source, "utf8");
       };
-      const messages = readUiMessageSources(
-        path.join(root, "messages"),
-        LOCALE_CODES,
-        (file) =>{  this.addWatchFile(file); },
-      ) as LocaleMessages;
+      const messages = offlineCatalogMessages(read("src/lib/i18n/catalogs/offline.json"));
       const page = renderOfflinePage(
         read("src/service-worker/offline.html"),
         read("src/app.css"),
