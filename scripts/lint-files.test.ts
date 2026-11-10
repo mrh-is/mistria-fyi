@@ -10,6 +10,7 @@ describe("changed-file lint", () => {
     const commands = lintCommands(undefined, false);
     expect(commands).toContainEqual(["run", "lint:shell"]);
     expect(commands).toContainEqual(["exec", "node", "scripts/check-lint-directives.ts"]);
+    expect(commands).toContainEqual(["exec", "node", "scripts/check-vendored-assets.ts"]);
     expect(lintCommands(undefined, true)).not.toContainEqual([
       "exec",
       "node",
@@ -62,6 +63,13 @@ describe("changed-file lint", () => {
       "scripts/a.ts",
       "src/a.svelte",
       "src/store.svelte.ts",
+    ]);
+    expect(commands).toContainEqual([
+      "exec",
+      "node",
+      "scripts/check-vendored-assets.ts",
+      "--",
+      ...files,
     ]);
     expect(commands).toContainEqual(["run", "lint:shell"]);
   });
