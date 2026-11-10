@@ -8,7 +8,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
@@ -27,11 +26,7 @@
   const gameDate = $derived.by(() => {
     const date = freshness?.gameDate;
     if (!date) return undefined;
-    return m.source_date_label_year({
-      day: String(date.day),
-      season: getName("ui", date.season, page.data.locale),
-      year: String(date.year),
-    });
+    return `${getName("ui", date.season, page.data.locale)} ${String(date.day)}, Year ${String(date.year)}`;
   });
 </script>
 
@@ -40,8 +35,8 @@
 
   {#if syncReceiver.status.kind === "unreachable"}
     <StatusNote tone="warning">
-      <p class="font-semibold">{m.sync_unreachable_title()}</p>
-      <p>{m.sync_unreachable_body()}</p>
+      <p class="font-semibold">We can’t connect right now</p>
+      <p>We’ll keep trying, or you can try again.</p>
       <Button
         class="mt-2"
         size="sm"
@@ -50,20 +45,20 @@
           syncReceiver.refresh();
         }}
       >
-        {m.sync_try_again()}
+        <!-- @wc-context: sync try again -->Try again
       </Button>
     </StatusNote>
   {/if}
 
   <dl class="sync-panel__facts">
-    <dt>{m.sync_panel_from()}</dt>
-    <dd>{lane?.kind === "computer" ? m.sync_panel_from_here() : m.sync_panel_from_computer()}</dd>
+    <dt>Save file from</dt>
+    <dd>{lane?.kind === "computer" ? "This computer" : "Your gaming computer"}</dd>
     {#if lastSave}
-      <dt>{m.sync_panel_last()}</dt>
+      <dt>Last save file</dt>
       <dd>{lastSave}</dd>
     {/if}
     {#if gameDate}
-      <dt>{m.sync_panel_date()}</dt>
+      <dt>In-game date</dt>
       <dd>{gameDate}</dd>
     {/if}
   </dl>
@@ -71,15 +66,15 @@
   {#if lane?.kind === "computer" && (syncCourier.status.source === "file" || syncCourier.status.source === "none")}
     <a class="sync-panel__link" href={localizedHref("data")}>
       <IconUpload class="size-4" aria-hidden="true" />
-      {m.sync_redrop_label()}
+      Drop in your latest save file
     </a>
   {:else if lane?.kind === "computer"}
-    <p class="sync-panel__note">{m.sync_status_keep_open()}</p>
+    <p class="sync-panel__note">Keep this tab open while you play so we can sync your save file.</p>
   {/if}
 
   <a class="sync-panel__link" href={localizedHref("data")}>
     <IconSettings class="size-4" aria-hidden="true" />
-    {m.sync_panel_settings()}
+    Sync & data settings
   </a>
 </div>
 

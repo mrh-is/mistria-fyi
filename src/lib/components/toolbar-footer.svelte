@@ -27,7 +27,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -53,7 +52,7 @@
   let syncStatusLabel = $derived.by(() => {
     const { trouble, upload } = syncCourier.status;
     if (syncReceiver.status.kind === "unreadable" || trouble === "unreadable") {
-      return m.sync_status_unreadable();
+      return /* @wc-include */ "can’t read the save file";
     }
     if (
       syncReceiver.needsALook ||
@@ -62,14 +61,16 @@
       upload === "refused" ||
       upload === "update"
     ) {
-      return m.sync_status_look();
+      return /* @wc-include */ "needs a look";
     }
-    if (syncReceiver.gapDays !== undefined) return m.sync_status_late();
-    if (syncReceiver.status.kind === "paused" || upload === "paused") return m.sync_status_paused();
+    if (syncReceiver.gapDays !== undefined) return /* @wc-include */ "no new saves in a while";
+    if (syncReceiver.status.kind === "paused" || upload === "paused") {
+      return /* @wc-include */ "paused";
+    }
     if (syncReceiver.status.kind === "unreachable" || upload === "unreachable") {
-      return m.sync_status_offline();
+      return /* @wc-include */ "can’t connect";
     }
-    return m.sync_status_up_to_date();
+    return /* @wc-include */ "up to date";
   });
 
   let activePanel = $state<ActivePanel>(null);
@@ -215,7 +216,7 @@
   }
   let filterStatus = $state("");
   function announceFilters(): void {
-    filterStatus = filtersActive ? m.toolbar_filters_applied() : m.toolbar_filters_cleared();
+    filterStatus = filtersActive ? "Filters applied" : "All filters cleared";
   }
 </script>
 
@@ -235,7 +236,7 @@
   {/key}
 
   <nav
-    aria-label={m.toolbar_nav_label()}
+    aria-label="Tracker tools"
     class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
@@ -246,12 +247,12 @@
           <IconSearch
             class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
-          <label class="sr-only" for="tracker-search">{m.toolbar_search_label()}</label>
+          <label class="sr-only" for="tracker-search">Search items</label>
           <Input
             bind:ref={searchInput}
             class="min-h-11 px-9"
             id="tracker-search"
-            placeholder={m.toolbar_search_placeholder()}
+            placeholder="Search items…"
             type="text"
             value={toolbarState.searchQuery}
             oninput={handleSearchInput}
@@ -260,7 +261,7 @@
             <button
               class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
               type="button"
-              aria-label={m.toolbar_clear_search()}
+              aria-label="Clear search"
               onclick={() => {
                 toolbarState.setSearchQuery("");
               }}>×</button
@@ -279,7 +280,7 @@
           <button
             class="floating-tool {activePanel === 'settings' ? 'floating-tool--active' : ''}"
             type="button"
-            aria-label={m.toolbar_quick_settings()}
+            aria-label="Quick settings"
             aria-expanded={activePanel === "settings"}
             aria-controls="quick-settings-panel"
             onclick={() => {
@@ -291,7 +292,7 @@
           <button
             class="floating-tool {activePanel === 'feedback' ? 'floating-tool--active' : ''}"
             type="button"
-            aria-label={m.toolbar_send_feedback()}
+            aria-label="Send feedback"
             aria-expanded={activePanel === "feedback"}
             onclick={() => {
               togglePanel("feedback");
@@ -302,12 +303,14 @@
           {#if syncing}
             <div class="sync-tool">
               {#if syncReceiver.gapDays !== undefined && activePanel !== "sync"}
-                <p class="sync-tool__slip">{m.sync_status_gap({ days: syncReceiver.gapDays })}</p>
+                <p class="sync-tool__slip">
+                  {`Haven’t heard from your game in ${syncReceiver.gapDays} days`}
+                </p>
               {/if}
               <button
                 class="floating-tool {activePanel === 'sync' ? 'floating-tool--active' : ''}"
                 type="button"
-                aria-label={m.sync_status_name({ status: syncStatusLabel })}
+                aria-label={`Save file sync: ${syncStatusLabel}`}
                 aria-expanded={activePanel === "sync"}
                 aria-controls="sync-status-panel"
                 onclick={() => {
@@ -326,7 +329,7 @@
             <button
               class="floating-tool"
               type="button"
-              aria-label={m.toolbar_search()}
+              aria-label="Search"
               data-toolbar-search-trigger
               onclick={openSearch}
             >
@@ -341,7 +344,7 @@
                   ? 'floating-tool--filtered'
                   : ''}"
               type="button"
-              aria-label={m.toolbar_visibility_filters()}
+              aria-label="Visibility filters"
               aria-expanded={activePanel === "visibility"}
               aria-controls="filter-panel"
               onclick={() => {
@@ -358,20 +361,14 @@
                 : ''}"
               type="button"
               aria-label={trackingReminders.clockHint
-                ? m.toolbar_clock_hint({
-                    season: seasonLabel(userState.state.worldState.season, page.data.locale),
-                    weather: weatherLabel(
-                      userState.state.worldState.weather,
-                      userState.state.worldState.season,
-                    ),
-                  })
-                : m.toolbar_clock({
-                    season: seasonLabel(userState.state.worldState.season, page.data.locale),
-                    weather: weatherLabel(
-                      userState.state.worldState.weather,
-                      userState.state.worldState.season,
-                    ),
-                  })}
+                ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                    userState.state.worldState.weather,
+                    userState.state.worldState.season,
+                  )}. This sorts your lists; set today’s day.`
+                : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                    userState.state.worldState.weather,
+                    userState.state.worldState.season,
+                  )}`}
               aria-expanded={activePanel === "clock"}
               aria-controls="clock-panel"
               onclick={() => {
@@ -402,28 +399,24 @@
     <PanelOverlay
       bind:element={panelElement}
       animateOut
-      closeLabel={m.toolbar_close_panel()}
+      closeLabel="Close panel"
       onClose={closePanel}
       style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     >
       {#if activePanel === "settings"}
-        <FoldoutPanel
-          id="quick-settings-panel"
-          title={m.toolbar_quick_settings()}
-          onClose={closePanel}
-        >
+        <FoldoutPanel id="quick-settings-panel" title="Quick settings" onClose={closePanel}>
           <QuickSettingsPanel />
         </FoldoutPanel>
       {:else if activePanel === "clock"}
-        <FoldoutPanel id="clock-panel" title={m.toolbar_clock_title()} onClose={closePanel}>
+        <FoldoutPanel id="clock-panel" title="Season & weather" onClose={closePanel}>
           <ClockPanel />
         </FoldoutPanel>
       {:else if activePanel === "sync"}
-        <FoldoutPanel id="sync-status-panel" title={m.sync_card_title()} onClose={closePanel}>
+        <FoldoutPanel id="sync-status-panel" title="Save file sync" onClose={closePanel}>
           <SyncStatusPanel />
         </FoldoutPanel>
       {:else}
-        <FoldoutPanel id="filter-panel" title={m.toolbar_filters()} onClose={closePanel}>
+        <FoldoutPanel id="filter-panel" title="Filters" onClose={closePanel}>
           {#snippet headerActions()}
             {#if filtersActive}
               <button
@@ -432,7 +425,7 @@
                 onclick={resetFilters}
                 transition:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}
               >
-                <IconRotate class="size-3.5" />{m.toolbar_reset_filters()}
+                <IconRotate class="size-3.5" /><!-- @wc-context: toolbar reset filters -->Reset
               </button>
             {/if}
           {/snippet}

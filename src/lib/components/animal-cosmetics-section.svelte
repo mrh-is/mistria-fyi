@@ -8,7 +8,6 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
@@ -107,7 +106,7 @@
   {isAnimalComplete}
   {locale}
   lookups={baseLookups}
-  name={m.animals_cosmetics_section_name()}
+  name="Cosmetics"
   reportCategory="animal-cosmetics"
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: CosmeticId) => {

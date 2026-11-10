@@ -2,8 +2,6 @@
   import IconLock from "@tabler/icons-svelte-runes/icons/lock";
   import IconWorld from "@tabler/icons-svelte-runes/icons/world";
 
-  import * as m from "#lib/ui-messages/messages.js";
-
   export type Visibility = "private" | "public";
 
   let { id, visibility }: { id?: string; visibility: Visibility } = $props();
@@ -12,9 +10,9 @@
 <!-- Says in words, not only in color, who will see an extra. -->
 <span {id} class="visibility-tag visibility-tag--{visibility}">
   {#if visibility === "public"}
-    <IconWorld class="size-3 shrink-0" aria-hidden="true" />{m.feedback_visibility_public()}
+    <IconWorld class="size-3 shrink-0" aria-hidden="true" />Public
   {:else}
-    <IconLock class="size-3 shrink-0" aria-hidden="true" />{m.feedback_visibility_private()}
+    <IconLock class="size-3 shrink-0" aria-hidden="true" />Private
   {/if}
 </span>
 

@@ -1,8 +1,6 @@
 <script lang="ts">
   import IconFileText from "@tabler/icons-svelte-runes/icons/file-text";
 
-  import * as m from "#lib/ui-messages/messages.js";
-
   let {
     label,
     onclick,
@@ -20,7 +18,7 @@
 -->
 <button class="peek-slip" type="button" aria-label={label} aria-haspopup="dialog" {onclick}>
   <span class="peek-slip__paper">
-    <IconFileText class="size-3 shrink-0" aria-hidden="true" />{m.feedback_peek_action()}
+    <IconFileText class="size-3 shrink-0" aria-hidden="true" />Peek
   </span>
 </button>
 

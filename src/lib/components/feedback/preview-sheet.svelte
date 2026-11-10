@@ -10,7 +10,6 @@
   import VisibilityTag from "#lib/components/feedback/visibility-tag.svelte";
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import { outlineLines } from "#lib/feedback/outline.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import type { OutlineLine } from "#lib/feedback/outline.js";
 
@@ -33,14 +32,15 @@
   let copy = $derived(
     preview === "progress"
       ? {
-          attach: m.feedback_attach_progress_label(),
-          removed: m.feedback_preview_progress_removed(),
-          title: m.feedback_preview_progress_title(),
+          attach: "Attach progress",
+          removed: "We took out your playtime and your farmer & farm names.",
+          title: "Your progress",
         }
       : {
-          attach: m.feedback_attach_sync_log(),
-          removed: m.feedback_preview_sync_log_removed(),
-          title: m.feedback_preview_sync_log_title(),
+          attach: "Attach sync log",
+          removed:
+            "We took out your farmer & farm names and your sync links, and scrambled your farm number.",
+          title: "Your sync log",
         },
   );
   // Kept while the sheet slides away, after the caller stops computing its data.
@@ -70,11 +70,11 @@
           <VisibilityTag visibility="public" />
         </div>
         <DialogPrimitive.Description class="preview-sheet__subtitle">
-          {m.feedback_preview_subtitle()}
+          Exactly what goes with your message, once you switch it on.
         </DialogPrimitive.Description>
         <DialogPrimitive.Close class="preview-sheet__close">
           <XIcon class="size-5" aria-hidden="true" />
-          <span class="sr-only">{m.common_close()}</span>
+          <span class="sr-only">Close</span>
         </DialogPrimitive.Close>
       </div>
       <!-- A keyboard stop, so the outline scrolls without a pointer. -->

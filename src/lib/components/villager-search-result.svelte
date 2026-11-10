@@ -6,7 +6,6 @@
   import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { VillagerId } from "#lib/types/tracker-data.js";
@@ -27,7 +26,7 @@
     <a
       class="villager-search-result__link"
       href="{localizedHref('villagers')}#villager-{id}"
-      aria-label={m.villager_relationship_level_aria({ level, max: MAX_HEART_LEVEL, name })}
+      aria-label={`${name} relationship level, ${level} of ${MAX_HEART_LEVEL}`}
     >
       <span class="villager-search-result__mark" aria-hidden="true">
         <Icon.ProgressMark

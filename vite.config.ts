@@ -13,6 +13,11 @@ import { wuchale } from "wuchale/vite";
 
 import { getAppVersion } from "./scripts/app-version.js";
 import { compileUiMessages } from "./scripts/compile-ui-messages.js";
+import {
+  aboutMetadataFile,
+  aboutSvelteFiles,
+  sharedSvelteFiles,
+} from "./scripts/lib/wuchale-source-files.js";
 import RelayFirstSequencer from "./scripts/vitest-relay-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import {
@@ -227,7 +232,7 @@ export default defineConfig(({ command }) => ({
         },
       ],
     }),
-    svelteCssCachePlugin(),
+    svelteCssCachePlugin([aboutMetadataFile, ...aboutSvelteFiles, ...sharedSvelteFiles]),
   ],
   resolve: { alias: libAlias },
   server: {

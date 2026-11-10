@@ -9,7 +9,6 @@
   import { getSectionGroupItem } from "#lib/controllers/section-grouping.svelte.js";
   import { progressShelf } from "#lib/engine/shelves.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -134,11 +133,7 @@
       aria-expanded={isOpen}
       aria-controls={contentId}
       aria-label={total !== undefined && boundedCount !== undefined
-        ? m.section_progress_label({
-            completed: formatNumber(boundedCount, locale),
-            name,
-            total: formatNumber(total, locale),
-          })
+        ? `${name}, ${formatNumber(boundedCount, locale)} of ${formatNumber(total, locale)} completed`
         : undefined}
       {@attach reportable}
     >

@@ -17,7 +17,6 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
@@ -130,7 +129,7 @@
     {progress}
     reportCategory="mount-appearances"
   >
-    {#each [{ kind: "appearance", name: m.animals_mount_appearances() }, { kind: "perk", name: m.animals_mount_perks() }] as group (group.kind)}
+    {#each [{ kind: "appearance", name: "Appearances" }, { kind: "perk", name: "Perks" }] as group (group.kind)}
       {@const groupProgress = countShelfRows(
         shelvedEntries.filter((entry) => entry.kind === group.kind),
       )}

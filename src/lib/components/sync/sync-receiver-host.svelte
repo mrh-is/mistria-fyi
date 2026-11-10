@@ -5,7 +5,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import SyncQuestionDialog from "./sync-question-dialog.svelte";
 
@@ -14,10 +13,16 @@
   function tell({ applied, kept, switchedFrom }: SyncTell): void {
     if (switchedFrom) {
       const farm = switchedFrom.farmName;
-      toast(farm ? m.sync_tell_switched({ farm }) : m.sync_tell_switched_unnamed());
+      toast(
+        farm
+          ? `New farm! We saved a backup of ${farm}. Restore it any time from Data.`
+          : "New farm! We saved a backup of your last one. Restore it any time from Data.",
+      );
     }
-    if (applied) toast(m.sync_tell_applied());
-    if (kept) toast(m.sync_tell_kept());
+    if (applied) toast("Your latest save file changed a few things here.");
+    if (kept) {
+      toast("We kept a few things you checked off by hand that your save file sees differently.");
+    }
   }
 
   onMount(() => {

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { getOverallProgress } from "#lib/engine/categories.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber, formatPercent, formatPercentParts } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -18,11 +17,7 @@
 
 <div
   class="overall-progress"
-  aria-label={m.overall_progress_label({
-    completed: formatNumber(overall.completed, page.data.locale),
-    pct: formatPercent(overall.pct, page.data.locale),
-    total: formatNumber(overall.total, page.data.locale),
-  })}
+  aria-label={`${formatNumber(overall.completed, page.data.locale)} of ${formatNumber(overall.total, page.data.locale)} completed overall, ${formatPercent(overall.pct, page.data.locale)}`}
   aria-live="polite"
   role="img"
 >

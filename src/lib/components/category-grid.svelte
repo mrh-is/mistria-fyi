@@ -5,7 +5,6 @@
   import { CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { progressShelf, SHELVES } from "#lib/engine/shelves.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -40,10 +39,7 @@
   {#each shelves as { keys, shelf } (shelf)}
     <section class="flex flex-col gap-2">
       <ShelfHeading class="px-1" {shelf} --shelf-heading-info-accent="var(--color-home-accent)" />
-      <ul
-        class="flex flex-col gap-1.5"
-        aria-label={m.shelf_categories_label({ shelf: shelfLabel(shelf) })}
-      >
+      <ul class="flex flex-col gap-1.5" aria-label={`${shelfLabel(shelf)} categories`}>
         {#each keys as key (key)}
           <li><CategoryCard {key} progress={progress[key]} quiet={shelf === "notNow"} /></li>
         {/each}

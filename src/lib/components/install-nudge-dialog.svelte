@@ -5,29 +5,28 @@
     downloadProgressBackup,
     trackingReminders,
   } from "#lib/controllers/tracking-reminders.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   let open = $derived(trackingReminders.installOpen);
 </script>
 
 <SyncTagDialog
   bind:open
-  title={m.tracking_install_title()}
-  body={m.tracking_install_body()}
+  title="Let’s keep your progress safe"
+  body="Safari can clear your progress after seven days of Safari use without a visit here. Adding the field guide to your Home Screen gives it its own storage, so we’ll move your progress over with a backup."
   onOpenChange={(value) => {
     if (!value && trackingReminders.installOpen) trackingReminders.closeInstall();
   }}
   actions={[
-    { label: m.tracking_install_later(), onclick: () => trackingReminders.closeInstall() },
+    { label: "Later", onclick: () => trackingReminders.closeInstall() },
     {
-      label: m.tracking_install_done(),
+      label: "I’ve installed it",
       onclick: () => trackingReminders.closeInstall(true),
       primary: true,
     },
   ]}
 >
-  <p>{m.tracking_install_backup()}</p>
-  <Button variant="outline" onclick={downloadProgressBackup}>{m.backup_export_action()}</Button>
-  <p>{m.tracking_install_add()}</p>
-  <p>{m.tracking_install_restore()}</p>
+  <p>1. Download a backup of your progress first.</p>
+  <Button variant="outline" onclick={downloadProgressBackup}>Export backup</Button>
+  <p>2. Open Share, then choose Add to Home Screen. Open the field guide from its new icon.</p>
+  <p>3. Open Data in the installed app and restore the backup you just downloaded.</p>
 </SyncTagDialog>

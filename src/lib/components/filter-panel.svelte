@@ -11,7 +11,6 @@
   import SourceExplainerDialog from "#lib/components/source-explainer-dialog.svelte";
   import { sortSourceFiltersByLabel, sourceFilterLabel } from "#lib/data/source-filters.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { page } from "$app/state";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
@@ -35,26 +34,21 @@
     const enabled = sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale).filter(
       (filter) => toolbarState.enabledSourceFilterIds.has(filter.id),
     );
-    if (enabled.length === toolbarState.sourceFilters.length) return m.visibility_sources_all();
-    if (enabled.length === 0) return m.visibility_sources_none();
+    if (enabled.length === toolbarState.sourceFilters.length) return "All types";
+    if (enabled.length === 0) return "No types";
     if (enabled.length > MAX_LISTED_SOURCE_TYPES) {
-      return m.visibility_source_types_summary({
-        enabled: enabled.length,
-        total: toolbarState.sourceFilters.length,
-      });
+      return /* @wc-context: visibility source types summary */ `${enabled.length} of ${toolbarState.sourceFilters.length}`;
     }
     // Labels are title-like on their own; mid-phrase they read as ordinary nouns.
     const labels = enabled.map((filter) =>
       sourceFilterLabel(filter.id, page.data.locale).toLocaleLowerCase(page.data.locale),
     );
-    if (labels.length === 1) return m.visibility_sources_only({ type: labels[0] ?? "" });
+    if (labels.length === 1) return `Only ${labels[0] ?? ""}`;
     const list = new Intl.ListFormat(page.data.locale, { type: "conjunction", style: "short" });
     const phrase = list.format(labels);
     return phrase.charAt(0).toLocaleUpperCase(page.data.locale) + phrase.slice(1);
   });
-  let showSummary = $derived(
-    toolbarState.showUnobtainable ? m.visibility_show_everything() : m.visibility_show_obtainable(),
-  );
+  let showSummary = $derived(toolbarState.showUnobtainable ? "Everything" : "Obtainable");
 
   function isCollapsed(section: FilterSectionId): boolean {
     return compact.current && !toolbarState.expandedFilterSections.has(section);
@@ -103,18 +97,13 @@
   {#if toolbarState.sourceFilters.length > 0}
     <section class="filter-section" aria-labelledby="sources-filter-label">
       <div class="filter-section__heading" class:filter-section__heading--compact={compact.current}>
-        {@render sectionHeading(
-          "sources",
-          IconTags,
-          m.visibility_source_types(),
-          sourceSummaryText,
-        )}
+        {@render sectionHeading("sources", IconTags, "Source types", sourceSummaryText)}
         <!-- Sits just left of the disclosure caret, so every section's caret lines up. -->
         {#if !isCollapsed("sources")}
           <button
             class="info-button"
             type="button"
-            aria-label={m.visibility_source_types_about_aria()}
+            aria-label="About source types"
             onclick={() => (sourcesExplainerOpen = true)}><IconInfoCircle class="size-4" /></button
           >
         {/if}
@@ -151,7 +140,7 @@
 
   {#if toolbarState.hasAlmanacFilters}
     <section class="filter-section" aria-labelledby="show-filter-label">
-      {@render sectionHeading("show", IconEye, m.visibility_show_heading(), showSummaryText)}
+      {@render sectionHeading("show", IconEye, "Show", showSummaryText)}
       <div
         id="show-filter-body"
         class="collapsible"
@@ -168,9 +157,7 @@
                   onFilterChange?.();
                 }}
               >
-                <span class="toggle__label"
-                  ><IconBan class="size-3.5 shrink-0" />{m.visibility_unobtainable_toggle()}</span
-                >
+                <span class="toggle__label"><IconBan class="size-3.5 shrink-0" />Unobtainable</span>
               </BlockySwitch>
             </div>
           </div>

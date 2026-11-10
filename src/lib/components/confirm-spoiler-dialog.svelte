@@ -2,7 +2,6 @@
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/button.svelte";
   import { canPlanConditionMutations } from "#lib/engine/visibility.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import type { GuardSubject } from "#lib/controllers/spoiler-guard.svelte.js";
   import type { VisibilityCondition } from "#lib/types/visibility.js";
@@ -31,26 +30,28 @@
   const copy = $derived.by(() => {
     if (subject === undefined) {
       return {
-        complete: invertible ? m.spoiler_dialog_yolo_item() : m.spoiler_dialog_yolo(),
-        completeAndUpdate: m.spoiler_dialog_yolo_and_update(),
-        description: m.spoiler_dialog_masked_description(),
-        title: m.spoiler_dialog_masked_title(),
+        complete: invertible ? "YOLO (just this one thing)" : /* @wc-include */ "YOLO",
+        completeAndUpdate: "YOLO, and prerequisites",
+        description: "You haven’t even revealed its name!",
+        title: "Check off this item?",
       };
     }
     const plain = {
-      complete: invertible ? m.spoiler_dialog_confirm_item() : m.spoiler_dialog_confirm(),
-      completeAndUpdate: m.spoiler_dialog_confirm_and_update(),
+      complete: invertible ? "Yes, just this one" : "Yes",
+      completeAndUpdate: "Yes, and prerequisites too",
     };
     return "floor" in subject
       ? {
           ...plain,
-          description: m.spoiler_dialog_floor_description(),
-          title: m.spoiler_dialog_floor_title({ floor: subject.floor }),
+          description:
+            "Based on your tracked progress, you haven’t broken the seal on the way there yet. Are you sure?",
+          title: `Head down to floor ${subject.floor}?`,
         }
       : {
           ...plain,
-          description: m.spoiler_dialog_description(),
-          title: m.spoiler_dialog_title({ name: subject.name }),
+          description:
+            "Based on your tracked progress, it doesn’t seem like you should be able to get this yet. Are you sure?",
+          title: `Check off ${subject.name}?`,
         };
   });
 </script>
@@ -67,7 +68,9 @@
     <AlertDialog.Footer
       class="flex-wrap [&>button]:h-auto [&>button]:min-h-11 [&>button]:py-2 [&>button]:text-balance [&>button]:whitespace-normal"
     >
-      <AlertDialog.Cancel onclick={onCancel}>{m.spoiler_dialog_cancel()}</AlertDialog.Cancel>
+      <AlertDialog.Cancel onclick={onCancel}
+        ><!-- @wc-context: spoiler dialog cancel -->Never mind</AlertDialog.Cancel
+      >
       <AlertDialog.Action
         class={`${buttonVariants({ variant: invertible ? "outline" : "default" })} ${invertible ? "text-foreground" : ""}`}
         onclick={onComplete}

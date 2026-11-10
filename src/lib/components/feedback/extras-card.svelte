@@ -7,7 +7,6 @@
   import VisibilityTag from "#lib/components/feedback/visibility-tag.svelte";
   import TagDialog from "#lib/components/tag-dialog.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import type { Preview } from "#lib/components/feedback/preview-sheet.svelte";
 
@@ -26,46 +25,52 @@
 <TagDialog bind:open>
   <div class="extras-card__body">
     <div class="extras-card__heading">
-      <Dialog.Title>{m.feedback_extras_title()}</Dialog.Title>
+      <Dialog.Title>What the extras send</Dialog.Title>
     </div>
-    <Dialog.Description class="extras-card__lead">{m.feedback_extras_lead()}</Dialog.Description>
+    <Dialog.Description class="extras-card__lead"
+      >Only what you switch on goes with your message. Peeking doesn’t count!</Dialog.Description
+    >
     <dl class="extras-card__list">
       <div class="extras-card__entry">
         <dt>
           <IconPaperclip class="size-3.5 shrink-0" aria-hidden="true" />
-          <span class="extras-card__name">{m.feedback_extra_progress_name()}</span>
-          <PeekSlip label={m.feedback_peek_progress_aria()} onclick={() => onPeek("progress")} />
+          <span class="extras-card__name"
+            ><!-- @wc-context: feedback extra progress name -->Progress</span
+          >
+          <PeekSlip label="Peek at my progress" onclick={() => onPeek("progress")} />
           <VisibilityTag visibility="public" />
         </dt>
-        <dd>
-          {m.feedback_extra_progress_description()}
-        </dd>
+        <dd>What you’ve checked off & your skill levels, so we can see what you’re seeing.</dd>
       </div>
       {#if allowSyncLog}
         <div class="extras-card__entry">
           <dt>
             <IconRefresh class="size-3.5 shrink-0" aria-hidden="true" />
-            <span class="extras-card__name">{m.feedback_extra_sync_log_name()}</span>
-            <PeekSlip label={m.feedback_peek_sync_log_aria()} onclick={() => onPeek("syncLog")} />
+            <span class="extras-card__name">Sync log</span>
+            <PeekSlip label="Peek at my sync log" onclick={() => onPeek("syncLog")} />
             <VisibilityTag visibility="public" />
           </dt>
           <dd>
-            {m.feedback_extra_sync_log_description()}
+            Your recent save file syncs from this tab, for when syncing acts up. Names & sync links
+            come out first.
           </dd>
         </div>
       {/if}
       <div class="extras-card__entry">
         <dt>
           <IconMail class="size-3.5 shrink-0" aria-hidden="true" />
-          <span class="extras-card__name">{m.feedback_extra_reply_name()}</span>
+          <span class="extras-card__name">Reply</span>
           <VisibilityTag visibility="private" />
         </dt>
-        <dd>{m.feedback_extra_reply_description()}</dd>
+        <dd>
+          We’ll ask for your email so Michael can write back. Nobody else sees it, and it never goes
+          on the issue.
+        </dd>
       </div>
     </dl>
   </div>
   <div class="extras-card__footer">
-    <Dialog.Close class="inventory-tag__close">{m.source_explainer_dismiss()}</Dialog.Close>
+    <Dialog.Close class="inventory-tag__close">Got it</Dialog.Close>
   </div>
 </TagDialog>
 

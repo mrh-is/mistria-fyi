@@ -6,7 +6,6 @@
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
   import { weathersForSeason } from "#lib/engine/world-state.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, seasonLabelAbbr, weatherLabel } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -70,9 +69,9 @@
 <div class="clock-panel">
   <div class="world-state-grid">
     <div>
-      <p>{m.visibility_season_label()}</p>
+      <p>Season</p>
       <SegmentedPicker
-        label={m.visibility_season_label()}
+        label="Season"
         choices={seasons}
         value={currentSeason}
         labelFor={(season) => seasonLabel(season, page.data.locale)}
@@ -85,9 +84,9 @@
     </div>
 
     <div>
-      <p>{m.visibility_weather_label()}</p>
+      <p>Weather</p>
       <SegmentedPicker
-        label={m.visibility_weather_label()}
+        label="Weather"
         choices={allWeathers}
         value={userState.state.worldState.weather}
         labelFor={(weather) => weatherLabel(weather, currentSeason)}

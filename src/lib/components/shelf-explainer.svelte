@@ -4,7 +4,6 @@
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -20,25 +19,26 @@
       <span class="shelf-tag__day">
         <Icon.Season {season} class="size-3.5" />
         <Icon.Weather {season} {weather} class="size-3.5" />
-        {m.shelf_explainer_day({
-          season: seasonLabel(season, page.data.locale),
-          weather: weatherLabel(weather, season),
-        })}
+        {`Sorted for ${seasonLabel(season, page.data.locale)}, ${weatherLabel(weather, season)}`}
       </span>
-      <Dialog.Title>{m.shelf_explainer_title()}</Dialog.Title>
-      <Dialog.Description class="sr-only">{m.shelf_explainer_description()}</Dialog.Description>
+      <Dialog.Title>What the shelves mean</Dialog.Title>
+      <Dialog.Description class="sr-only"
+        >What each shelf holds, & the day it’s sorted for.</Dialog.Description
+      >
     </div>
     <dl class="shelf-tag__list">
       <dt>{shelfLabel("todo")}</dt>
-      <dd>{m.shelf_explainer_todo()}</dd>
+      <dd>You can do at least one of these today.</dd>
       <dt>{shelfLabel("notNow")}</dt>
-      <dd>{m.shelf_explainer_not_now()}</dd>
+      <dd>
+        Nothing here can happen today. It’s waiting on a season, the weather, or your progress.
+      </dd>
       <dt>{shelfLabel("completed")}</dt>
-      <dd>{m.shelf_explainer_completed()}</dd>
+      <dd>You finished everything here. Nice!</dd>
     </dl>
   </div>
   <div class="shelf-tag__footer">
-    <Dialog.Close class="inventory-tag__close">{m.source_explainer_dismiss()}</Dialog.Close>
+    <Dialog.Close class="inventory-tag__close">Got it</Dialog.Close>
   </div>
 </TagDialog>
 

@@ -9,7 +9,6 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { townRankColor } from "#lib/utils/palette.js";
 
@@ -47,7 +46,7 @@
 {/if}
 
 {#if !compact}
-  <ul class="rank-register" aria-label={m.renown_rank_register_aria()}>
+  <ul class="rank-register" aria-label="Town rank register">
     {#each trackerData.townRanks as rank, index (index)}
       {#if matchesSearch(rank.levels.start, index)}
         <RankRecord

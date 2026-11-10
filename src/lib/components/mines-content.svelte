@@ -21,7 +21,6 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -157,7 +156,7 @@
     {#if key === "floors"}
       <ExpandableSection
         {locale}
-        name={m.mines_floor_progress_section()}
+        name="Floor progress"
         progress={mineFloorProgress(userState.state.progress)}
         reportCategory="mines"
         reportEntityId="floors"

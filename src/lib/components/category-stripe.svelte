@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Icon } from "#lib/components/icon/index.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -55,11 +54,7 @@
   class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
   href={localizedHref(href)}
-  aria-label={m.section_progress_label({
-    completed: formatNumber(completed, page.data.locale),
-    name,
-    total: formatNumber(categoryTotal, page.data.locale),
-  })}
+  aria-label={`${name}, ${formatNumber(completed, page.data.locale)} of ${formatNumber(categoryTotal, page.data.locale)} completed`}
   style="--category-color: {color}; --category-progress-percent: {pct}%; --category-todo-percent: {todoPct}%"
 >
   <span class="category-copy">

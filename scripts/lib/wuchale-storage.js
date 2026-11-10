@@ -14,17 +14,17 @@ function compare(left, right) {
 /** @param {string[]} shards @param {(item: import("wuchale").Item) => string} shardFor @returns {import("wuchale").StorageFactory} */
 export function partitionedStorage(shards, shardFor) {
   return ({ fs, localesDir, root, sourceLocale }) => {
-    const key = path.resolve(root, localesDir);
-    const files = shards.map((shard) => path.join(key, `${shard}.json`));
+    const directory = path.resolve(root, localesDir);
+    const files = shards.map((shard) => path.join(directory, `${shard}.json`));
     /** @param {import("wuchale").Item} item */
     const identity = (item) => {
       const source = item.translations.get(sourceLocale);
-      if (!source?.length) throw new Error(`Missing source message in ${key}`);
+      if (!source?.length) throw new Error(`Missing source message in ${directory}`);
       return getKey(source, item.context);
     };
     return {
       files,
-      key,
+      key: JSON.stringify(files.toSorted()),
       async load() {
         /** @type {Map<string, import("wuchale").Item>} */
         const items = new Map();
@@ -36,7 +36,7 @@ export function partitionedStorage(shards, shardFor) {
             const item = { ...row, translations: new Map(Object.entries(row.translations)) };
             const id = identity(item);
             if (items.has(id)) throw new Error(`Duplicate catalog entry in ${file}: ${id}`);
-            if (file !== path.join(key, `${shardFor(item)}.json`)) {
+            if (file !== path.join(directory, `${shardFor(item)}.json`)) {
               throw new Error(`Catalog entry is in the wrong shard: ${id}`);
             }
             items.set(id, item);
@@ -54,7 +54,7 @@ export function partitionedStorage(shards, shardFor) {
             translations: Object.fromEntries(item.translations),
           });
         }
-        await fs.mkdir(key);
+        await fs.mkdir(directory);
         await Promise.all(
           shards.map(async (shard, index) => {
             const file = files[index];

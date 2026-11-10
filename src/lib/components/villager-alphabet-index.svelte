@@ -3,7 +3,6 @@
   import { prefersReducedMotion } from "svelte/motion";
 
   import { nameCollator } from "#lib/data/names.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
 
@@ -108,7 +107,7 @@
 <nav
   class="villager-index"
   style="--villager-index-initial-count: {initials.length}"
-  aria-label={m.villagers_alphabet_aria()}
+  aria-label="Villager alphabet"
   data-scrubbing={scrubbing}
   onpointermove={scrub}
   onpointerup={stopScrub}
@@ -119,7 +118,7 @@
       type="button"
       data-villager-index-initial={entry.initial}
       data-scrub-target={scrubbing && lastScrubbedInitial === entry.initial}
-      aria-label={m.villagers_jump_to_initial_aria({ initial: entry.initial })}
+      aria-label={`Jump to ${entry.initial}, first villager record`}
       onpointerdown={(event) => {
         startScrub(event, entry);
       }}

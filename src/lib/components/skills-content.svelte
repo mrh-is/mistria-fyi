@@ -10,7 +10,6 @@
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordKeys } from "#lib/utils/record.js";
 
@@ -36,7 +35,7 @@
 </script>
 
 {#snippet ledger(rows: readonly { id: SkillId; name: string }[])}
-  <ul class="skill-ledger" aria-label={m.skills_ledger_aria()}>
+  <ul class="skill-ledger" aria-label="Skills ledger">
     {#each rows as skill (skill.id)}
       <CompletionSection complete={isSkillComplete(skill.id, userState.state.progress)}>
         <SkillRecord {compact} id={skill.id} {locale} name={skill.name} {spoilerGuard} />

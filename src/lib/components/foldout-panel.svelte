@@ -2,7 +2,6 @@
   import IconX from "@tabler/icons-svelte-runes/icons/x";
 
   import { trapFocus } from "#lib/attachments/trap-focus.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import type { Snippet } from "svelte";
 
@@ -37,12 +36,7 @@
     <div class="foldout__header-actions">
       {@render headerActions?.()}
     </div>
-    <button
-      class="foldout__close"
-      type="button"
-      aria-label={m.foldout_close({ title })}
-      onclick={onClose}
-    >
+    <button class="foldout__close" type="button" aria-label={`Close ${title}`} onclick={onClose}>
       <IconX class="size-4" />
     </button>
   </header>

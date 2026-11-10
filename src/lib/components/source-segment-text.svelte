@@ -6,7 +6,6 @@
   import Spoiler from "#lib/components/spoiler.svelte";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
 
   import type { SourceSegment } from "#lib/sources/source-segments.js";
 
@@ -26,7 +25,7 @@
     <span
       class="inline-block rounded-sm bg-muted-foreground/25 align-baseline text-transparent select-none"
     >
-      <span class="sr-only">{m.source_spoilered()}</span>
+      <span class="sr-only">Hidden</span>
       <span aria-hidden="true">███</span>
     </span>
   {:else if "condition" in segment}

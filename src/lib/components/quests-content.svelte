@@ -22,7 +22,6 @@
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -127,7 +126,7 @@
       case "crown":
         return getName("ui", "crown_requests", locale);
       case "fetch":
-        return m.quest_type_fetch();
+        return "Fetch quests";
       case "heart":
         return getName("ui", "heart_quests", locale);
       case "mission":

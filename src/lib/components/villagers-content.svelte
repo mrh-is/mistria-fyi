@@ -11,7 +11,6 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { page } from "$app/state";
 
@@ -82,7 +81,7 @@
   <ul
     class="villager-roster"
     data-testid="villager-roster"
-    aria-label={m.villagers_roster_aria()}
+    aria-label="Villager roster"
     tabindex="-1"
   >
     {#each rows as villager (villager.id)}
@@ -108,7 +107,7 @@
     >
       <span>{getName("ui", "disable_break_ups", locale)}</span>
     </BlockySwitch>
-    <p>{m.villagers_break_ups_hint()}</p>
+    <p>Match this to your game’s setting before you get engaged.</p>
   </div>
 {/if}
 
@@ -143,9 +142,7 @@
 
 {#if !compact && breakUpsReadOnly}
   <p class="break-ups-status">
-    {userState.state.progress.breakUpsDisabled
-      ? m.villagers_break_ups_disabled()
-      : m.villagers_break_ups_enabled()}
+    {userState.state.progress.breakUpsDisabled ? "Break-ups disabled" : "Break-ups enabled"}
   </p>
 {/if}
 

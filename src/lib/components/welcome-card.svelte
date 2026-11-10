@@ -5,15 +5,14 @@
 
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { currentDevice } from "#lib/sync/device.js";
-  import * as m from "#lib/ui-messages/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   let syncComputer = $state(true);
   let {
-    body = m.sync_home_body(),
+    body = "Let’s get you set up to keep track of all that hard work. How do you wanna work?",
     framed = true,
     onSync,
-    title = m.sync_home_title(),
+    title = "Ready to get started?",
   }: {
     body?: string;
     framed?: boolean;
@@ -30,11 +29,7 @@
   }
 </script>
 
-<section
-  class="welcome-card"
-  class:welcome-card--framed={framed}
-  aria-label={m.onboarding_region_label()}
->
+<section class="welcome-card" class:welcome-card--framed={framed} aria-label="Getting started">
   {#if framed}
     <div class="welcome-card__marker" aria-hidden="true">
       <IconSparkles />
@@ -42,7 +37,7 @@
   {/if}
 
   <div class="welcome-card__copy">
-    {#if framed}<p class="welcome-card__overline">{m.onboarding_overline()}</p>{/if}
+    {#if framed}<p class="welcome-card__overline">New field guide</p>{/if}
     <h2>{title}</h2>
     <p>{body}</p>
   </div>
@@ -55,17 +50,19 @@
     >
       <IconSparkles aria-hidden="true" />
       <span>
-        <span class="welcome-card__choice-title">{m.sync_home_sync()}</span>
+        <span class="welcome-card__choice-title">Sync from my farm automagically</span>
         <span class="welcome-card__choice-sub">
-          {syncComputer ? m.sync_home_sync_sub_computer() : m.sync_home_sync_sub_phone()}
+          {syncComputer
+            ? "Set up in 2 minutes, plus phone sync"
+            : "Set up in 2 minutes from your gaming computer"}
         </span>
       </span>
     </a>
     <button class="welcome-card__choice" type="button" onclick={startManually}>
       <IconPencil aria-hidden="true" />
       <span>
-        <span class="welcome-card__choice-title">{m.sync_home_hand()}</span>
-        <span class="welcome-card__choice-sub">{m.sync_home_hand_sub()}</span>
+        <span class="welcome-card__choice-title">I’ll track it all by hand</span>
+        <span class="welcome-card__choice-sub">The way my ancestors did it</span>
       </span>
     </button>
   </div>

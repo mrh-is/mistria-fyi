@@ -114,12 +114,10 @@ describe("lint tool ownership", () => {
     await expect(eslintRules("probe.svelte.ts")).resolves.toStrictEqual([]);
   });
 
-  it("checks app templates for hardcoded text, excluding ui/, dev, and fixture files", async () => {
+  it("checks keyed templates and leaves extracted templates to Wuchale", async () => {
     const eslint = new ESLint();
     for (const file of [
-      "src/lib/components/source-segment-text.svelte",
       "src/lib/components/future-feature.svelte",
-      "src/lib/components/spoiler.svelte",
       "src/routes/everything/+page.svelte",
       "src/routes/+error.svelte",
     ]) {
@@ -129,6 +127,8 @@ describe("lint tool ownership", () => {
       expect(config?.rules?.["local/no-hardcoded-ui-text"]?.[0], file).toBe(2);
     }
     for (const file of [
+      "src/lib/components/source-segment-text.svelte",
+      "src/lib/components/spoiler.svelte",
       "src/lib/components/ui/dialog/dialog-content.svelte",
       "src/routes/dev/fonts/+page.svelte",
       "src/lib/components/foldout-panel.test-harness.svelte",

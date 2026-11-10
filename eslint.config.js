@@ -14,6 +14,7 @@ import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.ts";
 // Node strips the types when it imports this TypeScript module.
 import noRawInternalHref from "./eslint-rules/no-raw-internal-href.ts";
 import noUntokenedClasses from "./eslint-rules/no-untokened-classes.ts";
+import { sharedSvelteFiles } from "./scripts/lib/wuchale-source-files.js";
 
 // SvelteKit 3 reads its config from the `sveltekit()` plugin in vite.config.ts, flattened (no `kit`).
 const loadedConfig = await loadConfig("./", { traverse: false });
@@ -106,7 +107,12 @@ export default defineConfig(
     // Cover app templates by default. The `ui/` primitives, dev-only pages, and fixture
     // templates are intentionally outside the user-facing localization contract.
     files: ["src/**/*.svelte"],
-    ignores: ["src/lib/components/ui/**", "src/routes/dev/**", "**/*.test-harness.svelte"],
+    ignores: [
+      "src/lib/components/ui/**",
+      "src/routes/dev/**",
+      "**/*.test-harness.svelte",
+      ...sharedSvelteFiles,
+    ],
     plugins: { local: localPlugin },
     rules: { "local/no-hardcoded-ui-text": "error" },
   },
