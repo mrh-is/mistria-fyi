@@ -31,7 +31,11 @@ export default defineConfig({
     shared: adapter({
       files: sharedSvelteFiles,
       loader: "custom",
-      runtime: { initReactive: () => false },
+      // A module script can run before the route loads its catalog. Only instances read it.
+      runtime: {
+        initReactive: (_scope, _file, /** @type {{ module: boolean }} */ context) =>
+          context.module ? null : false,
+      },
       storage: partitionedStorage(["shared"], () => "shared"),
     }),
   },
