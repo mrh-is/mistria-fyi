@@ -133,28 +133,6 @@
   },
   {
     "translations": {
-      "en": "<0/> Show code",
-      "ja": "<0/> コードを表示",
-      "zh-Hans": "<0/> 显示代码",
-      "zh-Hant": "<0/> 顯示代碼",
-      "es": "<0/> Mostrar código",
-      "fr": "<0/> Afficher le code",
-      "ko": "<0/> 코드 보기",
-      "ru": "<0/> Показать код"
-    },
-    "references": [
-      {
-        "file": "src/routes/data/sync-card.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "<0/> Sync from my farm automagically",
       "ja": "<0/> 農場から自動で同期する",
       "zh-Hans": "<0/> 从我的农场自动同步",

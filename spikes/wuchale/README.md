@@ -162,11 +162,41 @@ pnpm exec wrangler pages dev --port 4395 --ip 127.0.0.1
 pnpm exec node spikes/wuchale/app-probe.js http://127.0.0.1:4395 --wuchale
 ```
 
-## App-wide migration
+## App-wide source extraction
 
-The keyed compiler preserves existing call signatures, locale values, and plural selection. The app
-owns locale URLs and request context. [Localization](../../docs/localization.md) describes the
-current catalogs and the checks for translators and contributors.
+The candidate now extracts app-authored messages from Svelte and TypeScript. Shared Svelte copy
+reacts to the committed locale, and preloading the next locale only fills its catalog cache. Data
+and Sync share a Wuchale load group for the sync-code dialog. The standalone error catalog keeps
+recovery available when another catalog fails. [Localization](../../docs/localization.md) describes
+the authoring and catalog checks.
+
+### Cold production payload
+
+The baseline is Paraglide on main at `2669be88`. The candidate includes that same revision and the
+sync-code catalog split. Both builds used Node 24.22.1, the same tracker data, and local production
+previews. Each Spanish route loaded in a fresh Chromium context with the service worker blocked. The
+probe counts distinct app JavaScript requests through hydration and gzips the emitted files
+individually, independent of the preview server's compression.
+
+| Spanish route | Paraglide JS requests | Paraglide gzip bytes | Wuchale JS requests | Wuchale gzip bytes | Difference |
+| ------------- | --------------------: | -------------------: | ------------------: | -----------------: | ---------: |
+| Home          |                    71 |              406,358 |                  70 |            326,049 |     −19.8% |
+| Almanac       |                    95 |              475,187 |                  94 |            392,282 |     −17.4% |
+| Data          |                    62 |              440,664 |                  65 |            351,989 |     −20.1% |
+| About         |                    57 |              374,390 |                  58 |            306,639 |     −18.1% |
+
+Build each revision with `pnpm run build` and serve them with `pnpm run preview` on distinct ports.
+Run the probe from the candidate checkout and give it the client output for each preview.
+
+```sh
+pnpm exec node spikes/wuchale/compare-cold-app.js \
+  http://127.0.0.1:5197 /path/to/paraglide/.svelte-kit/output/client \
+  http://127.0.0.1:5196 .svelte-kit/output/client
+```
+
+These measurements cover the two app integrations at their current split points. The broader
+evaluation still needs warm navigation and locale-switch timings, worker cache-fill bytes, and the
+same live authoring and translation-review tasks on both branches.
 
 Upstream references: [Svelte adapter](https://wuchale.dev/adapters/svelte/),
 [catalog loading](https://wuchale.dev/guides/loading/),

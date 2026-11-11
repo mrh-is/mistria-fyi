@@ -15,7 +15,7 @@ import {
   sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
 import { partitionedStorage } from "./scripts/lib/wuchale-storage.js";
-import { ROUTE_UI_GROUPS } from "./src/lib/i18n/route-ui-groups.ts";
+import { ROUTE_UI_GROUPS, SYNC_CODE_SOURCE } from "./src/lib/i18n/route-ui-groups.ts";
 import { LOCALE_CODES } from "./src/lib/types/locale.ts";
 
 const aboutStorage = partitionedStorage(["about"], () => "about");
@@ -32,8 +32,11 @@ const instanceRuntime = {
 const routeStorage = partitionedStorage(
   [...ROUTE_UI_GROUPS.map(({ shard }) => `route-${shard}`), "route-shared"],
   ({ references }) => {
+    if (references.length > 0 && references.every(({ file }) => file === SYNC_CODE_SOURCE)) {
+      return "route-sync-code";
+    }
     const routes = new Set(references.map(({ file }) => file.split("/")[2]));
-    const group = ROUTE_UI_GROUPS.find(({ path }) => routes.has(path || "+page.svelte"));
+    const group = ROUTE_UI_GROUPS.find(({ paths }) => routes.has(paths[0] || "+page.svelte"));
     return group && routes.size === 1 ? `route-${group.shard}` : "route-shared";
   },
 );
@@ -83,7 +86,7 @@ export default defineConfig({
       storage: partitionedStorage(["offline"], () => "offline"),
     }),
     route: adapter({
-      files: routeSvelteFiles,
+      files: { ignore: ["**/*.test-harness.svelte"], include: routeSvelteFiles },
       loader: "custom",
       loading: { granular: true, group: ROUTE_UI_GROUPS.map(({ pattern }) => pattern) },
       runtime: instanceRuntime,

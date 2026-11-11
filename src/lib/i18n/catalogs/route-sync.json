@@ -1693,6 +1693,12 @@
     },
     "references": [
       {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/routes/sync/follow-setup.svelte",
         "refs": [
           null
@@ -1847,6 +1853,12 @@
     },
     "references": [
       {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/routes/sync/follow-setup.svelte",
         "refs": [
           null
@@ -1868,6 +1880,12 @@
       "ru": "Мы будем пробовать дальше, или можете попробовать снова сами."
     },
     "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/routes/sync/follow-setup.svelte",
         "refs": [

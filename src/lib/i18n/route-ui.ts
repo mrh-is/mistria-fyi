@@ -24,8 +24,11 @@ const groups = ROUTE_UI_GROUPS.map(({ shard }, index) =>
 
 export async function loadRouteUi(locale: LocaleCode, pathname: string): Promise<void> {
   const route = stripLocale(pathname).split("/")[1];
-  const index = ROUTE_UI_GROUPS.findIndex(({ path }) => path === route);
-  if (index !== -1) await groups[index].load(locale);
+  await Promise.all(
+    ROUTE_UI_GROUPS.flatMap(({ paths }, index) =>
+      paths.some((path) => path === route) ? [groups[index].load(locale)] : [],
+    ),
+  );
 }
 
 export function readRouteRuntime(group: number): Runtime {

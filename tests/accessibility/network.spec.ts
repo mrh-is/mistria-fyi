@@ -3,6 +3,32 @@ import { readFileSync } from "node:fs";
 import { expect, isolateNetwork, test } from "../browser/test.js";
 import { gotoApplication } from "./support/application-state.js";
 
+function catalogAsset(catalog: string): string {
+  const manifest = JSON.parse(
+    readFileSync(
+      new URL("../../.svelte-kit/output/client/.vite/manifest.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Record<string, { file: string }>;
+  return manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.es.compiled.js`].file;
+}
+
+test("Data and Sync request the sync-code copy and Home skips it", async ({ page }) => {
+  const asset = `/${catalogAsset("route.6")}`;
+  let requests = 0;
+  await page.route(`**${asset}`, async (route) => {
+    requests += 1;
+    await route.continue();
+  });
+
+  await gotoApplication(page, "/es");
+  expect(requests).toBe(0);
+  await gotoApplication(page, "/es/data");
+  expect(requests).toBe(1);
+  await gotoApplication(page, "/es/sync");
+  expect(requests).toBe(2);
+});
+
 for (const { catalog, warmShared } of [
   { catalog: "shared.0", warmShared: false },
   { catalog: "route.2", warmShared: false },
@@ -11,13 +37,7 @@ for (const { catalog, warmShared } of [
   test(`recovers in Spanish when the ${catalog} catalog is unavailable (${warmShared ? "warm" : "cold"} shared copy)`, async ({
     page,
   }) => {
-    const manifest = JSON.parse(
-      readFileSync(
-        new URL("../../.svelte-kit/output/client/.vite/manifest.json", import.meta.url),
-        "utf8",
-      ),
-    ) as Record<string, { file: string }>;
-    const { file } = manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.es.compiled.js`];
+    const file = catalogAsset(catalog);
     let blocked = false;
     await page.route(`**/${file}`, (route) => {
       blocked = true;

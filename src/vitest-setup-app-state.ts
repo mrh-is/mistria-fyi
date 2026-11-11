@@ -13,10 +13,11 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 // files in the shared Node app project, too.
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
+const routePaths = [...new Set(ROUTE_UI_GROUPS.flatMap(({ paths }) => paths))];
 await Promise.all(
   LOCALE_CODES.flatMap((locale) => [
     loadSharedUi(locale),
-    ...ROUTE_UI_GROUPS.map(({ path }) => loadRouteUi(locale, `/${path}`)),
+    ...routePaths.map((path) => loadRouteUi(locale, `/${path}`)),
   ]),
 );
 

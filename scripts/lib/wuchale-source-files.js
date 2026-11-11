@@ -1,3 +1,5 @@
+import { ROUTE_UI_GROUPS } from "../../src/lib/i18n/route-ui-groups.ts";
+
 export const aboutSvelteFiles = [
   "src/routes/about/about-copy.svelte",
   "src/lib/components/ai-disclosure-dialog.svelte",
@@ -35,28 +37,7 @@ export const sharedLocaleSvelteFiles = [
   "src/lib/components/search-guide-link.svelte",
 ];
 
-export const routeSvelteFiles = [
-  "src/routes/+page.svelte",
-  "src/routes/data/+page.svelte",
-  "src/routes/data/backup-card.svelte",
-  "src/routes/data/danger-zone-card.svelte",
-  "src/routes/data/import-card.svelte",
-  "src/routes/data/last-import.svelte",
-  "src/routes/data/merge-summary.svelte",
-  "src/routes/data/sync-card.svelte",
-  "src/routes/data/transfer-card.svelte",
-  "src/routes/everything/+page.svelte",
-  "src/routes/everything/section-header.svelte",
-  "src/routes/everything/source-content.svelte",
-  "src/routes/privacy/+page.svelte",
-  "src/routes/sync/+page.svelte",
-  "src/routes/sync/computer-setup.svelte",
-  "src/routes/sync/find-save-step.svelte",
-  "src/routes/sync/follow-setup.svelte",
-  "src/routes/sync/only-save-note.svelte",
-  "src/routes/sync/qr-scanner.svelte",
-  "src/routes/sync/where-choice.svelte",
-];
+export const routeSvelteFiles = ROUTE_UI_GROUPS.map(({ pattern }) => pattern);
 
 export const routeMetadataFiles = [
   "src/routes/(category)/almanac/+page.ts",

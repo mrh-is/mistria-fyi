@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
@@ -24,7 +24,7 @@ describe("TrackerRow localized checkbox labels", () => {
     { locale: "zh-Hans", plain: "勾选Window", variant: "勾选Window，Oak" },
     { locale: "zh-Hant", plain: "勾選Window", variant: "勾選Window，Oak" },
   ])("includes the variant only when present in $locale", async ({ locale, plain, variant }) => {
-    overwriteGetLocale(() => locale);
+    pageStub.data.locale = locale;
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
       fact: "almanac/window",
