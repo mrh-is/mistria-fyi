@@ -504,7 +504,7 @@ it("exports the field guide mockup's data", async () => {
         ]),
       ),
       tierLevels: d.perkTierLevels,
-      ranks: strip(d.townRanks).map((r, i) => ({
+      ranks: strip(d.renown.townRanks).map((r, i) => ({
         ...r,
         n: T["town-ranks"]?.[i] ?? String(i),
       })),

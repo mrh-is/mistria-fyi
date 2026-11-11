@@ -94596,6 +94596,478 @@
       "stationId": "mill"
     }
   },
+  "renown": {
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "head_adventurer_hood"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_adventurer"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "pants_adventurer"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "shoes_boots_adventurer"
+      },
+      {
+        "type": "money",
+        "amount": 250
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "item",
+        "itemId": "stone_bench_v2"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "item",
+        "itemId": "stone_storage_chest_v2"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "item",
+        "itemId": "large_paving_stone_v2"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "item",
+        "itemId": "stone_lamp_v2"
+      },
+      {
+        "type": "item",
+        "itemId": "stone_table_v2"
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_ranger_jacket"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_ranger"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "shoes_boots_ranger"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "head_ranger_leaves"
+      },
+      {
+        "type": "item",
+        "itemId": "training_dummy_sapling"
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "item",
+        "itemId": "mistria_wall_map_v1"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "item",
+        "itemId": "mistria_history_book_v1"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "item",
+        "itemId": "ornate_flagstone_v2"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "item",
+        "itemId": "dragon_priestess_fountain_v2"
+      },
+      {
+        "type": "item",
+        "itemId": "stone_dragon_figure_v2"
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_caldosian_overcoat"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "face_gear_caldosian_moon_earrings"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "shoes_boots_caldosian"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "head_caldosian_hat"
+      },
+      {
+        "type": "item",
+        "itemId": "mistria_history_scroll_v1"
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "item",
+        "itemId": "cottage_garden_planter_v1"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "item",
+        "itemId": "cottage_garden_trellis_v3"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "item",
+        "itemId": "cottage_garden_workbench_v2"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "item",
+        "itemId": "cottage_garden_arch_v2"
+      },
+      {
+        "type": "item",
+        "itemId": "cottage_garden_shed_v2"
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 100
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "back_gear_noble_cape"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_noble_jacket"
+      },
+      {
+        "type": "money",
+        "amount": 150
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "shoes_boots_noble"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_noble_tunic"
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "head_noble_hat"
+      },
+      {
+        "type": "item",
+        "itemId": "stamina_up"
+      },
+      {
+        "type": "money",
+        "amount": 200
+      },
+      {
+        "type": "item",
+        "itemId": "emerald_chair_v1"
+      },
+      {
+        "type": "money",
+        "amount": 250
+      },
+      {
+        "type": "item",
+        "itemId": "emerald_nightstand_v1"
+      },
+      {
+        "type": "money",
+        "amount": 300
+      },
+      {
+        "type": "item",
+        "itemId": "emerald_bed_v1"
+      },
+      {
+        "type": "money",
+        "amount": 350
+      },
+      {
+        "type": "item",
+        "itemId": "emerald_wallpaper_v1"
+      },
+      {
+        "type": "item",
+        "itemId": "emerald_rug_v1"
+      },
+      {
+        "type": "item",
+        "itemId": "essence_stone_large"
+      },
+      {
+        "type": "money",
+        "amount": 300
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "back_gear_exalted_cloak"
+      },
+      {
+        "type": "money",
+        "amount": 350
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "top_exalted"
+      },
+      {
+        "type": "money",
+        "amount": 400
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "pants_exalted"
+      },
+      {
+        "type": "money",
+        "amount": 450
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "shoes_boots_exalted"
+      },
+      {
+        "type": "cosmetic",
+        "cosmeticId": "head_exalted_crown"
+      },
+      {
+        "type": "item",
+        "itemId": "essence_stone_large"
+      },
+      {
+        "type": "money",
+        "amount": 300
+      },
+      {
+        "type": "item",
+        "itemId": "hero_shield_bronze"
+      },
+      {
+        "type": "money",
+        "amount": 350
+      },
+      {
+        "type": "item",
+        "itemId": "royal_chest_red"
+      },
+      {
+        "type": "money",
+        "amount": 400
+      },
+      {
+        "type": "item",
+        "itemId": "treasure_box_gold"
+      },
+      {
+        "type": "money",
+        "amount": 450
+      },
+      {
+        "type": "item",
+        "itemId": "treasure_box_gold"
+      },
+      {
+        "type": "money",
+        "amount": 500
+      },
+      {
+        "type": "item",
+        "itemId": "essence_stone_large"
+      }
+    ],
+    "townRanks": [
+      {
+        "levels": {
+          "start": 0,
+          "end": 9
+        }
+      },
+      {
+        "levels": {
+          "start": 10,
+          "end": 19
+        }
+      },
+      {
+        "levels": {
+          "start": 20,
+          "end": 29
+        }
+      },
+      {
+        "levels": {
+          "start": 30,
+          "end": 39
+        }
+      },
+      {
+        "levels": {
+          "start": 40,
+          "end": 49
+        }
+      },
+      {
+        "levels": {
+          "start": 50,
+          "end": 59
+        }
+      },
+      {
+        "levels": {
+          "start": 60,
+          "end": 69
+        }
+      },
+      {
+        "levels": {
+          "start": 70,
+          "end": 79
+        }
+      },
+      {
+        "levels": {
+          "start": 80,
+          "end": 89
+        }
+      },
+      {
+        "levels": {
+          "start": 90,
+          "end": 99
+        }
+      },
+      {
+        "levels": {
+          "start": 100,
+          "end": 100
+        }
+      }
+    ]
+  },
   "skills": {
     "archaeology": {
       "perkTiers": [
@@ -94951,74 +95423,6 @@
       }
     }
   },
-  "townRanks": [
-    {
-      "levels": {
-        "start": 0,
-        "end": 9
-      }
-    },
-    {
-      "levels": {
-        "start": 10,
-        "end": 19
-      }
-    },
-    {
-      "levels": {
-        "start": 20,
-        "end": 29
-      }
-    },
-    {
-      "levels": {
-        "start": 30,
-        "end": 39
-      }
-    },
-    {
-      "levels": {
-        "start": 40,
-        "end": 49
-      }
-    },
-    {
-      "levels": {
-        "start": 50,
-        "end": 59
-      }
-    },
-    {
-      "levels": {
-        "start": 60,
-        "end": 69
-      }
-    },
-    {
-      "levels": {
-        "start": 70,
-        "end": 79
-      }
-    },
-    {
-      "levels": {
-        "start": 80,
-        "end": 89
-      }
-    },
-    {
-      "levels": {
-        "start": 90,
-        "end": 99
-      }
-    },
-    {
-      "levels": {
-        "start": 100,
-        "end": 100
-      }
-    }
-  ],
   "treasureChestTiers": {
     "abyss": {},
     "copper": {},

@@ -364,10 +364,10 @@ function assignQuestVisibility(
       questId: prereq,
     }));
     if (quest.townRankLevel !== undefined) {
-      const targetIndex = trackerData.townRanks.findIndex(
+      const targetIndex = trackerData.renown.townRanks.findIndex(
         (rank) => rank.levels.start === quest.townRankLevel,
       );
-      const previousRank = trackerData.townRanks[targetIndex - 1];
+      const previousRank = trackerData.renown.townRanks[targetIndex - 1];
       if (!previousRank) {
         throw new Error(`Town rank quest "${questId}" has no preceding town rank`);
       }

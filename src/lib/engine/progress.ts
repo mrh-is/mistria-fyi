@@ -92,7 +92,7 @@ export function getMaxMineFloor(): number {
 }
 
 export function getMaxRenownLevel(): number {
-  const lastRank = trackerData.townRanks.at(-1);
+  const lastRank = trackerData.renown.townRanks.at(-1);
   if (!lastRank) throw new Error("Tracker data has no town ranks");
   return lastRank.levels.end;
 }

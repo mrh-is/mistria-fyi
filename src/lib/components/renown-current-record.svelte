@@ -16,7 +16,7 @@
 
   const feedbackContext = getFeedbackContext();
   let level = $derived(userState.state.progress.renown);
-  let presentation = $derived(getRenownPresentation(level, trackerData.townRanks));
+  let presentation = $derived(getRenownPresentation(level, trackerData.renown.townRanks));
   let reportable = $derived(
     feedbackContext.reportableAttachment({
       category: "renown",
