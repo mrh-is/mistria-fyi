@@ -57,7 +57,7 @@ import { extractQuests } from "./extract/quests.js";
 import { assignRecipeStations, CRAFTING_STATIONS } from "./extract/recipe-menus.js";
 import { extractRecipeScrollUnlocks } from "./extract/recipe-scrolls.js";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extract/recipes.js";
-import { extractTownRanks } from "./extract/renown.js";
+import { extractRenownRewards, extractTownRanks } from "./extract/renown.js";
 import { extractSkills } from "./extract/skills.js";
 import { extractStoresMeta } from "./extract/stores-meta.js";
 import { extractTownRankQuestLevels } from "./extract/town-rank-quests.js";
@@ -177,6 +177,7 @@ export function assembleTrackerData(
     skills,
   } = extractSkills(fiddle, localizer);
   const { localeNames: townRankLocaleNames, townRanks } = extractTownRanks(fiddle, localizer);
+  const renownRewards = extractRenownRewards(fiddle, townRanks.at(-1)?.levels.end ?? 0);
   const { localeNames: questLocaleNames, quests } = extractQuests(
     fiddle,
     localizer,
@@ -386,6 +387,7 @@ export function assembleTrackerData(
     },
     quests,
     recipes,
+    renownRewards,
     skills,
     stations: CRAFTING_STATIONS,
     stores: storesMeta,

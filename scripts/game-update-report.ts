@@ -266,6 +266,7 @@ export const COVERAGE = {
   questOrder: "none",
   quests: ["quests (type/ID)"],
   recipes: ["recipes"],
+  renownRewards: "none",
   skills: ["skills", "perks"],
   stations: ["stations"],
   stores: ["stores"],

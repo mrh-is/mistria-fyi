@@ -89,6 +89,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     questOrder: {},
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},
+    renownRewards: [],
     skills: {},
     stations: {},
     stores: {},

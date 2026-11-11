@@ -78,6 +78,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
       story: {},
     },
     recipes: {},
+    renownRewards: [],
     skills: {},
     stations: {},
     stores: {},

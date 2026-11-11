@@ -1,7 +1,42 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
-import { extractTownRanks as extractLocalizedTownRanks } from "./renown.js";
+import { extractTownRanks as extractLocalizedTownRanks, extractRenownRewards } from "./renown.js";
+
+describe("extractRenownRewards", () => {
+  it("extracts each level from 1 through the cap, preserving every reward type", () => {
+    const rewards = Array.from({ length: 100 }, (_, index) => {
+      if (index === 1) return { cosmetic: "head_adventurer_hood" };
+      if (index === 99) return { item: "essence_stone_large" };
+      return { purse: 100 };
+    });
+    const result = extractRenownRewards(makeFiddleBase({ renown: { rewards } }), 100);
+
+    expect(result.map(({ level }) => level)).toEqual(
+      Array.from({ length: 100 }, (_, index) => index + 1),
+    );
+    expect(result[0]).toEqual({ type: "money", amount: 100, level: 1 });
+    expect(result[1]).toEqual({ type: "cosmetic", cosmeticId: "head_adventurer_hood", level: 2 });
+    expect(result[99]).toEqual({ type: "item", itemId: "essence_stone_large", level: 100 });
+  });
+
+  it.each([
+    undefined,
+    {},
+    { purse: "100" },
+    { item: "" },
+    { cosmetic: 1 },
+    {
+      item: "essence_stone_large",
+      purse: 100,
+    },
+  ])("rejects an unreadable reward at its level (%j)", (reward) => {
+    const rewards = reward === undefined ? [{ purse: 100 }] : [{ purse: 100 }, reward];
+    expect(() => extractRenownRewards(makeFiddleBase({ renown: { rewards } }), 2)).toThrow(
+      /renown reward at level 2/i,
+    );
+  });
+});
 
 function extractTownRanks(fiddle: ReturnType<typeof makeFiddleBase>) {
   const { localeNames, townRanks } = extractLocalizedTownRanks(fiddle, stubLocalizer());

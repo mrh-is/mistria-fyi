@@ -305,6 +305,11 @@ export const StoreSchema = v.strictObject({
   visibility: v.optional(VisibilitySchema),
 });
 export const TownRankSchema = v.strictObject({ levels: LevelRangeSchema });
+const RenownRewardSchema = v.variant("type", [
+  v.strictObject({ type: v.literal("money"), amount: number, level: number }),
+  v.strictObject({ type: v.literal("item"), itemId: id("ItemId"), level: number }),
+  v.strictObject({ type: v.literal("cosmetic"), cosmeticId: id("CosmeticId"), level: number }),
+]);
 export const VillagerSchema = v.strictObject({
   // Player-facing names live in per-locale chunks; strictObject rejects untranslated names here.
   birthday: DaySchema,
@@ -349,6 +354,7 @@ export const TrackerDataSchema = v.strictObject({
     story: v.record(id("QuestId"), StoryQuestSchema),
   }),
   recipes: v.record(id("RecipeId"), RecipeSchema),
+  renownRewards: v.array(RenownRewardSchema),
   skills: v.record(id("SkillId"), SkillSchema),
   stations: v.pipe(
     v.record(craftingStationId, v.strictObject({ unlockQuestId: v.optional(id("QuestId")) })),
