@@ -22,10 +22,17 @@ export const prerender = true;
  */
 export const load: LayoutLoad = async ({ url }) => {
   const locale = localeFromPath(url.pathname) ?? getLocale();
-  await Promise.all([
+  const [, catalogLoadFailed] = await Promise.all([
     loadNames(locale, ["ui"]),
-    loadSharedUi(locale),
-    loadRouteUi(locale, url.pathname),
+    Promise.all([loadSharedUi(locale), loadRouteUi(locale, url.pathname)]).then(
+      () => false,
+      (error: unknown) => {
+        // Keep the root layout available when a browser cannot fetch a catalog.
+        // A broken build still needs to fail during server rendering and prerendering.
+        if (import.meta.env.SSR) throw error;
+        return true;
+      },
+    ),
   ]);
-  return { locale };
+  return catalogLoadFailed ? { catalogLoadFailed, locale } : { locale };
 };

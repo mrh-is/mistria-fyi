@@ -1,5 +1,49 @@
+import { readFileSync } from "node:fs";
+
 import { expect, isolateNetwork, test } from "../browser/test.js";
 import { gotoApplication } from "./support/application-state.js";
+
+for (const { catalog, warmShared } of [
+  { catalog: "shared.0", warmShared: false },
+  { catalog: "route.2", warmShared: false },
+  { catalog: "route.2", warmShared: true },
+]) {
+  test(`recovers in Spanish when the ${catalog} catalog is unavailable (${warmShared ? "warm" : "cold"} shared copy)`, async ({
+    page,
+  }) => {
+    const manifest = JSON.parse(
+      readFileSync(
+        new URL("../../.svelte-kit/output/client/.vite/manifest.json", import.meta.url),
+        "utf8",
+      ),
+    ) as Record<string, { file: string }>;
+    const { file } = manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.es.compiled.js`];
+    let blocked = false;
+    await page.route(`**/${file}`, (route) => {
+      blocked = true;
+      return route.abort();
+    });
+
+    if (warmShared) {
+      await gotoApplication(page, "/es");
+      await page.getByRole("button", { exact: true, name: "Ajustes rápidos" }).click();
+      await page.getByRole("link", { exact: true, name: "Datos" }).click();
+    } else {
+      await page.goto("/es/data");
+    }
+    await expect(
+      page.getByText("Algo ha fallado por nuestra parte, pero tu progreso está a salvo."),
+    ).toBeVisible();
+    expect(blocked).toBe(true);
+
+    await page.unroute(`**/${file}`);
+    const home = page.getByRole("link", { name: "Volver al inicio" });
+    await expect(home).toHaveAttribute("href", "/es");
+    await home.click();
+    await expect(page).toHaveURL(/\/es$/u);
+    await expect(page.getByRole("button", { exact: true, name: "Ajustes rápidos" })).toBeVisible();
+  });
+}
 
 test.describe("privacy disclosure", () => {
   // Turnstile is disclosed for specific actions, so a fresh page must not load it.

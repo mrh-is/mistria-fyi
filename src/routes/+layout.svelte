@@ -30,6 +30,8 @@
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
+  import ErrorPage from "./+error.svelte";
+
   let { children } = $props();
   const feedbackContext = setFeedbackContext(new FeedbackContext());
 
@@ -44,7 +46,7 @@
 
   onMount(() => {
     userState.loadFromStorage();
-    void trackingReminders.opened();
+    if (!page.data.catalogLoadFailed) void trackingReminders.opened();
     // A retire the relay hasn't confirmed yet tries again on every visit, then with backoff & on
     // coming back online for as long as the page is open.
     const stopRetiring = keepRetiring();
@@ -58,6 +60,7 @@
     page.status >= 400 ? errorPageMetadata(page.status, page.data.locale) : page.data.metadata,
   );
   $effect(() => {
+    if (page.data.catalogLoadFailed) return;
     // Read progress and the dialog state so closing an install nudge can reveal a due backup.
     void userState.factCount;
     void userState.trackingLane;
@@ -91,6 +94,7 @@
   });
 
   $effect(() => {
+    if (page.data.catalogLoadFailed) return;
     const batch = userState.starterItems;
     return batch && untrack(() => showStarterItemsToast(batch.count, batch.undo, batch.dismiss));
   });
@@ -100,41 +104,49 @@
   {#if fontStylesheet}
     <link rel="stylesheet" href={fontStylesheet} />
   {/if}
+  {#if page.data.catalogLoadFailed}
+    <title>503</title>
+  {/if}
 </svelte:head>
 
-<SeoHead {metadata} pathname={page.url.pathname} />
+{#if page.data.catalogLoadFailed}
+  <main class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe">
+    <ErrorPage catalogLoadFailed />
+  </main>
+{:else}
+  <SeoHead {metadata} pathname={page.url.pathname} />
+  <div
+    class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
+      ? 'pb-safe-offset-18'
+      : ''}"
+    inert={overlayActive ? true : undefined}
+  >
+    <SkipLink />
+    <RouteMain>
+      {@render children()}
+    </RouteMain>
+  </div>
 
-<div
-  class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
-    ? 'pb-safe-offset-18'
-    : ''}"
-  inert={overlayActive ? true : undefined}
->
-  <SkipLink />
-  <RouteMain>
-    {@render children()}
-  </RouteMain>
-</div>
+  <ToolbarFooter {metadata} bind:this={toolbarFooter} />
 
-<ToolbarFooter {metadata} bind:this={toolbarFooter} />
+  <Toaster
+    position="bottom-center"
+    expand
+    gap={14}
+    visibleToasts={VISIBLE_TOASTS}
+    offset={{
+      bottom: toastBottom,
+      left: toastOffset,
+      right: toastOffset,
+      top: toastOffset,
+    }}
+    mobileOffset={{ bottom: toastBottom }}
+  />
 
-<Toaster
-  position="bottom-center"
-  expand
-  gap={14}
-  visibleToasts={VISIBLE_TOASTS}
-  offset={{
-    bottom: toastBottom,
-    left: toastOffset,
-    right: toastOffset,
-    top: toastOffset,
-  }}
-  mobileOffset={{ bottom: toastBottom }}
-/>
-
-<PersistenceWarning />
-<LaneChooserDialog />
-<InstallNudgeDialog />
-<SyncReceiverHost />
-<PencilFilter />
-<AppUpdater />
+  <PersistenceWarning />
+  <LaneChooserDialog />
+  <InstallNudgeDialog />
+  <SyncReceiverHost />
+  <PencilFilter />
+  <AppUpdater />
+{/if}
