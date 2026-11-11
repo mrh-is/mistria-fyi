@@ -191,7 +191,8 @@ session limits) belong in each contributor’s user config.
 - Every agent-authored issue body & substantive GitHub comment ends with `Agent: <agent-id>`.
 - Commit, push, & open a PR. Its body includes `Closes #N` & a preview URL from the deployment
   integration or the PR template when a preview is available. Use `Refs #N` instead when the issue
-  needs work after the merge.
+  needs work after the merge. Redesign PRs target `next` and use `Refs #N`; see
+  [The redesign branch](docs/agent-workflow.md#the-redesign-branch).
 - Record each decision in the narrowest home that fits, usually the PR’s “Decisions” section. Add a
   record to `docs/decisions/` only when a newcomer would propose the rejected alternative; see
   [Recording decisions](docs/agent-workflow.md#recording-decisions).

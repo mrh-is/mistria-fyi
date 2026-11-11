@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+      # The redesign branch; see docs/agent-workflow.md#the-redesign-branch.
+      - next
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
@@ -12,7 +14,7 @@ on:
 permissions:
   contents: read
 
-# Pushes to main & the schedule share a ref, so the event keeps a merge from cancelling the nightly
+# Pushes to main or next & the schedule share a ref, so the event keeps a merge from cancelling the nightly
 # jobs, & the schedule from cancelling a push's timing sample.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
@@ -46,8 +48,8 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
       # Pull requests run the browser suites only when the app, its tests, or their tooling change,
-      # and the relay & scripts tests only when their own inputs or a shared input change. Main
-      # pushes, nightly runs, and manual dispatches always run all three.
+      # and the relay & scripts tests only when their own inputs or a shared input change. Pushes
+      # to main or next, nightly runs, and manual dispatches always run all three.
       - id: filter
         env:
           EVENT_NAME: ${{ github.event_name }}
