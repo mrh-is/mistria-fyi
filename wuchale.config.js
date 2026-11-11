@@ -1,4 +1,4 @@
-import { adapter } from "@wuchale/svelte";
+import { adapter, defaultArgs } from "@wuchale/svelte";
 import { defineConfig, gemini } from "wuchale";
 import { adapter as scriptAdapter } from "wuchale/adapter-vanilla";
 
@@ -43,7 +43,7 @@ export default defineConfig({
     about: adapter({
       files: aboutSvelteFiles,
       loader: "custom",
-      // The route owns a runtime snapshot, and the root layout remounts it on locale change.
+      // The About page owns a runtime snapshot for the lifetime of its route content.
       runtime: { initReactive: () => false },
       storage: aboutStorage,
     }),
@@ -92,7 +92,10 @@ export default defineConfig({
     shared: adapter({
       files: sharedSvelteFiles,
       loader: "custom",
-      runtime: instanceRuntime,
+      runtime: {
+        initReactive: (scope, file, context) =>
+          context.module ? null : defaultArgs.runtime.initReactive(scope, file, context),
+      },
       storage: sharedStorage,
     }),
     "shared-locale": scriptAdapter({

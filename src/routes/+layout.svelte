@@ -104,42 +104,37 @@
 
 <SeoHead {metadata} pathname={page.url.pathname} />
 
-<!-- Keyed messages read the active locale when the chrome mounts. -->
-{#key page.data.locale}
-  <div
-    class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
-      ? 'pb-safe-offset-18'
-      : ''}"
-    inert={overlayActive ? true : undefined}
-  >
-    <SkipLink />
-    <RouteMain>
-      {@render children()}
-    </RouteMain>
-  </div>
+<div
+  class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
+    ? 'pb-safe-offset-18'
+    : ''}"
+  inert={overlayActive ? true : undefined}
+>
+  <SkipLink />
+  <RouteMain>
+    {@render children()}
+  </RouteMain>
+</div>
 
-  <ToolbarFooter {metadata} bind:this={toolbarFooter} />
+<ToolbarFooter {metadata} bind:this={toolbarFooter} />
 
-  <Toaster
-    position="bottom-center"
-    expand
-    gap={14}
-    visibleToasts={VISIBLE_TOASTS}
-    offset={{
-      bottom: toastBottom,
-      left: toastOffset,
-      right: toastOffset,
-      top: toastOffset,
-    }}
-    mobileOffset={{ bottom: toastBottom }}
-  />
+<Toaster
+  position="bottom-center"
+  expand
+  gap={14}
+  visibleToasts={VISIBLE_TOASTS}
+  offset={{
+    bottom: toastBottom,
+    left: toastOffset,
+    right: toastOffset,
+    top: toastOffset,
+  }}
+  mobileOffset={{ bottom: toastBottom }}
+/>
 
-  <PersistenceWarning />
-  <LaneChooserDialog />
-  <InstallNudgeDialog />
-  <SyncReceiverHost />
-  <PencilFilter />
-{/key}
-
-<!-- Outside the locale key: a pending update must survive a client-side locale switch. -->
+<PersistenceWarning />
+<LaneChooserDialog />
+<InstallNudgeDialog />
+<SyncReceiverHost />
+<PencilFilter />
 <AppUpdater />
