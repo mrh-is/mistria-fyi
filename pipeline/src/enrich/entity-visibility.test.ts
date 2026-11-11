@@ -1071,6 +1071,24 @@ describe("assignEntityVisibility — spells", () => {
       questId: "the_water_tablet",
     });
   });
+
+  it("gates Full Restore with a direct Mines floor source", () => {
+    const trackerData = makeTrackerData({
+      mines: { spells: { full_restore: { name: "Full Restore", sources: [] } } },
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+
+    const spell = trackerData.mines.spells["full_restore" as SpellId];
+    expect(spell.visibility).toEqual({ type: "mineFloor", floor: 10 });
+    expect(spell.sources).toEqual([
+      {
+        type: "mine_floor",
+        floor: 10,
+        visibility: { type: "mineFloor", floor: 10 },
+      },
+    ]);
+  });
 });
 
 describe("assignEntityVisibility — quests", () => {
@@ -1190,11 +1208,11 @@ describe("assignEntityVisibility — quests", () => {
         levels: { start, end: starts[index + 1] === undefined ? start : starts[index + 1] - 1 },
       })),
     });
-    const chains = makeQuestChains({
+    const questChains = makeQuestChains({
       story: { reach_ruby: { prerequisites: ["prior_quest" as QuestId] } } as never,
     });
 
-    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), chains);
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
 
     expect(Object.keys(trackerData.quests.story)).toHaveLength(9);
     for (const [index, id] of ids.entries()) {

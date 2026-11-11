@@ -684,6 +684,7 @@
   "source_mine": "Добыть: {biome}",
   "source_mine_fish": "Рыбачить: {biome}",
   "source_mine_fish_any": "Рыбачить в шахтах",
+  "source_mines_floor": "Достичь {floor}-го этажа шахт",
   "source_mines_chest": "Найти в сундуке: {biome}",
   "source_mines_chest_perk": "Найти в сундуке: {biome}, с {perk}",
   "source_mines_dig_site": "Выкопать: {biome}",

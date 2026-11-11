@@ -657,6 +657,7 @@
   "source_mine": "{biome}で採掘",
   "source_mine_fish": "{biome}で釣る",
   "source_mine_fish_any": "鉱坑で釣る",
+  "source_mines_floor": "鉱坑{floor}階に到達する",
   "source_mines_chest": "{biome}の宝箱から入手",
   "source_mines_chest_perk": "{perk}を習得した状態で、{biome}の宝箱から入手",
   "source_mines_dig_site": "{biome}で掘り出す",

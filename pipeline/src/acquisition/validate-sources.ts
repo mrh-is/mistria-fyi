@@ -161,6 +161,7 @@ const SOURCE_FIELDS = {
   lost_and_found: [],
   mine: ["biomeId"],
   mine_fish: ["biomeId"],
+  mine_floor: ["floor"],
   mines_chest: ["biomeId", "lootGroup", "perkId"],
   mines_dig_site: ["biomeId", "perkId"],
   monster: ["monsterId"],
@@ -1212,6 +1213,9 @@ function validateVariantFields(
       break;
     case "mine":
       stringReferences.push(["biomeId", "biome"]);
+      break;
+    case "mine_floor":
+      requiredNumbers.push("floor");
       break;
     case "mine_fish":
       optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);

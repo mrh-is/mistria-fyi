@@ -101,6 +101,7 @@ export const SOURCE_ICON: Record<Source["type"], Icon> = {
   lost_and_found: IconArchive,
   mine: IconPick,
   mine_fish: IconFish,
+  mine_floor: IconPick,
   mines_chest: IconPick,
   mines_dig_site: IconPick,
   monster: IconSkull,

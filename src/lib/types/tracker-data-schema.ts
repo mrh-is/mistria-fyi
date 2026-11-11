@@ -142,6 +142,7 @@ export const SourceSchema = v.variant("type", [
   source("lost_and_found", {}),
   source("mine", { biomeId: id("MinesBiomeId") }),
   source("mine_fish", { biomeId: v.optional(id("MinesBiomeId")) }),
+  source("mine_floor", { floor: number }),
   source("mines_chest", {
     biomeId: id("MinesBiomeId"),
     lootGroup: v.optional(id("DungeonLootGroup")),

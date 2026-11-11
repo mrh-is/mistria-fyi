@@ -284,6 +284,8 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     }
     case "lost_and_found":
       return [m.source_lost_and_found({}, opts)];
+    case "mine_floor":
+      return [m.source_mines_floor({ floor: String(source.floor) }, opts)];
     case "mine": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
       return fillMessage((slot) => m.source_mine({ biome: slot(biomeLabel) }, opts));

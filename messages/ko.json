@@ -657,6 +657,7 @@
   "source_mine": "{biome}에서 채굴",
   "source_mine_fish": "{biome}에서 낚시",
   "source_mine_fish_any": "광산에서 낚시",
+  "source_mines_floor": "광산 {floor}층 도달",
   "source_mines_chest": "{biome}의 보물 상자에서 발견",
   "source_mines_chest_perk": "{perk} 보유 시 {biome}의 보물 상자에서 발견",
   "source_mines_dig_site": "{biome}에서 발굴",

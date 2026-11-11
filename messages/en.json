@@ -666,6 +666,7 @@
   "source_mine": "Mine in {biome}",
   "source_mine_fish": "Fish in {biome}",
   "source_mine_fish_any": "Fish in the Mines",
+  "source_mines_floor": "Reach Mines floor {floor}",
   "source_mines_chest": "Find in a Treasure Chest in {biome}",
   "source_mines_chest_perk": "Find in a Treasure Chest in {biome}, with {perk}",
   "source_mines_dig_site": "Dig up in {biome}",
