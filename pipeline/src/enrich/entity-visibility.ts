@@ -4,6 +4,7 @@ import { resolveToVisibility } from "../acquisition/requirement-projector.js";
 import {
   CROWN_QUEST_GATE,
   HAYDENS_BARN_GATE,
+  SPELL_MINE_FLOORS,
   SPELL_SOURCES,
   STORE_UNLOCK_QUESTS,
   VILLAGER_GATES,
@@ -57,6 +58,8 @@ interface SourceVisibilityContext {
   biomeFloor: (biomeId: MinesBiomeId) => number | undefined;
   perks: Record<string, FlatPerkInfo>;
   perkTierLevels: TrackerData["perkTierLevels"];
+  recipes: TrackerData["recipes"];
+  stations: TrackerData["stations"];
   storeVisibility: Record<StoreId, VisibilityCondition>;
 }
 
@@ -70,15 +73,17 @@ export function assignEntityVisibility(
     biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.floors.start,
     perks: buildFlatPerks(trackerData.skills),
     perkTierLevels: trackerData.perkTierLevels,
+    recipes: trackerData.recipes,
+    stations: trackerData.stations,
     storeVisibility: buildStoreVisibilityMap(trackerData.stores),
   };
 
-  assignItemVisibility(trackerData, ctx);
   assignRecipeVisibility(trackerData, ctx);
+  assignItemVisibility(trackerData, ctx);
   assignCosmeticVisibility(trackerData, ctx);
   assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
-  assignSpellVisibility(trackerData);
+  assignSpellVisibility(trackerData, ctx);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
   stripAllAlwaysVisibility(trackerData);
 }
@@ -204,7 +209,6 @@ function acquisitionSourceCondition(
     case "museum_donation":
     case "proposal":
     case "reach_day":
-    case "recipe":
     case "secret_chest":
     case "ship_item":
     case "spouseGift":
@@ -214,6 +218,8 @@ function acquisitionSourceCondition(
     case "wedding":
     case "wishing_well":
       return ALWAYS_VISIBLE;
+    case "recipe":
+      return ctx.recipes[source.recipeId]?.visibility ?? ALWAYS_VISIBLE;
     case "bait_fish":
       return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
     case "horse_statue":
@@ -230,6 +236,8 @@ function acquisitionSourceCondition(
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
       return floor === undefined ? ALWAYS_VISIBLE : { type: "mineFloor", floor };
     }
+    case "mine_floor":
+      return { type: "mineFloor", floor: source.floor };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
@@ -351,15 +359,21 @@ function assignQuestVisibility(
 
   for (const [questId, quest] of Object.entries(trackerData.quests.story)) {
     const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
-    quest.visibility =
-      prerequisites.length === 0
-        ? ALWAYS_VISIBLE
-        : andSimplify(
-            prerequisites.map((prereq): VisibilityCondition => ({
-              type: "questCompleted",
-              questId: prereq,
-            })),
-          );
+    const conditions: VisibilityCondition[] = prerequisites.map((prereq) => ({
+      type: "questCompleted",
+      questId: prereq,
+    }));
+    if (quest.townRankLevel !== undefined) {
+      const targetIndex = trackerData.townRanks.findIndex(
+        (rank) => rank.levels.start === quest.townRankLevel,
+      );
+      const previousRank = trackerData.townRanks[targetIndex - 1];
+      if (!previousRank) {
+        throw new Error(`Town rank quest "${questId}" has no preceding town rank`);
+      }
+      conditions.push({ type: "renownLevel", level: previousRank.levels.start });
+    }
+    quest.visibility = andSimplify(conditions);
   }
 
   for (const [villagerId, entries] of Object.entries(chains.heart)) {
@@ -391,15 +405,14 @@ function assignQuestVisibility(
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const recipe of Object.values(trackerData.recipes)) {
     assignSourcedEntityVisibility(recipe, ctx);
+    if (ctx.stations[recipe.stationId]?.unlockQuestId) {
+      recipe.visibility = andSimplify([
+        recipe.visibility ?? ALWAYS_VISIBLE,
+        { type: "station", stationId: recipe.stationId },
+      ]);
+    }
   }
 }
-
-/**
- * Hardcoded spell → source-quest mappings. The cutscene chain (quest → seal break → post-cutscene
- * → spell_to_unlock) is too indirect for the cutsceneMap to trace automatically: the post-seal
- * cutscenes lack quest_to_start/quest_to_progress and aren't referenced in quest stage queries.
- * full_restore has no quest at all (mines level 10 reward).
- */
 
 function acquisitionSourceConditions(
   source: AcquisitionSource,
@@ -440,7 +453,6 @@ function acquisitionSourceConditions(
     case "perk_drop":
     case "proposal":
     case "reach_day":
-    case "recipe":
     case "renown":
     case "ritual_chamber":
     case "secret_chest":
@@ -453,6 +465,9 @@ function acquisitionSourceConditions(
     case "wedding":
     case "wishing_well":
       return { entity, source: ALWAYS_VISIBLE };
+    case "mine_floor":
+    case "recipe":
+      return { entity, source: entity };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
@@ -513,8 +528,17 @@ function assignSourcedEntityVisibility(entity: SourcedEntity, ctx: SourceVisibil
   entity.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
 }
 
-function assignSpellVisibility(trackerData: TrackerData): void {
+function assignSpellVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [spellId, spell] of Object.entries(trackerData.mines.spells)) {
+    const floor = SPELL_MINE_FLOORS[spellId];
+    if (floor !== undefined) {
+      const source: AcquisitionSource = { type: "mine_floor", floor };
+      const conditions = computeSourceConditions(source, ctx);
+      spell.sources = [{ ...source, visibility: conditions.source }];
+      spell.visibility = conditions.entity;
+      continue;
+    }
+
     const questId = SPELL_SOURCES[spellId];
     if (questId) {
       spell.visibility = { type: "questCompleted", questId };

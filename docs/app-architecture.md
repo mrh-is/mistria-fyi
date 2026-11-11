@@ -178,7 +178,8 @@ The store writes two blobs, under the keys in `src/lib/stores/storage-keys.ts`:
   - `progress`: every `ProgressState` field, with sets serialized as sorted arrays and records
     filtered to non-default entries, plus each fact's history (see [Provenance](#provenance)):
     `provenance`, `resolutions`, `lastSavePlaytime`, & `lastSaveUnordered` (version 7).
-  - `worldState`: the in-game season & weather the availability filters read.
+  - `worldState`: the in-game season, weather, & optional day of the season (version 10). Older
+    clocks leave the day unknown until a dated save arrives.
   - `local` (storage only, left out while empty): this device's own section, which holds sync's
     lane, receipt, freshness, pending retires, & farm-switch backup (see [sync.md](sync.md)), plus
     `trackingLane` & `reminders` (version 9; see [Tracking lanes](#tracking-lanes)). Exports never
@@ -478,8 +479,13 @@ Progress calculation and UI row visibility are separate concerns.
 - **Availability** is `isDoableToday` in `engine/availability.ts`. A locked row isn't doable. A row
   without sources is. Any other row needs a doable source among those the filters show, so a hidden
   shop can't keep a spring insect doable in summer. A source isn't doable while it's locked, a
-  progress gate the app records is unmet, or it's out of season or weather. Unevaluable gates count
-  as met, & time of day never counts against a source.
+  progress gate the app records is unmet, or it's out of season or weather. Festival sources use the
+  exact festival date when the clock has a day. Mine sources use their biome’s first floor, and
+  monster drops use the shallowest biome listed in `mines.monsters`. The Artifact Replicator
+  requires a complete Archaeology set & the original artifact in the Almanac. Unevaluable gates
+  count as met, & time of day never counts against a source. A fresh tracker starts at mine floor
+  zero. Mine sources wait until the player records access to the mines or imports a save that
+  supplies it.
 - **Availability has no knowledge of spoilers.** `ProgressContext.progressionState` is always
   derived with “Show spoilers” off, so that switch only changes what the spoiler UI reveals. Code
   that masks something reads `userState.progressionState` instead.
@@ -496,7 +502,8 @@ Progress calculation and UI row visibility are separate concerns.
   note.
 - **The toolbar** gives each page its own `clock` & `filter` flags in `ToolbarConfig`. The clock
   sets `worldState`. A save import or sync overwrites it with the save’s day, and a clock change
-  then holds until the next save arrives.
+  then holds until the next save arrives. Changing the season clears the day number. A save from a
+  different known farm supplies its own day number or leaves it unknown.
 - Mines counts floors as doable down to the first unbroken seal at or below the player's floor, and
   the floors past it wait. Finishing the seal's quest breaks it, and a floor below a seal proves
   that seal is broken. Quests combine spoiler gates, requested-item sources, & each quest's native

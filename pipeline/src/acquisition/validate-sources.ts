@@ -109,6 +109,7 @@ const VISIBILITY_FIELDS = {
   reachedSeason: ["season"],
   renownLevel: ["level"],
   skillLevel: ["level", "skillId"],
+  station: ["stationId"],
   villagerKnown: ["villagerId"],
 } as const satisfies Record<VisibilityCondition["type"], readonly string[]>;
 
@@ -160,6 +161,7 @@ const SOURCE_FIELDS = {
   lost_and_found: [],
   mine: ["biomeId"],
   mine_fish: ["biomeId"],
+  mine_floor: ["floor"],
   mines_chest: ["biomeId", "lootGroup", "perkId"],
   mines_dig_site: ["biomeId", "perkId"],
   monster: ["monsterId"],
@@ -170,7 +172,7 @@ const SOURCE_FIELDS = {
   proposal: ["villagerId"],
   quest: ["challengeRecipeId", "choiceId", "questId", "questType", "requestedItemId", "trigger"],
   reach_day: ["triggerDate"],
-  recipe: ["method", "recipeId"],
+  recipe: ["recipeId"],
   renown: ["level"],
   ritual_chamber: ["perkId"],
   scroll_bundle: ["bundleItemId", "storeId"],
@@ -1212,6 +1214,9 @@ function validateVariantFields(
     case "mine":
       stringReferences.push(["biomeId", "biome"]);
       break;
+    case "mine_floor":
+      requiredNumbers.push("floor");
+      break;
     case "mine_fish":
       optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);
       break;
@@ -1323,17 +1328,6 @@ function validateVariantFields(
       break;
     case "recipe":
       stringReferences.push(["recipeId", "recipe"]);
-      if (
-        !new Set(["cook", "craft", "dragon_forge", "mill", "smith"]).has(source.method as string)
-      ) {
-        malformed(
-          diagnostics,
-          targetId,
-          `${fieldPath}.method`,
-          "Expected a production method",
-          source,
-        );
-      }
       break;
     case "renown":
       requiredNumbers.push("level");
@@ -1811,6 +1805,9 @@ function validateVisibility(
       case "questAvailable":
       case "questCompleted":
         visibilityReference("questId", "quest");
+        return;
+      case "station":
+        visibilityReference("stationId", "station");
         return;
       case "reachedSeason":
         if (

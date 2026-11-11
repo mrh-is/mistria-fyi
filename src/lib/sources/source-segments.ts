@@ -10,12 +10,12 @@ import { requireBiome, requireEntry } from "#lib/utils/format.js";
 import type {
   AvailabilityCondition,
   CutsceneSourceId,
-  ProductionMethod,
   Source,
   UpgradeId,
 } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
+  CraftingStationId,
   LocationId,
   MinesBiomeId,
   PerkId,
@@ -45,6 +45,7 @@ export type SegmentLookups = BaseSegmentLookups &
     museumWingNames: Partial<Record<string, string>>;
     questTypes: Partial<Record<QuestId, QuestType>>;
     questVillagerIds: Partial<Record<QuestId, VillagerId>>;
+    recipeStations: Partial<Record<keyof TrackerData["recipes"], CraftingStationId>>;
     /** The game's season names in the active locale (`ui` chunk). */
     seasonNames: Record<Season, string>;
     stationNames: Partial<Record<string, string>>;
@@ -78,20 +79,18 @@ type VisibilityLookup<T> = Partial<Record<keyof T, VisibilityCondition>>;
 
 const SPOILERED: SourceSegment = { spoilered: true };
 
-const RECIPE_METHOD_MESSAGES: Record<
-  ProductionMethod,
-  (recipe: string, locale: LocaleCode) => string
-> = {
-  cook: (recipe, _locale) => `Cook via ${recipe}`,
-  craft: (recipe, _locale) => `Craft via ${recipe}`,
-  dragon_forge: (recipe, _locale) => `Dragon Forge via ${recipe}`,
-  mill: (recipe, _locale) => `Mill via ${recipe}`,
-  smith: (recipe, _locale) => `Smith via ${recipe}`,
+type LocalizedLabel = (locale: LocaleCode) => string;
+
+const CRAFTING_STATION_LABELS: Record<CraftingStationId, LocalizedLabel> = {
+  blacksmithing: (_locale) => "Forge",
+  dragon_forge: (_locale) => "Dragon Forge",
+  kitchen: (_locale) => "Kitchen",
+  mill: (_locale) => "Mill",
+  stone_refinery: (_locale) => "Stone Refinery",
+  woodcrafting: (_locale) => "Crafting Station",
 };
 
-type StoreActionLabel = (locale: LocaleCode) => string;
-
-const UPGRADE_MESSAGES: Record<UpgradeId, StoreActionLabel> = {
+const UPGRADE_MESSAGES: Record<UpgradeId, LocalizedLabel> = {
   adept_kitchen: (_locale) => "Upgrade to the adept kitchen",
   cozy_kitchen: (_locale) => "Upgrade to the cozy kitchen",
   farm_bridge: (_locale) => "Expand your farm",
@@ -99,7 +98,7 @@ const UPGRADE_MESSAGES: Record<UpgradeId, StoreActionLabel> = {
 };
 
 /** A store's `upgradeAction`; a store without one reads as upgrading. */
-const STORE_ACTION_CLAUSES: Record<StoreUpgradeAction, StoreActionLabel> = {
+const STORE_ACTION_CLAUSES: Record<StoreUpgradeAction, LocalizedLabel> = {
   repair: (_locale) => /* @wc-include */ "after repairing",
 };
 
@@ -278,6 +277,8 @@ export function buildSourceSegments(
     }
     case "lost_and_found":
       return ["Obtain from the Lost and Found chest"];
+    case "mine_floor":
+      return [`Reach Mines floor ${String(source.floor)}`];
     case "mine": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
       return fillMessage((slot) => `Mine in ${slot(biomeLabel)}`);
@@ -349,7 +350,9 @@ export function buildSourceSegments(
     }
     case "recipe": {
       const recipe = requireEntry(lookups.recipeNames, source.recipeId, "recipeNames");
-      return [RECIPE_METHOD_MESSAGES[source.method](recipe, locale)];
+      const stationId = requireEntry(lookups.recipeStations, source.recipeId, "recipeStations");
+      const station = CRAFTING_STATION_LABELS[stationId](_locale);
+      return productionSourceLabel(`Craft at ${station} via ${recipe}`, source.visibility);
     }
     case "renown":
       return [`Get the town rank to level ${String(source.level)}`];
@@ -377,7 +380,7 @@ export function buildSourceSegments(
     }
     case "station": {
       const station = requireEntry(lookups.stationNames, source.stationId, "stationNames");
-      return [`Process at ${station}`];
+      return productionSourceLabel(`Process at ${station}`, source.visibility);
     }
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
@@ -408,6 +411,10 @@ export function buildSourceSegments(
     case "wishing_well":
       return [`Obtain from the Wishing Well (${String(source.cost)}t)`];
   }
+}
+
+function productionSourceLabel(label: string, condition?: VisibilityCondition): Segments {
+  return condition && condition.type !== "always" ? [{ condition, unspoilered: [label] }] : [label];
 }
 
 /**

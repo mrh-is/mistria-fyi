@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import AnimalsContent from "#lib/components/animals-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
+import { getMaxMineFloor } from "#lib/engine/progress.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -26,6 +27,7 @@ afterEach(() => {
 // The mount section holds its group through the section context rather than the page's toggles.
 it("holds a sub-section finished by a row toggle, then moves it under Completed", async () => {
   userState.toggleShowSpoilers();
+  userState.setMineFloor(getMaxMineFloor());
   // Finished rows stay listed, so the finished section keeps rendering & can move.
   const appearanceIds = recordKeys(trackerData.mount.appearances).toSorted((a, b) =>
     nameCollator("en").compare(getName("mount", a, "en"), getName("mount", b, "en")),

@@ -511,13 +511,46 @@ function collectMonsterDropSources(
   petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
 ): void {
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
-  if (!monsters) return;
+  if (!monsters || Object.keys(monsters).length === 0) return;
+
+  // Mines vote tables are the source of truth for monster drops; non-Mines monsters are excluded.
+  // In 1.0.8, these variants have drops but no Mines spawns:
+  // mistrilclod, rockclod_purple, and sapling_orange_mini.
+  const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
+  const dungeonData = dungeons?.dungeons as Record<string, unknown> | undefined;
+  const rawBiomes = dungeonData?.biomes;
+  if (!Array.isArray(rawBiomes)) {
+    throw new TypeError("Expected dungeons.dungeons.biomes to be an array");
+  }
+
+  const spawnedMonsterIds = new Set<string>();
+
+  for (const rawBiome of rawBiomes) {
+    if (typeof rawBiome !== "object" || rawBiome === null) continue;
+    const votes = (rawBiome as Record<string, unknown>).votes;
+    if (typeof votes !== "object" || votes === null) continue;
+
+    for (const [voteKind, candidates] of Object.entries(votes)) {
+      if (!voteKind.endsWith("enemy") || !Array.isArray(candidates)) continue;
+
+      for (const candidate of candidates) {
+        if (typeof candidate !== "object" || candidate === null) continue;
+        const monsterId = (candidate as Record<string, unknown>).object;
+        if (typeof monsterId === "string") spawnedMonsterIds.add(monsterId);
+      }
+    }
+  }
+
+  if (spawnedMonsterIds.size === 0) {
+    throw new Error("No monster IDs found in dungeons.dungeons.biomes");
+  }
 
   for (const [, monstersOfType] of Object.entries(monsters)) {
     if (typeof monstersOfType !== "object" || monstersOfType === null) continue;
 
     for (const [monsterId, monster] of Object.entries(monstersOfType)) {
       if (monsterId === "default" || typeof monster !== "object" || monster === null) continue;
+      if (!spawnedMonsterIds.has(monsterId)) continue;
 
       const monsterData = monster as Record<string, unknown>;
       const drops = Array.isArray(monsterData.drops) ? monsterData.drops : [];

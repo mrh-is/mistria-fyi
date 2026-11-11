@@ -44,17 +44,21 @@ describe("QuestsContent empty sections", () => {
     const completedQuestIds = [
       ...recordKeys(trackerData.quests.crown),
       ...recordKeys(trackerData.quests.cooking),
-      ...recordKeys(trackerData.quests.story).slice(0, 48),
+      ...recordKeys(trackerData.quests.story)
+        .filter((id) => id !== "reach_copper_star_town_rank")
+        .slice(0, 48),
     ];
     await userState.mergeFromSave(
       extractSaveProgress({ quests: { completed_quests: completedQuestIds } }).completed,
     );
+    userState.setRenown(10);
     const view = renderWithFeedback(QuestsContent, { locale: "en" });
     await tick();
 
     expect(view.container.querySelector("[data-tracker-empty]")).toBeNull();
-    await fireEvent.click(view.getByRole("button", { name: /^Story Quests,/ }));
-    const story = view.getByRole("button", { name: /^Story Quests,/ }).closest("section, .section");
+    const storyButton = view.getByRole("button", { name: /^Story Quests,/i });
+    await fireEvent.click(storyButton);
+    const story = storyButton.closest("section, .section");
     if (!story) throw new Error("Expected the Story section");
     await fireEvent.click(within(story as HTMLElement).getByRole("button", { name: "Not now" }));
     await waitFor(() => {
@@ -64,8 +68,9 @@ describe("QuestsContent empty sections", () => {
 
     const pageFold = view.getByRole("heading", { level: 2, name: "Completed" });
     await fireEvent.click(within(pageFold).getByRole("button"));
-    await fireEvent.click(view.getByRole("button", { name: /^Crown Requests,/ }));
-    const crown = view.getByRole("button", { name: /^Crown Requests,/ }).closest(".section");
+    const crownButton = view.getByRole("button", { name: /^Crown Requests,/i });
+    await fireEvent.click(crownButton);
+    const crown = crownButton.closest(".section");
     if (!crown) throw new Error("Expected the Crown section");
     await tick();
     // The Story section above takes the rows rendered at once; Crown's arrive over frames.

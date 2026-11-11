@@ -49,7 +49,7 @@ export function resolveItemVariants(
   descriptions: Readonly<Record<string, string | undefined>>,
   reviewed: readonly ItemVariantSet[],
 ): Map<ItemId, ItemVariant> {
-  const reviewByKey = new Map(reviewed.map((set) => [setKey(reviewedIds(set)), set]));
+  const reviewByKey = new Map(reviewed.map((set) => [setKey(Object.keys(set.named)), set]));
   const unmatched = new Set(reviewByKey.keys());
   const variants = new Map<ItemId, ItemVariant>();
   const errors: string[] = [];
@@ -67,20 +67,21 @@ export function resolveItemVariants(
     if (review.name !== set.name) {
       errors.push(`Reviewed set “${review.name}” is now named “${set.name}”`);
     }
-    for (const [id, description] of Object.entries(reviewedDescriptions(review))) {
+    const seen = new Set<ItemVariant>();
+    for (const [id, { description, variant }] of Object.entries(review.named)) {
       if (descriptions[id] !== description) {
         errors.push(
           `Reviewed description for “${id}” changed: ${JSON.stringify(description)} → ${JSON.stringify(descriptions[id])}`,
         );
       }
-    }
-    if (!("named" in review)) continue;
-
-    const seen = new Set<ItemVariant>();
-    for (const [id, { variant }] of Object.entries(review.named)) {
       if (seen.has(variant)) errors.push(`Reviewed set “${set.name}” repeats variant “${variant}”`);
       seen.add(variant);
-      variants.set(id as ItemId, variant);
+      const itemId = id as ItemId;
+      const existing = variants.get(itemId);
+      if (existing !== undefined && existing !== variant) {
+        errors.push(`Reviewed row “${id}” has conflicting variants “${existing}” and “${variant}”`);
+      }
+      variants.set(itemId, variant);
     }
   }
 
@@ -100,8 +101,8 @@ export function resolveItemVariants(
  * Applies the mechanical review rules to one set: description first, ID second. Each row’s
  * differentiator is what its text doesn’t share with every other row, so shared wording (“left
  * version”) never becomes part of a name, and IDs that differ mid-stem still diff cleanly. A set
- * whose IDs differ only by a bare version number (`_v1`, `_v2`) stays unnamed. So does one where
- * some rows have no differentiator, which a reviewer may name with a counterpart word (“Plain”).
+ * whose IDs differ only by a bare version number (`_v1`, `_v2`) needs manual naming. So does one
+ * where some rows have no differentiator, which a reviewer may name with a counterpart word (“Plain”).
  */
 export function proposeItemVariants(
   set: SameNameRowSet,
@@ -135,17 +136,6 @@ export function proposeItemVariants(
     };
   }
   return { kind: "unnamed", reason: "Identical descriptions, and the IDs name no difference." };
-}
-
-function reviewedIds(set: ItemVariantSet): string[] {
-  return Object.keys(reviewedDescriptions(set));
-}
-
-function reviewedDescriptions(set: ItemVariantSet): Record<string, string> {
-  if (!("named" in set)) return { ...set.unnamed };
-  return Object.fromEntries(
-    Object.entries(set.named).map(([id, { description }]) => [id, description]),
-  );
 }
 
 function setKey(ids: readonly string[]): string {

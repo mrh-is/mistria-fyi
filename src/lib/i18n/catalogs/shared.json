@@ -2193,6 +2193,28 @@
   },
   {
     "translations": {
+      "en": "Chipped",
+      "es": "Desportillado",
+      "fr": "Ébréché",
+      "ja": "欠け",
+      "ko": "이가 빠진",
+      "ru": "Со сколом",
+      "zh-Hans": "缺口",
+      "zh-Hant": "缺口"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Chocolate",
       "ja": "チョコレート",
       "zh-Hans": "巧克力",
@@ -2924,35 +2946,6 @@
   },
   {
     "translations": {
-      "en": "Cook via {0}",
-      "ja": "{0}で料理する",
-      "zh-Hans": "通过{0}烹饪",
-      "zh-Hant": "透過{0}烹飪",
-      "es": "Cocinar mediante {0}",
-      "fr": "Cuisiner via : {0}",
-      "ko": "{0}(으)로 요리",
-      "ru": "Приготовить по рецепту: {0}"
-    },
-    "references": [
-      {
-        "file": "src/lib/sources/source-segments.ts",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "recipe"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Cooking & crafting",
       "ja": "料理とクラフト",
       "zh-Hans": "烹饪与制作",
@@ -3098,6 +3091,28 @@
   },
   {
     "translations": {
+      "en": "Cracked",
+      "es": "Agrietado",
+      "fr": "Fissuré",
+      "ja": "ひび割れ",
+      "ko": "금이 간",
+      "ru": "С трещиной",
+      "zh-Hans": "裂纹",
+      "zh-Hant": "裂紋"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Cracked purple",
       "ja": "ひびの入った紫色",
       "zh-Hans": "有裂纹的紫色",
@@ -3149,14 +3164,14 @@
   },
   {
     "translations": {
-      "en": "Craft via {0}",
-      "ja": "{0}で作る",
-      "zh-Hans": "通过{0}制作",
-      "zh-Hant": "透過{0}製作",
-      "es": "Fabricar mediante {0}",
-      "fr": "Fabriquer via : {0}",
-      "ko": "{0}(으)로 제작",
-      "ru": "Изготовить по рецепту: {0}"
+      "en": "Craft at {0} via {1}",
+      "es": "Fabricar en {0} con {1}",
+      "fr": "Fabriquer à cet atelier : {0} (recette : {1})",
+      "ja": "{0}で{1}を作る",
+      "ko": "{0}에서 {1} 제작",
+      "ru": "Изготовить на станции «{0}» по рецепту «{1}»",
+      "zh-Hans": "在{0}按配方制作{1}",
+      "zh-Hant": "在{0}按配方製作{1}"
     },
     "references": [
       {
@@ -3166,6 +3181,10 @@
             "placeholders": [
               [
                 "0",
+                "station"
+              ],
+              [
+                "1",
                 "recipe"
               ]
             ]
@@ -3190,6 +3209,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Crafting Station",
+      "es": "Banco de trabajo",
+      "fr": "Établi",
+      "ja": "クラフトステーション",
+      "ko": "작업대",
+      "ru": "Ремесленный станок",
+      "zh-Hans": "制作台",
+      "zh-Hant": "製作台"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
         "refs": [
           null
         ]
@@ -3240,6 +3281,28 @@
       },
       {
         "file": "src/routes/dev/fonts/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Crossed tape",
+      "es": "Cinta en cruz",
+      "fr": "Ruban en croix",
+      "ja": "十字のテープ",
+      "ko": "십자 테이프",
+      "ru": "Лента крестом",
+      "zh-Hans": "十字胶带",
+      "zh-Hant": "十字膠帶"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
         "refs": [
           null
         ]
@@ -3824,27 +3887,20 @@
   },
   {
     "translations": {
-      "en": "Dragon Forge via {0}",
-      "ja": "{0}でドラゴンの炉を使う",
-      "zh-Hans": "通过{0}使用龙之熔炉",
-      "zh-Hant": "透過{0}使用龍之熔爐",
-      "es": "Forja del dragón mediante {0}",
-      "fr": "Forge du dragon via : {0}",
-      "ko": "{0}(으)로 용의 대장간 제작",
-      "ru": "Драконья кузня по рецепту: {0}"
+      "en": "Dragon Forge",
+      "es": "Forja del dragón",
+      "fr": "Forge du dragon",
+      "ja": "竜の鍛冶場",
+      "ko": "용의 대장간",
+      "ru": "Драконья кузница",
+      "zh-Hans": "龙之熔炉",
+      "zh-Hant": "龍之熔爐"
     },
     "references": [
       {
         "file": "src/lib/sources/source-segments.ts",
         "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "recipe"
-              ]
-            ]
-          }
+          null
         ]
       }
     ],
@@ -4868,6 +4924,28 @@
   },
   {
     "translations": {
+      "en": "Forge",
+      "es": "Forja",
+      "fr": "Forge",
+      "ja": "鍛冶場",
+      "ko": "대장간",
+      "ru": "Кузница",
+      "zh-Hans": "锻造台",
+      "zh-Hant": "熔鐵爐"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Friendship & relationships",
       "ja": "友情と関係",
       "zh-Hans": "友情与关系",
@@ -5625,6 +5703,28 @@
   },
   {
     "translations": {
+      "en": "Horizontal tape",
+      "es": "Cinta horizontal",
+      "fr": "Ruban horizontal",
+      "ja": "横一文字のテープ",
+      "ko": "가로 테이프",
+      "ru": "Горизонтальная лента",
+      "zh-Hans": "横条胶带",
+      "zh-Hant": "橫條膠帶"
+    },
+    "references": [
+      {
+        "file": "src/lib/data/item-variants.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Horse statue",
       "ja": "馬の像",
       "zh-Hans": "马雕像",
@@ -6033,6 +6133,28 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Kitchen",
+      "es": "Cocina",
+      "fr": "Cuisine",
+      "ja": "キッチン",
+      "ko": "주방",
+      "ru": "Кухня",
+      "zh-Hans": "厨房",
+      "zh-Hant": "廚房"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
         "refs": [
           null
         ]
@@ -6629,27 +6751,20 @@
   },
   {
     "translations": {
-      "en": "Mill via {0}",
-      "ja": "{0}で製粉する",
-      "zh-Hans": "通过{0}研磨",
-      "zh-Hant": "透過{0}研磨",
-      "es": "Moler mediante {0}",
-      "fr": "Moudre via : {0}",
-      "ko": "{0}(으)로 제분",
-      "ru": "Смолоть по рецепту: {0}"
+      "en": "Mill",
+      "es": "Molino",
+      "fr": "Moulin",
+      "ja": "製粉所",
+      "ko": "제분소",
+      "ru": "Мельница",
+      "zh-Hans": "磨坊",
+      "zh-Hant": "磨坊"
     },
     "references": [
       {
         "file": "src/lib/sources/source-segments.ts",
         "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "recipe"
-              ]
-            ]
-          }
+          null
         ]
       }
     ],
@@ -9037,6 +9152,35 @@
   },
   {
     "translations": {
+      "en": "Reach Mines floor {0}",
+      "es": "Alcanza el piso {0} de las minas",
+      "fr": "Atteindre l’étage {0} des mines",
+      "ja": "鉱坑{0}階に到達する",
+      "ko": "광산 {0}층 도달",
+      "ru": "Достичь {0}-го этажа шахт",
+      "zh-Hans": "到达矿洞第{0}层",
+      "zh-Hant": "到達礦洞第{0}層"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "String(source.floor)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reading your save file…",
       "ja": "セーブデータを読み込み中…",
       "zh-Hans": "正在读取你的存档…",
@@ -10681,35 +10825,6 @@
   },
   {
     "translations": {
-      "en": "Smith via {0}",
-      "ja": "{0}で鍛冶をする",
-      "zh-Hans": "通过{0}锻造",
-      "zh-Hant": "透過{0}鍛造",
-      "es": "Forjar mediante {0}",
-      "fr": "Forger via : {0}",
-      "ko": "{0}(으)로 대장 작업",
-      "ru": "Выковать по рецепту: {0}"
-    },
-    "references": [
-      {
-        "file": "src/lib/sources/source-segments.ts",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "recipe"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Snow",
       "ja": "雪",
       "zh-Hans": "雪",
@@ -10964,6 +11079,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Stone Refinery",
+      "es": "Refinería minera",
+      "fr": "Affinerie",
+      "ja": "精錬装置",
+      "ko": "석재 가공소",
+      "ru": "Камнетёсная установка",
+      "zh-Hans": "石料精炼台",
+      "zh-Hant": "煉石廠"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
         "refs": [
           null
         ]

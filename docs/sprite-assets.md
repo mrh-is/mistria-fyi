@@ -131,6 +131,11 @@ environment variable.
 
 ## Repository history
 
+Don’t commit sprites in any form, including base64 copies baked into a design mockup or JSON file.
+Bake them into a gitignored file instead, as `docs/design/field-guide/generator/bake.mjs` does.
+`scripts/check-vendored-assets.ts` fails lint on long inline base64 images. Screenshots that show
+sprites are fine; a sprite file or its encoded bytes is not.
+
 Sprites lived in `static/sprites/` (tracked in Git) before #247. Removing them from the current tree
 does not remove the old blobs from existing Git history. As with fonts, do not make the repository
 public on the strength of this current-tree change alone — see issue #218 for the history-rewrite

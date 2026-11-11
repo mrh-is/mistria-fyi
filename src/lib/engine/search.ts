@@ -1,12 +1,14 @@
 import { nameCollator } from "#lib/data/names.js";
 import { CATEGORY_DEFINITIONS } from "#lib/engine/categories.js";
+import { createProgressContext } from "#lib/engine/progress.js";
 import { matchesTerms, matchKey } from "#lib/utils/name-match.js";
 
 import type { SearchCategoryKey } from "#lib/engine/categories.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { WorldDay } from "#lib/engine/world-state.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
+import type { ItemId } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -56,7 +58,7 @@ export interface SearchContext {
 export function searchAllCategories(
   query: string,
   completed: DeepReadonly<ProgressState>,
-  worldState: { season: Season; weather: Weather },
+  worldState: WorldDay,
   progressionState: UserProgressionState,
   locale: LocaleCode,
   /** What decides availability, which never knows about "Show spoilers". */
@@ -71,11 +73,7 @@ export function searchAllCategories(
   const context: SearchContext = {
     locale,
     progressionState,
-    projectionContext: {
-      progress: completed,
-      progressionState: availabilityState,
-      worldState,
-    },
+    projectionContext: createProgressContext(completed, availabilityState, worldState),
   };
   const results: SearchResult[] = [];
   const termMatches = new Set<SearchResult>();

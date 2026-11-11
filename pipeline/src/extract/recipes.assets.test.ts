@@ -3,12 +3,28 @@ import { describe, expect, it } from "vitest";
 import { evaluateExpressions } from "../parse/evaluate.js";
 import { parseFiddle } from "../parse/parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
-import { requireCraftingMenus } from "./recipe-menus.js";
+import { assignRecipeStations, requireCraftingMenus } from "./recipe-menus.js";
 import { extractRecipes } from "./recipes.js";
 
 import type { RecipeId } from "#lib/types/tracker-data.js";
 
 describe("extractRecipes — real assets", () => {
+  it("assigns every extracted recipe to exactly one station", () => {
+    const { data: fiddle } = parseFiddle(requireGameAssetsDir());
+    requireCraftingMenus(fiddle);
+    evaluateExpressions(fiddle);
+
+    const { recipeMemberItems } = extractRecipes(fiddle);
+    const stations = assignRecipeStations(fiddle, recipeMemberItems);
+    expect(stations.size).toBe(recipeMemberItems.size);
+    expect(stations.get("copper_armor" as RecipeId)).toBe("blacksmithing");
+    expect(stations.get("blackberry_jam" as RecipeId)).toBe("kitchen");
+    expect(stations.get("flour" as RecipeId)).toBe("mill");
+    expect(stations.get("basic_wood_chest" as RecipeId)).toBe("woodcrafting");
+    expect(stations.get("essence_stone_giant" as RecipeId)).toBe("stone_refinery");
+    expect(stations.get("sword_dragon_forged" as RecipeId)).toBe("dragon_forge");
+  });
+
   it("produces recipes with expected source type counts", () => {
     const { data: fiddle } = parseFiddle(requireGameAssetsDir());
     requireCraftingMenus(fiddle);

@@ -114,7 +114,15 @@ export const SOURCE_FILTERS: readonly SourceFilter[] = [
   {
     id: "mines",
     members: ["mining", "chests", "dig_sites", "mine_fishing", "monsters"],
-    types: ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"],
+    types: [
+      "mines_chest",
+      "mines_dig_site",
+      "mine",
+      "mine_fish",
+      "mine_floor",
+      "monster",
+      "monster_feed",
+    ],
   },
   {
     id: "museum",

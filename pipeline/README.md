@@ -348,6 +348,10 @@ Mines acquisition source. Beta localization fallbacks remain separate from data-
 
 The `enrich/` modules compute spoiler gating from facts extracted in `extract/`.
 
+Each recipe points to one crafting station selected from the game’s station menus. The `stations`
+registry stores quest unlocks. A recipe combines its station gate with its acquisition conditions,
+and a product can become visible through any of its sources.
+
 | Module                                 | Responsibility                                                                                                                                |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `extract/cutscene-quest-map.ts`        | Maps cutscenes to the quests that trigger them, including setup scenes that gate a quest-starting scene.                                      |
@@ -372,6 +376,11 @@ game predicate. Acquired-item gates read Almanac history for tracked items; untr
 history stays unknown. Other reviewed game predicates remain explicit `gamePredicate` leaves, which
 quest shelves treat as met. Unrecognized predicates throw, even when newly declared in
 `requirements.toml`.
+
+The game starts each town-rank quest on reaching the previous rank, as
+`gml/scripts/GameplaySystems/Player/RenownUtils.gml` & `Ari.gml` show. The pipeline uses the
+preceding extracted rank boundary as its spoiler-visibility gate. Copper therefore appears at level
+10, not on a fresh save. Existing story prerequisites still apply.
 
 Quest shelves evaluate start conditions in addition to spoiler gates and existing fetch/cooking item
 sources. An obtained quest has already passed its start conditions. The app doesn't infer inventory

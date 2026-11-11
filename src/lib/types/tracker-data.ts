@@ -8,7 +8,6 @@ export type {
   JsonValue,
   LocationId,
   MonsterId,
-  ProductionMethod,
   Source,
   StationId,
   WaterType,
@@ -70,7 +69,17 @@ export type MountPerk = SourcedEntity;
 export type PetCosmeticSet = SourcedEntity;
 export type PetSkin = SourcedEntity;
 export type QuestType = keyof TrackerData["quests"];
-export type Recipe = SourcedEntity;
+export type Recipe = v.InferOutput<typeof schemas.RecipeSchema>;
+
+export const CRAFTING_STATION_IDS = [
+  "blacksmithing",
+  "dragon_forge",
+  "kitchen",
+  "mill",
+  "stone_refinery",
+  "woodcrafting",
+] as const;
+export type CraftingStationId = (typeof CRAFTING_STATION_IDS)[number];
 export type Spell = TrackerEntity;
 /** A chest tier carries no data; its name lives in locale files. */
 export type TreasureChestTier = TrackerData["treasureChestTiers"][TreasureChestTierId];
@@ -87,9 +96,12 @@ export const ITEM_VARIANTS = [
   "blue_and_yellow",
   "brown",
   "cherry",
+  "chipped",
   "chocolate",
   "cool_toned",
+  "cracked",
   "cracked_purple",
+  "crossed_tape",
   "cream",
   "dark_brown",
   "dark_wood",
@@ -124,6 +136,7 @@ export const ITEM_VARIANTS = [
   "sparkly",
   "stone_framed",
   "strawberry",
+  "striped_tape",
   "walnut",
   "walnut_and_gold",
   "walnut_and_green",

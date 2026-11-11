@@ -69,7 +69,7 @@ export function extractRecipes(
   recipeIdByItemId: Map<string, RecipeId>;
   recipeMemberItems: Map<RecipeId, ItemId[]>;
   recipeNameSources: Record<RecipeId, RecipeNameSource>;
-  recipes: Record<RecipeId, SourceDraft<Recipe>>;
+  recipes: Record<RecipeId, SourceDraft<Omit<Recipe, "stationId">>>;
 } {
   const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   const entries = collectRecipeEntries(fiddle);
@@ -100,7 +100,7 @@ export function extractRecipes(
     sources,
   };
 
-  const recipes: Record<RecipeId, SourceDraft<Recipe>> = {};
+  const recipes: Record<RecipeId, SourceDraft<Omit<Recipe, "stationId">>> = {};
   const recipeNameSources = {} as Record<RecipeId, RecipeNameSource>;
   const recipeMemberItems = new Map<RecipeId, ItemId[]>();
   for (const [recipeId, group] of grouped) {

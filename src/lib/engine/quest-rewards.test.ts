@@ -10,6 +10,10 @@ const MULTIPLE_REWARD_QUEST = "apiaries_and_terrariums" as QuestId;
 const MULTIPLE_REWARD_RECIPES = ["apiary", "terrarium"] as RecipeId[];
 
 describe("findRecipesForQuest", () => {
+  it("includes default recipes at the station opened by the quest", () => {
+    expect(findRecipesForQuest("find_the_magic_key" as QuestId)).toContain("sword_dragon_forged");
+  });
+
   it("returns recipe IDs for a quest that awards one recipe", () => {
     expect(findRecipesForQuest(ONE_REWARD_QUEST)).toEqual([ONE_REWARD_RECIPE]);
   });

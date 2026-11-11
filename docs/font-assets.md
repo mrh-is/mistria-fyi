@@ -18,8 +18,12 @@ For exact typography without a network connection:
 2. Install the Regular face using your operating system’s font manager.
 3. Restart the browser or development server if it was already running.
 
-Do not add the font binary to Git. The legacy path `static/fonts/satoshi-regular.woff2` remains
-ignored to prevent accidental recommits.
+Do not add the font to Git, as a file or inlined as base64 in a mockup or stylesheet. Fontshare’s
+license forbids redistributing it through a repository. The legacy path
+`static/fonts/satoshi-regular.woff2` remains ignored, and `scripts/check-vendored-assets.ts` fails
+lint on any font file outside the open-licensed set & on fonts inlined as `data:` URIs or base64
+bodies. A design mockup loads Satoshi from the hosted URL below, which allows cross-origin requests,
+even from a `file://` page.
 
 ### Browser tests
 

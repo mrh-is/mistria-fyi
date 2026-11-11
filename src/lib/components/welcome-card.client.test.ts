@@ -8,7 +8,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
 
 const STARTER_RECIPE = "basic_wood_chest" as RecipeId;
-const STARTER_COUNT = 293;
+const STARTER_COUNT = 266;
 
 describe("WelcomeCard", () => {
   it("asks how to work, with sync or by hand", async () => {

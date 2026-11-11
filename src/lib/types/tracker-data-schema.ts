@@ -5,7 +5,13 @@ import {
   DATE_INSPIRATION_DROP_ACTIVITIES,
   UPGRADE_IDS,
 } from "./acquisition.js";
-import { ITEM_VARIANTS, SEASONS, STORE_UPGRADE_ACTIONS, WEATHERS } from "./tracker-data.js";
+import {
+  CRAFTING_STATION_IDS,
+  ITEM_VARIANTS,
+  SEASONS,
+  STORE_UPGRADE_ACTIONS,
+  WEATHERS,
+} from "./tracker-data.js";
 
 import type { AvailabilityCondition, JsonValue } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
@@ -16,6 +22,7 @@ const nonEmpty = <T extends v.GenericSchema>(schema: T) => v.tupleWithRest([sche
 const season = v.picklist(SEASONS);
 const weather = v.picklist(WEATHERS);
 const questType = v.picklist(["cooking", "crown", "fetch", "heart", "mission", "story"]);
+const craftingStationId = v.picklist(CRAFTING_STATION_IDS);
 
 export const DaySchema = v.strictObject({ day: number, season });
 export const LevelRangeSchema = v.strictObject({ start: number, end: number });
@@ -35,6 +42,7 @@ export const VisibilityLeafSchema = v.variant("type", [
   v.strictObject({ type: v.literal("reachedSeason"), season }),
   v.strictObject({ type: v.literal("renownLevel"), level: number }),
   v.strictObject({ type: v.literal("skillLevel"), level: number, skillId: id("SkillId") }),
+  v.strictObject({ type: v.literal("station"), stationId: craftingStationId }),
   v.strictObject({ type: v.literal("villagerKnown"), villagerId: id("VillagerId") }),
 ]);
 const VisibilitySchema: v.GenericSchema<unknown, VisibilityCondition> = v.lazy(() =>
@@ -134,6 +142,7 @@ export const SourceSchema = v.variant("type", [
   source("lost_and_found", {}),
   source("mine", { biomeId: id("MinesBiomeId") }),
   source("mine_fish", { biomeId: v.optional(id("MinesBiomeId")) }),
+  source("mine_floor", { floor: number }),
   source("mines_chest", {
     biomeId: id("MinesBiomeId"),
     lootGroup: v.optional(id("DungeonLootGroup")),
@@ -157,10 +166,7 @@ export const SourceSchema = v.variant("type", [
   source("reach_day", {
     triggerDate: v.strictObject({ ...DaySchema.entries, year: v.optional(number) }),
   }),
-  source("recipe", {
-    method: v.picklist(["cook", "craft", "dragon_forge", "mill", "smith"]),
-    recipeId: id("RecipeId"),
-  }),
+  source("recipe", { recipeId: id("RecipeId") }),
   source("renown", { level: number }),
   source("ritual_chamber", { perkId: id("PerkId") }),
   source("scroll_bundle", { bundleItemId: id("ItemId"), storeId: id("StoreId") }),
@@ -184,6 +190,10 @@ export const TrackerEntitySchema = v.strictObject({
 export const SourcedEntitySchema = v.strictObject({
   ...TrackerEntitySchema.entries,
   sources: nonEmpty(SourceSchema),
+});
+export const RecipeSchema = v.strictObject({
+  ...SourcedEntitySchema.entries,
+  stationId: craftingStationId,
 });
 /** Labels resolve through getName("ui", id, locale), so categories store no name. */
 export const AlmanacEntrySchema = v.strictObject({
@@ -314,7 +324,9 @@ export const TrackerDataSchema = v.strictObject({
   festivals: v.record(id("FestivalId"), FestivalSchema),
   items: v.record(id("ItemId"), ItemSchema),
   mines: v.strictObject({
+    /** In floor order. */
     biomes: v.array(MinesBiomeSchema),
+    monsters: v.record(id("MonsterId"), v.strictObject({ biomes: nonEmpty(id("MinesBiomeId")) })),
     /** In floor order. */
     seals: v.array(MineSealSchema),
     spells: v.record(id("SpellId"), TrackerEntitySchema),
@@ -336,8 +348,15 @@ export const TrackerDataSchema = v.strictObject({
     mission: v.record(id("QuestId"), QuestEntitySchema),
     story: v.record(id("QuestId"), StoryQuestSchema),
   }),
-  recipes: v.record(id("RecipeId"), SourcedEntitySchema),
+  recipes: v.record(id("RecipeId"), RecipeSchema),
   skills: v.record(id("SkillId"), SkillSchema),
+  stations: v.pipe(
+    v.record(craftingStationId, v.strictObject({ unlockQuestId: v.optional(id("QuestId")) })),
+    v.check(
+      (stations) => CRAFTING_STATION_IDS.every((stationId) => Object.hasOwn(stations, stationId)),
+      "Missing crafting station",
+    ),
+  ),
   stores: v.record(id("StoreId"), StoreSchema),
   townRanks: v.array(TownRankSchema),
   treasureChestTiers: v.record(id("TreasureChestTierId"), emptyEntry),

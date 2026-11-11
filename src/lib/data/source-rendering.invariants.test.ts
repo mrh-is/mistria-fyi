@@ -54,6 +54,7 @@ const SOURCE_TYPES: Record<Source["type"], true> = {
   lost_and_found: true,
   mine: true,
   mine_fish: true,
+  mine_floor: true,
   mines_chest: true,
   mines_dig_site: true,
   monster: true,

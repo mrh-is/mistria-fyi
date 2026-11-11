@@ -80,7 +80,11 @@ function syntheticFiddle() {
       },
       // Villager visibility hard-codes the market upgrades that bring these villagers to town.
       story_quests: {
+        breaking_the_fire_seal: { name: "Breaking the Fire Seal" },
+        find_the_magic_key: { name: "Find the Magic Key" },
         find_the_weathervane: { name: "Find the Weathervane" },
+        stone_refinery: { name: "Stone Refinery" },
+        the_fire_tablet: { name: "The Fire Tablet" },
         upgrade_the_saturday_market: { name: "Upgrade the Saturday Market" },
         upgrade_the_saturday_market_plaza: { name: "Upgrade the Saturday Market Plaza" },
       },

@@ -142,6 +142,57 @@ describe("serialized progress writes", () => {
     identity: { creationVersion: null, saveNumber: "456" },
   };
 
+  it.each([
+    { different: true, path: "manual import" },
+    { different: true, path: "sync lane start" },
+    { different: false, path: "manual import" },
+    { different: false, path: "sync lane start" },
+  ])(
+    "retains the day on $path only for the same farm (different=$different)",
+    async ({ different, path }) => {
+      const worldState = { day: 17, season: "spring", weather: "inclement" };
+      const initial = buildState(
+        1,
+        { lastImport: firstFarm, worldState },
+        CURRENT_SERIALIZATION_VERSION,
+      );
+      const storage = memoryStorage({ [PROGRESS_KEY]: initial });
+      vi.stubGlobal("localStorage", storage);
+      vi.stubGlobal("navigator", {});
+      const { userState } = await openTab();
+      expect(userState.state.worldState).toEqual(worldState);
+      const day = { season: undefined, weather: undefined };
+      const metadata = different ? secondFarm : firstFarm;
+
+      let applied: boolean;
+      let asked = false;
+      if (path === "manual import") {
+        const outcome = await userState.mergeFromSave({ mineFloor: 10 }, { day, metadata });
+        asked = outcome.kind === "ask";
+        const result =
+          outcome.kind === "ask"
+            ? await userState.mergeFromSave(
+                { mineFloor: 10 },
+                { confirmedFarm: outcome.farm, day, metadata },
+              )
+            : outcome;
+        applied = result.kind === "applied";
+      } else {
+        applied = await userState.startSyncLane(
+          { kind: "computer" },
+          { completed: {}, day, metadata, playtime: 1000 },
+        );
+      }
+
+      expect(asked).toBe(path === "manual import" && different);
+      expect(applied).toBe(true);
+      const expected = different ? { season: "spring", weather: "inclement" } : worldState;
+      expect(userState.state.worldState).toEqual(expected);
+      const reloaded = await openTab();
+      expect(reloaded.userState.state.worldState).toEqual(expected);
+    },
+  );
+
   it("waits for a decision before merging another farm's save", async () => {
     const initial = buildState(1, { lastImport: firstFarm }, CURRENT_SERIALIZATION_VERSION);
     const storage = memoryStorage({ [PROGRESS_KEY]: initial });

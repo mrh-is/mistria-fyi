@@ -76,6 +76,9 @@ export const progressSync = createSyncFacade(repository, {
     return hand.canStartTrackingByHand;
   },
   chooseSync: hand.chooseSync,
+  get clockFarm() {
+    return shell.state.lastImport?.identity ?? null;
+  },
   emptyProgress: shell.emptyProgress,
   get laneChoiceNeeded() {
     return hand.laneChoiceNeeded;
@@ -151,7 +154,7 @@ const core = {
   },
   setSeason(season: Season) {
     const { worldState } = shell.state;
-    Object.assign(worldState, applySaveDay(worldState, { season, weather: undefined }));
+    shell.state.worldState = applySaveDay(worldState, { season, weather: undefined });
   },
   setWeather(weather: Weather) {
     if (isWeatherInSeason(weather, shell.state.worldState.season)) {

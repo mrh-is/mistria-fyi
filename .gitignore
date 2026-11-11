@@ -62,6 +62,7 @@ pipeline/output
 # Personal agent settings (see CONTRIBUTING.md, Using AI agents)
 /.claude/settings.local.json
 CLAUDE.local.md
+
 # Isolated Wuchale spike build and generated catalog modules
 /spikes/wuchale/build/
 /spikes/wuchale/catalogs/.wuchale/*
@@ -72,3 +73,6 @@ CLAUDE.local.md
 !/src/lib/i18n/catalogs/.wuchale/*.d.ts
 /src/lib/i18n/catalogs/data.js
 /src/lib/i18n/catalogs/plural.js
+
+# Field guide mockup sprites (baked from assets.mistria.fyi; game art stays out of Git)
+docs/design/field-guide/sprites.js

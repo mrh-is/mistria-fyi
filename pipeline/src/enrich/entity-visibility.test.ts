@@ -80,7 +80,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     dates: {},
     festivals: {},
     items: {},
-    mines: { biomes: [], seals: [], spells: {} },
+    mines: { biomes: [], monsters: {}, seals: [], spells: {} },
     mount: { appearances: {}, perks: {} },
     museum: {},
     perkTierLevels: [1, 10, 20, 45, 60],
@@ -90,6 +90,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},
     skills: {},
+    stations: {},
     stores: {},
     townRanks: [],
     treasureChestTiers: {},
@@ -322,6 +323,30 @@ describe("extractHeartLevelChanges", () => {
 });
 
 describe("assignEntityVisibility — items", () => {
+  it.each([
+    ["stone_refinery", "stone_refinery"],
+    ["dragon_forge", "find_the_magic_key"],
+  ])("keeps the recipe and production source behind the %s unlock", (stationId, unlockQuestId) => {
+    const source = { type: "recipe", recipeId: "product" };
+    const trackerData = makeTrackerData({
+      items: {
+        alternate: { sources: [{ type: "default" }, source] },
+        product: { sources: [source] },
+      },
+      recipes: { product: { sources: [{ type: "default" }], stationId } },
+      stations: { [stationId]: { unlockQuestId } },
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+
+    const gate = { type: "station", stationId };
+    expect(trackerData.recipes["product" as RecipeId].visibility).toEqual(gate);
+    expect(trackerData.items["product" as ItemId].visibility).toEqual(gate);
+    const alternate = trackerData.items["alternate" as ItemId];
+    expect(alternate.visibility).toBeUndefined();
+    expect(alternate.sources[1]).toHaveProperty("visibility", gate);
+  });
+
   it("leaves a non-gated item always visible", () => {
     const trackerData = makeTrackerData({
       items: {
@@ -1046,6 +1071,24 @@ describe("assignEntityVisibility — spells", () => {
       questId: "the_water_tablet",
     });
   });
+
+  it("gates Full Restore with a direct Mines floor source", () => {
+    const trackerData = makeTrackerData({
+      mines: { spells: { full_restore: { name: "Full Restore", sources: [] } } },
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+
+    const spell = trackerData.mines.spells["full_restore" as SpellId];
+    expect(spell.visibility).toEqual({ type: "mineFloor", floor: 10 });
+    expect(spell.sources).toEqual([
+      {
+        type: "mine_floor",
+        floor: 10,
+        visibility: { type: "mineFloor", floor: 10 },
+      },
+    ]);
+  });
 });
 
 describe("assignEntityVisibility — quests", () => {
@@ -1141,6 +1184,74 @@ describe("assignEntityVisibility — quests", () => {
       type: "questCompleted",
       questId: "prior_quest",
     });
+  });
+
+  it("reveals rank quests at the preceding rank while retaining other prerequisites", () => {
+    const starts = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const ids = [
+      "copper",
+      "ruby",
+      "iron",
+      "sapphire",
+      "silver",
+      "emerald",
+      "gold",
+      "diamond",
+      "mistril",
+    ];
+    const story = Object.fromEntries(
+      ids.map((id, index) => [`reach_${id}`, { sources: [], townRankLevel: starts[index + 2] }]),
+    );
+    const trackerData = makeTrackerData({
+      quests: { story },
+      townRanks: starts.map((start, index) => ({
+        levels: { start, end: starts[index + 1] === undefined ? start : starts[index + 1] - 1 },
+      })),
+    });
+    const questChains = makeQuestChains({
+      story: { reach_ruby: { prerequisites: ["prior_quest" as QuestId] } } as never,
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
+
+    expect(Object.keys(trackerData.quests.story)).toHaveLength(9);
+    for (const [index, id] of ids.entries()) {
+      const gate = { type: "renownLevel", level: starts[index + 1] };
+      expect(trackerData.quests.story[`reach_${id}` as QuestId].visibility).toEqual(
+        id === "ruby"
+          ? {
+              type: "and",
+              conditions: [{ type: "questCompleted", questId: "prior_quest" }, gate],
+            }
+          : gate,
+      );
+    }
+  });
+
+  it("uses the preceding rank boundary even when rank widths differ", () => {
+    const trackerData = makeTrackerData({
+      quests: { story: { rank_quest: { sources: [], townRankLevel: 20 } } },
+      townRanks: [
+        { levels: { start: 0, end: 6 } },
+        { levels: { start: 7, end: 19 } },
+        { levels: { start: 20, end: 20 } },
+      ],
+    });
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    expect(trackerData.quests.story["rank_quest" as QuestId].visibility).toEqual({
+      type: "renownLevel",
+      level: 7,
+    });
+  });
+
+  it.each([0, 15])("rejects a rank quest with no preceding rank at level %i", (level) => {
+    const trackerData = makeTrackerData({
+      quests: { story: { rank_quest: { sources: [], townRankLevel: level } } },
+      townRanks: [{ levels: { start: 0, end: 9 } }, { levels: { start: 10, end: 19 } }],
+    });
+    expect(() => {
+      assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    }).toThrow(/rank_quest.*preceding.*rank/);
   });
 });
 

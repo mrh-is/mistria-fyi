@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { trackerData as actualTrackerData } from "#lib/data/index.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { deepMerge } from "#lib/test-utils/deep-partial.js";
 import { recordKeys } from "#lib/utils/record.js";
@@ -61,7 +62,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     dates: {},
     festivals: {},
     items: {},
-    mines: { biomes: [], seals: [], spells: {} },
+    mines: { biomes: [], monsters: {}, seals: [], spells: {} },
     mount: { appearances: {}, perks: {} },
     museum: {},
     perkTierLevels: [1, 15, 30, 45, 60],
@@ -78,6 +79,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     },
     recipes: {},
     skills: {},
+    stations: {},
     stores: {},
     townRanks: [],
     treasureChestTiers: {},
@@ -88,6 +90,60 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
 }
 
 describe("isConditionVisible", () => {
+  it.each([
+    ["stone_refinery", "stone_refinery"],
+    ["dragon_forge", "find_the_magic_key"],
+  ] as const)("requires the %s station quest to be completed", (stationId, quest) => {
+    const questId = quest as QuestId;
+    const condition = { type: "station", stationId } as const;
+    const stations = { [stationId]: { unlockQuestId: questId } };
+
+    expect(isConditionVisible(condition, makeState({ stations }))).toBe(false);
+    expect(
+      isConditionVisible(
+        condition,
+        makeState({
+          questVisibility: { [questId]: "available" },
+          stations,
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isConditionVisible(
+        condition,
+        makeState({
+          questVisibility: { [questId]: "completed" },
+          stations,
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("reveals the next town rank quest only after reaching its preceding rank", () => {
+    const ids = [
+      "reach_copper_star_town_rank",
+      "reach_ruby_star_town_rank",
+      "reach_iron_star_town_rank",
+      "reach_sapphire_star_town_rank",
+      "reach_silver_star_town_rank",
+      "reach_emerald_star_town_rank",
+      "reach_gold_star_town_rank",
+      "reach_diamond_star_town_rank",
+      "reach_mistril_star_town_rank",
+    ] as QuestId[];
+    expect(ids).toHaveLength(9);
+    for (const [index, id] of ids.entries()) {
+      const quest = actualTrackerData.quests.story[id];
+      expect(quest, id).toBeDefined();
+      const level = (index + 1) * 10;
+      expect(isConditionVisible(quest.visibility, makeState({ renown: 0 })), id).toBe(false);
+      expect(isConditionVisible(quest.visibility, makeState({ renown: level - 1 })), id).toBe(
+        false,
+      );
+      expect(isConditionVisible(quest.visibility, makeState({ renown: level })), id).toBe(true);
+    }
+  });
+
   it("always returns true", () => {
     expect(isConditionVisible({ type: "always" }, makeState())).toBe(true);
   });

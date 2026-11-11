@@ -8,6 +8,7 @@ import {
   MAX_SKILL_LEVEL,
   normalizeLevel,
 } from "#lib/engine/progress.js";
+import { availableDefaultRecipeIds } from "#lib/engine/quest-rewards.js";
 import { getSpouseId } from "#lib/engine/relationships.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { WEATHERS } from "#lib/types/tracker-data.js";
@@ -145,6 +146,7 @@ export interface SaveIdentity {
 
 /** The in-game day the save was made on, from `gamedata.date` & `gamedata.weather`. */
 export interface SaveDayFields {
+  day?: number;
   season: ExtractedField<Season>;
   weather: ExtractedField<Weather>;
 }
@@ -260,7 +262,11 @@ export function progressOfExtraction(extraction: SaveExtraction): {
   }
   return {
     completed: completed as Partial<ProgressState>,
-    day: { season: extraction.day.season.value, weather: extraction.day.weather.value },
+    day: {
+      ...(extraction.day.day === undefined ? {} : { day: extraction.day.day }),
+      season: extraction.day.season.value,
+      weather: extraction.day.weather.value,
+    },
     playtime: extraction.identity.playtime.value,
     warnings: extraction.diagnostics.filter(isSaveImportWarning),
   };
@@ -315,13 +321,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   }
 
   // ── Recipe unlocks ──
-  // Default recipes are known without the save, so they're always in the value.
   const almanacRecipes = new Set<RecipeId>();
-  for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources.some((source) => source.type === "default")) {
-      almanacRecipes.add(id as RecipeId);
-    }
-  }
   for (const id of player.stringList("recipe_unlocks", ["almanacRecipes"]) ?? []) {
     if (Object.hasOwn(trackerData.recipes, id)) {
       almanacRecipes.add(id as RecipeId);
@@ -667,6 +667,9 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
     }
   }
   const questStates = readCompleted || readActive || readRankCompletion ? foundQuests : undefined;
+  for (const id of availableDefaultRecipeIds((questId) => foundQuests[questId] === "completed")) {
+    almanacRecipes.add(id);
+  }
 
   // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_status) ──
   // Explicit statuses include null for undecided. Legacy flags still add partial evidence, with
@@ -813,6 +816,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   };
   return {
     day: {
+      ...(today === undefined ? {} : { day: today.day }),
       season: collector.finish("season", today?.season),
       weather: collector.finish("weather", weather),
     },

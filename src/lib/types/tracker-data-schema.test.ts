@@ -112,8 +112,18 @@ describe("TrackerDataSchema", () => {
       v.safeParse(TrackerDataSchema, {
         ...trackerDataJson,
         categoryVisibility: { story: { type: "and", conditions: [{ type: "always" }] } },
-        recipes: { test: { sources: [{ type: "store", availability, storeId: "shop" }] } },
+        recipes: {
+          test: {
+            sources: [{ type: "store", availability, storeId: "shop" }],
+            stationId: "kitchen",
+          },
+        },
       }).success,
     ).toBe(true);
+  });
+
+  it("rejects an incomplete crafting station registry", () => {
+    const { stone_refinery: _refinery, ...stations } = trackerDataJson.stations;
+    expect(v.safeParse(TrackerDataSchema, { ...trackerDataJson, stations }).success).toBe(false);
   });
 });
