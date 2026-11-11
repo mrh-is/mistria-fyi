@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+      # The redesign branch; see docs/agent-workflow.md#the-redesign-branch.
+      - next
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
