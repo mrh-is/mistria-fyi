@@ -142,10 +142,11 @@
   tabindex="-1"
 >
   <header class="villager-identity">
-    <span class="villager-icon" data-spoilered={isSpoilered} aria-hidden="true">
+    <span class="villager-icon" aria-hidden="true">
       {#if !imageFailed}
         <img
           src={villagerSpriteUrl(id)}
+          class:villager-silhouette={isSpoilered}
           alt=""
           width="44"
           height="44"
@@ -330,8 +331,8 @@
     image-rendering: pixelated;
   }
 
-  .villager-icon[data-spoilered="true"] {
-    filter: grayscale(1);
+  .villager-silhouette {
+    filter: brightness(0) invert(0.5);
     opacity: 0.35;
   }
 

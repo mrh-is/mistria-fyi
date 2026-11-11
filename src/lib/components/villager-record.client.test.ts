@@ -93,6 +93,7 @@ describe("VillagerRecord", () => {
     });
 
     expect(view.getByRole("button", { name: m.spoiler_reveal_aria() })).toBeInTheDocument();
+    expect(view.container.querySelector("img")).toHaveClass("villager-silhouette");
     expect(view.getByText(m.villager_birthday_spoilered())).toBeInTheDocument();
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(0);
     expect(
@@ -102,6 +103,11 @@ describe("VillagerRecord", () => {
     expect(view.queryByRole("button", { name: /Adeline hearts/ })).not.toBeInTheDocument();
 
     await fireEvent.click(view.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    expect(view.container.querySelector("img")).not.toHaveClass("villager-silhouette");
+    expect(view.container.querySelector("img")).toHaveAttribute(
+      "src",
+      villagerSpriteUrl(adelineId),
+    );
     expect(
       view.getByRole("group", { name: "Adeline relationship level, 6 of 10" }),
     ).toBeInTheDocument();
