@@ -2,6 +2,7 @@
   import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { messageParts } from "#lib/utils/message-parts.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>
@@ -21,16 +22,16 @@
         <strong class="text-foreground">{m.ai_disclosure_email_safe()}</strong>
       </p>
       <p>
-        {m.ai_disclosure_link_intro()}
-        <a
-          href="https://github.com/mrh-is/mistria-fyi"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="underline hover:text-foreground">{m.ai_disclosure_github_link()}</a
-        >, {m.ai_disclosure_link_or()}
-        <a href="mailto:michael@mistria.fyi" class="underline hover:text-foreground"
-          >{m.ai_disclosure_email_link()}</a
-        >.
+        {#each messageParts( (slot) => m.ai_disclosure_link_intro( { github: slot("github"), email: slot("email") } ) ) as part, index (index)}
+          {#if typeof part === "string"}{part}{:else if part.slot === "github"}<a
+              href="https://github.com/mrh-is/mistria-fyi"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline hover:text-foreground">{m.ai_disclosure_github_link()}</a
+            >{:else}<a href="mailto:michael@mistria.fyi" class="underline hover:text-foreground"
+              >{m.ai_disclosure_email_link()}</a
+            >{/if}
+        {/each}
       </p>
     </div>
     <DialogCloseButton />

@@ -60,23 +60,23 @@ describe("plural messages", () => {
     ).toBe("Checked off “Copper Sword” and unlocked 3 recipes");
     expect(
       m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
-    ).toBe("«Copper Sword» отмечено, разблокировано 3 рецепта");
+    ).toBe("Отмечено: «Copper Sword», открыто 3 рецепта");
   });
 
   it("resolves all four Russian plural categories for the mine-floor merge-count label", () => {
     const locale: Locale = "ru";
 
     expect(m.merge_label_mine_floor({ count: 1, countText: "1" }, { locale })).toBe(
-      "Шахтный этаж: +1 этаж",
+      "Этажи шахт: +1 этаж",
     );
     expect(m.merge_label_mine_floor({ count: 3, countText: "3" }, { locale })).toBe(
-      "Шахтный этаж: +3 этажа",
+      "Этажи шахт: +3 этажа",
     );
     expect(m.merge_label_mine_floor({ count: 5, countText: "5" }, { locale })).toBe(
-      "Шахтный этаж: +5 этажей",
+      "Этажи шахт: +5 этажей",
     );
     expect(m.merge_label_mine_floor({ count: 11, countText: "11" }, { locale })).toBe(
-      "Шахтный этаж: +11 этажей",
+      "Этажи шахт: +11 этажей",
     );
   });
 });

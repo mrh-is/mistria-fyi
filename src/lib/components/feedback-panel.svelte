@@ -20,6 +20,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncDiagnostics } from "#lib/sync/diagnostics.svelte.js";
   import { ensureTurnstileScript } from "#lib/turnstile.js";
+  import { messageParts } from "#lib/utils/message-parts.js";
   import { version } from "$app/env";
 
   import type { Preview } from "#lib/components/feedback/preview-sheet.svelte";
@@ -562,16 +563,14 @@
 
         {#if turnstileError}
           <p class="text-2xs text-muted-foreground">
-            {m.feedback_turnstile_unavailable_intro()}
-            <a
-              class="underline hover:text-foreground"
-              href="https://github.com/mrh-is/mistria-fyi/issues/new"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {m.feedback_turnstile_github_action()}</a
-            >
-            {m.feedback_turnstile_unavailable_suffix()}
+            {#each messageParts( (slot) => m.feedback_turnstile_unavailable( { github: slot("github") } ) ) as part, index (index)}
+              {#if typeof part === "string"}{part}{:else}<a
+                  class="underline hover:text-foreground"
+                  href="https://github.com/mrh-is/mistria-fyi/issues/new"
+                  rel="noopener noreferrer"
+                  target="_blank">{m.feedback_turnstile_github_action()}</a
+                >{/if}
+            {/each}
           </p>
         {/if}
 

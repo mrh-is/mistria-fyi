@@ -328,10 +328,12 @@
           </Dialog.Header>
           <ol class="mt-2 list-decimal space-y-2 pl-5 text-sm marker:text-muted-foreground">
             <li>
-              {m.import_step_press_prefix()}
-              <kbd class="rounded border px-1 font-mono text-xs">Win</kbd>
-              + <kbd class="rounded border px-1 font-mono text-xs">R</kbd>
-              {m.import_step_press_suffix()}
+              {#each messageParts( (slot) => m.import_step_press( { shortcut: slot("shortcut") } ) ) as part, index (index)}
+                {#if typeof part === "string"}{part}{:else}<kbd
+                    class="rounded border px-1 font-mono text-xs">Win</kbd
+                  >
+                  + <kbd class="rounded border px-1 font-mono text-xs">R</kbd>{/if}
+              {/each}
             </li>
             <li>
               {m.import_step_paste_path()}
@@ -351,8 +353,9 @@
               </div>
             </li>
             <li>
-              {m.import_step_drag_autosave_before()} <code>-autosave.sav</code>
-              {m.import_step_drag_autosave_after()}
+              {#each messageParts( (slot) => m.import_step_drag_autosave( { file: slot("file") } ) ) as part, index (index)}
+                {#if typeof part === "string"}{part}{:else}<code>-autosave.sav</code>{/if}
+              {/each}
             </li>
           </ol>
           <Dialog.Footer class="mt-2">

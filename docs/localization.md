@@ -87,6 +87,15 @@ message that mentions one of these concepts, use the term below.
 | Town rank | town rank | categoría (de la aldea) | classement (de la ville) | タウンランク   | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
 | Villagers | villager  | aldeano                 | habitant                 | 町の住民       | 마을 주민 | житель      | 村民     | 村民     |
 | Perks     | perk      | don de habilidad        | bonus de compétence      | スキルボーナス | 스킬 특성 | навык       | 技能特长 | 技能特長 |
+| Almanac   | Almanac   | almanaque               | catalogue                | 図鑑           | 도감      | альманах    | 博物图鉴 | 博物圖鑑 |
+| Cosmetics | Cosmetics | cosméticos              | cosmétiques              | 着せ替え       | 코스메틱  | косметика   | 装扮     | 裝扮     |
+
+The Almanac row is the `ui` chunk's `almanac`. The game has no label for Cosmetics, so that row is
+MFG's choice: 装饰 & コスメ were rejected because they mean decorations & makeup.
+
+The app's full name stays "Mistria Field Guide" in running text in every locale, matching
+`app_name`; never half-translate it. Short self-references ("the field guide") are translated, but
+never with the game's Almanac word (図鑑, 도감, 图鉴), which would read as the Almanac.
 
 Note: in both Chinese scripts the game titles its villager list 居民列表 (the `ui` chunk's
 `villagers`) but calls an individual villager 村民 (`select_a_villager`). The category heading reads
@@ -302,12 +311,23 @@ These rules apply to every locale:
 - **Carry the voice, not the orthography.** The English talks like a chill, helpful friend: it
   addresses the reader as "you", speaks as "we", reassures, and allows a little goofiness ("Oops,
   forgot to put in your email!"); [voice.md](voice.md) defines it. Keep that register in every
-  locale within that language's own UI conventions (tú in `es`, vous in `fr`, 你 in Chinese). Don't
-  carry over marks that are only English house style: `en.json` uses `&` for close pairs ("Questions
-  & requests"), but other locales write their own conjunction (y, et, and so on). In Spanish, y
-  becomes e before an i sound ("datos e imágenes").
+  locale within that language's own UI conventions, using one form of address in every message of a
+  locale (see the table below). Don't carry over marks that are only English house style: `en.json`
+  uses `&` for close pairs ("Questions & requests"), but other locales write their own conjunction
+  (y, et, and so on). In Spanish, y becomes e before an i sound ("datos e imágenes").
 - **Native punctuation.** `zh-Hans` and `zh-Hant` use full-width punctuation (`，：（）！`) and `…`,
-  not ASCII `, : ( ) !` or `...`.
+  not ASCII `, : ( ) !` or `...`. French puts a no-break space (U+00A0) before `? ! : ;` & `»` and
+  after `«`, so a line never wraps to start with the mark, and writes the curly apostrophe (’).
+
+| Locale    | Address the player as                                   | Quote marks |
+| --------- | ------------------------------------------------------- | ----------- |
+| `es`      | tú                                                      | « »         |
+| `fr`      | vous                                                    | « »         |
+| `ja`      | です・ます form                                         | 「」        |
+| `ko`      | 해요체, including toasts (완료했어요, not 완료했습니다) | “ ”         |
+| `ru`      | вы, lowercase                                           | « »         |
+| `zh-Hans` | 你                                                      | “ ”         |
+| `zh-Hant` | 你                                                      | 「」        |
 
 ## Tooling
 
