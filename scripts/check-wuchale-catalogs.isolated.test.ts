@@ -10,6 +10,7 @@ import { checkCatalogs } from "./check-wuchale-catalogs.js";
 import type { Config } from "wuchale";
 
 it("extracts a new UI message helper during development without registration", async () => {
+  // Wuchale imports its configuration once per process, so load it in an isolated test project.
   vi.stubEnv("NODE_ENV", "development");
   const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));
   try {
