@@ -71,8 +71,11 @@ message that mentions one of these concepts, use the term below.
   `invite_npc_to_festival`).
 - **Mines, Quests, Recipes, & Cosmetics** (`category_*_name`, `source_location_mines`) are
   standalone labels, but the game's `fiddle/misc_local.toml` has no key for any of them. The game
-  names the mines only inside sentences ("Are you sure you want to exit the Mines?"), so the Mines
-  message uses that sentence's noun.
+  names the mines & cosmetics only inside sentences & buttons ("Are you sure you want to exit the
+  Mines?", "You can now equip this cosmetic in the customization menu!"), so those messages use that
+  noun. Cosmetics come from the `misc_local/*_cosmetic*` keys. Where a locale words them two ways,
+  the table takes the one most of those keys use: es accesorios over adornos, fr accessoires over
+  objet cosmétique, ko 꾸미기 아이템 over 코디, & zh-Hans 装扮 over 外观 & 装饰.
 - **Perks** follow the game's skill-perk tutorial (`ui/tutorials/skill_perks/title`) and its
   dialogue. Standalone labels use the full term; English keeps "perk", which the game uses on its
   own ("Select a perk to see its description"). Note: the game calls skills умения in Russian and
@@ -80,18 +83,17 @@ message that mentions one of these concepts, use the term below.
   `ui/tutorials/skill_perks/steps/1/text`), so labels for a set of perks use that plural, while a
   single perk is a « bonus de compétence ».
 
-| Concept   | en        | es                      | fr                       | ja             | ko        | ru          | zh-Hans  | zh-Hant  |
-| --------- | --------- | ----------------------- | ------------------------ | -------------- | --------- | ----------- | -------- | -------- |
-| Mines     | Mines     | minas                   | mines                    | 鉱坑           | 광산      | шахты       | 矿洞     | 礦洞     |
-| Renown    | renown    | reputación              | renommée                 | 名声           | 명성      | репутация   | 声望     | 聲望     |
-| Town rank | town rank | categoría (de la aldea) | classement (de la ville) | タウンランク   | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
-| Villagers | villager  | aldeano                 | habitant                 | 町の住民       | 마을 주민 | житель      | 村民     | 村民     |
-| Perks     | perk      | don de habilidad        | bonus de compétence      | スキルボーナス | 스킬 특성 | навык       | 技能特长 | 技能特長 |
-| Almanac   | Almanac   | almanaque               | catalogue                | 図鑑           | 도감      | альманах    | 博物图鉴 | 博物圖鑑 |
-| Cosmetics | Cosmetics | cosméticos              | cosmétiques              | 着せ替え       | 코스메틱  | косметика   | 装扮     | 裝扮     |
+| Concept   | en        | es                      | fr                       | ja             | ko            | ru          | zh-Hans  | zh-Hant  |
+| --------- | --------- | ----------------------- | ------------------------ | -------------- | ------------- | ----------- | -------- | -------- |
+| Mines     | Mines     | minas                   | mines                    | 鉱坑           | 광산          | шахты       | 矿洞     | 礦洞     |
+| Renown    | renown    | reputación              | renommée                 | 名声           | 명성          | репутация   | 声望     | 聲望     |
+| Town rank | town rank | categoría (de la aldea) | classement (de la ville) | タウンランク   | 마을 등급     | ранг города | 城镇等级 | 城鎮段位 |
+| Villagers | villager  | aldeano                 | habitant                 | 町の住民       | 마을 주민     | житель      | 村民     | 村民     |
+| Perks     | perk      | don de habilidad        | bonus de compétence      | スキルボーナス | 스킬 특성     | навык       | 技能特长 | 技能特長 |
+| Almanac   | Almanac   | almanaque               | catalogue                | 図鑑           | 도감          | альманах    | 博物图鉴 | 博物圖鑑 |
+| Cosmetics | Cosmetics | accesorios              | accessoires              | 外見アイテム   | 꾸미기 아이템 | украшения   | 装扮     | 飾物     |
 
-The Almanac row is the `ui` chunk's `almanac`. The game has no label for Cosmetics, so that row is
-MFG's choice: 装饰 & コスメ were rejected because they mean decorations & makeup.
+The Almanac row is the `ui` chunk's `almanac`.
 
 The app's full name stays "Mistria Field Guide" in running text in every locale, matching
 `app_name`; never half-translate it. Short self-references ("the field guide") are translated, but
