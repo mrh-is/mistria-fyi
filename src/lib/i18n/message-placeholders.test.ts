@@ -14,7 +14,7 @@ function readCatalog(locale: string): Catalog {
 /** Every `{name}` a message's text can render, across all of its plural variants. */
 function placeholders(value: unknown): string {
   const names = new Set<string>();
-  for (const [, name] of JSON.stringify(value).matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/gu)) {
+  for (const [, name] of JSON.stringify(value ?? "").matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/gu)) {
     names.add(name);
   }
   return [...names].toSorted().join(",");
