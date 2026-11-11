@@ -90,6 +90,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},
     skills: {},
+    stations: {},
     stores: {},
     townRanks: [],
     treasureChestTiers: {},
@@ -322,6 +323,30 @@ describe("extractHeartLevelChanges", () => {
 });
 
 describe("assignEntityVisibility — items", () => {
+  it.each([
+    ["stone_refinery", "stone_refinery"],
+    ["dragon_forge", "find_the_magic_key"],
+  ])("keeps the recipe and production source behind the %s unlock", (stationId, unlockQuestId) => {
+    const source = { type: "recipe", recipeId: "product" };
+    const trackerData = makeTrackerData({
+      items: {
+        alternate: { sources: [{ type: "default" }, source] },
+        product: { sources: [source] },
+      },
+      recipes: { product: { sources: [{ type: "default" }], stationId } },
+      stations: { [stationId]: { unlockQuestId } },
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+
+    const gate = { type: "station", stationId };
+    expect(trackerData.recipes["product" as RecipeId].visibility).toEqual(gate);
+    expect(trackerData.items["product" as ItemId].visibility).toEqual(gate);
+    const alternate = trackerData.items["alternate" as ItemId];
+    expect(alternate.visibility).toBeUndefined();
+    expect(alternate.sources[1]).toHaveProperty("visibility", gate);
+  });
+
   it("leaves a non-gated item always visible", () => {
     const trackerData = makeTrackerData({
       items: {

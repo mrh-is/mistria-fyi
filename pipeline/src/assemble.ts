@@ -54,6 +54,7 @@ import { extractPetCosmetics, extractPetSkins } from "./extract/pets.js";
 import { extractQuestChains } from "./extract/quest-chains.js";
 import { assignQuestRequirements } from "./extract/quest-requirements.js";
 import { extractQuests } from "./extract/quests.js";
+import { assignRecipeStations, CRAFTING_STATIONS } from "./extract/recipe-menus.js";
 import { extractRecipeScrollUnlocks } from "./extract/recipe-scrolls.js";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extract/recipes.js";
 import { extractTownRanks } from "./extract/renown.js";
@@ -236,7 +237,7 @@ export function assembleTrackerData(
     recipeIdByItemId,
     sources: recipeSources,
   };
-  deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
+  deriveRecipeProductSources(recipeMemberItems, itemSources);
   collectNaturalSources(fiddle, itemSources, cosmeticSources, petCosmeticSources, diagnostics);
   collectRecipeAcquisitionSources(fiddle, recipeContext, requirementContext, {
     animalCosmeticSources,
@@ -314,7 +315,12 @@ export function assembleTrackerData(
     sources: requireSources(`items.${itemId}`, itemSources.get(itemId as ItemId)),
   }));
   const cosmetics = finalizeSources("cosmetics", cosmeticDrafts);
-  const recipes = finalizeSources("recipes", recipeDrafts);
+  const recipeStations = assignRecipeStations(fiddle, recipeMemberItems);
+  const recipes = recordMap(finalizeSources("recipes", recipeDrafts), (recipe, recipeId) => {
+    const stationId = recipeStations.get(recipeId);
+    if (!stationId) throw new Error(`Missing crafting station for ${recipeId}`);
+    return { ...recipe, stationId };
+  });
   const animals = recordMap(animalDrafts, (animal, animalId) => ({
     ...animal,
     cosmetics: finalizeSources(`animals.${animalId}.cosmetics`, animal.cosmetics),
@@ -381,6 +387,7 @@ export function assembleTrackerData(
     quests,
     recipes,
     skills,
+    stations: CRAFTING_STATIONS,
     stores: storesMeta,
     townRanks,
     treasureChestTiers,
@@ -392,6 +399,11 @@ export function assembleTrackerData(
   stampStoreVisibility(trackerData);
   assignEntityVisibility(trackerData, cutsceneQuestMap, fiddle, questChainsRaw);
   assignQuestRequirements(fiddle, trackerData.quests, cutsceneQuestMap);
+  for (const [stationId, station] of Object.entries(trackerData.stations)) {
+    if (station.unlockQuestId && !Object.hasOwn(trackerData.quests.story, station.unlockQuestId)) {
+      throw new Error(`Unknown unlock quest "${station.unlockQuestId}" for station "${stationId}"`);
+    }
+  }
 
   // Validation is the last step before serialization: visibility assignment rewrites sources and
   // injects hard-coded quest gates, so validating any earlier would miss the emitted shape.
@@ -471,6 +483,6 @@ function buildAcquisitionReferences(
       villagers: trackerData.villagers,
       wings: trackerData.museum,
     },
-    reviewed: REVIEWED_NON_NATIVE_REFERENCES,
+    reviewed: { ...REVIEWED_NON_NATIVE_REFERENCES, stations: Object.keys(trackerData.stations) },
   });
 }

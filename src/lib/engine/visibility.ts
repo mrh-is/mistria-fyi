@@ -27,6 +27,7 @@ export interface UserProgressionState {
   renown: number;
   showSpoilers: boolean;
   skillLevels: Readonly<Partial<Record<SkillId, number>>>;
+  stations?: TrackerData["stations"];
   unlockedPerks: ReadonlySet<PerkId>;
 }
 
@@ -69,6 +70,7 @@ export function deriveProgressionState(
     renown: recorded.renown,
     showSpoilers,
     skillLevels: recorded.skillLevels,
+    stations: trackerData.stations,
     unlockedPerks: recorded.unlockedPerks,
   };
 }
@@ -88,6 +90,7 @@ export function canPlanConditionMutations(condition: VisibilityCondition): boole
     case "reachedSeason":
     case "renownLevel":
     case "skillLevel":
+    case "station":
       return true;
     case "and":
     case "or":
@@ -156,6 +159,14 @@ function evaluateCondition(
       return state.renown >= condition.level;
     case "skillLevel":
       return (state.skillLevels[condition.skillId] ?? 0) >= condition.level;
+    case "station": {
+      const station = state.stations?.[condition.stationId];
+      return (
+        station !== undefined &&
+        (station.unlockQuestId === undefined ||
+          state.questStatus(station.unlockQuestId) === "completed")
+      );
+    }
     case "villagerKnown":
       return state.isVillagerKnown(condition.villagerId);
   }
@@ -304,6 +315,11 @@ function planConditionMutationsInDraft(
         completed.skillLevels[condition.skillId] ?? 0,
         condition.level,
       );
+      return;
+    case "station": {
+      const questId = trackerData.stations[condition.stationId]?.unlockQuestId;
+      if (questId) markQuestCompleted(questId, completed, trackerData);
+    }
   }
 }
 
@@ -353,6 +369,7 @@ function recordedProgressContext(
     reachedSeason: completed.reachedSeason,
     renown: completed.renown,
     skillLevels: completed.skillLevels,
+    stations: trackerData.stations,
     unlockedPerks: completed.unlockedPerks,
   };
   return context;
