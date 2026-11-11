@@ -8,11 +8,13 @@ export const aboutMetadataFile = "src/routes/about/about-metadata.ts";
 export const errorSvelteFile = "src/routes/+error.svelte";
 export const errorMetadataFile = "src/lib/data/page-metadata.ts";
 
+export const uiMessageHelperGlob = "src/{lib,routes}/**/*-messages.ts";
+
 export const sharedScriptFiles = [
   "src/lib/controllers/tracking-reminders.svelte.ts",
   "src/lib/presentation/shelves.ts",
   "src/lib/utils/format.ts",
-  "src/routes/data/data-error-messages.ts",
+  uiMessageHelperGlob,
 ];
 
 export const sharedLocaleFiles = [

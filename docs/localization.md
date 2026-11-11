@@ -204,18 +204,20 @@ under `locales.en`, then use the same native key under the target locale. For ex
 lexicon also covers Almanac category labels and skill names. The song crystal category is omitted
 while its Japanese translation is missing. The lexicon lives outside the app's bundled data.
 
-1. Write the English where it appears. Svelte components and routes are scanned by default. For a
-   new TypeScript helper, add the file to the appropriate list in
-   [`scripts/lib/wuchale-source-files.js`](../scripts/lib/wuchale-source-files.js). Keep the whole
-   sentence in one string or template literal so translators can move its placeholders.
-2. Run `pnpm run messages:extract`. Review the catalog diff, fill missing translations, and keep the
-   numbered placeholders intact. Identical English with different meanings can use `@wc-context: …`.
-   Use `@wc-include` for missed copy and `@wc-ignore` for technical literals.
+1. Write the English where it appears. Svelte components and routes are scanned by default. Name new
+   TypeScript helpers that format copy in the current UI locale `*-messages.ts` under `src/lib` or
+   `src/routes`. Keep the whole sentence in one string or template literal so translators can move
+   its placeholders.
+2. `pnpm run dev` adds newly encountered messages to the catalogs as you edit and visit pages. Run
+   `pnpm run messages:extract` before review to scan every source file and remove obsolete entries.
+   Review the catalog diff, fill missing translations, and keep the numbered placeholders intact.
+   Identical English with different meanings can use `@wc-context: …`. Use `@wc-include` for missed
+   copy and `@wc-ignore` for technical literals.
 3. Run `pnpm run check:i18n` and `pnpm run lint`. Check the new copy in context, including in a
    language whose layout, word order, or plural forms differ from English.
 
-With `GEMINI_API_KEY` already in your environment, run
-`WUCHALE_TRANSLATE=1 pnpm run messages:extract` to let
+With `GEMINI_API_KEY` already in your environment, run `WUCHALE_TRANSLATE=1 pnpm run dev` for live
+drafts or `WUCHALE_TRANSLATE=1 pnpm run messages:extract` for a repository-wide pass. Both let
 [Wuchale draft translations](https://wuchale.dev/guides/ai/). The provider receives the source
 messages it is asked to translate. Review its drafts for regional usage and game terms before
 committing. Installation, CI, and normal builds use the checked-in translations and require no

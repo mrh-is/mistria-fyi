@@ -2,12 +2,46 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { getConfig, Hub } from "wuchale";
 
 import { checkCatalogs } from "./check-wuchale-catalogs.js";
 
 import type { Config } from "wuchale";
+
+it("extracts a new UI message helper during development without registration", async () => {
+  vi.stubEnv("NODE_ENV", "development");
+  const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));
+  try {
+    const base = await getConfig(fileURLToPath(new URL("../wuchale.config.js", import.meta.url)));
+    const config: Config = {
+      ...base,
+      adapters: { "shared-script": base.adapters["shared-script"] },
+      ai: null,
+      locales: ["en", "es"],
+    };
+    const sourceDirectory = join(root, "src/routes/data");
+    const catalogs = join(root, config.localesDir);
+    await mkdir(sourceDirectory, { recursive: true });
+    await mkdir(catalogs, { recursive: true });
+    await writeFile(join(catalogs, "shared-script.loader.js"), "export {};\n");
+
+    const hub = await Hub.create("dev", config, root);
+    const source = join(sourceDirectory, "backup-messages.ts");
+    const code = 'export function label() { return "Download a backup"; }\n';
+    await writeFile(source, code);
+    const result = await hub.transform(code, source);
+
+    expect(result.code).toContain("shared-script.loader.js");
+    expect(await readFile(join(catalogs, "shared.json"), "utf8")).toContain("Download a backup");
+    expect(await checkCatalogs(config, root)).toContain(
+      "Missing or incomplete es translation: Download a backup",
+    );
+  } finally {
+    vi.unstubAllEnvs();
+    await rm(root, { force: true, recursive: true });
+  }
+});
 
 it("discovers new components and requires translations again when their English changes", async () => {
   const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));

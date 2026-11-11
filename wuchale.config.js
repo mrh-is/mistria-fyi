@@ -118,7 +118,8 @@ export default defineConfig({
     }),
   },
   ai: process.env.WUCHALE_TRANSLATE === "1" ? gemini() : null,
-  dev: "read",
+  // The Vite plugin can use its dev transform even during a normal Vite production build.
+  dev: process.env.NODE_ENV === "development" ? "add" : "read",
   locales: [...LOCALE_CODES],
   localesDir: "src/lib/i18n/catalogs",
 });

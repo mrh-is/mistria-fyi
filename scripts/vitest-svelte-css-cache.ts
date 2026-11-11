@@ -1,5 +1,7 @@
-import { resolve } from "node:path";
+import { posix, resolve } from "node:path";
 import { normalizePath } from "vite";
+
+import { uiMessageHelperGlob } from "./lib/wuchale-source-files.js";
 
 import type { Plugin } from "vite";
 import type { CacheKeyIdGeneratorContext } from "vitest/node";
@@ -24,6 +26,7 @@ export function skipsFsModuleCache({
 /** Keeps transforms that depend on plugin state out of Vitest's fs module cache. */
 export function svelteCssCachePlugin(wuchaleSources: readonly string[]): Plugin {
   const catalogSources = new Set(wuchaleSources.map((file) => normalizePath(resolve(file))));
+  const uiMessageHelpers = normalizePath(resolve(uiMessageHelperGlob));
   const appDirectory = `${normalizePath(resolve("src"))}/`;
   return {
     configureVitest({ defineCacheKeyGenerator }) {
@@ -31,6 +34,7 @@ export function svelteCssCachePlugin(wuchaleSources: readonly string[]): Plugin 
       defineCacheKeyGenerator((context) =>
         skipsFsModuleCache(context) ||
         (context.id.startsWith(appDirectory) && context.id.endsWith(".svelte")) ||
+        posix.matchesGlob(normalizePath(context.id), uiMessageHelpers) ||
         catalogSources.has(normalizePath(context.id))
           ? false
           : undefined,
