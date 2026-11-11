@@ -102,7 +102,7 @@ both assignments before retrying the authorized handoff.
    agent-verification.md).
 8. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
    - for issue-backed work, `Closes #N`, or `Refs #N` when the issue needs work after the merge (see
-     “Final state” below),
+     “Final state” below) or the PR targets `next` (see “The redesign branch” below),
    - a deployment or branch preview URL when available (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
    - the GitHub user you represent as its assignee (`--assignee @me`).
@@ -318,8 +318,9 @@ The field guide redesign (#477) collects on a long-lived `next` branch, which de
 Issues in the “Field guide redesign” milestone that change the app belong on `next`.
 
 - **Branch from `next`:** run `pnpm run worktree:new <number>-<slug> next`, then claim the issue
-  with `pnpm run start-work issue <number> --current` inside the new worktree. Open the PR with
-  `gh pr create --base next`.
+  with `pnpm run start-work issue <number> --current` inside the new worktree. A harness-created
+  worktree starts from `main`, so rebase its branch onto `origin/next` before the first commit. Open
+  the PR with `gh pr create --base next`.
 - **Use `Refs #N`, not `Closes #N`:** GitHub acts on closing keywords only in PRs into the default
   branch. After the PR merges into `next`, close the issue by hand with a comment that links the PR.
   The final PR into `main` lists every redesign issue it ships.
@@ -334,6 +335,8 @@ Issues in the “Field guide redesign” milestone that change the app belong on
   relay accepts Turnstile tokens only from `mistria.fyi`, and follow links point to production.
 - **Storage changes still migrate:** a schema change on `next` needs a migration & compatibility
   tests from `main`’s current schema, because the final merge upgrades real players’ data.
+- **Retire `next` after the squash:** delete the branch once it ships, and this section with it,
+  because later merges between the two branches would conflict.
 
 ### Release versions
 
