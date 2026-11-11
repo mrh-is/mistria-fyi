@@ -447,7 +447,7 @@ describe("recipes progress", () => {
 
 describe("renown progress", () => {
   it("total equals max rank level", () => {
-    const maxLevel = trackerData.townRanks.at(-1)?.levels.end;
+    const maxLevel = trackerData.renown.townRanks.at(-1)?.levels.end;
     const progress = getCategoryProgress("renown", ctx());
     expect(progress.total).toBe(maxLevel);
   });

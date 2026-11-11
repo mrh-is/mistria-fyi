@@ -32,7 +32,7 @@ describe("tracker data structural presence", () => {
     "recipes",
     "skills",
     "stores",
-    "townRanks",
+    "renown",
     "treasureChestTiers",
     "version",
   ];
@@ -113,7 +113,7 @@ describe("non-empty collections", () => {
   });
 
   it("has town ranks", () => {
-    expect(trackerData.townRanks.length).toBeGreaterThan(0);
+    expect(trackerData.renown.townRanks.length).toBeGreaterThan(0);
   });
 
   it("has quest types with quests", () => {
@@ -365,22 +365,27 @@ describe("no duplicate IDs", () => {
 // ─── Town ranks ────────────────────────────────────────────────────
 
 describe("town ranks", () => {
+  it("has a reward for every level through the final rank", () => {
+    const { rewards, townRanks } = trackerData.renown;
+    expect(rewards).toHaveLength(townRanks.at(-1)?.levels.end ?? 0);
+  });
+
   it("ranks are in ascending order", () => {
-    for (let i = 1; i < trackerData.townRanks.length; i++) {
-      expect(trackerData.townRanks[i].levels.start).toBeGreaterThanOrEqual(
-        trackerData.townRanks[i - 1].levels.end,
+    for (let i = 1; i < trackerData.renown.townRanks.length; i++) {
+      expect(trackerData.renown.townRanks[i].levels.start).toBeGreaterThanOrEqual(
+        trackerData.renown.townRanks[i - 1].levels.end,
       );
     }
   });
 
   it("every rank has a name", () => {
-    for (const [index] of trackerData.townRanks.entries()) {
+    for (const [index] of trackerData.renown.townRanks.entries()) {
       expect(getName("town-ranks", index.toString(), "en").length).toBeGreaterThan(0);
     }
   });
 
   it("first rank starts at 0 or 1", () => {
-    expect(trackerData.townRanks[0].levels.start).toBeLessThanOrEqual(1);
+    expect(trackerData.renown.townRanks[0].levels.start).toBeLessThanOrEqual(1);
   });
 });
 

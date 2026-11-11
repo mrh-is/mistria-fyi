@@ -89,11 +89,10 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     questOrder: {},
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},
-    renownRewards: [],
+    renown: { rewards: [], townRanks: [] },
     skills: {},
     stations: {},
     stores: {},
-    townRanks: [],
     treasureChestTiers: {},
     version: "test",
     villagers: {},
@@ -1205,9 +1204,12 @@ describe("assignEntityVisibility — quests", () => {
     );
     const trackerData = makeTrackerData({
       quests: { story },
-      townRanks: starts.map((start, index) => ({
-        levels: { start, end: starts[index + 1] === undefined ? start : starts[index + 1] - 1 },
-      })),
+      renown: {
+        rewards: [],
+        townRanks: starts.map((start, index) => ({
+          levels: { start, end: starts[index + 1] === undefined ? start : starts[index + 1] - 1 },
+        })),
+      },
     });
     const questChains = makeQuestChains({
       story: { reach_ruby: { prerequisites: ["prior_quest" as QuestId] } } as never,
@@ -1232,11 +1234,14 @@ describe("assignEntityVisibility — quests", () => {
   it("uses the preceding rank boundary even when rank widths differ", () => {
     const trackerData = makeTrackerData({
       quests: { story: { rank_quest: { sources: [], townRankLevel: 20 } } },
-      townRanks: [
-        { levels: { start: 0, end: 6 } },
-        { levels: { start: 7, end: 19 } },
-        { levels: { start: 20, end: 20 } },
-      ],
+      renown: {
+        rewards: [],
+        townRanks: [
+          { levels: { start: 0, end: 6 } },
+          { levels: { start: 7, end: 19 } },
+          { levels: { start: 20, end: 20 } },
+        ],
+      },
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.quests.story["rank_quest" as QuestId].visibility).toEqual({
@@ -1248,7 +1253,10 @@ describe("assignEntityVisibility — quests", () => {
   it.each([0, 15])("rejects a rank quest with no preceding rank at level %i", (level) => {
     const trackerData = makeTrackerData({
       quests: { story: { rank_quest: { sources: [], townRankLevel: level } } },
-      townRanks: [{ levels: { start: 0, end: 9 } }, { levels: { start: 10, end: 19 } }],
+      renown: {
+        rewards: [],
+        townRanks: [{ levels: { start: 0, end: 9 } }, { levels: { start: 10, end: 19 } }],
+      },
     });
     expect(() => {
       assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));

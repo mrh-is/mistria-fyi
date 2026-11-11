@@ -12,13 +12,13 @@ import type { ParsedGameData } from "../parse/parse-fiddle.js";
 
 export interface TownRankExtraction {
   localeNames: Record<LocaleCode, Record<string, string>>;
-  townRanks: TrackerData["townRanks"];
+  townRanks: TrackerData["renown"]["townRanks"];
 }
 
 export function extractRenownRewards(
   fiddle: ParsedGameData,
   maxLevel: number,
-): TrackerData["renownRewards"] {
+): TrackerData["renown"]["rewards"] {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return [];
 
@@ -35,16 +35,15 @@ export function extractRenownRewards(
     if (Object.keys(reward).length === 1) {
       const { cosmetic, item, purse } = reward;
       if (typeof purse === "number" && Number.isSafeInteger(purse) && purse > 0) {
-        return { type: "money", amount: purse, level };
+        return { type: "money", amount: purse };
       }
       if (Object.hasOwn(reward, "item")) {
-        return { type: "item", itemId: expectNonEmptyString(item, context) as ItemId, level };
+        return { type: "item", itemId: expectNonEmptyString(item, context) as ItemId };
       }
       if (Object.hasOwn(reward, "cosmetic")) {
         return {
           type: "cosmetic",
           cosmeticId: expectNonEmptyString(cosmetic, context) as CosmeticId,
-          level,
         };
       }
     }
@@ -70,7 +69,7 @@ export function extractTownRanks(fiddle: ParsedGameData, localizer: Localizer): 
 
   // The game uses N-1 full ranks + 1 cap rank at the ceiling level
   const maxLevel = (rawRanks.length - 1) * levelsPerRank;
-  const townRanks: TrackerData["townRanks"] = rawRanks.map((r, i) => {
+  const townRanks: TrackerData["renown"]["townRanks"] = rawRanks.map((r, i) => {
     const name = r.name as string | undefined;
     if (!name) throw new Error(`Town rank at ordinal ${i} has no English name`);
     const { values } = localizer.localizeField({

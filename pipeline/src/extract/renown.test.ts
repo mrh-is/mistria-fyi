@@ -12,12 +12,10 @@ describe("extractRenownRewards", () => {
     });
     const result = extractRenownRewards(makeFiddleBase({ renown: { rewards } }), 100);
 
-    expect(result.map(({ level }) => level)).toEqual(
-      Array.from({ length: 100 }, (_, index) => index + 1),
-    );
-    expect(result[0]).toEqual({ type: "money", amount: 100, level: 1 });
-    expect(result[1]).toEqual({ type: "cosmetic", cosmeticId: "head_adventurer_hood", level: 2 });
-    expect(result[99]).toEqual({ type: "item", itemId: "essence_stone_large", level: 100 });
+    expect(result).toHaveLength(100);
+    expect(result[0]).toEqual({ type: "money", amount: 100 });
+    expect(result[1]).toEqual({ type: "cosmetic", cosmeticId: "head_adventurer_hood" });
+    expect(result[99]).toEqual({ type: "item", itemId: "essence_stone_large" });
   });
 
   it.each([
