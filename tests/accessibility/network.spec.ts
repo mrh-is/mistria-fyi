@@ -55,6 +55,10 @@ for (const { catalog, warmShared } of [
       page.getByText("Algo ha fallado por nuestra parte, pero tu progreso está a salvo."),
     ).toBeVisible();
     expect(blocked).toBe(true);
+    // Let the font fixture finish before the recovery link unloads the document.
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
 
     await page.unroute(`**/${file}`);
     const home = page.getByRole("link", { name: "Volver al inicio" });
@@ -62,6 +66,9 @@ for (const { catalog, warmShared } of [
     await home.click();
     await expect(page).toHaveURL(/\/es$/u);
     await expect(page.getByRole("button", { exact: true, name: "Ajustes rápidos" })).toBeVisible();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
   });
 }
 
