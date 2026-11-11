@@ -192,7 +192,7 @@ test("speaks the uncached URL's locale on the offline page", async ({ context, p
   await goOffline(context);
   await page.goto("/ja/pwa-uncached-offline-probe");
   await expect(page.getByRole("heading", { name: "オフラインです" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "再試行" })).toHaveAttribute("href", "");
+  await expect(page.getByRole("link", { name: "もう一度試す" })).toHaveAttribute("href", "");
 
   const document_ = await page.evaluate(() => ({
     dir: document.documentElement.dir,
