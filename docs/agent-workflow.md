@@ -66,7 +66,8 @@ pnpm run start-work takeover 456 --current codex
   suffix of an existing agent label, such as `codex` or `claude`. Use `human` for work without an
   agent.
 - **Task** prepares an ad hoc branch without looking up or creating an issue. Both new-worktree
-  modes branch from freshly fetched `origin/main` and leave the primary checkout alone.
+  modes branch from freshly fetched `origin/main` and leave the primary checkout alone. Redesign
+  work branches from `next` instead; see [The redesign branch](#the-redesign-branch).
 - **Takeover** runs in a clean, dedicated linked worktree. It checks out the existing PR branch,
   runs setup, & updates ownership on the PR and its single linked open issue, if any. The command
   recognizes closing references & standalone `Refs #N` lines. Coordinate multi-issue handoffs
