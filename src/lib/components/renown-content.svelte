@@ -33,8 +33,9 @@
   registerPageSearch(() => {
     const matches = compact
       ? 0
-      : trackerData.townRanks.filter((rank, index) => matchesSearch(rank.levels.start, index))
-          .length;
+      : trackerData.renown.townRanks.filter((rank, index) =>
+          matchesSearch(rank.levels.start, index),
+        ).length;
     return { filtered: { completed: 0, notNow: 0, todo: 0 }, visible: matches };
   });
 </script>
@@ -47,7 +48,7 @@
 
 {#if !compact}
   <ul class="rank-register" aria-label="Town rank register">
-    {#each trackerData.townRanks as rank, index (index)}
+    {#each trackerData.renown.townRanks as rank, index (index)}
       {#if matchesSearch(rank.levels.start, index)}
         <RankRecord
           color={townRankColor(index)}
