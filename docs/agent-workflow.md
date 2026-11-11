@@ -66,7 +66,8 @@ pnpm run start-work takeover 456 --current codex
   suffix of an existing agent label, such as `codex` or `claude`. Use `human` for work without an
   agent.
 - **Task** prepares an ad hoc branch without looking up or creating an issue. Both new-worktree
-  modes branch from freshly fetched `origin/main` and leave the primary checkout alone.
+  modes branch from freshly fetched `origin/main` and leave the primary checkout alone. Redesign
+  work branches from `next` instead; see [The redesign branch](#the-redesign-branch).
 - **Takeover** runs in a clean, dedicated linked worktree. It checks out the existing PR branch,
   runs setup, & updates ownership on the PR and its single linked open issue, if any. The command
   recognizes closing references & standalone `Refs #N` lines. Coordinate multi-issue handoffs
@@ -102,7 +103,7 @@ both assignments before retrying the authorized handoff.
    agent-verification.md).
 8. **Deliver.** Commit with the required co-author trailer, push, & open a PR. The PR needs:
    - for issue-backed work, `Closes #N`, or `Refs #N` when the issue needs work after the merge (see
-     “Final state” below),
+     “Final state” below) or the PR targets `next` (see “The redesign branch” below),
    - a deployment or branch preview URL when available (see “Preview URL” below),
    - `data:diff` output, if the PR regenerates tracker data (see “Tracker data changes” below),
    - the GitHub user you represent as its assignee (`--assignee @me`).
@@ -310,6 +311,33 @@ maintainer merges on GitHub, and an agent may get no moment to fix anything afte
   after the merge, such as a production check, reference that issue with `Refs #N`, not `Closes #N`.
   `Closes` would close the issue with the item still unchecked. Whoever finishes the item closes the
   issue.
+
+### The redesign branch
+
+The field guide redesign (#477) collects on a long-lived `next` branch, which deploys to
+`https://next.mistria.fyi`. It merges into `main` once, as a single squash, when the redesign ships.
+Issues in the “Field guide redesign” milestone that change the app belong on `next`.
+
+- **Branch from `next`:** run `pnpm run worktree:new <number>-<slug> next`, then claim the issue
+  with `pnpm run start-work issue <number> --current` inside the new worktree. A harness-created
+  worktree starts from `main`, so rebase its branch onto `origin/next` before the first commit. Open
+  the PR with `gh pr create --base next`.
+- **Use `Refs #N`, not `Closes #N`:** GitHub acts on closing keywords only in PRs into the default
+  branch. After the PR merges into `next`, close the issue by hand with a comment that links the PR.
+  The final PR into `main` lists every redesign issue it ships.
+- **Fixes go to `main`:** engine, pipeline, data, & bug fixes land on `main` as usual, even when the
+  redesign needs them. Engine work that the redesign depends on can land on `main` first with no UI
+  change, which keeps `next`’s diff to the interface.
+- **Merge `main` into `next` often,** after each data or engine PR at least. Open the merge as a PR
+  into `next` so CI runs on it, and resolve conflicts in favor of `next`’s interface & `main`’s
+  logic.
+- **The preview is a separate origin:** `next.mistria.fyi` has its own localStorage, so testers
+  start empty and move progress over with a backup. Sync pairing doesn’t work there, because the
+  relay accepts Turnstile tokens only from `mistria.fyi`, and follow links point to production.
+- **Storage changes still migrate:** a schema change on `next` needs a migration & compatibility
+  tests from `main`’s current schema, because the final merge upgrades real players’ data.
+- **Retire `next` after the squash:** delete the branch once it ships, and this section with it,
+  because later merges between the two branches would conflict.
 
 ### Release versions
 
