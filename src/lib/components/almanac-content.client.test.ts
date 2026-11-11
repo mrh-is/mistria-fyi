@@ -81,6 +81,7 @@ describe("AlmanacContent", () => {
 
   it("filters a merged row by a noncanonical member's name", async () => {
     // Single & double beds share one recipe, so the row is named for the single bed.
+    userState.toggleShowSpoilers();
     toolbarState.setSearchQuery("Emerald Double Bed");
 
     const view = renderWithFeedback(AlmanacContent, { locale: "en" });

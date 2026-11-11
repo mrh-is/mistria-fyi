@@ -57,6 +57,8 @@ interface SourceVisibilityContext {
   biomeFloor: (biomeId: MinesBiomeId) => number | undefined;
   perks: Record<string, FlatPerkInfo>;
   perkTierLevels: TrackerData["perkTierLevels"];
+  recipes: TrackerData["recipes"];
+  stations: TrackerData["stations"];
   storeVisibility: Record<StoreId, VisibilityCondition>;
 }
 
@@ -70,11 +72,13 @@ export function assignEntityVisibility(
     biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.floors.start,
     perks: buildFlatPerks(trackerData.skills),
     perkTierLevels: trackerData.perkTierLevels,
+    recipes: trackerData.recipes,
+    stations: trackerData.stations,
     storeVisibility: buildStoreVisibilityMap(trackerData.stores),
   };
 
-  assignItemVisibility(trackerData, ctx);
   assignRecipeVisibility(trackerData, ctx);
+  assignItemVisibility(trackerData, ctx);
   assignCosmeticVisibility(trackerData, ctx);
   assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
@@ -204,7 +208,6 @@ function acquisitionSourceCondition(
     case "museum_donation":
     case "proposal":
     case "reach_day":
-    case "recipe":
     case "secret_chest":
     case "ship_item":
     case "spouseGift":
@@ -214,6 +217,8 @@ function acquisitionSourceCondition(
     case "wedding":
     case "wishing_well":
       return ALWAYS_VISIBLE;
+    case "recipe":
+      return ctx.recipes[source.recipeId]?.visibility ?? ALWAYS_VISIBLE;
     case "bait_fish":
       return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
     case "horse_statue":
@@ -397,6 +402,12 @@ function assignQuestVisibility(
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const recipe of Object.values(trackerData.recipes)) {
     assignSourcedEntityVisibility(recipe, ctx);
+    if (ctx.stations[recipe.stationId]?.unlockQuestId) {
+      recipe.visibility = andSimplify([
+        recipe.visibility ?? ALWAYS_VISIBLE,
+        { type: "station", stationId: recipe.stationId },
+      ]);
+    }
   }
 }
 
@@ -446,7 +457,6 @@ function acquisitionSourceConditions(
     case "perk_drop":
     case "proposal":
     case "reach_day":
-    case "recipe":
     case "renown":
     case "ritual_chamber":
     case "secret_chest":
@@ -459,6 +469,8 @@ function acquisitionSourceConditions(
     case "wedding":
     case "wishing_well":
       return { entity, source: ALWAYS_VISIBLE };
+    case "recipe":
+      return { entity, source: entity };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);

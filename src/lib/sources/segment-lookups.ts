@@ -87,6 +87,7 @@ function buildStaticBaseSegmentLookups(): Omit<
       ),
     ),
     questVillagerIds: recordMap(trackerData.quests.fetch, ({ villager }) => villager),
+    recipeStations: recordMap(trackerData.recipes, ({ stationId }) => stationId),
     storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
     villagerVisibility: recordMap(trackerData.villagers, ({ visibility }) => visibility),
   };
@@ -160,7 +161,6 @@ function getLocalizedBaseSegmentLookups(
       ),
     ),
     recipeNames: getNameTable("recipes", locale),
-    // Processing stations are items.
     stationNames: itemNames,
     stores: Object.fromEntries(
       recordEntries(trackerData.stores).map(([id, store]) => [

@@ -720,13 +720,13 @@ describe("validateAcquisitionSources", () => {
       museum: {},
       recipes: {
         cycle_a: {
-          sources: [{ type: "recipe", method: "cook", recipeId: "cycle_b" }],
+          sources: [{ type: "recipe", recipeId: "cycle_b" }],
         },
         cycle_b: {
-          sources: [{ type: "recipe", method: "cook", recipeId: "cycle_a" }],
+          sources: [{ type: "recipe", recipeId: "cycle_a" }],
         },
         unresolved: {
-          sources: [{ type: "recipe", method: "cook", recipeId: "missing_recipe" }],
+          sources: [{ type: "recipe", recipeId: "missing_recipe" }],
         },
       },
     };

@@ -55,6 +55,7 @@ export function toAvailableVisibility(condition: VisibilityCondition): Visibilit
     case "renownLevel":
     case "skillLevel":
     case "villagerKnown":
+    case "station":
       return condition;
     case "and":
     case "or":
