@@ -60,6 +60,15 @@ export const SPELL_SOURCES_ENTRIES = entriesFromRecord<QuestId>(
 );
 export const SPELL_SOURCES = entriesToRecord(SPELL_SOURCES_ENTRIES);
 
+export const SPELL_MINE_FLOORS_ENTRIES = entriesFromRecord<number>(
+  {
+    full_restore: 10,
+  },
+  "fiddle.cutscenes.full_restore requirements.reached_mines_level",
+  "Full Restore is represented by its Mines floor requirement, not a cutscene source",
+);
+export const SPELL_MINE_FLOORS = entriesToRecord(SPELL_MINE_FLOORS_ENTRIES);
+
 export const STORY_PREREQUISITE_OVERRIDES_ENTRIES = entriesFromRecord<QuestId[]>(
   {
     ["breaking_the_final_seal" as QuestId]: ["the_dragonsworn_tablet" as QuestId],

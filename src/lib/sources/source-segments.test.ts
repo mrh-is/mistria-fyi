@@ -403,6 +403,11 @@ describe("buildSourceSegments — simple types", () => {
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Get the town rank to level 3"]);
   });
 
+  it("Mines floor", () => {
+    const source: Source = { type: "mine_floor", floor: 10 };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Reach Mines floor 10"]);
+  });
+
   it("museum donation", () => {
     const source: Source = {
       type: "museum_donation",

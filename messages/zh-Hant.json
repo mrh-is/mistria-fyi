@@ -657,6 +657,7 @@
   "source_mine": "在{biome}採礦",
   "source_mine_fish": "在{biome}釣魚",
   "source_mine_fish_any": "在礦洞釣魚",
+  "source_mines_floor": "到達礦洞第{floor}層",
   "source_mines_chest": "在{biome}的寶箱中找到",
   "source_mines_chest_perk": "擁有{perk}時，在{biome}的寶箱中找到",
   "source_mines_dig_site": "在{biome}挖掘",

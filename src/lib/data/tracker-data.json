@@ -71684,7 +71684,20 @@
     ],
     "spells": {
       "full_restore": {
-        "sources": []
+        "sources": [
+          {
+            "type": "mine_floor",
+            "floor": 10,
+            "visibility": {
+              "type": "mineFloor",
+              "floor": 10
+            }
+          }
+        ],
+        "visibility": {
+          "type": "mineFloor",
+          "floor": 10
+        }
       },
       "summon_rain": {
         "sources": [

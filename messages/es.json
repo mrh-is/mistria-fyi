@@ -675,6 +675,7 @@
   "source_mine": "Picar en {biome}",
   "source_mine_fish": "Pescar en {biome}",
   "source_mine_fish_any": "Pescar en las minas",
+  "source_mines_floor": "Alcanza el piso {floor} de las minas",
   "source_mines_chest": "Encontrar en un cofre del tesoro en {biome}",
   "source_mines_chest_perk": "Encontrar en un cofre del tesoro en {biome}, con {perk}",
   "source_mines_dig_site": "Desenterrar en {biome}",

@@ -4,6 +4,7 @@ import { resolveToVisibility } from "../acquisition/requirement-projector.js";
 import {
   CROWN_QUEST_GATE,
   HAYDENS_BARN_GATE,
+  SPELL_MINE_FLOORS,
   SPELL_SOURCES,
   STORE_UNLOCK_QUESTS,
   VILLAGER_GATES,
@@ -82,7 +83,7 @@ export function assignEntityVisibility(
   assignCosmeticVisibility(trackerData, ctx);
   assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
-  assignSpellVisibility(trackerData);
+  assignSpellVisibility(trackerData, ctx);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
   stripAllAlwaysVisibility(trackerData);
 }
@@ -235,6 +236,8 @@ function acquisitionSourceCondition(
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
       return floor === undefined ? ALWAYS_VISIBLE : { type: "mineFloor", floor };
     }
+    case "mine_floor":
+      return { type: "mineFloor", floor: source.floor };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
@@ -411,13 +414,6 @@ function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityC
   }
 }
 
-/**
- * Hardcoded spell → source-quest mappings. The cutscene chain (quest → seal break → post-cutscene
- * → spell_to_unlock) is too indirect for the cutsceneMap to trace automatically: the post-seal
- * cutscenes lack quest_to_start/quest_to_progress and aren't referenced in quest stage queries.
- * full_restore has no quest at all (mines level 10 reward).
- */
-
 function acquisitionSourceConditions(
   source: AcquisitionSource,
   ctx: SourceVisibilityContext,
@@ -469,6 +465,7 @@ function acquisitionSourceConditions(
     case "wedding":
     case "wishing_well":
       return { entity, source: ALWAYS_VISIBLE };
+    case "mine_floor":
     case "recipe":
       return { entity, source: entity };
     case "mines_chest":
@@ -531,8 +528,17 @@ function assignSourcedEntityVisibility(entity: SourcedEntity, ctx: SourceVisibil
   entity.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
 }
 
-function assignSpellVisibility(trackerData: TrackerData): void {
+function assignSpellVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [spellId, spell] of Object.entries(trackerData.mines.spells)) {
+    const floor = SPELL_MINE_FLOORS[spellId];
+    if (floor !== undefined) {
+      const source: AcquisitionSource = { type: "mine_floor", floor };
+      const conditions = computeSourceConditions(source, ctx);
+      spell.sources = [{ ...source, visibility: conditions.source }];
+      spell.visibility = conditions.entity;
+      continue;
+    }
+
     const questId = SPELL_SOURCES[spellId];
     if (questId) {
       spell.visibility = { type: "questCompleted", questId };

@@ -675,6 +675,7 @@
   "source_mine": "Miner : {biome}",
   "source_mine_fish": "Pêcher : {biome}",
   "source_mine_fish_any": "Pêcher dans les mines",
+  "source_mines_floor": "Atteindre l’étage {floor} des mines",
   "source_mines_chest": "Trouver dans un coffre au trésor : {biome}",
   "source_mines_chest_perk": "Trouver dans un coffre au trésor : {biome}, avec {perk}",
   "source_mines_dig_site": "Déterrer : {biome}",
