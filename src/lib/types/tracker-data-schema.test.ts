@@ -67,7 +67,7 @@ describe("TrackerDataSchema", () => {
         },
       },
     ],
-    ["townRanks", [{ levels: { start: 1, end: Infinity } }]],
+    ["renown", { ...trackerDataJson.renown, townRanks: [{ levels: { start: 1, end: Infinity } }] }],
   ])("rejects a malformed %s section", (key, value) => {
     expect(v.safeParse(TrackerDataSchema, { ...trackerDataJson, [key]: value }).success).toBe(
       false,
