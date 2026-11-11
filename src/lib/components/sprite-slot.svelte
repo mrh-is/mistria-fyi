@@ -5,6 +5,9 @@
   import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { SPRITE_PREVIEW_FADE_MS } from "#lib/utils/row-timing.js";
 
+  // SVG filter input, never displayed.
+  const sourceAlpha = /* @wc-ignore */ "SourceAlpha";
+
   export type SpriteSlotState = "complete" | "ready" | "spoilered";
 
   let {
@@ -45,14 +48,14 @@
     <defs>
       <filter id={grayFilterId} color-interpolation-filters="sRGB">
         <feFlood flood-color="var(--color-ink-muted)" result="gray" />
-        <feComposite in="gray" in2="SourceAlpha" operator="in" />
+        <feComposite in="gray" in2={sourceAlpha} operator="in" />
       </filter>
 
       <filter id={tintFilterId} color-interpolation-filters="sRGB">
         <!-- Lighter fill: erode slightly to create the inner shape -->
-        <feMorphology in="SourceAlpha" operator="erode" radius="0.15" result="innerShape" />
+        <feMorphology in={sourceAlpha} operator="erode" radius="0.15" result="innerShape" />
         <!-- Darker outline: difference between full alpha and eroded shape -->
-        <feComposite in="SourceAlpha" in2="innerShape" operator="out" result="outline" />
+        <feComposite in={sourceAlpha} in2="innerShape" operator="out" result="outline" />
         <!-- Fill the inner shape with a lighter version of the category color -->
         <feFlood flood-color="currentColor" flood-opacity="0.25" result="lightFill" />
         <feComposite in="lightFill" in2="innerShape" operator="in" result="filledInner" />

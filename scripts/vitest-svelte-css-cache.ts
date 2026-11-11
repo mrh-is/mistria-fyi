@@ -24,11 +24,14 @@ export function skipsFsModuleCache({
 /** Keeps transforms that depend on plugin state out of Vitest's fs module cache. */
 export function svelteCssCachePlugin(wuchaleSources: readonly string[]): Plugin {
   const catalogSources = new Set(wuchaleSources.map((file) => normalizePath(resolve(file))));
+  const appDirectory = `${normalizePath(resolve("src"))}/`;
   return {
     configureVitest({ defineCacheKeyGenerator }) {
       // A catalog edit can reorder Wuchale's numeric message indices in an unchanged source file.
       defineCacheKeyGenerator((context) =>
-        skipsFsModuleCache(context) || catalogSources.has(normalizePath(context.id))
+        skipsFsModuleCache(context) ||
+        (context.id.startsWith(appDirectory) && context.id.endsWith(".svelte")) ||
+        catalogSources.has(normalizePath(context.id))
           ? false
           : undefined,
       );

@@ -9,7 +9,6 @@ import { getName } from "#lib/data/names.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ItemId } from "#lib/types/tracker-data.js";
@@ -95,7 +94,7 @@ describe("AlmanacContent", () => {
     const view = renderWithFeedback(AlmanacContent, { locale: "en" });
 
     // Six rows share each name; the word & the name each match half of the query.
-    const subtitles = await view.findAllByText(m.variant_oak());
+    const subtitles = await view.findAllByText("Oak");
     expect(subtitles.map((subtitle) => subtitle.parentElement?.textContent.trim())).toEqual(
       expect.arrayContaining([
         expect.stringMatching(/^Animated Clouds Window\s*Oak$/),
@@ -106,7 +105,7 @@ describe("AlmanacContent", () => {
     expect(
       view.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
     ).toBeInTheDocument();
-    expect(view.queryByText(m.variant_walnut())).toBeNull();
+    expect(view.queryByText("Walnut")).toBeNull();
   });
 
   it("shows no subtitle on a row without a variant", async () => {

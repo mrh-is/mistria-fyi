@@ -35,7 +35,6 @@ jobs:
     outputs:
       browser: ${{ steps.filter.outputs.browser }}
       dependencies: ${{ steps.filter.outputs.dependencies }}
-      messages: ${{ steps.filter.outputs.messages }}
       relay: ${{ steps.filter.outputs.relay }}
       scripts: ${{ steps.filter.outputs.scripts }}
       tests: ${{ steps.filter.outputs.tests }}
@@ -58,7 +57,6 @@ jobs:
         run: |
           browser=true
           dependencies=false
-          messages=false
           relay=true
           scripts=true
           tests=
@@ -83,9 +81,6 @@ jobs:
           while IFS= read -r file; do
             case "$file" in
               package.json | pnpm-lock.yaml | pnpm-workspace.yaml | .github/workflows/ci.yml) dependencies=true ;;
-            esac
-            case "$file" in
-              messages/* | scripts/check-locale-sync.* | scripts/locale-sync-allowlist.json) messages=true ;;
             esac
             case "$file" in
               *.test.ts) tests="$tests $file" ;;
@@ -116,22 +111,18 @@ jobs:
             esac
             case "$file" in
               scripts/playwright-*.test.ts) ;; # Unit tests for the helpers only need Vitest.
-              src/* | static/* | tests/* | messages/* | wuchale.config.js | _headers | \
-                scripts/compile-ui-messages.ts | scripts/lib/compile-ui-catalog.ts | \
-                scripts/lib/ui-message-sources.ts | \
+              src/* | static/* | tests/* | wuchale.config.js | _headers | \
+                scripts/compile-wuchale.js | scripts/lib/wuchale-* | \
                 scripts/playwright-* | playwright*.config.ts | svelte.config.* | vite.config.* | \
                 package.json | pnpm-lock.yaml | .node-version | .github/workflows/ci.yml)
                 browser=true
                 ;;
             esac
           done <<< "$files"
-          # The stale-translation check compares a pull request with its base; other events skip it.
-          [ "$EVENT_NAME" = "pull_request" ] || messages=false
           # Only a pull request can fail on a slow test file it changes; other events just warn.
           [ "$EVENT_NAME" = "pull_request" ] || tests=
           echo "browser=$browser" >> "$GITHUB_OUTPUT"
           echo "dependencies=$dependencies" >> "$GITHUB_OUTPUT"
-          echo "messages=$messages" >> "$GITHUB_OUTPUT"
           echo "relay=$relay" >> "$GITHUB_OUTPUT"
           echo "scripts=$scripts" >> "$GITHUB_OUTPUT"
           echo "tests=${tests# }" >> "$GITHUB_OUTPUT"
@@ -156,31 +147,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec svelte-kit sync
       - run: pnpm run verify -- --step=lint
-
-  # A pull request that changes an English message must change each locale's value too (or allowlist
-  # the key). The checkout is the PR's merge commit, so HEAD^1 is the base branch tip it merges into.
-  locale-sync:
-    name: Locale sync
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .node-version
-      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
-        timeout-minutes: 3
-        with:
-          cache: true
-          save-cache: false
-          install: false
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run verify -- --step=check:locale-sync --base HEAD^1
 
   # PRs & main pushes fail on moderate or worse advisories only when dependency inputs or this
   # workflow change. Manual dispatches always audit; the nightly report tracks new advisories
@@ -523,7 +489,7 @@ jobs:
   ci-passed:
     name: CI passed
     if: always()
-    needs: [changes, lint, locale-sync, audit, check, test, saves, build, accessibility, pwa]
+    needs: [changes, lint, audit, check, test, saves, build, accessibility, pwa]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

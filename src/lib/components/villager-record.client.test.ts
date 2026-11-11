@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import VillagerRecordHarness from "#lib/components/villager-record.test-harness.svelte";
 import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
@@ -51,9 +50,7 @@ describe("VillagerRecord", () => {
     expect(view.getByRole("button", { name: "Decrease Adeline hearts" })).toBeEnabled();
     expect(view.getByRole("button", { name: "Increase Adeline hearts" })).toBeEnabled();
     expect(view.getByRole("button", { name: "Best Friend" })).toBeInTheDocument();
-    expect(
-      view.getByRole("button", { name: m.relationship_action_romantic() }),
-    ).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Start dating" })).toBeInTheDocument();
   });
 
   it("falls back to a stable initial when the sprite image fails to load", async () => {
@@ -92,8 +89,8 @@ describe("VillagerRecord", () => {
       villager: adeline,
     });
 
-    expect(view.getByRole("button", { name: m.spoiler_reveal_aria() })).toBeInTheDocument();
-    expect(view.getByText(m.villager_birthday_spoilered())).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Reveal spoiler" })).toBeInTheDocument();
+    expect(view.getByText("Birthday hidden")).toBeInTheDocument();
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(0);
     expect(
       view.getByRole("group", { name: "Hidden villager relationship level, 0 of 10" }),
@@ -101,7 +98,7 @@ describe("VillagerRecord", () => {
     expect(view.getByRole("button", { name: "Decrease hidden villager hearts" })).toBeDisabled();
     expect(view.queryByRole("button", { name: /Adeline hearts/ })).not.toBeInTheDocument();
 
-    await fireEvent.click(view.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
     expect(
       view.getByRole("group", { name: "Adeline relationship level, 6 of 10" }),
     ).toBeInTheDocument();
@@ -122,7 +119,7 @@ describe("VillagerRecord", () => {
       "data-compact",
       "true",
     );
-    expect(view.queryByText(m.relationship_prompt_choose_path())).not.toBeInTheDocument();
+    expect(view.queryByText("Choose path")).not.toBeInTheDocument();
   });
 
   it("advances through only the next relationship decisions and preserves focus", async () => {
@@ -134,23 +131,23 @@ describe("VillagerRecord", () => {
       villager: adeline,
     });
 
-    expect(
-      view.getByRole("button", { name: m.relationship_action_proposed() }),
-    ).toHaveAccessibleDescription(/Getting engaged moves everyone else/i);
-    await fireEvent.click(view.getByRole("button", { name: m.relationship_action_proposed() }));
-    const marriage = await view.findByRole("button", { name: m.relationship_action_married() });
+    expect(view.getByRole("button", { name: "Record proposal" })).toHaveAccessibleDescription(
+      /Getting engaged moves everyone else/i,
+    );
+    await fireEvent.click(view.getByRole("button", { name: "Record proposal" }));
+    const marriage = await view.findByRole("button", { name: "Record marriage" });
     expect(view.getByText("Engaged")).toBeInTheDocument();
     expect(marriage).not.toHaveAttribute("aria-describedby");
     expect(document.activeElement).toBe(marriage);
 
     await fireEvent.click(marriage);
-    const kids = await view.findByRole("button", { name: m.relationship_action_yes() });
-    expect(view.getByRole("button", { name: m.relationship_action_no() })).toBeInTheDocument();
+    const kids = await view.findByRole("button", { name: "Kids" });
+    expect(view.getByRole("button", { name: "Child-free" })).toBeInTheDocument();
     expect(document.activeElement).toBe(kids);
 
-    await fireEvent.click(view.getByRole("button", { name: m.relationship_action_no() }));
+    await fireEvent.click(view.getByRole("button", { name: "Child-free" }));
     await waitFor(() => {
-      expect(view.getByText(m.relationship_status_married_child_free())).toBeInTheDocument();
+      expect(view.getByText("Married · child-free")).toBeInTheDocument();
     });
     expect(document.activeElement).toBe(view.container.querySelector("[data-villager-record]"));
   });

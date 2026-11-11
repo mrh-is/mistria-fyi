@@ -12,7 +12,6 @@ import { configDefaults } from "vitest/config";
 import { wuchale } from "wuchale/vite";
 
 import { getAppVersion } from "./scripts/app-version.js";
-import { compileUiMessages } from "./scripts/compile-ui-messages.js";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
@@ -23,7 +22,6 @@ import {
   sharedLocaleFiles,
   sharedLocaleSvelteFiles,
   sharedScriptFiles,
-  sharedSvelteFiles,
 } from "./scripts/lib/wuchale-source-files.js";
 import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
@@ -175,16 +173,6 @@ export default defineConfig(({ command }) => ({
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
   },
   plugins: [
-    {
-      config: async () => compileUiMessages(),
-      name: "mfg:compile-ui-messages",
-      transform: {
-        filter: { id: /\/src\/lib\/ui-messages\/.*\.js$/u },
-        // The generated barrel only re-exports pure message modules. This keeps unrelated
-        // messages out of shared route chunks.
-        handler: () => ({ moduleSideEffects: false }),
-      },
-    },
     wuchale({ configPath: path.join(import.meta.dirname, "wuchale.config.js") }),
     tailwindcss(),
     sveltekit({
@@ -224,7 +212,7 @@ export default defineConfig(({ command }) => ({
               "## Wuchale runtime",
             ),
           name: "Wuchale runtime notice",
-          prefix: "src/lib/i18n/keyed-message-runtime",
+          prefix: "src/lib/i18n/catalogs/.wuchale/",
         },
         {
           declared: "MIT",
@@ -248,7 +236,6 @@ export default defineConfig(({ command }) => ({
       ...sharedLocaleFiles,
       ...sharedLocaleSvelteFiles,
       ...sharedScriptFiles,
-      ...sharedSvelteFiles,
       "scripts/lib/offline-copy.ts",
     ]),
   ],

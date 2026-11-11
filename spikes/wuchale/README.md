@@ -2,14 +2,13 @@
 
 The isolated fixture shipped about 21% less compressed JavaScript. Moving About's body, footer, and
 metadata reduced the real Spanish route's initial JavaScript by 2,934 gzip bytes. Those are
-historical measurements from before the app-wide migration. The app now uses Wuchale for the
-source-extracted About catalog and for the keyed UI catalogs shared by the rest of the app.
+historical measurements from before the app-wide migration. The app now extracts its UI copy from
+Svelte and TypeScript. This fixture is still runnable; its historical baselines are in Git.
 
 ## Run from the workspace root
 
 Use the regular worktree setup first. The fixture has a separate SvelteKit app, Vite config and
-Cloudflare Pages output. Its keyed build reads the app's keyed messages and game data for
-comparison.
+Cloudflare Pages output. It uses the app's game vocabulary for comparison.
 
 ```sh
 pnpm exec wuchale check --full --config spikes/wuchale/wuchale.config.js
@@ -31,14 +30,15 @@ pnpm exec wrangler --cwd spikes/wuchale pages dev --port 4381 --ip 127.0.0.1
 ```
 
 Run the probe in a second terminal. An optional directory argument saves desktop and mobile
-screenshots. Stop the local server, repeat the build with `build keyed`, and run the probe without
-`--wuchale` against the rebuilt fixture. Both builds use the same output directory. The keyed build
-uses the current compiler. To reproduce the Paraglide baseline below, use the earlier fixture at
-commit `100b0d23` and its `build paraglide` mode.
+screenshots.
 
 ```sh
 pnpm exec node spikes/wuchale/browser-probe.js http://127.0.0.1:4381 --wuchale
 ```
+
+To rerun the intermediate keyed baseline, use the fixture at commit `c341692f` in a separate
+checkout and build with `build keyed`. For the original Paraglide baseline, use commit `100b0d23`
+and its `build paraglide` mode.
 
 The launcher sets the fixture working directory before invoking Vite's multi-environment builder.
 The explicit CLI config path keeps pnpm at the workspace root after Vite creates a local cache. For
@@ -68,13 +68,13 @@ development, `pnpm exec node spikes/wuchale/run-vite.js dev` serves the fixture 
   heuristic misses, and narrow exclusions for literals such as product names or game-owned data. The
   game-owned fishing label is passed as a value from `getName` and never enters the catalogs.
 
-## Checks and review
+## Historical comparison of checks
 
 | Existing protection                                                   | Spike equivalent and limits                                                                                                                                                                                                                                                             |
 | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `check:i18n` compares message-key sets                                | The fixture checks a nonblank value or plural form array in each of the eight configured locales. Wuchale's structural check validates placeholders and plural forms, but skips empty values.                                                                                           |
 | `check:locale-sync` flags changed English with unchanged translations | Full extraction detects source changes before regeneration. After extraction a reworded source gets a new identity with empty translations. The round-trip test verifies both failures and the runtime English fallback. Copying an old translation onto a new identity can still pass. |
-| The hardcoded-text ESLint rule flags unwrapped Svelte literals        | Extraction covers recognized template text and attributes. An extraction check can pass while unrecognized display text remains. Keep the production rule and retain a reviewed inventory of display surfaces on any converted route.                                                   |
+| The hardcoded-text ESLint rule flags unwrapped Svelte literals        | Extraction covers recognized template text and attributes. An extraction check can pass while unrecognized display text remains. Review the extracted references and check the rendered surface.                                                                                        |
 
 The fixture reuses the existing translations, including Spain Spanish and Taiwan Traditional
 Chinese. A complete catalog may legitimately contain a source-identical value. Reviewers still need

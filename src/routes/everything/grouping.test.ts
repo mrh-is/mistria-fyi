@@ -5,7 +5,6 @@ import { pageMetadata } from "#lib/data/page-metadata.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import AllPage from "./+page.svelte";
 
@@ -68,7 +67,7 @@ beforeEach(() => {
 it("offers both grouping lenses and renders source anchors from the device preference", () => {
   userState.setEverythingGrouping("source");
   const view = renderToFragmentWithFeedback(AllPage, { props });
-  expect(view.queries.getByLabelText(m.everything_group_by())).toBeTruthy();
+  expect(view.queries.getByLabelText("Group by")).toBeTruthy();
   expect(view.container.querySelector("#sources-stores")).not.toBeNull();
   expect(view.container.querySelector("#store-balor")).not.toBeNull();
   expect(view.container.querySelector("#fish-ocean")).not.toBeNull();

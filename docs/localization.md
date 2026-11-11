@@ -20,16 +20,16 @@ translations keyed `misc_local/<key>`; the pipeline emits the keys the app uses 
 `misc_local` entry (fish → "Fishing and Diving"). Cosmetic sub-category labels come from the ordinal
 `ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`; the slots
 themselves are icon tabs in the game with no text, so a slot with one sub-category borrows that
-label and the rest use MFG's own `cosmetic_slot_*` messages. When a label matches something the game
-already names, pull it from there rather than adding a keyed UI message: the in-game term is the one
-players recognize.
+label and the rest use MFG's own slot labels. When a label matches something the game already names,
+pull it from there rather than writing another translation: the in-game term is the one players
+recognize.
 
 ### Game vocabulary in UI chrome
 
 MFG's own chrome names plenty of concepts the game names too: category names ("Almanac",
-"Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". Those are not keyed
-UI messages. `APP_UI_STRINGS` in `pipeline/src/localize/ui-strings.ts` lists the `misc_local` keys
-the app displays, the pipeline writes them into the `ui` chunk, and the root layout
+"Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". These come from the
+game vocabulary. `APP_UI_STRINGS` in `pipeline/src/localize/ui-strings.ts` lists the `misc_local`
+keys the app displays, the pipeline writes them into the `ui` chunk, and the root layout
 (`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)` works
 anywhere.
 
@@ -64,9 +64,9 @@ Some game nouns can't come from the `ui` chunk, so their messages carry the game
 Each locale uses exactly one term per concept across all of its messages; when you add or edit a
 message that mentions one of these concepts, use the term below.
 
-- **Terms inside sentences** ("Decrease renown", "Mines floor {floor}") stay keyed UI messages,
-  since interpolating a game label into a sentence breaks grammar across languages. Their wording
-  follows the game's own sentence-level term, checked against the 1.0.5 translation tables
+- **Terms inside sentences** ("Decrease renown", "Mines floor {floor}") are complete Wuchale
+  messages, since interpolating a game label into a sentence breaks grammar across languages. Their
+  wording follows the game's own sentence-level term, checked against the 1.0.5 translation tables
   (`misc_local/confirm_leave_dungeon`, `town_rank`, `rank`, `select_a_villager`, &
   `invite_npc_to_festival`).
 - **Mines, Quests, Recipes, & Cosmetics** (`category_*_name`, `source_location_mines`) are
@@ -118,31 +118,23 @@ exists but was never awaited throws rather than silently degrading.
 - **Tests** run with every chunk preloaded by `src/vitest-setup-names.ts`. Tests of the loading
   boundary itself run in the `cold` Vitest project, which skips that setup.
 
-**MFG's own UI chrome text** (buttons, labels, dialogs, descriptions) uses Wuchale. About is
-extracted directly from its source. The remaining keyed messages live in `messages/features/`, with
-the English source and seven translations together under each key. The build compiles the keyed
-catalogs with Wuchale into typed, tree-shakeable exports.
+**MFG's own UI copy** (buttons, labels, dialogs, descriptions) is English in the Svelte or
+TypeScript that displays it. Wuchale extracts that copy into
+[`src/lib/i18n/catalogs/`](../src/lib/i18n/catalogs/). A catalog entry keeps the source, references,
+and all translations together. Wuchale identifies a message by its source text and optional context.
 
-These systems have no shared enforcement. A component can display a raw, English-only game-data
-field (a plain property access like `entity.name`, syntactically indistinguishable from a properly
-localized one) with no tooling able to catch it — that's a type/pipeline-contract concern, not a
-lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
-
-### Source text
-
-The About page's route copy and AI disclosure use native Wuchale extraction. The English text lives
-in the Svelte components and `src/routes/about/about-metadata.ts`. All eight locales share the
-feature catalog in `src/lib/i18n/catalogs/about.json`. After editing source text, run
-`pnpm exec wuchale --clean` from the workspace root, review the catalog diff, and fill every locale
-before running `pnpm run check:i18n`. The rest of the app uses the keyed authoring flow below.
+The root layout loads shared copy and the destination route’s catalog for the URL locale. Loading a
+destination in advance doesn’t change the active locale. About loads its own catalog, metadata
+formatters receive the destination locale, and the small error catalog is bundled so it’s available
+without a successful catalog load. The game vocabulary still uses its separate name chunks.
 
 Acquisition sources ("Purchase from the General Store (after repairing)") are sentences assembled
 from game names, and parts of them can be spoilered or gated behind progress. `source-segments.ts`
-renders each sentence from a `source_*` keyed UI message and `fillMessage` fills its placeholders
-with segments rather than plain text: it passes private-use markers into the message, then splits
-the result at the markers, so each locale's word order decides where a gated name lands. A message
-that drops a placeholder throws; the source-rendering invariants test renders every generated source
-in every locale to catch that.
+writes each complete sentence in source, and `fillMessage` fills its placeholders with segments
+rather than plain text: it passes private-use markers into the message, then splits the result at
+the markers, so each locale's word order decides where a gated name lands. A message that drops a
+placeholder throws; the source-rendering invariants test renders every generated source in every
+locale to catch that.
 
 English grammar stays in English: the definite article on stores and biomes ("the General Store";
 `en-grammar.ts` lists the stores that take one, so the tracker contract carries no English),
@@ -151,9 +143,9 @@ messages handle articles themselves. Lists of alternatives ("Pond, River, or Oce
 `Intl.ListFormat`'s disjunction for the active locale.
 
 A store's availability qualifier is a slot, not a suffix. `buildStoreQualifier` returns bare clauses
-("after repairing") joined by `Intl.ListFormat`'s conjunction, and the `source_store_qualified` &
-`source_scroll_bundle_qualified` messages place it: in parentheses after the store in English, ahead
-of the verb in Japanese, Korean, & Chinese.
+("after repairing") joined by `Intl.ListFormat`'s conjunction, and the store and scroll bundle
+sentences place it: in parentheses after the store in English, ahead of the verb in Japanese,
+Korean, & Chinese.
 
 Most names come from game-translated chunks: farm animals use `animals` `<id>/core`, stations are
 items, museum wings use `museum_wings`, and locations use `locations` (`locations/<id>/name`). The
@@ -162,24 +154,23 @@ game leaves some source names untranslated or unnamed, so `source-names.ts` fill
 - **Monsters:** the game has no full monster name. Since 1.0.7 a `pets.toml` variant carries only a
   bare qualifier (“Copper”, “Default”) shown under its pet kind, and three monsters have no variant.
   Every locale, English included, composes the `pets/skins` family name with a machine-translated
-  `source_monster_variant_*` qualifier.
+  qualifier.
 - **Locations without a game name** (`farm`, `mines`, & `dungeon`) and **water types** use interim
-  machine-translated `source_location_*` & `source_water_*` messages. The Bell Tower's upper floor
-  (`bell_tower_f2`) borrows the building's `bell_tower_f1` name.
+  machine-translated labels. The Bell Tower's upper floor (`bell_tower_f2`) borrows the building's
+  `bell_tower_f1` name.
 - **Cutscenes:** the game names none, so each reviewed `CutsceneSourceId` has its own
-  machine-translated `source_cutscene_*` message; villager names inside them come from the
-  `villagers` chunk.
+  machine-translated sentence; villager names inside them come from the `villagers` chunk.
 
 Almanac rows that share a name (six “Animated Clouds Window” rows) show a variant word, such as
-“Oak”, as a subtitle. The game names no variants, so each `ItemVariant` key is a `variant_*`
-message. Most values are the game’s own terms, taken from each locale’s descriptions; the rest are
-machine translations. `pipeline/src/overrides/item-variant-terms.ts` records which is which, and the
+“Oak”, as a subtitle. The game names no variants, so `item-variants.ts` supplies the labels. Most
+values are the game’s own terms, taken from each locale’s descriptions; the rest are machine
+translations. `pipeline/src/overrides/item-variant-terms.ts` records which is which, and the
 [game version update protocol](game-version-update-protocol.md#name-same-name-almanac-rows) says how
 to add one.
 
 Scroll bundle sources carry the bundle's `bundleItemId` and render through the `items` chunk.
 Upgrade sources carry a closed `UpgradeId`, and a store's `upgradeAction` is a `StoreUpgradeAction`
-key; each maps to a keyed UI message.
+key; the source formatter supplies the display text for each.
 
 ## Falling back to English
 
@@ -204,49 +195,54 @@ locale, while the server hook isolates the locale of each request.
 
 ## Adding a new UI string (agents & humans)
 
-When translating `messages/features/*.json`, look up in-game terms in
-`pipeline/output/game-term-lexicon.json`. Run `pnpm run pipeline:assets -- --game-term-lexicon-only`
-if the file is missing or its `version` differs from `CURRENT_GAME_VERSION` in
-`pipeline/src/game-version.ts`. Look up the English term under `locales.en`, then use the same
-native key under the target locale. For example, `locations/water_seal/name` gives `水の封印` in
-`ja`, so the game uses `封印` for the seal. The lexicon also covers Almanac category labels and
-skill names. The song crystal category is omitted while its Japanese translation is missing. The
-lexicon lives outside the app's bundled data.
+When reviewing UI translations, look up in-game terms in `pipeline/output/game-term-lexicon.json`.
+Run `pnpm run pipeline:assets -- --game-term-lexicon-only` if the file is missing or its `version`
+differs from `CURRENT_GAME_VERSION` in `pipeline/src/game-version.ts`. Look up the English term
+under `locales.en`, then use the same native key under the target locale. For example,
+`locations/water_seal/name` gives `水の封印` in `ja`, so the game uses `封印` for the seal. The
+lexicon also covers Almanac category labels and skill names. The song crystal category is omitted
+while its Japanese translation is missing. The lexicon lives outside the app's bundled data.
 
-1. Add a descriptive snake_case key to its shard in `messages/features/`. The first part of the key
-   is the shard name, so `feedback_submit_button` belongs in `feedback.json`.
-2. Add English and all seven translations under that key. Preserve the game's regional usage and
-   terminology. Review the locale values before committing.
-3. Run `pnpm run messages:compile` to regenerate the typed exports. Vite and worktree setup also
-   compile them.
-4. Call the message from `#lib/ui-messages/messages.js` and run `pnpm run check:i18n` and
-   `pnpm run lint`.
+1. Write the English where it appears. Svelte components and routes are scanned by default. For a
+   new TypeScript helper, add the file to the appropriate list in
+   [`scripts/lib/wuchale-source-files.js`](../scripts/lib/wuchale-source-files.js). Keep the whole
+   sentence in one string or template literal so translators can move its placeholders.
+2. Run `pnpm run messages:extract`. Review the catalog diff, fill missing translations, and keep the
+   numbered placeholders intact. Identical English with different meanings can use `@wc-context: …`.
+   Use `@wc-include` for missed copy and `@wc-ignore` for technical literals.
+3. Run `pnpm run check:i18n` and `pnpm run lint`. Check the new copy in context, including in a
+   language whose layout, word order, or plural forms differ from English.
 
-### Sentences around links & icons
+With `GEMINI_API_KEY` already in your environment, run
+`WUCHALE_TRANSLATE=1 pnpm run messages:extract` to let
+[Wuchale draft translations](https://wuchale.dev/guides/ai/). The provider receives the source
+messages it is asked to translate. Review its drafts for regional usage and game terms before
+committing. Installation, CI, and normal builds use the checked-in translations and require no
+credentials.
 
-A sentence that wraps a link or icon is one message with a placeholder per element so translators
-can move it. In the Wuchale pilot, write the markup inline and keep its numbered tags in the
-translation. For keyed messages, render with `messageParts` from `src/lib/utils/message-parts.ts`
-and place each slot in a snippet or `{#each}`. A keyed message that drops a placeholder throws.
+### Plurals and rich text
 
-The `ui/` `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
-`showCloseButton={false}` & render `dialog-close-button.svelte`, which uses `common_close`.
+Write ``plural(count, [`${count} result`, `${count} results`])`` with the Wuchale-generated
+`plural.js` helper for English singular and plural forms. Wuchale applies the target locale’s plural
+rules and catalog forms. Write links and icons inline in a complete Svelte sentence; the catalog
+represents the elements with numbered tags that a translation can move. When markup is chosen at
+runtime, `messageParts` can splice structured pieces into a translated sentence.
+
+The `ui/` dialog primitive defaults to an English “Close” label. Product dialogs pass
+`showCloseButton={false}` and use the localized `dialog-close-button.svelte` instead.
 
 ### Page metadata & manifest
 
-`SITE_NAME` is the product name, a proper noun that is the same in every locale (`app_name`). Every
-page's title and description come from localized messages. About passes its locale's Wuchale runtime
-directly to the metadata function. The other pages use keyed messages through `localizedPageLoad`.
-`static/manifest.json` is a single static file, so it stays English and declares `"lang": "en"` &
-`"id": "/"`; a per-locale manifest would need a route and a locale-aware `<link rel="manifest">`.
+`SITE_NAME` is the product name and stays the same in every locale. Route titles and descriptions
+are extracted from their page load functions, which receive the destination locale.
+`static/manifest.json` is a single English file. A per-locale manifest would need a route and a
+locale-aware `<link rel="manifest">`.
 
 ### Offline page
 
-The service worker serves `src/service-worker/offline.html` with its `%m.<key>%` slots filled by
-`offlinePagePlugin`. The build reads plain text from the feature catalogs and can fall back to
-English. Only plain-text messages fit; the build throws for one with placeholders. The worker picks
-the URL's locale prefix, then the last-used locale, then English, and sets `<html lang>` & `dir` to
-match.
+`scripts/lib/offline-copy.ts` supplies the English for the static offline template. The build fills
+its text slots from `offline.json` and checks that the values are plain text. The worker selects the
+URL locale, then the last-used locale, then English, and sets the document language and direction.
 
 ### Regional variants
 
@@ -302,90 +298,20 @@ These rules apply to every locale:
 
 ## Tooling
 
-Three checks exist. None is a full localization safety net; see
-[Limits of the tooling](#limits-of-the-tooling).
+`pnpm run check:i18n` checks every source adapter and catalog without writing files. It fails if
+extraction would change the catalog, if a message is obsolete, or if any of the eight locales lacks
+a translation or has invalid placeholders or plural forms. Changing the English creates a new source
+identity. After extraction it needs translations again; unchanged messages keep theirs. The same
+check runs locally and in CI, with no merge base or allowlist.
 
-### Catalog check (`pnpm run check:i18n`)
+`pnpm run messages:compile` only builds the ignored runtime files from the checked-in catalogs.
+Worktree setup and installation use this path, so stale extraction can’t be silently fixed before CI
+checks it.
 
-`pnpm run check:i18n` verifies that keyed feature catalogs supply every locale with the same message
-inputs and supported plural forms. It also checks About extraction and translation completeness.
-Translation quality, regional usage, and terminology still need review.
-
-### Stale-translation check (`pnpm run check:locale-sync`)
-
-`scripts/check-locale-sync.ts` catches what the key-shape check cannot: an English value that
-changed while a locale’s value for the same key did not. It compares the merge base of `--base`
-(default `origin/main`) with the working tree, reading the feature catalogs, and lists each
-`(locale, key)` where English changed and that locale’s value is identical to the one it had at the
-base. A locale that changed the key (even to the same text as English) passes. Added & removed keys
-are not its concern; the key-shape check owns them.
-
-When an English value changes, each locale’s value must be retranslated in the same PR, or the key
-must go on the allowlist.
-
-CI runs it as the “Locale sync” job on pull requests that touch `messages/`, the check, or the
-allowlist, using `--base HEAD^1`, the base branch tip of the PR’s merge checkout. It does not run on
-pushes or in `pnpm run verify`, which have no PR base to compare against; run it locally with
-`pnpm run check:locale-sync` (after `git fetch origin main`, or pass `-- --base <ref>`).
-
-When the English change needs no new translation (a punctuation fix, a proper noun that is the same
-in every script), add an entry to `scripts/locale-sync-allowlist.json`:
-
-```json
-[
-  {
-    "english": "Mistria Field Guide!",
-    "key": "app_name",
-    "locale": "ja",
-    "reason": "Only the trailing punctuation changed; the Japanese title is unaffected."
-  }
-]
-```
-
-Each entry names one key, one locale, the English text it was reviewed against, & a non-empty
-reason. It applies only while English still equals that text, so a later edit to the English value
-is checked again; an entry for a key or locale that does not exist fails the check, as does a
-malformed file. Entries are reviewed like any other change, so delete one when its key is
-retranslated.
-
-### ESLint rule (`local/no-hardcoded-ui-text`)
-
-A custom rule in `eslint-rules/no-hardcoded-ui-text.ts` walks the Svelte template AST and flags:
-
-- Literal text nodes containing letters (not just punctuation/whitespace/digits).
-- Literal values on text-bearing attributes (`title`, `alt`, `placeholder`, `aria-label`, etc).
-
-It exempts `<code>`, `<kbd>`, `<pre>`, and `<samp>` content (file paths, keys, code snippets aren't
-translated) and anything inside `<script>`/`<style>`. It cannot distinguish a proper noun ("Fields
-of Mistria", a person's name) from ordinary prose — those need a
-`<!-- eslint-disable local/no-hardcoded-ui-text -- reason -->` /
-`<!-- eslint-enable local/no-hardcoded-ui-text -->` pair around the element, with a reason.
-
-The rule applies to every `src/**/*.svelte` file except `src/lib/components/ui/**`, development
-routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these exceptions narrow
-so new app templates receive the rule automatically.
-
-## Limits of the tooling
-
-Be honest with yourself (and reviewers) about what this catches:
-
-- The ESLint rule only sees Svelte template syntax. It cannot verify that a displayed field like
-  `entity.name` is actually locale-aware — that depends on whether the pipeline extractor for that
-  category reads the game's translation tables. As of this writing, every pipeline category emits
-  its names through per-locale chunks (`src/lib/data/locales/<locale>/<category>.json`) and
-  `tracker-data.json` carries no display names, so the remaining risk is app-authored text. A future
-  field added to the contract as English-only would render fine and pass lint.
-- The key-shape check cannot verify translation quality or that a value has actually been translated
-  (as opposed to copy-pasted from English). The stale-translation check only sees that a locale’s
-  value changed in the same PR as English; it cannot tell whether the new text is a correct
-  translation, & it accepts any edit to the locale value, whatever the reason.
-- The stale-translation check matches keys by name, so renaming a key & editing its English in the
-  same PR looks like an added key & a removed one, & passes without any retranslation. Treat a
-  rename that also rewords the English as a changed value yourself.
-- The ESLint rule covers app templates by default, but it does not inspect user-facing strings
-  assembled in scripts or data. Review those strings when adding new features.
-
-Do your best with these; don't treat a green CI run as proof that a feature is fully localized.
+Extraction can miss strings assembled dynamically, passed from unscanned scripts, or excluded by its
+heuristics. Check the extracted references after changing display text. CI checks completeness and
+structure; it can’t tell whether a translation is correct or whether an English game-data field
+should have come from a name chunk.
 
 ## Fonts
 

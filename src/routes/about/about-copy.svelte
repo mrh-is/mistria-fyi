@@ -20,7 +20,6 @@
   } = $props();
 </script>
 
-<!-- eslint-disable local/no-hardcoded-ui-text -- Wuchale extracts the authored copy in this component. -->
 <div class="about-page">
   <section>
     <h2>Project status</h2>
@@ -72,8 +71,6 @@
     </ul>
   </footer>
 </div>
-
-<!-- eslint-enable local/no-hardcoded-ui-text -->
 
 <style>
   .about-page {

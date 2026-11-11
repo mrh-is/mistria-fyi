@@ -7,7 +7,6 @@ import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 // Finishing a section fires confetti, which needs a canvas happy-dom doesn't provide.
@@ -48,14 +47,12 @@ it("moves a section finished by a row toggle under Completed once the row has le
   vi.useFakeTimers();
   await fireEvent.click(toggle);
   await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 10);
-  expect(
-    screen.queryByRole("heading", { level: 2, name: m.common_completed_heading() }),
-  ).toBeNull();
+  expect(screen.queryByRole("heading", { level: 2, name: "Completed" })).toBeNull();
 
   await vi.advanceTimersByTimeAsync(10);
   const completedHeading = screen.getByRole("heading", {
     level: 2,
-    name: m.common_completed_heading(),
+    name: "Completed",
   });
   await fireEvent.click(within(completedHeading).getByRole("button"));
   const sectionTrigger = screen.getByRole("button", { name: sectionName });

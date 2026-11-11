@@ -380,7 +380,8 @@ describe("CI workflow browser suites", () => {
     "src/routes/+page.svelte",
     "static/icon.png",
     "tests/accessibility/routes.spec.ts",
-    "messages/features/search.json",
+    "src/lib/i18n/catalogs/shared.json",
+    "scripts/lib/wuchale-storage.js",
     "wuchale.config.js",
     "_headers",
     "scripts/playwright-preview.ts",
@@ -468,29 +469,6 @@ describe("CI workflow browser suites", () => {
     expect(steps.find((step) => step.id === stepId)?.["continue-on-error"]).toBe(true);
     expect(steps.at(-1)?.if).toBe(`steps.${stepId}.outcome == 'failure'`);
     expect(steps.at(-1)?.run).toBe("exit 1");
-  });
-});
-
-describe("CI workflow locale sync", () => {
-  it.each([
-    ["pull_request", "messages/fr.json", true],
-    ["pull_request", "scripts/locale-sync-allowlist.json", true],
-    ["pull_request", "scripts/check-locale-sync.ts", true],
-    ["pull_request", "src/app.css", false],
-    ["push", "messages/fr.json", false],
-    ["schedule", "messages/fr.json", false],
-    ["workflow_dispatch", "messages/fr.json", false],
-  ] as const)("detects message changes for %s: %s", (event, file, expected) => {
-    expect(detectChanges(event, file).messages).toBe(String(expected));
-  });
-
-  // “CI passed” accepts a skipped job, so broken wiring would turn this check off with CI green.
-  it("passes the change detector's result to the locale sync job", () => {
-    expect(jobs.changes.outputs?.messages).toBe("${{ steps.filter.outputs.messages }}");
-    expect(jobs["locale-sync"].needs).toBe("changes");
-    expect(jobs["locale-sync"].if).toBe(
-      "github.event_name == 'pull_request' && needs.changes.outputs.messages == 'true'",
-    );
   });
 });
 

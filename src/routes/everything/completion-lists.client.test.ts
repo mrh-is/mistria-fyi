@@ -11,7 +11,6 @@ import * as questSections from "#lib/presentation/quest-sections.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 import CompletionLists from "./completion-lists.test-harness.svelte";
@@ -59,10 +58,10 @@ it("gathers complete sections into the completed list and moves a reopened secti
   const completed = view.getByTestId("everything-completed");
   // One completed item doesn't finish an almanac section or create an empty completed category.
   expect(within(completed).queryByRole("button", { name: "Almanac" })).not.toBeInTheDocument();
-  const finishedMines = within(completed).getByRole("button", { name: m.category_mines_name() });
+  const finishedMines = within(completed).getByRole("button", { name: "Mines" });
   expect(finishedMines).toHaveAttribute("aria-expanded", "false");
   const activeMines = view
-    .getAllByRole("button", { name: m.category_mines_name() })
+    .getAllByRole("button", { name: "Mines" })
     .find((button) => !completed.contains(button));
   expect(activeMines).toHaveAttribute("aria-expanded", "true");
   expect(view.getAllByRole("button", { name: "Renown" })).toHaveLength(1);
@@ -73,9 +72,7 @@ it("gathers complete sections into the completed list and moves a reopened secti
   expect(within(completed).queryByText(/Current floor/)).not.toBeInTheDocument();
   userState.toggleSpell(Object.keys(trackerData.mines.spells)[0] as SpellId);
   await finishRowLeaving();
-  expect(
-    within(completed).queryByRole("button", { name: m.category_mines_name() }),
-  ).not.toBeInTheDocument();
+  expect(within(completed).queryByRole("button", { name: "Mines" })).not.toBeInTheDocument();
   expect(view.getByRole("button", { name: /^Magic Spells,/ })).toBeInTheDocument();
   await tick();
   expect(toolbarState.hasAlmanacFilters).toBe(true);
@@ -103,7 +100,7 @@ it("partitions compact skill records only after both their level and perks are f
   await finishRowLeaving();
   expect(within(completed).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
   expect(
-    within(view.getByRole("list", { name: m.skills_ledger_aria() })).getByText(name, {
+    within(view.getByRole("list", { name: "Skills ledger" })).getByText(name, {
       exact: true,
     }),
   ).toBeInTheDocument();
@@ -166,7 +163,7 @@ describe("while a section changes lists", () => {
     expect(section.hidden).toBe(true);
     expect(
       within(view.getByTestId("everything-completed")).getByRole("button", {
-        name: m.category_mines_name(),
+        name: "Mines",
       }),
     ).toBeInTheDocument();
     expectFocusOnRenderedTrigger();
@@ -219,7 +216,7 @@ async function renderFinishedQuests() {
   const view = renderWithFeedback(CompletionLists, { categories: ["quests"] });
   await tick();
   const completed = view.getByTestId("everything-completed");
-  const finished = within(completed).getByRole("button", { name: m.category_quests_name() });
+  const finished = within(completed).getByRole("button", { name: "Quests" });
   await fireEvent.click(finished);
   await tick();
   return { completed, finished, view };
@@ -235,16 +232,12 @@ describe("locked quest sections", () => {
     await tick();
     const outstanding = view.container.querySelector("#category-quests")?.closest("section");
     if (!outstanding) throw new Error("Quests has no outstanding group");
-    await fireEvent.click(within(outstanding).getByRole("button", { name: m.shelf_not_now() }));
-    await fireEvent.click(
-      within(outstanding).getByRole("button", { name: m.spoiler_reveal_aria() }),
-    );
+    await fireEvent.click(within(outstanding).getByRole("button", { name: "Not now" }));
+    await fireEvent.click(within(outstanding).getByRole("button", { name: "Reveal spoiler" }));
     await tick();
     expect(within(outstanding).queryByRole("button", { name: /^Crown Requests,/ })).toBeNull();
     const completed = view.getByTestId("everything-completed");
-    await fireEvent.click(
-      within(completed).getByRole("button", { name: m.category_quests_name() }),
-    );
+    await fireEvent.click(within(completed).getByRole("button", { name: "Quests" }));
     await tick();
     expect(within(completed).getByRole("button", { name: /^Crown Requests,/ })).toBeInTheDocument();
   });
@@ -253,26 +246,24 @@ describe("locked quest sections", () => {
     const { finished } = await renderFinishedQuests();
     const group = finished.closest("section");
     if (!group) throw new Error("Quests has no group");
-    expect(within(group).queryByRole("button", { name: m.spoiler_reveal_aria() })).toBeNull();
+    expect(within(group).queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
     expect(
-      within(group).getByRole("button", { name: (name) => name.startsWith(m.quest_type_fetch()) }),
+      within(group).getByRole("button", { name: (name) => name.startsWith("Fetch quests") }),
     ).toBeInTheDocument();
   });
 
   it("keeps a category outstanding when only its locked sections remain", async () => {
     const { completed, view } = await renderFinishedQuests();
     const outstanding = view
-      .getAllByRole("button", { name: m.category_quests_name() })
+      .getAllByRole("button", { name: "Quests" })
       .find((button) => !completed.contains(button))
       ?.closest("section");
     if (!outstanding) throw new Error("Quests has no outstanding group");
-    await fireEvent.click(within(outstanding).getByRole("button", { name: m.shelf_not_now() }));
-    expect(
-      within(outstanding).getAllByRole("button", { name: m.spoiler_reveal_aria() }),
-    ).toHaveLength(1);
+    await fireEvent.click(within(outstanding).getByRole("button", { name: "Not now" }));
+    expect(within(outstanding).getAllByRole("button", { name: "Reveal spoiler" })).toHaveLength(1);
     expect(
       within(outstanding).queryByRole("button", {
-        name: (name) => name.startsWith(m.quest_type_fetch()),
+        name: (name) => name.startsWith("Fetch quests"),
       }),
     ).toBeNull();
   });

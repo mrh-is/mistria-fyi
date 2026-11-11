@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import { load } from "./+page.js";
 
@@ -14,7 +13,8 @@ describe("almanac page load", () => {
 
     expect(result).toMatchObject({
       metadata: {
-        description: m.almanac_page_description({}, { locale: "ja" }),
+        description:
+          "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
         title: getName("ui", "almanac", "ja"),
       },
     });

@@ -5,7 +5,6 @@
   let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>
 
-<!-- eslint-disable local/no-hardcoded-ui-text -- Wuchale extracts this dialog into the About catalog. -->
 <Dialog.Root bind:open>
   <Dialog.Content class="max-w-md" showCloseButton={false}>
     <Dialog.Header>

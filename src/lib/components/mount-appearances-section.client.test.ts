@@ -6,7 +6,6 @@ import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { PerkId } from "#lib/types/tracker-data.js";
@@ -38,7 +37,7 @@ describe("MountAppearancesSection", () => {
         name: `${getName("ui", "mount", "en")}, 0 of ${total} completed`,
       }),
     ).toHaveAttribute("aria-expanded", "true");
-    for (const name of [m.animals_mount_appearances(), m.animals_mount_perks()]) {
+    for (const name of ["Appearances", "Perks"]) {
       const heading = screen.getByRole("heading", { level: 3, name });
       expect(
         within(heading).getByRole("button", { name: `${name}, 0 of 3 completed` }),
@@ -70,9 +69,7 @@ describe("MountAppearancesSection", () => {
     expect(screen.getByRole("button", { name: "Perks, 1 of 3 completed" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mount, 1 of 6 completed" })).toBeTruthy();
 
-    await fireEvent.click(
-      screen.getByRole("button", { expanded: false, name: m.common_completed_heading() }),
-    );
+    await fireEvent.click(screen.getByRole("button", { expanded: false, name: "Completed" }));
     await fireEvent.click(await screen.findByRole("button", { name: `Uncheck ${name}` }));
     expect(userState.state.progress.unlockedPerks.has(horsepower)).toBe(false);
     expect(screen.getByRole("button", { name: "Perks, 0 of 3 completed" })).toBeTruthy();

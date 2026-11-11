@@ -50,7 +50,7 @@ export async function checkCatalogs(config, root) {
       }
     }
   }
-  const hub = await Hub.create("cli", config, root, [], 0, fs);
+  const hub = await Hub.create("cli", { ...config, ai: null }, root, [], 0, fs);
   const result = await hub.check(true);
   for (const adapter of result.syncs) errors.push(`Extraction has pending changes: ${adapter}`);
   for (const { locale, source } of result.errors) {

@@ -33,8 +33,8 @@ these types; the store owns the mutable instance.
 
 Pure functions with no side effects. They accept explicit inputs and return computed values.
 oxlint's `no-restricted-imports` enforces the layering: engine modules and their tests can't import
-from `src/lib/stores/`, `src/lib/components/`, or `src/lib/ui-messages/`, even for types. Engine
-tests build their inputs directly rather than driving the store. Service-worker cache code & update
+from `src/lib/stores/`, `src/lib/components/`, or `src/lib/i18n/`, even for types. Engine tests
+build their inputs directly rather than driving the store. Service-worker cache code & update
 plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src/lib/presentation/`.
 
 ### Other `src/lib/` layers

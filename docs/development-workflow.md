@@ -530,20 +530,20 @@ step, `pnpm run verify -- --step=audit`, stays available.
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
 [accessibility testing](accessibility-testing.md) and [PWA verification](pwa-verification.md). Its
-“CI passed” job aggregates the merge checks & accepts skipped audits, locale-sync, & browser jobs.
-Scheduled reporting jobs stay outside that gate, so it is the one check to require for merging.
+“CI passed” job aggregates the merge checks & accepts skipped audits & browser jobs. Scheduled
+reporting jobs stay outside that gate, so it is the one check to require for merging.
 
 ### Linting & formatting
 
 `pnpm run lint` runs five tools, each covering what the others can't:
 
-| Tool       | Config                | Covers                                                                                                              |
-| ---------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| oxfmt      | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type                                  |
-| oxlint     | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint                              |
-| ESLint     | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables, & `no-hardcoded-ui-text` |
-| Stylelint  | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                                                    |
-| ShellCheck | `.shellcheckrc`       | Every tracked `*.sh`, through `pnpm run lint:shell`, which uses the system `shellcheck`                             |
+| Tool       | Config                | Covers                                                                                    |
+| ---------- | --------------------- | ----------------------------------------------------------------------------------------- |
+| oxfmt      | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type        |
+| oxlint     | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint    |
+| ESLint     | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables |
+| Stylelint  | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                          |
+| ShellCheck | `.shellcheckrc`       | Every tracked `*.sh`, through `pnpm run lint:shell`, which uses the system `shellcheck`   |
 
 oxlint enables every category except `nursery`, with the `eslint`, `typescript`, `unicorn`, `oxc`,
 `import`, `promise`, `node`, & `jsdoc` plugins (plus `vitest` for `*.test.ts`), and adds
@@ -601,9 +601,8 @@ script, switch on a local variable and use `return value satisfies never;` in th
 The same test checks that oxfmt formats `.svelte` files. That needs `.oxfmtrc.json`'s `svelte`
 option; without it, `oxfmt --check` skips every `.svelte` file without saying so.
 
-ESLint's template rules include two local ones in `eslint-rules/`: `no-hardcoded-ui-text` (see
-[localization](localization.md)) and `no-raw-internal-href`, which rejects literal internal routes
-like `href="/about"` and accepts `localizedHref(...)` or any other expression. It replaces
+The local ESLint rule `no-raw-internal-href` rejects literal internal routes like `href="/about"`
+and accepts `localizedHref(...)` or any other expression. It replaces
 `svelte/no-navigation-without-resolve`, which needs type information to recognize `localizedHref()`.
 
 #### Oxlint rule decisions

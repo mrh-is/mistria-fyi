@@ -4,7 +4,6 @@ import path from "node:path";
 import { Window } from "happy-dom";
 import { describe, expect, it } from "vitest";
 
-import * as m from "../ui-messages/messages.js";
 import { getTextDirection } from "../i18n/locale-runtime.js";
 import { offlinePageHtml } from "../pwa/offline-page.js";
 import { inlineScriptHashes } from "../security/inline-scripts.js";
@@ -29,8 +28,8 @@ function messagesFor(
 }
 
 const MESSAGES = messagesFor(
-  { offline_heading: "You’re offline", offline_retry: "Try <again>" },
-  { ja: { offline_heading: "オフラインです" } },
+  { heading: "You’re offline", retry: "Try <again>" },
+  { ja: { heading: "オフラインです" } },
 );
 
 function renderReal(): ReturnType<typeof renderOfflinePage> {
@@ -89,7 +88,7 @@ const APP_HTML = `<!doctype html>
 </html>`;
 
 const TEMPLATE = `<html lang="%offline.lang%" dir="%offline.dir%"><head>${OFFLINE_PAGE_SLOT}
-%offline.fonts%</head><body><h1>%m.offline_heading%</h1><a>%m.offline_retry%</a></body></html>`;
+%offline.fonts%</head><body><h1>%copy.heading%</h1><a>%copy.retry%</a></body></html>`;
 
 /** `TEMPLATE` rendered in `locale`, from `appCss` & `appHtml`. */
 function render(appCss = APP_CSS, appHtml = APP_HTML, locale: "en" | "ja" = "en"): string {
@@ -149,12 +148,12 @@ describe("renderOfflinePage", () => {
     const page = renderOfflinePage(
       TEMPLATE,
       APP_CSS,
-      `${APP_HTML}<script>"%m.offline_heading%"</script>`,
+      `${APP_HTML}<script>"%copy.heading%"</script>`,
       MESSAGES,
     );
 
-    expect(page.slots).toEqual(["offline.lang", "offline.dir", "offline.fonts", "m.offline_heading", "m.offline_retry"]);
-    expect(offlinePageHtml(page, "en", undefined)).toContain('<script>"%m.offline_heading%"</script>');
+    expect(page.slots).toEqual(["offline.lang", "offline.dir", "offline.fonts", "copy.heading", "copy.retry"]);
+    expect(offlinePageHtml(page, "en", undefined)).toContain('<script>"%copy.heading%"</script>');
   });
 
   it("throws when the template has no slot", () => {
@@ -184,19 +183,19 @@ describe("renderOfflinePage", () => {
 
   it("throws for a missing English message or one with placeholders", () => {
     expect(() =>
-      renderOfflinePage(TEMPLATE, APP_CSS, APP_HTML, messagesFor({ offline_heading: "Offline" })),
-    ).toThrow(/messages\/en\.json has no plain-text "offline_retry"/);
+      renderOfflinePage(TEMPLATE, APP_CSS, APP_HTML, messagesFor({ heading: "Offline" })),
+    ).toThrow(/offline\.json has no en plain-text "retry"/);
     expect(() =>
       renderOfflinePage(
         TEMPLATE,
         APP_CSS,
         APP_HTML,
         messagesFor(
-          { offline_heading: "Offline", offline_retry: "Retry" },
-          { fr: { offline_retry: "Réessayer {count}" } },
+          { heading: "Offline", retry: "Retry" },
+          { fr: { retry: "Réessayer {count}" } },
         ),
       ),
-    ).toThrow(/messages\/fr\.json's "offline_retry" has placeholders/);
+    ).toThrow(/offline\.json's fr "retry" has placeholders/);
   });
 
   it("renders the real offline page from the real app files", () => {
@@ -207,7 +206,7 @@ describe("renderOfflinePage", () => {
     expect(html).toContain('font-family: "Petrona"');
     expect(html).toContain("html:lang(ja)");
     expect(html).not.toMatch(/\son[a-z]+=/i);
-    expect(html).not.toMatch(/%(m|offline)\.[\w-]+%/);
+    expect(html).not.toMatch(/%(copy|offline)\.[\w-]+%/);
     expect(inlineScriptHashes(html)).toEqual(inlineScriptHashes(read("src/app.html")));
   });
 
@@ -220,11 +219,11 @@ describe("renderOfflinePage", () => {
 
       expect(document.documentElement.lang).toBe(locale);
       expect(document.documentElement.dir).toBe(getTextDirection(locale));
-      expect(document.title).toBe(m.offline_page_title({}, { locale }));
-      expect(text(".eyebrow")).toBe(m.offline_eyebrow({}, { locale }));
-      expect(text("h1")).toBe(m.offline_heading({}, { locale }));
-      expect(text(".eyebrow + h1 + p")).toBe(m.offline_body({}, { locale }));
-      expect(text(".retry")).toBe(m.action_retry({}, { locale }));
+      expect(document.title).toBe(REAL_MESSAGES[locale].title);
+      expect(text(".eyebrow")).toBe(REAL_MESSAGES[locale].eyebrow);
+      expect(text("h1")).toBe(REAL_MESSAGES[locale].heading);
+      expect(text(".eyebrow + h1 + p")).toBe(REAL_MESSAGES[locale].body);
+      expect(text(".retry")).toBe(REAL_MESSAGES[locale].retry);
     } finally {
       window.close();
     }

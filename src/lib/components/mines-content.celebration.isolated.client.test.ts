@@ -9,7 +9,6 @@ import { showUndoToast } from "#lib/effects/undo-toast.js";
 import { getMaxMineFloor } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 // Confetti needs a canvas happy-dom doesn't provide, and the toast's undo is called directly.
@@ -50,7 +49,7 @@ it("undoing an untick doesn't celebrate", async () => {
   renderWithFeedback(MinesContent, { defaultOpen: true, locale: "en" });
   // Every finished list sits under a closed Completed shelf.
   const completedHeadings = await screen.findAllByRole("heading", {
-    name: m.common_completed_heading(),
+    name: "Completed",
   });
   await Promise.all(
     completedHeadings.map((heading) => fireEvent.click(within(heading).getByRole("button"))),

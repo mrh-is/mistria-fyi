@@ -9,7 +9,6 @@ import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 
@@ -39,11 +38,11 @@ function toolbarNav() {
 }
 
 function settingsButton() {
-  return screen.getByRole("button", { name: m.toolbar_quick_settings() });
+  return screen.getByRole("button", { name: "Quick settings" });
 }
 
 function visibilityButton() {
-  return screen.getByRole("button", { name: m.toolbar_visibility_filters() });
+  return screen.getByRole("button", { name: "Visibility filters" });
 }
 
 beforeEach(() => {
@@ -74,20 +73,20 @@ describe("ToolbarFooter panels", () => {
     "keeps replacement %s focus when feedback closes",
     async (replacement) => {
       renderToolbar();
-      const feedback = screen.getByRole("button", { name: m.toolbar_send_feedback() });
+      const feedback = screen.getByRole("button", { name: "Send feedback" });
       feedback.focus();
       await fireEvent.click(feedback);
       await waitFor(() =>
-        expect(screen.getByRole("dialog", { name: m.toolbar_send_feedback() })).toHaveFocus(),
+        expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus(),
       );
       const trigger = screen.getByRole("button", { name: replacement });
       trigger.focus();
       await fireEvent.click(trigger);
       await waitFor(() => {
-        expect(screen.queryByRole("dialog", { name: m.toolbar_send_feedback() })).toBeNull();
+        expect(screen.queryByRole("dialog", { name: "Send feedback" })).toBeNull();
       });
       expect(
-        screen.getByRole(replacement === m.toolbar_search() ? "textbox" : "button", {
+        screen.getByRole(replacement === "Search" ? "textbox" : "button", {
           name: replacement === "Search" ? "Search items" : "Close Quick settings",
         }),
       ).toHaveFocus();
@@ -99,17 +98,15 @@ describe("ToolbarFooter panels", () => {
 
     await fireEvent.click(settingsButton());
     expect(settingsButton()).toHaveAttribute("aria-expanded", "true");
-    expect(
-      await screen.findByRole("dialog", { name: m.toolbar_quick_settings() }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Quick settings" })).toBeInTheDocument();
     expect(overlayState()).toBe("active");
 
     await fireEvent.click(visibilityButton());
-    expect(await screen.findByRole("dialog", { name: m.toolbar_filters() })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Filters" })).toBeInTheDocument();
     expect(settingsButton()).toHaveAttribute("aria-expanded", "false");
     expect(visibilityButton()).toHaveAttribute("aria-expanded", "true");
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: m.toolbar_quick_settings() })).toBeNull();
+      expect(screen.queryByRole("dialog", { name: "Quick settings" })).toBeNull();
     });
 
     await fireEvent.click(visibilityButton());
@@ -125,7 +122,7 @@ describe("ToolbarFooter panels", () => {
 
     settingsButton().focus();
     await fireEvent.click(settingsButton());
-    const dialog = await screen.findByRole("dialog", { name: m.toolbar_quick_settings() });
+    const dialog = await screen.findByRole("dialog", { name: "Quick settings" });
     await waitFor(() => {
       expect(dialog.contains(document.activeElement)).toBe(true);
     });
@@ -143,15 +140,15 @@ describe("ToolbarFooter panels", () => {
   it("dismisses a nested spoiler dialog without closing the settings panel", async () => {
     renderToolbar();
     await fireEvent.click(settingsButton());
-    await fireEvent.click(screen.getByRole("switch", { name: m.settings_show_spoilers() }));
-    const confirmation = await screen.findByRole("dialog", { name: m.settings_show_spoilers() });
-    const cancel = within(confirmation).getByRole("button", { name: m.settings_spoilers_cancel() });
+    await fireEvent.click(screen.getByRole("switch", { name: "Show spoilers?" }));
+    const confirmation = await screen.findByRole("dialog", { name: "Show spoilers?" });
+    const cancel = within(confirmation).getByRole("button", { name: "Never mind" });
     cancel.focus();
     await fireEvent.keyDown(cancel, { key: "Escape" });
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: m.settings_show_spoilers() })).toBeNull();
+      expect(screen.queryByRole("dialog", { name: "Show spoilers?" })).toBeNull();
     });
-    expect(screen.getByRole("dialog", { name: m.toolbar_quick_settings() })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Quick settings" })).toBeInTheDocument();
     expect(settingsButton()).toHaveAttribute("aria-expanded", "true");
   });
 
@@ -159,9 +156,9 @@ describe("ToolbarFooter panels", () => {
     renderToolbar();
 
     await fireEvent.click(visibilityButton());
-    await screen.findByRole("dialog", { name: m.toolbar_filters() });
+    await screen.findByRole("dialog", { name: "Filters" });
 
-    await fireEvent.click(screen.getByLabelText(m.toolbar_close_panel()));
+    await fireEvent.click(screen.getByLabelText("Close panel"));
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -172,7 +169,7 @@ describe("ToolbarFooter panels", () => {
     renderToolbar();
 
     await fireEvent.click(visibilityButton());
-    const dialog = await screen.findByRole("dialog", { name: m.toolbar_filters() });
+    const dialog = await screen.findByRole("dialog", { name: "Filters" });
 
     await fireEvent.click(within(dialog).getByRole("button", { name: "Close Filters" }));
 
@@ -185,7 +182,7 @@ describe("ToolbarFooter panels", () => {
     renderToolbar();
 
     await fireEvent.click(settingsButton());
-    await screen.findByRole("dialog", { name: m.toolbar_quick_settings() });
+    await screen.findByRole("dialog", { name: "Quick settings" });
 
     pageStub.navigate("/en/museum");
     navigation.afterNavigate.mock.calls[0]?.[0]({ shallow: false });
@@ -198,28 +195,26 @@ describe("ToolbarFooter panels", () => {
 
   it("preserves a feedback draft on dismiss but remounts it on navigation", async () => {
     renderToolbar();
-    const feedbackButton = screen.getByRole("button", { name: m.toolbar_send_feedback() });
+    const feedbackButton = screen.getByRole("button", { name: "Send feedback" });
     await fireEvent.click(feedbackButton);
-    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_message_label() }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Draft feedback" },
     });
     await fireEvent.click(screen.getByRole("button", { name: "Close Send feedback" }));
     await fireEvent.click(feedbackButton);
-    expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue(
-      "Draft feedback",
-    );
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("Draft feedback");
     pageStub.navigate("/en/museum");
     navigation.afterNavigate.mock.calls[0]?.[0]({ shallow: false });
     await tick();
     await fireEvent.click(feedbackButton);
-    expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue("");
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
   });
 
   it("cancels pending search updates when the toolbar unmounts", async () => {
     vi.useFakeTimers();
     try {
       const view = renderToolbar();
-      await fireEvent.click(screen.getByRole("button", { name: m.toolbar_search() }));
+      await fireEvent.click(screen.getByRole("button", { name: "Search" }));
       await fireEvent.input(screen.getByRole("textbox"), { target: { value: "stale query" } });
       view.unmount();
       await vi.advanceTimersByTimeAsync(250);
@@ -231,7 +226,7 @@ describe("ToolbarFooter panels", () => {
 
   it("marks the overlay active and hides the toolbar while the feedback picker runs", async () => {
     const { feedbackContext } = renderToolbar();
-    const nav = screen.getByRole("navigation", { name: m.toolbar_nav_label() });
+    const nav = screen.getByRole("navigation", { name: "Tracker tools" });
 
     expect(overlayState()).toBe("inactive");
     feedbackContext.startPicking(() => undefined);
@@ -258,21 +253,21 @@ describe("ToolbarFooter panels", () => {
 describe("ToolbarFooter search", () => {
   it("offers search only when the page's toolbar config enables it", () => {
     renderToolbar({ search: false });
-    expect(screen.queryByRole("button", { name: m.toolbar_search() })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
     cleanup();
 
     renderToolbar({ search: true });
-    expect(screen.getByRole("button", { name: m.toolbar_search() })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   });
 
   it("opens the search bar, focuses the input, and debounces the query", async () => {
     renderToolbar();
 
-    await fireEvent.click(screen.getByRole("button", { name: m.toolbar_search() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
-    const input = screen.getByRole("textbox", { name: m.toolbar_search_label() });
+    const input = screen.getByRole("textbox", { name: "Search items" });
     expect(input).toHaveFocus();
-    expect(screen.queryByRole("button", { name: m.toolbar_search() })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
 
     await fireEvent.input(input, { target: { value: "tomato" } });
     expect(toolbarState.searchQuery).toBe("");
@@ -280,26 +275,26 @@ describe("ToolbarFooter search", () => {
     await waitFor(() => {
       expect(toolbarState.searchQuery).toBe("tomato");
     });
-    expect(screen.getByRole("button", { name: m.toolbar_clear_search() })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
   });
 
   it("clears the query without closing the search bar", async () => {
     renderToolbar();
-    await fireEvent.click(screen.getByRole("button", { name: m.toolbar_search() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Search" }));
     toolbarState.setSearchQuery("bread");
 
-    await fireEvent.click(await screen.findByRole("button", { name: m.toolbar_clear_search() }));
+    await fireEvent.click(await screen.findByRole("button", { name: "Clear search" }));
 
     expect(toolbarState.searchQuery).toBe("");
-    expect(screen.getByRole("textbox", { name: m.toolbar_search_label() })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Search items" })).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.queryByRole("button", { name: m.toolbar_clear_search() })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
     });
   });
 
   it("cancels search, resets the query, and returns focus to the search trigger", async () => {
     renderToolbar();
-    const trigger = screen.getByRole("button", { name: m.toolbar_search() });
+    const trigger = screen.getByRole("button", { name: "Search" });
     trigger.focus();
     await fireEvent.click(trigger);
     toolbarState.setSearchQuery("bread");
@@ -309,21 +304,21 @@ describe("ToolbarFooter search", () => {
     expect(toolbarState.searchOpen).toBe(false);
     expect(toolbarState.searchQuery).toBe("");
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: m.toolbar_search() })).toHaveFocus();
+      expect(screen.getByRole("button", { name: "Search" })).toHaveFocus();
     });
   });
 
   it("closes any open panel when search opens", async () => {
     renderToolbar();
     await fireEvent.click(settingsButton());
-    await screen.findByRole("dialog", { name: m.toolbar_quick_settings() });
+    await screen.findByRole("dialog", { name: "Quick settings" });
 
-    await fireEvent.click(screen.getByRole("button", { name: m.toolbar_search() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
-    expect(screen.getByRole("textbox", { name: m.toolbar_search_label() })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Search items" })).toBeInTheDocument();
   });
 });
 
@@ -332,13 +327,11 @@ describe("ToolbarFooter filters", () => {
     toolbarState.registerSourceFilters("almanac", []);
     renderToolbar();
     await fireEvent.click(visibilityButton());
-    const dialog = await screen.findByRole("dialog", { name: m.toolbar_filters() });
-    await fireEvent.click(
-      within(dialog).getByRole("switch", { name: m.visibility_unobtainable_toggle() }),
-    );
+    const dialog = await screen.findByRole("dialog", { name: "Filters" });
+    await fireEvent.click(within(dialog).getByRole("switch", { name: "Unobtainable" }));
     expect(toolbarState.showUnobtainable).toBe(true);
-    expect(screen.getByRole("status")).toHaveTextContent(m.toolbar_filters_applied());
-    await fireEvent.click(within(dialog).getByRole("button", { name: m.toolbar_reset_filters() }));
+    expect(screen.getByRole("status")).toHaveTextContent("Filters applied");
+    await fireEvent.click(within(dialog).getByRole("button", { name: "Reset" }));
     expect(toolbarState.showUnobtainable).toBe(false);
     expect(visibilityButton()).not.toHaveClass("floating-tool--filtered");
   });
@@ -348,20 +341,20 @@ describe("ToolbarFooter filters", () => {
     toolbarState.registerSourceFilters("test", [first, second]);
     renderToolbar();
     await fireEvent.click(visibilityButton());
-    const dialog = await screen.findByRole("dialog", { name: m.toolbar_filters() });
-    expect(within(dialog).queryByRole("button", { name: m.toolbar_reset_filters() })).toBeNull();
+    const dialog = await screen.findByRole("dialog", { name: "Filters" });
+    expect(within(dialog).queryByRole("button", { name: "Reset" })).toBeNull();
     expect(visibilityButton()).not.toHaveClass("floating-tool--filtered");
 
     toolbarState.toggleSourceFilter(first);
-    const reset = await within(dialog).findByRole("button", { name: m.toolbar_reset_filters() });
+    const reset = await within(dialog).findByRole("button", { name: "Reset" });
 
     await fireEvent.click(reset);
 
     expect(toolbarState.isSourceFilterNarrowing).toBe(false);
     await waitFor(() => {
-      expect(within(dialog).queryByRole("button", { name: m.toolbar_reset_filters() })).toBeNull();
+      expect(within(dialog).queryByRole("button", { name: "Reset" })).toBeNull();
     });
-    expect(screen.getByRole("status")).toHaveTextContent(m.toolbar_filters_cleared());
+    expect(screen.getByRole("status")).toHaveTextContent("All filters cleared");
   });
 
   it("highlights the filter trigger while filters are active and the panel is closed", async () => {
@@ -398,10 +391,8 @@ describe("ToolbarFooter clock", () => {
 
     await fireEvent.click(clockButton());
 
-    const dialog = await screen.findByRole("dialog", { name: m.toolbar_clock_title() });
-    expect(
-      within(dialog).getByRole("radiogroup", { name: m.visibility_season_label() }),
-    ).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Season & weather" });
+    expect(within(dialog).getByRole("radiogroup", { name: "Season" })).toBeInTheDocument();
   });
 
   it("shows a dot & a hint label until the clock opens", async () => {
@@ -422,7 +413,7 @@ describe("ToolbarFooter clock", () => {
     renderToolbar({ search: true });
 
     expect(screen.queryByRole("button", { name: /^Season & weather/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: m.toolbar_visibility_filters() })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Visibility filters" })).toBeNull();
   });
 });
 
@@ -437,8 +428,8 @@ describe("ToolbarFooter picker state", () => {
       page: "/recipes",
     })(target);
 
-    await fireEvent.click(screen.getByRole("button", { name: m.toolbar_send_feedback() }));
-    await fireEvent.click(await screen.findByRole("button", { name: m.feedback_pick_action() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(await screen.findByRole("button", { name: "Point at something" }));
 
     // `FeedbackPanel` starts picking; the toolbar and the root layout's `inert` (mirrored by the
     // harness through `isOverlayActive`) are other components reading the same context.
@@ -447,7 +438,7 @@ describe("ToolbarFooter picker state", () => {
       expect(overlayState()).toBe("active");
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: m.feedback_picker_cancel_aria() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Cancel item picker" }));
     await waitFor(() => {
       expect(toolbarNav()).not.toHaveAttribute("hidden");
     });

@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 // The receiver's surfaces, against a following device that has every reason to show them.
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
@@ -86,11 +85,11 @@ describe("the status button", () => {
     await renderToolbar();
     const button = screen.getByRole("button", { name: /^Save file sync:/ });
     expect(button).toHaveAccessibleName("Save file sync: no new saves in a while");
-    expect(screen.getByText(m.sync_status_gap({ days: 5 }))).toBeVisible();
+    expect(screen.getByText("Haven’t heard from your game in 5 days")).toBeVisible();
 
     await fireEvent.click(button);
     await tick();
-    expect(screen.getByText(m.sync_panel_last())).toBeVisible();
+    expect(screen.getByText("Last save file")).toBeVisible();
     expect(button).toHaveAttribute("aria-expanded", "true");
 
     await fireEvent.click(button);
@@ -103,7 +102,7 @@ describe("the status button", () => {
     await renderToolbar();
     await fireEvent.click(screen.getByRole("button", { name: /^Save file sync:/ }));
     await tick();
-    expect(screen.getByText(m.sync_panel_last())).toBeVisible();
+    expect(screen.getByText("Last save file")).toBeVisible();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     await userState.stopSyncing();
@@ -111,7 +110,7 @@ describe("the status button", () => {
     expect(screen.queryByRole("button", { name: /^Save file sync:/ })).toBeNull();
     // The panel animates out.
     await waitFor(() => {
-      expect(screen.queryByText(m.sync_panel_from())).toBeNull();
+      expect(screen.queryByText("Save file from")).toBeNull();
     });
   });
 });
@@ -123,9 +122,9 @@ describe("the farm-switch backup", () => {
     const offer = screen.getByRole("button", { name: /^Backup of Old Acres, from / });
     await fireEvent.click(offer);
     await tick();
-    expect(screen.getByText(m.sync_backup_restore_title())).toBeVisible();
-    await fireEvent.click(screen.getByRole("button", { name: m.sync_backup_restore_confirm() }));
+    expect(screen.getByText("Restore this backup?")).toBeVisible();
+    await fireEvent.click(screen.getByRole("button", { name: "Restore it" }));
     await tick();
-    expect(screen.getAllByText(m.sync_backup_restored()).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Restored that backup.").length).toBeGreaterThan(0);
   });
 });

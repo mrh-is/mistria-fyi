@@ -2,14 +2,13 @@ import { createBuilder, createServer } from "vite";
 
 // The Cloudflare adapter resolves some build paths from cwd, independently of Vite's root.
 process.chdir(import.meta.dirname);
-const [command, variant] = process.argv.slice(2);
-const mode = variant === "keyed" ? "keyed" : undefined;
+const [command] = process.argv.slice(2);
 
 if (command === "build") {
-  const builder = await createBuilder({ mode });
+  const builder = await createBuilder();
   await builder.buildApp();
 } else if (command === "dev") {
-  const server = await createServer({ mode, server: { port: 4380, strictPort: true } });
+  const server = await createServer({ server: { port: 4380, strictPort: true } });
   await server.listen();
   server.printUrls();
 } else {

@@ -51,7 +51,6 @@
     "static/sprites/",
     "static/villager-sprites/",
     "static/fonts/satoshi-regular.woff2",
-    "src/lib/ui-messages/",
     "scripts/locale-fonts/**",
     "scripts/locale-fonts/input/",
     ".locale-fonts-dist/"
@@ -85,7 +84,7 @@
     "import/group-exports": "off", // Same.
     "import/no-default-export": "off", // Config files and SvelteKit hooks require default exports.
     "import/no-named-export": "off",
-    "import/no-namespace": "off", // Keyed messages use the `m` namespace.
+    "import/no-namespace": "off",
     "import/no-nodejs-modules": "off", // The pipeline and scripts are Node programs.
     "import/no-unassigned-import": "off", // CSS & polyfill side-effect imports.
     "import/prefer-default-export": "off",
@@ -415,7 +414,7 @@
             "patterns": [
               {
                 "message": "The engine is pure domain logic; move shared types to src/lib/types/ and keep side effects and message lookups at store or component boundaries.",
-                "regex": "^(#lib/|(?:\\.\\./)+)(stores|progress|components|ui-messages)/"
+                "regex": "^(#lib/|(?:\\.\\./)+)(stores|progress|components|i18n)/"
               }
             ]
           }

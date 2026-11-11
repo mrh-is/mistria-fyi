@@ -33,7 +33,7 @@
         // the npm SDK of the same name & reports it unlisted. We do not use that package.
         "cloudflare",
       ],
-      // The spike switches these aliases between the two fixture builds.
+      // The separate spike's Vite config resolves these fixture aliases.
       "ignoreUnresolved": ["#fixture-ui", "#fixture-search", "#fixture-settings"],
     },
     "pipeline": {
@@ -50,8 +50,6 @@
     "scripts/vitest-timings.ts": ["exports"],
     // Ad-hoc Firefox verification scripts import `launchFirefox` from outside the repository (#287).
     "scripts/lib/playwright-firefox.ts": ["exports"],
-    // The ignored, generated UI message module calls this renderer.
-    "src/lib/i18n/keyed-message-runtime.ts": ["exports"],
     // `page` is `$app/state`'s export name, so the stub exports one object under two names.
     "src/lib/test-utils/page-stub.svelte.ts": ["duplicates"],
   },

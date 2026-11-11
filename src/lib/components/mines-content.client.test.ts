@@ -6,12 +6,11 @@ import MinesContent from "#lib/components/mines-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 const waterQuest = trackerData.mines.seals[0].questId;
 
 async function stepDown(): Promise<void> {
-  await fireEvent.click(screen.getByRole("button", { name: m.mines_floor_down() }));
+  await fireEvent.click(screen.getByRole("button", { name: "Go down one floor" }));
   await tick();
 }
 
@@ -42,7 +41,7 @@ describe("MinesContent floor stepper", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(userState.state.progress.mineFloor).toBe(20);
-    await confirm(m.spoiler_dialog_cancel());
+    await confirm("Never mind");
     expect(userState.state.progress.mineFloor).toBe(20);
   });
 
@@ -50,7 +49,7 @@ describe("MinesContent floor stepper", () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm(m.spoiler_dialog_confirm_item());
+    await confirm("Yes, just this one");
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBeUndefined();
@@ -60,7 +59,7 @@ describe("MinesContent floor stepper", () => {
     userState.setMineFloor(20);
     flushSync();
     await stepDown();
-    await confirm(m.spoiler_dialog_confirm_and_update());
+    await confirm("Yes, and prerequisites too");
 
     expect(userState.state.progress.mineFloor).toBe(21);
     expect(userState.state.progress.questStates[waterQuest]).toBe("completed");
@@ -73,7 +72,7 @@ describe("MinesContent floor stepper", () => {
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
     expect(input.value).toBe("0");
-    await confirm(m.spoiler_dialog_cancel());
+    await confirm("Never mind");
     expect(userState.state.progress.mineFloor).toBe(0);
   });
 });

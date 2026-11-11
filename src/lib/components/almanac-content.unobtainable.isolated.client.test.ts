@@ -7,7 +7,6 @@ import FilterPanel from "#lib/components/filter-panel.svelte";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type * as DataModule from "#lib/data/index.js";
 import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
@@ -37,7 +36,7 @@ it("reveals an unobtainable row with the filter and hides it again", async () =>
   const view = renderWithFeedback(AlmanacContent, { locale: "en" });
   await tick();
   const filters = renderWithFeedback(FilterPanel, {});
-  const toggle = filters.getByRole("switch", { name: m.visibility_unobtainable_toggle() });
+  const toggle = filters.getByRole("switch", { name: "Unobtainable" });
   expect(toggle).not.toBeChecked();
   expect(view.queryByText("Turnip", { exact: true })).toBeNull();
   await fireEvent.click(toggle);

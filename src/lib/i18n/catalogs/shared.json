@@ -6921,6 +6921,29 @@
   },
   {
     "translations": {
+      "en": "Mistria Field Guide showing an Everything progress stripe at 27% completion.",
+      "ja": "ミストリアフィールドガイドの「すべて」の進捗バーが27%を示しています。",
+      "zh-Hans": "米斯特里亚图鉴中，“全部”的进度条显示已完成27%。",
+      "zh-Hant": "米斯特里亞圖鑑中，「全部」的進度條顯示已完成 27%。",
+      "es": "La guía de campo de Mistria muestra la barra de progreso de «Todo» al 27 %.",
+      "fr": "Le guide de terrain de Mistria affiche la barre de progression « Tout » à 27 %.",
+      "ko": "미스트리아 필드 가이드의 ‘전체’ 진행률 표시줄이 27%를 보여 줍니다.",
+      "ru": "Полевой справочник Мистрии показывает, что раздел «Всё» завершён на 27%."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/seo-head.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Mocha",
       "ja": "モカ",
       "zh-Hans": "摩卡",

@@ -7,7 +7,6 @@ import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { SkillId } from "#lib/types/tracker-data.js";
 
@@ -35,8 +34,6 @@ describe("SkillsContent", () => {
     userState.togglePerk(lastPerk);
     flushSync();
     expect(miningRecord()).toBeNull();
-    expect(
-      screen.getByRole("button", { expanded: false, name: m.common_completed_heading() }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { expanded: false, name: "Completed" })).toBeInTheDocument();
   });
 });

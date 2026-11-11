@@ -47,8 +47,6 @@ pipeline/output
 # Browser-suite copy of the hosted Satoshi (scripts/playwright-satoshi.ts)
 /tests/browser/fixtures/local/
 
-# Generated UI messages
-/src/lib/ui-messages/
 
 # Locale font build inputs/outputs (scripts/locale-fonts)
 /scripts/locale-fonts/input/

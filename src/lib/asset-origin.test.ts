@@ -47,12 +47,7 @@ describe("one asset origin", () => {
     const offenders = readdirSync(sourceRoot, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:svelte|ts)$/.test(entry.name))
       .map((entry) => toPosixPath(relative(repositoryRoot, resolve(entry.parentPath, entry.name))))
-      .filter(
-        (path) =>
-          !path.endsWith(".test.ts") &&
-          !path.startsWith("src/lib/ui-messages/") &&
-          path !== "src/lib/asset-origin.ts",
-      )
+      .filter((path) => !path.endsWith(".test.ts") && path !== "src/lib/asset-origin.ts")
       .filter((path) => read(path).includes(PRODUCTION_ASSET_ORIGIN));
 
     expect(offenders).toEqual([]);

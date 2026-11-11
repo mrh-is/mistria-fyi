@@ -91,6 +91,17 @@ describe("formatMergeCount", () => {
     expect(formatMergeCount("mineFloor", 1234, "fr")).toBe("Étage de mine : +1\u202F234 étages");
   });
 
+  it.each([
+    [1, "этаж"],
+    [21, "этаж"],
+    [3, "этажа"],
+    [22, "этажа"],
+    [5, "этажей"],
+    [11, "этажей"],
+  ])("selects the Russian form for %i floors", (count, noun) => {
+    expect(formatMergeCount("mineFloor", count, "ru")).toBe(`Шахтный этаж: +${count} ${noun}`);
+  });
+
   it("formats a boolean field without a count prefix", () => {
     expect(formatMergeCount("hasUpperFloor", 1, "en")).toBe("Upper floor unlocked");
     expect(formatMergeCount("reachedSeason", 1, "en")).toBe("Season progression updated");

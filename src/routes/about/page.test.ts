@@ -5,7 +5,6 @@ import { trackerData } from "#lib/data/index.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { loadAboutCatalog } from "#lib/i18n/about-ui.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import AboutPage from "./+page.svelte";
 import { aboutMetadata } from "./about-metadata.js";
@@ -60,8 +59,6 @@ describe("about and legal page", () => {
     expect(container.querySelector(".feedback-icon")).not.toBeNull();
     expect(queries.getByRole("link", { name: "Privacy" })).toBeTruthy();
     expect(queries.getByRole("button", { name: "AI disclosure" })).toBeTruthy();
-    expect(
-      queries.getByRole("link", { name: m.page_header_back_to_home() }).getAttribute("href"),
-    ).toBe("/en");
+    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
   });
 });

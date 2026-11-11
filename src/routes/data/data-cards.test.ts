@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import BackupCard from "./backup-card.svelte";
 import DangerZoneCard from "./danger-zone-card.svelte";
@@ -23,7 +22,7 @@ describe("data cards", () => {
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain(m.import_card_summary());
+    expect(text).toContain("Import progress from a Fields of Mistria save.");
   });
 
   it("summarizes device transfer while collapsed", () => {
@@ -34,7 +33,7 @@ describe("data cards", () => {
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain(m.transfer_card_summary());
+    expect(text).toContain("Take your progress to another device.");
   });
 
   it("summarizes backup and restore while collapsed", () => {
@@ -43,7 +42,7 @@ describe("data cards", () => {
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain(m.backup_card_summary());
+    expect(text).toContain("Export or restore all tracker data.");
   });
 
   it("summarizes the danger zone while collapsed", () => {
@@ -52,6 +51,6 @@ describe("data cards", () => {
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain(m.danger_zone_summary());
+    expect(text).toContain("Erase all tracked progress.");
   });
 });

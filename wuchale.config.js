@@ -1,5 +1,5 @@
 import { adapter } from "@wuchale/svelte";
-import { defineConfig } from "wuchale";
+import { defineConfig, gemini } from "wuchale";
 import { adapter as scriptAdapter } from "wuchale/adapter-vanilla";
 
 import {
@@ -117,6 +117,7 @@ export default defineConfig({
       storage: sharedStorage,
     }),
   },
+  ai: process.env.WUCHALE_TRANSLATE === "1" ? gemini() : null,
   dev: "read",
   locales: [...LOCALE_CODES],
   localesDir: "src/lib/i18n/catalogs",

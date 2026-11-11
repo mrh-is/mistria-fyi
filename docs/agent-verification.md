@@ -56,8 +56,7 @@ These CI steps aren’t in the local matrix:
   `pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.github/workflows/ci.yml` changes (manual dispatches
   always audit),
 - the budgeted test run, which is the complete asset-independent suite with per-file timing limits
-  (pull requests skip the relay & most `scripts/` tests unless they change those tests’ inputs),
-- the stale-translation check, which runs only on pull requests that touch `messages/`.
+  (pull requests skip the relay & most `scripts/` tests unless they change those tests’ inputs).
 
 The accessibility & PWA suites run against the build job’s output when `src/`, `static/`, `tests/`,
 or their tooling change. The “CI passed” job aggregates every result. Coverage runs nightly; it’s

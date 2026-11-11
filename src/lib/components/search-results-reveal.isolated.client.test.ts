@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SearchResults from "#lib/components/search-results.svelte";
 import { INITIAL_ROW_BUDGET } from "#lib/controllers/row-reveal.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import type { SearchResult } from "#lib/engine/search.js";
 
@@ -94,7 +93,7 @@ describe("SearchResults progressive reveal", () => {
     await finishReveal();
     expect(view.container.querySelectorAll(".search-result")).toHaveLength(0);
     expect(
-      view.getByText(m.search_no_results(), { selector: ".search-results__empty" }),
+      view.getByText("No items found", { selector: ".search-results__empty" }),
     ).toBeInTheDocument();
     expect(view.container.querySelector("[aria-busy=true]")).toBeNull();
     await view.rerender({ query: "Animal" });

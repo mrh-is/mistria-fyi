@@ -1,0 +1,60 @@
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { expect, it } from "vitest";
+import { getConfig, Hub } from "wuchale";
+
+import { checkCatalogs } from "./check-wuchale-catalogs.js";
+
+import type { Config } from "wuchale";
+
+it("discovers new components and requires translations again when their English changes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));
+  try {
+    const base = await getConfig(fileURLToPath(new URL("../wuchale.config.js", import.meta.url)));
+    const config: Config = {
+      ...base,
+      adapters: { shared: base.adapters.shared },
+      ai: null,
+      locales: ["en", "es"],
+    };
+    const components = join(root, "src/lib/components");
+    const catalog = join(root, config.localesDir, "shared.json");
+    const source = join(components, "new-feature.svelte");
+    await mkdir(components, { recursive: true });
+    await mkdir(join(root, config.localesDir), { recursive: true });
+    await writeFile(join(root, config.localesDir, "shared.loader.js"), "export {};\n");
+    await writeFile(source, "<button>Open your notebook</button>\n");
+
+    const extract = async () => {
+      const hub = await Hub.create("cli", config, root);
+      await hub.directVisit(true, false, false);
+    };
+    await extract();
+    const initial = await readFile(catalog, "utf8");
+    expect(initial).toContain("Open your notebook");
+    expect(await checkCatalogs(config, root)).toContain(
+      "Missing or incomplete es translation: Open your notebook",
+    );
+
+    const rows = JSON.parse(initial) as { translations: Record<string, string> }[];
+    rows[0].translations.es = "Abre tu cuaderno";
+    const translated = `${JSON.stringify(rows, null, 2)}\n`;
+    await writeFile(catalog, translated);
+    expect(await checkCatalogs(config, root)).toEqual([]);
+
+    await writeFile(source, "<button>Close your notebook</button>\n");
+    await Hub.create("build", config, root);
+    expect(await readFile(catalog, "utf8")).toBe(translated);
+    expect(await checkCatalogs(config, root)).toContain("Extraction has pending changes: shared");
+
+    await extract();
+    expect(await checkCatalogs(config, root)).toContain(
+      "Missing or incomplete es translation: Close your notebook",
+    );
+    expect(await readFile(catalog, "utf8")).not.toContain("Abre tu cuaderno");
+  } finally {
+    await rm(root, { force: true, recursive: true });
+  }
+});

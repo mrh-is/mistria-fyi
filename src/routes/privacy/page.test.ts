@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
-import * as m from "#lib/ui-messages/messages.js";
 
 import PrivacyPage from "./+page.svelte";
 
@@ -9,14 +8,12 @@ describe("privacy policy", () => {
   it("includes the AI in development section", () => {
     const { queries, text } = renderToFragment(PrivacyPage, { props: {} });
 
-    expect(queries.getByRole("heading", { name: m.privacy_ai_heading() })).toBeTruthy();
+    expect(queries.getByRole("heading", { name: "AI in development" })).toBeTruthy();
     expect(text).toContain("AI coding tools");
     expect(text).toContain("AI tools never get your email address");
     expect(text).toContain("save file sync log");
     expect(text).not.toContain("any information about how you use the app");
-    expect(
-      queries.getByRole("link", { name: m.page_header_back_to_home() }).getAttribute("href"),
-    ).toBe("/en");
+    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
   });
 
   it("shows when the policy last changed", () => {

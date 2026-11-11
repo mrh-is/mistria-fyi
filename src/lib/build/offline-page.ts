@@ -19,11 +19,11 @@ export const OFFLINE_PAGE_MODULE = "virtual:mfg/offline-page";
 const RESOLVED_OFFLINE_PAGE_MODULE = `\0${OFFLINE_PAGE_MODULE}`;
 
 /**
- * A template slot the worker fills per locale: `%m.<key>%` for a keyed UI message,
+ * A template slot the worker fills per locale: `%copy.<key>%` for translated page copy,
  * `%offline.lang%` & `%offline.dir%` for `<html>`, and the font stylesheet's link. Captured, so
  * splitting the template on it alternates parts & slots.
  */
-const LOCALE_SLOT = /%(m\.[a-z][a-z0-9_]*|offline\.(?:lang|dir|fonts))%/;
+const LOCALE_SLOT = /%(copy\.[a-z][a-z0-9_]*|offline\.(?:lang|dir|fonts))%/;
 
 /** Localized copy for the offline template slots. */
 export type LocaleMessages = Readonly<Record<LocaleCode, Readonly<Record<string, unknown>>>>;
@@ -96,10 +96,10 @@ function messageText(messages: LocaleMessages, locale: LocaleCode, key: string):
   const source = messages[locale][key] === undefined ? BASE_LOCALE : locale;
   const text = messages[source][key];
   if (typeof text !== "string") {
-    throw new TypeError(`messages/${source}.json has no plain-text "${key}" message.`);
+    throw new TypeError(`offline.json has no ${source} plain-text "${key}" message.`);
   }
   if (/[{}]/.test(text)) {
-    throw new Error(`messages/${source}.json's "${key}" has placeholders the offline page can't fill.`);
+    throw new Error(`offline.json's ${source} "${key}" has placeholders the offline page can't fill.`);
   }
   return text;
 }
@@ -112,7 +112,7 @@ function localeCopy(slots: readonly string[], messages: LocaleMessages): Offline
       .map((slot) => {
         if (slot === "offline.lang") return [slot, locale];
         if (slot === "offline.dir") return [slot, textDirection(locale)];
-        return [slot, escapeHtml(messageText(messages, locale, slot.slice("m.".length)))];
+        return [slot, escapeHtml(messageText(messages, locale, slot.slice("copy.".length)))];
       });
     return [locale, Object.fromEntries(values) as Record<string, string>];
   });
@@ -166,7 +166,7 @@ export function renderOfflinePage(
  * Serves `src/service-worker/offline.html`, rendered, as {@link OFFLINE_PAGE_MODULE}, in dev & build
  * alike. The service worker bundles the page (#226), so it shares no stylesheet with the app, and
  * has no app message runtime; this hands it the app's fonts, colours & saved theme, and every
- * locale's text from `messages/` (#206).
+ * locale's text from the Wuchale offline catalog (#206).
  */
 export function offlinePagePlugin(): Plugin {
   let root = process.cwd();
