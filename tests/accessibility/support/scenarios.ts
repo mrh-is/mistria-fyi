@@ -3,9 +3,7 @@ import { expect } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
 export async function openFeedbackValidation(page: Page): Promise<void> {
-  const trigger = page
-    .getByRole("navigation", { name: "Tracker tools" })
-    .getByRole("button", { name: "Send feedback" });
+  const trigger = page.getByRole("button", { exact: true, name: "Send feedback" });
   await trigger.click();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   const dialog = page.getByRole("dialog", { name: "Send feedback" });

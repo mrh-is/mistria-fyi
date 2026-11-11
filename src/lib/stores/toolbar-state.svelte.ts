@@ -12,10 +12,16 @@ export interface PageSearchCount {
   visible: number;
 }
 
+/** The toolbar's panels, at most one open at a time. */
+export type ToolbarPanel = "clock" | "contents" | "feedback" | "settings" | "sync" | "visibility";
+
 /** The filter-panel sections that collapse into disclosures on phones. */
 export type FilterSectionId = "show" | "sources";
 
 export class ToolbarState {
+  // The open toolbar panel. The toolbar owns it; the book's thumb-tab rail reads it for its own
+  // buttons' state, and asks for a panel through `requestPanel`.
+  activePanel = $state<null | ToolbarPanel>(null);
   enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
   // Phone-width disclosure state; session-only, so sections start collapsed on each visit.
   readonly expandedFilterSections = new SvelteSet<FilterSectionId>();
@@ -23,6 +29,8 @@ export class ToolbarState {
   filterPanelAvailable = $state(false);
   // Counts requests to open the filter panel from outside the toolbar, like the empty-state link.
   filterPanelRequest = $state(0);
+  // The latest request to toggle a panel from outside the toolbar; `serial` makes repeats distinct.
+  panelRequest = $state<null | { panel: ToolbarPanel; serial: number }>(null);
   // Pixels an open toolbar panel occupies above the viewport bottom; toasts rise above it.
   panelClearance = $state(0);
   searchOpen = $state(false);
@@ -107,6 +115,11 @@ export class ToolbarState {
   /** Asks the toolbar to open its filter panel. */
   requestFilterPanel(): void {
     this.filterPanelRequest += 1;
+  }
+
+  /** Asks the toolbar to open a panel, or to close it if it's already open. */
+  requestPanel(panel: ToolbarPanel): void {
+    this.panelRequest = { panel, serial: (this.panelRequest?.serial ?? 0) + 1 };
   }
 
   reset(): void {

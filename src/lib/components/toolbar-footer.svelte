@@ -1,15 +1,15 @@
 <script lang="ts">
   import IconClock from "@tabler/icons-svelte-runes/icons/clock";
   import IconFilter from "@tabler/icons-svelte-runes/icons/filter";
-  import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
+  import IconListDetails from "@tabler/icons-svelte-runes/icons/list-details";
   import IconPlugConnected from "@tabler/icons-svelte-runes/icons/plug-connected";
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconSearch from "@tabler/icons-svelte-runes/icons/search";
-  import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
   import { flushSync, onDestroy, tick, untrack } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
+  import ThumbIndex from "#lib/components/book/thumb-index.svelte";
   import ClockPanel from "#lib/components/clock-panel.svelte";
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FilterPanel from "#lib/components/filter-panel.svelte";
@@ -33,8 +33,7 @@
   import { page } from "$app/state";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
-
-  type ActivePanel = "clock" | "feedback" | "settings" | "sync" | "visibility" | null;
+  import type { ToolbarPanel } from "#lib/stores/toolbar-state.svelte.js";
 
   // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
   // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
@@ -72,7 +71,6 @@
     return m.sync_status_up_to_date();
   });
 
-  let activePanel = $state<ActivePanel>(null);
   let panelElement = $state<HTMLElement | null>(null);
   let panelOpener: HTMLElement | null = null;
 
@@ -80,7 +78,7 @@
     if (feedbackContext.errorReportRequest) {
       untrack(() => {
         panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        activePanel = "feedback";
+        toolbarState.activePanel = "feedback";
       });
     }
   });
@@ -96,7 +94,7 @@
   $effect(() => {
     if (toolbarState.filterPanelRequest === 0) return;
     untrack(() => {
-      if (toolbar?.filter && activePanel !== "visibility") togglePanel("visibility");
+      if (toolbar?.filter && toolbarState.activePanel !== "visibility") togglePanel("visibility");
     });
   });
 
@@ -118,9 +116,25 @@
     };
   });
 
+  // The book's thumb-tab rail holds Settings & Send a note at wide sizes; it asks for their panels.
+  // A request made before this toolbar mounted (a locale switch remounts it) isn't replayed.
+  let handledPanelRequest = toolbarState.panelRequest?.serial ?? 0;
+  $effect(() => {
+    const request = toolbarState.panelRequest;
+    if (!request || request.serial <= handledPanelRequest) return;
+    handledPanelRequest = request.serial;
+    untrack(() => {
+      togglePanel(request.panel);
+    });
+  });
+  // The open panel belongs to this toolbar, so it doesn't outlive it.
+  onDestroy(() => {
+    toolbarState.activePanel = null;
+  });
+
   // Stopping, here or in another tab, leaves the sync panel nothing to say.
   $effect(() => {
-    if (!syncing && activePanel === "sync") closePanel(false);
+    if (!syncing && toolbarState.activePanel === "sync") closePanel(false);
   });
 
   afterNavigate(({ shallow }) => {
@@ -132,7 +146,7 @@
   });
 
   export function isOverlayActive(): boolean {
-    return activePanel !== null || feedbackContext.isPicking;
+    return toolbarState.activePanel !== null || feedbackContext.isPicking;
   }
 
   async function afterTick(run: () => void): Promise<void> {
@@ -141,30 +155,39 @@
   }
 
   function closePanel(restoreFocus = true): void {
-    if (activePanel === null) return;
-    activePanel = null;
+    if (toolbarState.activePanel === null) return;
+    toolbarState.activePanel = null;
     const focusTarget = panelOpener;
     panelOpener = null;
     if (restoreFocus) {
       void afterTick(() => {
-        if (activePanel === null && !toolbarState.searchOpen && focusTarget?.isConnected) {
+        if (
+          toolbarState.activePanel === null &&
+          !toolbarState.searchOpen &&
+          focusTarget?.isConnected
+        ) {
           focusTarget.focus();
         }
       });
     }
   }
 
-  function togglePanel(panel: Exclude<ActivePanel, null>): void {
-    if (activePanel === panel) {
+  function togglePanel(panel: ToolbarPanel): void {
+    if (toolbarState.activePanel === panel) {
       closePanel();
       return;
     }
-    panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    activePanel = panel;
+    // Moving on from Contents to a panel it lists keeps Contents' opener, since its row unmounts.
+    if (toolbarState.activePanel !== "contents") {
+      panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+    toolbarState.activePanel = panel;
     if (panel === "clock") trackingReminders.clearClockHint();
     if (panel !== "feedback") {
       void afterTick(() => {
-        if (activePanel === panel) panelElement?.querySelector<HTMLElement>("button, a")?.focus();
+        if (toolbarState.activePanel === panel) {
+          panelElement?.querySelector<HTMLElement>("button, a")?.focus();
+        }
       });
     }
   }
@@ -226,17 +249,17 @@
         accentColor={toolbarAccent}
         initialMessage={feedbackContext.errorReportRequest?.message}
         allowSyncLog={feedbackContext.errorReportRequest === undefined}
-        open={activePanel === "feedback"}
+        open={toolbarState.activePanel === "feedback"}
         onClose={closePanel}
         pickerEnabled
-        restoreFocus={activePanel === null && !toolbarState.searchOpen}
+        restoreFocus={toolbarState.activePanel === null && !toolbarState.searchOpen}
       />
     {/key}
   {/key}
 
   <nav
     aria-label={m.toolbar_nav_label()}
-    class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
+    class="toolbar pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
   >
@@ -276,39 +299,33 @@
     {:else}
       <div class="flex items-end justify-between gap-3">
         <div class="flex items-center gap-1.5">
+          <!-- Contents holds the thumb tabs, Send a note, & Settings; at book widths the rail does. -->
           <button
-            class="floating-tool {activePanel === 'settings' ? 'floating-tool--active' : ''}"
+            class="floating-tool floating-tool--phone {toolbarState.activePanel === 'contents'
+              ? 'floating-tool--active'
+              : ''}"
             type="button"
-            aria-label={m.toolbar_quick_settings()}
-            aria-expanded={activePanel === "settings"}
-            aria-controls="quick-settings-panel"
+            aria-label={m.book_contents()}
+            aria-expanded={toolbarState.activePanel === "contents"}
+            aria-controls="contents-panel"
             onclick={() => {
-              togglePanel("settings");
+              togglePanel("contents");
             }}
           >
-            <IconSettings class="size-5 transition-transform motion-reduce:transition-none" />
-          </button>
-          <button
-            class="floating-tool {activePanel === 'feedback' ? 'floating-tool--active' : ''}"
-            type="button"
-            aria-label={m.toolbar_send_feedback()}
-            aria-expanded={activePanel === "feedback"}
-            onclick={() => {
-              togglePanel("feedback");
-            }}
-          >
-            <IconMessageReport class="size-5" />
+            <IconListDetails class="size-5" />
           </button>
           {#if syncing}
             <div class="sync-tool">
-              {#if syncReceiver.gapDays !== undefined && activePanel !== "sync"}
+              {#if syncReceiver.gapDays !== undefined && toolbarState.activePanel !== "sync"}
                 <p class="sync-tool__slip">{m.sync_status_gap({ days: syncReceiver.gapDays })}</p>
               {/if}
               <button
-                class="floating-tool {activePanel === 'sync' ? 'floating-tool--active' : ''}"
+                class="floating-tool {toolbarState.activePanel === 'sync'
+                  ? 'floating-tool--active'
+                  : ''}"
                 type="button"
                 aria-label={m.sync_status_name({ status: syncStatusLabel })}
-                aria-expanded={activePanel === "sync"}
+                aria-expanded={toolbarState.activePanel === "sync"}
                 aria-controls="sync-status-panel"
                 onclick={() => {
                   togglePanel("sync");
@@ -335,14 +352,14 @@
           {/if}
           {#if toolbar.filter}
             <button
-              class="floating-tool {activePanel === 'visibility'
+              class="floating-tool {toolbarState.activePanel === 'visibility'
                 ? 'floating-tool--active'
                 : filtersActive
                   ? 'floating-tool--filtered'
                   : ''}"
               type="button"
               aria-label={m.toolbar_visibility_filters()}
-              aria-expanded={activePanel === "visibility"}
+              aria-expanded={toolbarState.activePanel === "visibility"}
               aria-controls="filter-panel"
               onclick={() => {
                 togglePanel("visibility");
@@ -353,7 +370,7 @@
           {/if}
           {#if toolbar.clock}
             <button
-              class="floating-tool floating-tool--tabbed {activePanel === 'clock'
+              class="floating-tool floating-tool--tabbed {toolbarState.activePanel === 'clock'
                 ? 'floating-tool--active'
                 : ''}"
               type="button"
@@ -372,7 +389,7 @@
                       userState.state.worldState.season,
                     ),
                   })}
-              aria-expanded={activePanel === "clock"}
+              aria-expanded={toolbarState.activePanel === "clock"}
               aria-controls="clock-panel"
               onclick={() => {
                 togglePanel("clock");
@@ -398,7 +415,7 @@
     {/if}
   </nav>
 
-  {#if activePanel === "clock" || activePanel === "settings" || activePanel === "visibility" || activePanel === "sync"}
+  {#if toolbarState.activePanel !== null && toolbarState.activePanel !== "feedback"}
     <PanelOverlay
       bind:element={panelElement}
       animateOut
@@ -406,7 +423,11 @@
       onClose={closePanel}
       style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     >
-      {#if activePanel === "settings"}
+      {#if toolbarState.activePanel === "contents"}
+        <FoldoutPanel id="contents-panel" title={m.book_contents()} onClose={closePanel}>
+          <ThumbIndex />
+        </FoldoutPanel>
+      {:else if toolbarState.activePanel === "settings"}
         <FoldoutPanel
           id="quick-settings-panel"
           title={m.toolbar_quick_settings()}
@@ -414,11 +435,11 @@
         >
           <QuickSettingsPanel />
         </FoldoutPanel>
-      {:else if activePanel === "clock"}
+      {:else if toolbarState.activePanel === "clock"}
         <FoldoutPanel id="clock-panel" title={m.toolbar_clock_title()} onClose={closePanel}>
           <ClockPanel />
         </FoldoutPanel>
-      {:else if activePanel === "sync"}
+      {:else if toolbarState.activePanel === "sync"}
         <FoldoutPanel id="sync-status-panel" title={m.sync_card_title()} onClose={closePanel}>
           <SyncStatusPanel />
         </FoldoutPanel>
@@ -446,6 +467,11 @@
 {/if}
 
 <style>
+  /* Stays put, above the page, while a page turns (see app.css). */
+  .toolbar {
+    view-transition-name: book-toolbar;
+  }
+
   .search-bar,
   .floating-tool {
     border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
@@ -567,6 +593,20 @@
     .floating-tool--active,
     .floating-tool:is(:hover, :focus-visible) :global(svg) {
       transform: none;
+    }
+  }
+
+  /* At book widths (the media query matches the `book` variant in app.css), the page tools sit at
+     the foot of the page, beside the thumb-tab rail, instead of centered under a phone column. */
+  @media (min-width: 48rem) and (min-height: 32rem) {
+    .floating-tool--phone {
+      display: none;
+    }
+
+    .toolbar {
+      right: calc(var(--size-book-rail-width) + var(--size-book-margin) + 0.75rem);
+      left: auto;
+      max-width: none;
     }
   }
 </style>

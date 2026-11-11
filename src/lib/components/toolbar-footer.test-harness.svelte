@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
+  import ThumbTabs from "#lib/components/book/thumb-tabs.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { pageMetadata } from "#lib/data/page-metadata.js";
   import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -19,5 +20,7 @@
   setFeedbackContext(untrack(() => feedbackContext));
 </script>
 
+<!-- The rail holds Send a note & Settings at book widths, so the toolbar is tested with it. -->
+<ThumbTabs hasToolbar={metadata.toolbar !== "hidden"} />
 <ToolbarFooter metadata={pageMetadata(metadata)} bind:this={toolbarFooter} />
 <p data-testid="overlay-state">{overlayActive ? "active" : "inactive"}</p>
