@@ -7,6 +7,7 @@ import type { TranslationTableSource } from "./localize.js";
 
 interface GameTermMatch {
   key: string;
+  sourceDifferences: Partial<Record<LocaleCode, string>>;
   text: Record<LocaleCode, null | string>;
 }
 
@@ -20,8 +21,11 @@ export function searchGameTerms(query: string, loadTable: TranslationTableSource
   if (!needle) throw new Error("Pass an English word or phrase: pnpm run game-term -- cosmetic");
 
   const englishByKey = new Map<string, string>();
-  for (const language of TARGET_LANGUAGES) {
-    for (const [key, english] of loadTable(language, "source_caches")) {
+  const sources = TARGET_LANGUAGES.map(
+    (language) => [language, loadTable(language, "source_caches")] as const,
+  );
+  for (const [, source] of sources) {
+    for (const [key, english] of source) {
       if (!englishByKey.has(key) && english.toLowerCase().includes(needle)) {
         englishByKey.set(key, english);
       }
@@ -29,17 +33,24 @@ export function searchGameTerms(query: string, loadTable: TranslationTableSource
   }
   if (englishByKey.size === 0) return [];
 
-  const tables = TARGET_LANGUAGES.map(
-    (language) => [GAME_LANGUAGE_TO_LOCALE[language], loadTable(language, "translations")] as const,
-  );
+  const tables = sources.map(([language, source]) => ({
+    locale: GAME_LANGUAGE_TO_LOCALE[language],
+    source,
+    target: loadTable(language, "translations"),
+  }));
   return [...englishByKey]
     .toSorted(([a], [b]) => (a < b ? -1 : Number(a > b)))
     .map(([key, english]) => {
       const text = { en: english } as Record<LocaleCode, null | string>;
-      for (const [locale, table] of tables) {
-        const value = table.get(key);
+      const sourceDifferences: GameTermMatch["sourceDifferences"] = {};
+      for (const { locale, source, target } of tables) {
+        const value = target.get(key);
+        const cachedEnglish = source.get(key);
         text[locale] = value?.trim() ? value : null;
+        if (text[locale] !== null && cachedEnglish !== undefined && cachedEnglish !== english) {
+          sourceDifferences[locale] = cachedEnglish;
+        }
       }
-      return { key, text };
+      return { key, sourceDifferences, text };
     });
 }

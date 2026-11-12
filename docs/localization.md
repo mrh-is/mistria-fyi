@@ -232,8 +232,9 @@ matching key with its text in all eight locales. Compare entries by context: for
 
 The command reads the extracted tables in `pipeline/input/vX.Y.Z/assets/localization/` for
 `CURRENT_GAME_VERSION`. It prints “(missing)” for absent or blank translations. The English is the
-text cached for translation, so it can differ from the latest English in `fiddle/`. The command
-writes no files. If the tables are missing, see
+text cached for translation, so it can differ from the latest English in `fiddle/`. If a locale used
+different English from the displayed match, the command prints that source beneath its translation.
+The command writes no files. If the tables are missing, see
 [Pipeline setup](../pipeline/README.md#setup--commands).
 
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by

@@ -19,10 +19,12 @@ try {
       `No English matches in game ${CURRENT_GAME_VERSION} for ${JSON.stringify(query.trim())}.`,
     );
   }
-  for (const { key, text } of matches) {
+  for (const { key, sourceDifferences, text } of matches) {
     console.log(key);
     for (const [locale, value] of Object.entries(text)) {
       console.log(`  ${locale}: ${value === null ? "(missing)" : JSON.stringify(value)}`);
+      const source = sourceDifferences[locale as keyof typeof sourceDifferences];
+      if (source !== undefined) console.log(`    English source: ${JSON.stringify(source)}`);
     }
   }
 } catch (error) {

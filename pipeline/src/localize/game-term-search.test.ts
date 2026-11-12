@@ -13,9 +13,9 @@ describe("searchGameTerms", () => {
             ["misc_local/cosmetic_key_only", "Unrelated English text"],
           ]);
         }
-        return language === "fra"
-          ? new Map([["misc_local/notice", "New cosmetics available!"]])
-          : new Map();
+        if (language === "fra") return new Map([["misc_local/notice", "New cosmetics available!"]]);
+        if (language === "jpn") return new Map([["misc_local/select", "Select an accessory"]]);
+        return new Map();
       }
       return language === "jpn"
         ? new Map([
@@ -28,6 +28,7 @@ describe("searchGameTerms", () => {
     expect(hits).toEqual([
       {
         key: "misc_local/notice",
+        sourceDifferences: {},
         text: {
           en: "New cosmetics available!",
           es: null,
@@ -41,6 +42,7 @@ describe("searchGameTerms", () => {
       },
       {
         key: "misc_local/select",
+        sourceDifferences: { ja: "Select an accessory" },
         text: {
           en: "Select Cosmetic",
           es: null,
