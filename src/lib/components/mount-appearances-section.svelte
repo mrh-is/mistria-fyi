@@ -13,7 +13,6 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -130,7 +129,7 @@
     {progress}
     reportCategory="mount-appearances"
   >
-    {#each [{ kind: "appearance", name: m.animals_mount_appearances() }, { kind: "perk", name: m.animals_mount_perks() }] as group (group.kind)}
+    {#each [{ kind: "appearance", name: "Appearances" }, { kind: "perk", name: "Perks" }] as group (group.kind)}
       {@const groupProgress = countShelfRows(
         shelvedEntries.filter((entry) => entry.kind === group.kind),
       )}

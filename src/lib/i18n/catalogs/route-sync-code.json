@@ -1,0 +1,246 @@
+[
+  {
+    "translations": {
+      "en": "<0/> Generating the code…",
+      "ja": "<0/> コードを作成中…",
+      "zh-Hans": "<0/> 正在生成代码…",
+      "zh-Hant": "<0/> 正在產生代碼…",
+      "es": "<0/> Generando el código…",
+      "fr": "<0/> Création du code…",
+      "ko": "<0/> 코드를 만드는 중…",
+      "ru": "<0/> Создаём код…"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Code for syncing your save file",
+      "ja": "セーブデータを同期するためのコード",
+      "zh-Hans": "用于同步存档的代码",
+      "zh-Hant": "用來同步存檔的代碼",
+      "es": "Código para sincronizar tu partida guardada",
+      "fr": "Code pour synchroniser votre sauvegarde",
+      "ko": "세이브 파일 동기화용 코드",
+      "ru": "Код для синхронизации сохранения"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Copied!",
+      "ja": "コピーしました！",
+      "zh-Hans": "已复制！",
+      "zh-Hant": "已複製！",
+      "es": "¡Copiado!",
+      "fr": "Copié !",
+      "ko": "복사했어요!",
+      "ru": "Скопировано!"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Copy link",
+      "ja": "リンクをコピー",
+      "zh-Hans": "复制链接",
+      "zh-Hant": "複製連結",
+      "es": "Copiar enlace",
+      "fr": "Copier le lien",
+      "ko": "링크 복사",
+      "ru": "Копировать ссылку"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "For a computer with no camera",
+      "ja": "カメラのないパソコン向け",
+      "zh-Hans": "适用于没有摄像头的电脑",
+      "zh-Hant": "適用於沒有相機的電腦",
+      "es": "Para un ordenador sin cámara",
+      "fr": "Pour un ordinateur sans caméra",
+      "ko": "카메라가 없는 컴퓨터용",
+      "ru": "Для компьютера без камеры"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Live on stream? Maybe don’t show this bit.",
+      "ja": "配信中ですか？ここは映さないほうがいいかもしれません。",
+      "zh-Hans": "正在直播？这部分最好别给观众看。",
+      "zh-Hant": "正在直播？這部分最好別給觀眾看。",
+      "es": "¿En directo? Mejor no enseñes esta parte.",
+      "fr": "En live ? Mieux vaut ne pas montrer ce passage.",
+      "ko": "방송 중인가요? 이 부분은 안 보여 주는 게 좋겠어요.",
+      "ru": "Вы на стриме? Эту часть лучше не показывать."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Sync said no to that one",
+      "ja": "同期を受け付けてもらえませんでした",
+      "zh-Hans": "同步这次没有通过",
+      "zh-Hant": "同步這次沒有通過",
+      "es": "La sincronización ha dicho que no esta vez",
+      "fr": "La synchro a dit non cette fois",
+      "ko": "동기화가 이번 요청을 거절했어요",
+      "ru": "Синхронизация в этот раз сказала «нет»"
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Try again",
+      "ja": "もう一度試す",
+      "zh-Hans": "重试",
+      "zh-Hant": "重試",
+      "es": "Reintentar",
+      "fr": "Réessayer",
+      "ko": "다시 시도",
+      "ru": "Повторить"
+    },
+    "context": "sync try again",
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We got through, but it wouldn’t make your code this time. Nothing is lost, and this isn’t anything you did. Trying again usually sorts it out.",
+      "ja": "接続はできましたが、今回はコードを作成できませんでした。何も失われていませんし、あなたのせいではありません。もう一度試すと、たいてい解決します。",
+      "zh-Hans": "我们连上了，但这次没能生成你的代码。什么都没有丢失，这也不是你的问题。再试一次通常就好了。",
+      "zh-Hant": "我們連上了，但這次沒能產生你的代碼。什麼都沒有遺失，這也不是你的問題。再試一次通常就好了。",
+      "es": "Hemos conseguido conectar, pero esta vez no ha querido crear tu código. No se ha perdido nada, y no es culpa tuya. Volver a intentarlo suele arreglarlo.",
+      "fr": "La connexion a marché, mais votre code n’a pas pu être créé cette fois. Rien n’est perdu, et ce n’est pas de votre faute. Réessayer suffit généralement.",
+      "ko": "연결은 됐지만 이번에는 코드를 만들지 못했어요. 잃어버린 건 없고, 뭔가 잘못하신 것도 아니에요. 다시 시도하면 대개 해결돼요.",
+      "ru": "Связь есть, но код в этот раз создать не удалось. Ничего не потеряно, и вашей вины здесь нет. Обычно помогает повторная попытка."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "We’ve paused save file syncing for a bit to keep things running smoothly. It’ll turn back on by itself, usually by tomorrow. You can make your code later from Data.",
+      "ja": "安定して動くように、セーブデータの同期を少しの間止めています。たいてい明日までには自動で再開します。コードはあとでデータ管理から作れます。",
+      "zh-Hans": "为了让一切顺利运行，我们暂停了一会儿存档同步。它会自己恢复，通常在明天之前。你之后可以在数据管理里生成代码。",
+      "zh-Hant": "為了讓一切順利運作，我們暫停了一下存檔同步。它會自己恢復，通常在明天之前。你之後可以在「資料」頁面產生代碼。",
+      "es": "Hemos pausado la sincronización de partidas guardadas un rato para que todo funcione bien. Volverá sola, normalmente mañana. Puedes crear tu código más tarde desde Datos.",
+      "fr": "On a mis la synchro des sauvegardes en pause un moment pour que tout tourne bien. Elle reviendra toute seule, en général d’ici demain. Vous pourrez créer votre code plus tard depuis Données.",
+      "ko": "원활하게 돌아가도록 세이브 파일 동기화를 잠시 멈췄어요. 보통 내일까지는 알아서 다시 켜져요. 코드는 나중에 데이터 관리에서 만들 수 있어요.",
+      "ru": "Мы ненадолго приостановили синхронизацию сохранений, чтобы всё работало стабильно. Она включится сама, обычно к завтрашнему дню. Создать код можно будет позже в разделе «Данные»."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Whoa, that’s a lot of new codes! Give it a few minutes and try again.",
+      "ja": "おっと、新しいコードがたくさんです！数分待ってからもう一度試してください。",
+      "zh-Hans": "哇，新代码太多了！等几分钟再试吧。",
+      "zh-Hant": "哇，新代碼太多了！等幾分鐘再試吧。",
+      "es": "¡Uf, cuántos códigos nuevos! Espera unos minutos y vuelve a intentarlo.",
+      "fr": "Oula, ça fait beaucoup de nouveaux codes ! Patientez quelques minutes et réessayez.",
+      "ko": "와, 새 코드가 너무 많아요! 몇 분 기다렸다가 다시 시도하세요.",
+      "ru": "Ого, сколько новых кодов! Подождите несколько минут и попробуйте снова."
+    },
+    "references": [
+      {
+        "file": "src/routes/sync/code-area.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

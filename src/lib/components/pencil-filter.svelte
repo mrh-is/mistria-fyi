@@ -6,6 +6,7 @@
   Also defines the provenance marks' tool filters, `mark-<tool>-<seed>`, which
   `provenanceMark` picks per entry.
 -->
+<!-- @wc-ignore-file -->
 <script lang="ts">
   import { MARK_FILTER_SEEDS } from "#lib/engine/provenance-marks.js";
 </script>

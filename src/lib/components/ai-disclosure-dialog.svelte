@@ -1,8 +1,6 @@
 <script lang="ts">
   import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/paraglide/messages.js";
-  import { messageParts } from "#lib/utils/message-parts.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>
@@ -10,28 +8,33 @@
 <Dialog.Root bind:open>
   <Dialog.Content class="max-w-md" showCloseButton={false}>
     <Dialog.Header>
-      <Dialog.Title>{m.ai_disclosure_title()}</Dialog.Title>
+      <Dialog.Title>Built with AI assistance</Dialog.Title>
     </Dialog.Header>
     <div class="flex flex-col gap-3 text-sm text-muted-foreground">
       <p>
-        {m.ai_disclosure_intro()}
+        The Mistria Field Guide is developed with the help of AI coding tools. AI agents write code,
+        review pull requests, & help maintain the project, under the supervision of humans (well,
+        just one human).
       </p>
       <p>
-        {m.ai_disclosure_no_data_sent()}
-        {m.ai_disclosure_feedback_exception()}
-        <strong class="text-foreground">{m.ai_disclosure_email_safe()}</strong>
+        Using the app will never cause your data to be sent to an AI service. The one exception is
+        that if you choose to submit feedback, your message & game progress (if you choose to
+        include it) will probably be seen by an AI.
+        <strong class="text-foreground">Your email will never be sent.</strong>
       </p>
       <p>
-        {#each messageParts( (slot) => m.ai_disclosure_link_intro( { github: slot("github"), email: slot("email") } ) ) as part, index (index)}
-          {#if typeof part === "string"}{part}{:else if part.slot === "github"}<a
-              href="https://github.com/mrh-is/mistria-fyi"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="underline hover:text-foreground">{m.ai_disclosure_github_link()}</a
-            >{:else}<a href="mailto:michael@mistria.fyi" class="underline hover:text-foreground"
-              >{m.ai_disclosure_email_link()}</a
-            >{/if}
-        {/each}
+        If this changes how you feel about this app, I respect that, & I want you to be able to make
+        that choice with full information. To see the full details of how AI works in this project,
+        you can check out
+        <a
+          href="https://github.com/mrh-is/mistria-fyi"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="underline hover:text-foreground">the GitHub repo</a
+        >, or
+        <a href="mailto:michael@mistria.fyi" class="underline hover:text-foreground"
+          >drop me a line</a
+        >.
       </p>
     </div>
     <DialogCloseButton />

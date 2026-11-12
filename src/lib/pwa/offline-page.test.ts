@@ -6,17 +6,17 @@ import type { OfflinePage } from "./offline-page.js";
 
 const PAGE: OfflinePage = {
   copy: {
-    en: { "m.offline_heading": "You’re offline", "offline.lang": "en" },
-    es: { "m.offline_heading": "Estás sin conexión", "offline.lang": "es" },
-    fr: { "m.offline_heading": "Vous êtes hors ligne", "offline.lang": "fr" },
-    ja: { "m.offline_heading": "オフラインです", "offline.lang": "ja" },
-    ko: { "m.offline_heading": "오프라인 상태입니다", "offline.lang": "ko" },
-    ru: { "m.offline_heading": "Нет подключения к сети", "offline.lang": "ru" },
-    "zh-Hans": { "m.offline_heading": "你已离线", "offline.lang": "zh-Hans" },
-    "zh-Hant": { "m.offline_heading": "你已離線", "offline.lang": "zh-Hant" },
+    en: { "copy.heading": "You’re offline", "offline.lang": "en" },
+    es: { "copy.heading": "Estás sin conexión", "offline.lang": "es" },
+    fr: { "copy.heading": "Vous êtes hors ligne", "offline.lang": "fr" },
+    ja: { "copy.heading": "オフラインです", "offline.lang": "ja" },
+    ko: { "copy.heading": "오프라인 상태입니다", "offline.lang": "ko" },
+    ru: { "copy.heading": "Нет подключения к сети", "offline.lang": "ru" },
+    "zh-Hans": { "copy.heading": "你已离线", "offline.lang": "zh-Hans" },
+    "zh-Hant": { "copy.heading": "你已離線", "offline.lang": "zh-Hant" },
   },
   parts: ['<html lang="', '"><head>', "</head><h1>", "</h1></html>"],
-  slots: ["offline.lang", OFFLINE_FONTS_SLOT, "m.offline_heading"],
+  slots: ["offline.lang", OFFLINE_FONTS_SLOT, "copy.heading"],
 };
 
 describe("offlinePageHtml", () => {

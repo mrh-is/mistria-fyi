@@ -1,28 +1,32 @@
 import { describe, expect, it } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
-import { locales } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import PrivacyPage from "./+page.svelte";
 
-function renderPage() {
-  return renderToFragment(PrivacyPage, { props: {} });
+import type { LocaleCode } from "#lib/types/locale.js";
+
+function renderPage(locale: LocaleCode = "en") {
+  pageStub.data = { locale };
+  overwriteGetLocale(() => locale);
+  try {
+    return renderToFragment(PrivacyPage, { props: {} });
+  } finally {
+    overwriteGetLocale();
+    pageStub.reset();
+  }
 }
 
 describe("privacy page sync sections", () => {
   it("splits into “Without sync” & “With sync”", () => {
     const { queries } = renderPage();
 
-    expect(
-      queries.getByRole("heading", { level: 2, name: m.privacy_without_sync_heading() }),
-    ).toBeTruthy();
-    expect(
-      queries.getByRole("heading", { level: 2, name: m.privacy_with_sync_heading() }),
-    ).toBeTruthy();
-    expect(
-      queries.getByRole("heading", { level: 3, name: m.privacy_short_heading() }),
-    ).toBeTruthy();
+    expect(queries.getByRole("heading", { level: 2, name: "Without sync" })).toBeTruthy();
+    expect(queries.getByRole("heading", { level: 2, name: "With sync" })).toBeTruthy();
+    expect(queries.getByRole("heading", { level: 3, name: "The short version" })).toBeTruthy();
   });
 
   it("covers each sync disclosure", () => {
@@ -52,33 +56,32 @@ describe("privacy page sync sections", () => {
   it("says what encryption covers & that players still trust the code they’re served", () => {
     const { queries, text } = renderPage();
 
-    expect(
-      queries.getByRole("heading", { level: 3, name: m.privacy_sync_trust_heading() }),
-    ).toBeTruthy();
+    expect(queries.getByRole("heading", { level: 3, name: "What you’re trusting" })).toBeTruthy();
     expect(text).toContain("Encryption protects the save file the server stores");
     expect(text).toContain("you’re trusting the app your browser gets from us");
     expect(text).toContain("the Cloudflare Turnstile script");
     expect(text).toContain("open the feedback form");
   });
 
-  it("keeps the date & the email retention period in every locale", () => {
-    for (const locale of locales) {
-      expect(m.privacy_last_updated({ date: "SLOT" }, { locale })).toContain("SLOT");
-      expect(m.privacy_feedback_email_storage({}, { locale })).toContain("90");
-    }
-  });
-
-  it("keeps the addendum link's slot in every locale", () => {
-    for (const locale of locales) {
-      expect(m.privacy_sync_turnstile_body({ addendum: "SLOT" }, { locale })).toContain("SLOT");
-    }
+  it.each(LOCALE_CODES)("keeps the date, email retention and addendum in %s", (locale) => {
+    const { container, text } = renderPage(locale);
+    const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
+      Date.UTC(2026, 10, 5),
+    );
+    expect(text).toContain(date);
+    expect(text).toContain("90");
+    expect(
+      container
+        .querySelector('a[href="https://www.cloudflare.com/turnstile-privacy-policy/"]')
+        ?.textContent.trim(),
+    ).toBeTruthy();
   });
 
   it("links Cloudflare’s Turnstile Privacy Addendum", () => {
     const { queries } = renderPage();
 
     expect(
-      queries.getByRole("link", { name: m.privacy_sync_turnstile_link() }).getAttribute("href"),
+      queries.getByRole("link", { name: "Turnstile Privacy Addendum" }).getAttribute("href"),
     ).toBe("https://www.cloudflare.com/turnstile-privacy-policy/");
   });
 
@@ -104,10 +107,13 @@ describe("privacy page sync sections", () => {
   });
 
   it("names the feedback section as its heading reads in every locale", () => {
-    for (const locale of locales) {
-      expect(m.privacy_sync_what_feedback_log({}, { locale })).toContain(
-        m.privacy_feedback_heading({}, { locale }),
-      );
+    for (const locale of LOCALE_CODES) {
+      const { queries } = renderPage(locale);
+      const feedbackHeading = queries.getAllByRole("heading", { level: 3 })[2]?.textContent?.trim();
+      expect(feedbackHeading).toBeTruthy();
+      expect(
+        queries.getAllByRole("paragraph").some((p) => p.textContent.includes(feedbackHeading)),
+      ).toBe(true);
     }
   });
 
@@ -123,10 +129,8 @@ describe("privacy page sync sections", () => {
       "zh-Hant": "請不要在留言中包含個人資訊",
     };
 
-    for (const locale of locales) {
-      expect(m.privacy_feedback_public_body({ issue: "", visible: "" }, { locale })).toContain(
-        warnings[locale],
-      );
+    for (const locale of LOCALE_CODES) {
+      expect(renderPage(locale).text).toContain(warnings[locale]);
     }
   });
 });

@@ -24,7 +24,6 @@
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { emptyProgress, filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
   import {
@@ -225,7 +224,7 @@
   }
 
   function stateShelf(state: SourceSection<SourceChecklistRow>["state"]): Shelf {
-    if (state === "done") return "completed";
+    if (state === /* @wc-ignore */ "done") return "completed";
     return state === "now" ? "todo" : "notNow";
   }
 
@@ -310,7 +309,9 @@
         for (const { id, rows } of sections) {
           if (!rows.some(({ entry: row }) => row.key === entry.key)) continue;
           sectionGrouping.hold(id);
-          sectionChecks.push(() => sections.find((section) => section.id === id)?.state === "done");
+          sectionChecks.push(
+            () => sections.find((section) => section.id === id)?.state === /* @wc-ignore */ "done",
+          );
         }
         return sectionChecks;
       },
@@ -379,13 +380,11 @@
                 forceOpen={anchor === section.id ||
                   (section.id === "progress" && anchor === "source-progress") ||
                   !!toolbarState.searchQuery}
-                name={m.everything_source_heading({
-                  name,
-                  state:
-                    section.state === "done"
-                      ? m.everything_source_done()
-                      : shelfLabel(stateShelf(section.state)),
-                })}
+                name={/* @wc-include */ `${name} · ${
+                  section.state === /* @wc-ignore */ "done"
+                    ? "Done"
+                    : shelfLabel(stateShelf(section.state))
+                }`}
                 forceShelvesOpen={!!toolbarState.searchQuery}
                 getKey={({ entry }) => entry.key}
                 getShelf={rowShelfOf}

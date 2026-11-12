@@ -3,21 +3,23 @@ import path from "node:path";
 
 import type { Manifest, Plugin } from "vite";
 
-/** The global the service worker reads its per-locale name-chunk paths from. */
+/** The global the service worker reads its per-locale asset paths from. */
 export const LOCALE_NAME_CHUNKS_DEFINE = "__LOCALE_NAME_CHUNKS__";
 
 /** Source modules `names.ts` code-splits into one chunk per locale & category. */
 const LOCALE_NAME_SOURCE = /^src\/lib\/data\/locales\/([^/]+)\/.+\.json$/;
+const WUCHALE_CATALOG_SOURCE =
+  /^src\/lib\/i18n\/catalogs\/\.wuchale\/[\w-]+\.\d+\.([^.]+)\.compiled\.js$/;
 
 /**
- * Groups the client build's emitted name chunks by locale, as root-relative paths matching the
+ * Groups the client build's game-name and Wuchale catalog chunks by locale, as paths matching the
  * service worker's `build` list. The grouping comes from each chunk's source module in the Vite
  * manifest, never from its hashed filename, which encodes nothing about the locale.
  */
 export function localeNameChunks(manifest: Manifest): Record<string, string[]> {
   const chunks: Record<string, Set<string>> = {};
   for (const [source, chunk] of Object.entries(manifest)) {
-    const locale = LOCALE_NAME_SOURCE.exec(source)?.[1];
+    const locale = (LOCALE_NAME_SOURCE.exec(source) ?? WUCHALE_CATALOG_SOURCE.exec(source))?.[1];
     if (locale === undefined) continue;
     (chunks[locale] ??= new Set()).add(`/${chunk.file}`);
   }

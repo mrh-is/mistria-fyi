@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import QuestsContent from "#lib/components/quests-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -15,20 +14,20 @@ it("labels the matching shelf without the unfiltered section's shelf heading", a
   userState.setSeason("summer");
   const view = renderWithFeedback(QuestsContent, { locale: "en" });
   await tick();
-  expect(view.getByRole("heading", { level: 2, name: m.shelf_to_do() })).toBeVisible();
+  expect(view.getByRole("heading", { level: 2, name: "To do" })).toBeVisible();
 
   toolbarState.setSearchQuery("Berries");
   await tick();
 
-  expect(view.getByRole("heading", { name: m.quest_type_fetch() })).toBeVisible();
-  const matches = within(view.getByRole("group", { name: m.shelf_not_now() }));
-  expect(matches.getByRole("heading", { level: 3, name: m.shelf_not_now() })).toBeVisible();
+  expect(view.getByRole("heading", { name: "Fetch quests" })).toBeVisible();
+  const matches = within(view.getByRole("group", { name: "Not now" }));
+  expect(matches.getByRole("heading", { level: 3, name: "Not now" })).toBeVisible();
   expect(matches.getAllByRole("button", { name: "Check Wild Berries" })).toHaveLength(3);
-  expect(view.queryByRole("heading", { name: m.shelf_to_do() })).toBeNull();
+  expect(view.queryByRole("heading", { name: "To do" })).toBeNull();
 
   toolbarState.setSearchQuery("");
   await tick();
-  expect(view.getByRole("heading", { level: 2, name: m.shelf_to_do() })).toBeVisible();
+  expect(view.getByRole("heading", { level: 2, name: "To do" })).toBeVisible();
 });
 
 describe("QuestsContent empty sections", () => {
@@ -61,15 +60,13 @@ describe("QuestsContent empty sections", () => {
     await fireEvent.click(storyButton);
     const story = storyButton.closest("section, .section");
     if (!story) throw new Error("Expected the Story section");
-    await fireEvent.click(
-      within(story as HTMLElement).getByRole("button", { name: m.shelf_not_now() }),
-    );
+    await fireEvent.click(within(story as HTMLElement).getByRole("button", { name: "Not now" }));
     await waitFor(() => {
       expect(story.querySelectorAll("[data-tracker-row]")).toHaveLength(9);
     });
     expect(story.querySelector("[data-tracker-empty]")).toBeNull();
 
-    const pageFold = view.getByRole("heading", { level: 2, name: m.common_completed_heading() });
+    const pageFold = view.getByRole("heading", { level: 2, name: "Completed" });
     await fireEvent.click(within(pageFold).getByRole("button"));
     const crownButton = view.getByRole("button", { name: /^Crown Requests,/i });
     await fireEvent.click(crownButton);
@@ -89,19 +86,19 @@ describe("QuestsContent empty sections", () => {
     const view = renderWithFeedback(QuestsContent, { locale: "en" });
     await tick();
     expect(
-      view.getByRole("button", { name: (name) => name.startsWith(m.quest_type_fetch()) }),
+      view.getByRole("button", { name: (name) => name.startsWith("Fetch quests") }),
     ).toBeInTheDocument();
 
     toolbarState.hideAllSourceFilters();
     await tick();
     expect(
-      view.queryByRole("button", { name: (name) => name.startsWith(m.quest_type_fetch()) }),
+      view.queryByRole("button", { name: (name) => name.startsWith("Fetch quests") }),
     ).toBeNull();
 
     toolbarState.resetSourceFilters();
     await tick();
     expect(
-      view.getByRole("button", { name: (name) => name.startsWith(m.quest_type_fetch()) }),
+      view.getByRole("button", { name: (name) => name.startsWith("Fetch quests") }),
     ).toBeInTheDocument();
   });
 });

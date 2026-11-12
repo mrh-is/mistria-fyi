@@ -10,7 +10,6 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -103,7 +102,7 @@
   <ExpandableSection
     {locale}
     forceOpen={!!nameFilter}
-    name={m.animals_pet_cosmetics_section_name()}
+    name="Pet cosmetics"
     progress={cosmeticProgress}
     reportCategory="pet-cosmetics"
   >
@@ -148,7 +147,7 @@
   <ExpandableSection
     {locale}
     forceOpen={!!nameFilter}
-    name={m.animals_pet_skins_section_name()}
+    name="Pet skins"
     progress={skinProgress}
     reportCategory="pet-skins"
   >

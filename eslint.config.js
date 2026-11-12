@@ -1,6 +1,6 @@
 // ESLint covers only what oxlint can't: Svelte templates. oxlint (`.oxlintrc.json`) lints every
 // script, including `.svelte` `<script>` blocks; ESLint runs eslint-plugin-svelte, the template-aware
-// `no-unused-vars`, and the local `no-hardcoded-ui-text` rule on `.svelte` & `.svelte.{js,ts}` files,
+// `no-unused-vars` on `.svelte` & `.svelte.{js,ts}` files,
 // without type information. See docs/development-workflow.md#linting--formatting.
 import { includeIgnoreFile } from "@eslint/compat";
 import { loadConfig } from "@sveltejs/load-config";
@@ -10,7 +10,6 @@ import globals from "globals";
 import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
-import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.ts";
 // Node strips the types when it imports this TypeScript module.
 import noRawInternalHref from "./eslint-rules/no-raw-internal-href.ts";
 import noUntokenedClasses from "./eslint-rules/no-untokened-classes.ts";
@@ -25,7 +24,6 @@ const svelteConfig = loadedConfig.config;
 // One plugin object: flat config rejects two different definitions of the same plugin name.
 const localPlugin = {
   rules: {
-    "no-hardcoded-ui-text": noHardcodedUiText,
     "no-raw-internal-href": noRawInternalHref,
     "no-untokened-classes": noUntokenedClasses,
   },
@@ -101,13 +99,5 @@ export default defineConfig(
     files: ["src/**/*.svelte"],
     ignores: ["src/lib/components/ui/**", "**/*.test-harness.svelte"],
     rules: { "local/no-untokened-classes": "error" },
-  },
-  {
-    // Cover app templates by default. The `ui/` primitives, dev-only pages, and fixture
-    // templates are intentionally outside the user-facing localization contract.
-    files: ["src/**/*.svelte"],
-    ignores: ["src/lib/components/ui/**", "src/routes/dev/**", "**/*.test-harness.svelte"],
-    plugins: { local: localPlugin },
-    rules: { "local/no-hardcoded-ui-text": "error" },
   },
 );

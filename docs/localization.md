@@ -20,15 +20,15 @@ translations keyed `misc_local/<key>`; the pipeline emits the keys the app uses 
 `misc_local` entry (fish → "Fishing and Diving"). Cosmetic sub-category labels come from the ordinal
 `ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`; the slots
 themselves are icon tabs in the game with no text, so a slot with one sub-category borrows that
-label and the rest use MFG's own `cosmetic_slot_*` messages. When a label matches something the game
-already names, pull it from there rather than adding a Paraglide message: the in-game term is the
-one players recognize.
+label and the rest use MFG's own slot labels. When a label matches something the game already names,
+pull it from there rather than writing another translation: the in-game term is the one players
+recognize.
 
 ### Game vocabulary in UI chrome
 
 MFG's own chrome names plenty of concepts the game names too: category names ("Almanac",
-"Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". Those are not
-Paraglide messages. `APP_UI_STRINGS` in `pipeline/src/localize/ui-strings.ts` lists the `misc_local`
+"Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". These come from the
+game vocabulary. `APP_UI_STRINGS` in `pipeline/src/localize/ui-strings.ts` lists the `misc_local`
 keys the app displays, the pipeline writes them into the `ui` chunk, and the root layout
 (`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)` works
 anywhere.
@@ -43,9 +43,9 @@ There are two ways, & the choice follows what the component renders:
 - **Sitewide chrome** (page header, progress counters, the language picker) reads `page.data.locale`
   from `$app/state`.
 
-Components never call Paraglide's ambient `getLocale()`: it reports the previous page's locale while
-a navigation is committing, & it is a third source of truth. `tests/component-locale.test.ts`
-enforces both rules.
+Components never call the ambient `getLocale()`: it reports the previous page's locale while a
+navigation is committing, & it is a third source of truth. `tests/component-locale.test.ts` enforces
+both rules.
 
 Two adjustments happen in the extractor rather than the app. A request with `stripArticle` drops the
 leading definite article the game puts on a menu title ("The Almanac" → "Almanac", "Le musée" →
@@ -64,9 +64,9 @@ Some game nouns can't come from the `ui` chunk, so their messages carry the game
 Each locale uses exactly one term per concept across all of its messages; when you add or edit a
 message that mentions one of these concepts, use the term below.
 
-- **Terms inside sentences** ("Decrease renown", "Mines floor {floor}") stay Paraglide messages,
-  since interpolating a game label into a sentence breaks grammar across languages. Their wording
-  follows the game's own sentence-level term, checked against the 1.0.5 translation tables
+- **Terms inside sentences** ("Decrease renown", "Mines floor {floor}") are complete Wuchale
+  messages, since interpolating a game label into a sentence breaks grammar across languages. Their
+  wording follows the game's own sentence-level term, checked against the 1.0.5 translation tables
   (`misc_local/confirm_leave_dungeon`, `town_rank`, `rank`, `select_a_villager`, &
   `invite_npc_to_festival`).
 - **Mines, Quests, Recipes, & Cosmetics** (`category_*_name`, `source_location_mines`) are
@@ -95,9 +95,9 @@ message that mentions one of these concepts, use the term below.
 
 The Almanac row is the `ui` chunk's `almanac`.
 
-The app's full name stays "Mistria Field Guide" in running text in every locale, matching
-`app_name`; never half-translate it. Short self-references ("the field guide") are translated, but
-never with the game's Almanac word (図鑑, 도감, 图鉴), which would read as the Almanac.
+The app's full name stays "Mistria Field Guide" in running text in every locale, matching the site
+name; never half-translate it. Short self-references ("the field guide") are translated, but never
+with the game's Almanac word (図鑑, 도감, 图鉴), which would read as the Almanac.
 
 Note: in both Chinese scripts the game titles its villager list 居民列表 (the `ui` chunk's
 `villagers`) but calls an individual villager 村民 (`select_a_villager`). The category heading reads
@@ -116,12 +116,11 @@ inside `$derived`) and read from a session cache that `loadNames()` fills; readi
 exists but was never awaited throws rather than silently degrading.
 
 - **Routes** build their `+page.ts` load with `localizedPageLoad([...], (locale) => metadata)` from
-  `src/lib/data/page-load.ts`, which awaits the listed chunks in the locale the root layout resolved
-  (never the URL: paraglide's `getLocaleForUrl` reports the base locale during SSR). The layout
-  already awaits `ui` on every route, so pages don't list it. A page that renders source segments
-  also spreads `SEGMENT_LOOKUP_NAME_CHUNKS` from `src/lib/sources/segment-lookups.ts`. If you add a
-  `getName()` call for a new category to a page's component tree, add the category to that route's
-  list; the thrown error names the missing chunk.
+  `src/lib/data/page-load.ts`, which awaits the listed chunks in the locale the root layout
+  resolved. The layout already awaits `ui` on every route, so pages don't list it. A page that
+  renders source segments also spreads `SEGMENT_LOOKUP_NAME_CHUNKS` from
+  `src/lib/sources/segment-lookups.ts`. If you add a `getName()` call for a new category to a page's
+  component tree, add the category to that route's list; the thrown error names the missing chunk.
 - **`/everything`** awaits every category (`NAME_CHUNKS`).
 - **Sitewide search** (`search-results.svelte`) awaits every category for the active locale, plus
   English (search also matches English terms), on first open, not at page load, and gates its
@@ -130,25 +129,23 @@ exists but was never awaited throws rather than silently degrading.
 - **Tests** run with every chunk preloaded by `src/vitest-setup-names.ts`. Tests of the loading
   boundary itself run in the `cold` Vitest project, which skips that setup.
 
-**MFG's own UI chrome text** (buttons, labels, dialogs, descriptions) is machine-translated by us
-and built on [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Source
-strings live in `messages/en.json`; translations live in the other 7 `messages/<locale>.json` files.
-This is the system you touch when adding a new feature.
+**MFG's own UI copy** (buttons, labels, dialogs, descriptions) is English in the Svelte or
+TypeScript that displays it. Wuchale extracts that copy into
+[`src/lib/i18n/catalogs/`](../src/lib/i18n/catalogs/). A catalog entry keeps the source, references,
+and all translations together. Wuchale identifies a message by its source text and optional context.
 
-These systems have no shared enforcement. A component can display a raw, English-only game-data
-field (a plain property access like `entity.name`, syntactically indistinguishable from a properly
-localized one) with no tooling able to catch it — that's a type/pipeline-contract concern, not a
-lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
-
-### Source text
+The root layout loads shared copy and the destination route’s catalog for the URL locale. Loading a
+destination in advance doesn’t change the active locale. About loads its own catalog, metadata
+formatters receive the destination locale, and the small error catalog is bundled so it’s available
+without a successful catalog load. The game vocabulary still uses its separate name chunks.
 
 Acquisition sources ("Purchase from the General Store (after repairing)") are sentences assembled
 from game names, and parts of them can be spoilered or gated behind progress. `source-segments.ts`
-renders each sentence from a `source_*` Paraglide message and `fillMessage` fills its placeholders
-with segments rather than plain text: it passes private-use markers into the message, then splits
-the result at the markers, so each locale's word order decides where a gated name lands. A message
-that drops a placeholder throws; the source-rendering invariants test renders every generated source
-in every locale to catch that.
+writes each complete sentence in source, and `fillMessage` fills its placeholders with segments
+rather than plain text: it passes private-use markers into the message, then splits the result at
+the markers, so each locale's word order decides where a gated name lands. A message that drops a
+placeholder throws; the source-rendering invariants test renders every generated source in every
+locale to catch that.
 
 English grammar stays in English: the definite article on stores and biomes ("the General Store";
 `en-grammar.ts` lists the stores that take one, so the tracker contract carries no English),
@@ -157,36 +154,35 @@ messages handle articles themselves. Lists of alternatives ("Pond, River, or Oce
 `Intl.ListFormat`'s disjunction for the active locale.
 
 A store's availability qualifier is a slot, not a suffix. `buildStoreQualifier` returns bare clauses
-("after repairing") joined by `Intl.ListFormat`'s conjunction, and the `source_store_qualified` &
-`source_scroll_bundle_qualified` messages place it: in parentheses after the store in English, ahead
-of the verb in Japanese, Korean, & Chinese.
+("after repairing") joined by `Intl.ListFormat`'s conjunction, and the store and scroll bundle
+sentences place it: in parentheses after the store in English, ahead of the verb in Japanese,
+Korean, & Chinese.
 
 Most names come from game-translated chunks. Farm animals use `animals` `<id>/core`, museum wings
 use `museum_wings`, and locations use `locations` (`locations/<id>/name`). Processing stations such
-as apiaries use item names. Crafting station names use Paraglide’s `source_station_*` messages. The
+as apiaries use item names. Crafting station labels are extracted from `source-segments.ts`. The
 game leaves some source names untranslated or unnamed, so `source-names.ts` fills the gaps:
 
 - **Monsters:** the game has no full monster name. Since 1.0.7 a `pets.toml` variant carries only a
   bare qualifier (“Copper”, “Default”) shown under its pet kind, and three monsters have no variant.
   Every locale, English included, composes the `pets/skins` family name with a machine-translated
-  `source_monster_variant_*` qualifier.
+  qualifier.
 - **Locations without a game name** (`farm`, `mines`, & `dungeon`) and **water types** use interim
-  machine-translated `source_location_*` & `source_water_*` messages. The Bell Tower's upper floor
-  (`bell_tower_f2`) borrows the building's `bell_tower_f1` name.
+  machine-translated labels. The Bell Tower's upper floor (`bell_tower_f2`) borrows the building's
+  `bell_tower_f1` name.
 - **Cutscenes:** the game names none, so each reviewed `CutsceneSourceId` has its own
-  machine-translated `source_cutscene_*` message; villager names inside them come from the
-  `villagers` chunk.
+  machine-translated sentence; villager names inside them come from the `villagers` chunk.
 
 Almanac rows that share a name (six “Animated Clouds Window” rows) show a variant word, such as
-“Oak”, as a subtitle. The game names no variants, so each `ItemVariant` key is a `variant_*`
-message. Most values are the game’s own terms, taken from each locale’s descriptions; the rest are
-machine translations. `pipeline/src/overrides/item-variant-terms.ts` records which is which, and the
+“Oak”, as a subtitle. The game names no variants, so `item-variants.ts` supplies the labels. Most
+values are the game’s own terms, taken from each locale’s descriptions; the rest are machine
+translations. `pipeline/src/overrides/item-variant-terms.ts` records which is which, and the
 [game version update protocol](game-version-update-protocol.md#name-same-name-almanac-rows) says how
 to add one.
 
 Scroll bundle sources carry the bundle's `bundleItemId` and render through the `items` chunk.
 Upgrade sources carry a closed `UpgradeId`, and a store's `upgradeAction` is a `StoreUpgradeAction`
-key; each maps to a Paraglide message.
+key; the source formatter supplies the display text for each.
 
 ## Falling back to English
 
@@ -202,32 +198,19 @@ preference cookie's (`mistria-fyi-locale`) locale, then the browser's best langu
 hand one visitor's locale to another. A prefix in the wrong case (`/zh-hans/almanac`, or all
 uppercase) lands permanently on its BCP 47 casing.
 
-## Locale list & Paraglide config
+## Locale list & routing
 
-`project.inlang/settings.json` is the authoritative locale list. `LOCALE_CODES` in
-`src/lib/types/locale.ts` repeats it as a literal tuple so `LocaleCode` stays a union type, and the
-pipeline generates `src/lib/data/locales.json` from the game's language list. `locale.test.ts` fails
-if either copy, or the compiled Paraglide runtime, drifts from `settings.json` (order included).
-Adding a locale means changing all three in one PR.
-
-`PARAGLIDE_OPTIONS` in `src/lib/i18n/paraglide-options.ts` is the only Paraglide compiler config:
-the URL strategy, the per-locale URL patterns, and the unlocalized paths (`/api`, `/sitemap.xml`),
-which `src/hooks.server.ts` also reads. The Vite plugin and `pnpm run paraglide:compile` (run by
-`prepare`, through `scripts/paraglide-compile.ts`) both compile with it, so `src/lib/paraglide`
-behaves the same whichever wrote it last. Don't call the `paraglide-js compile` CLI directly; it
-takes only a few options as flags and would emit a runtime with the default strategy.
-
-Both compilers emit `messages.d.ts` alongside `messages.js`. If a check reports TS7016 for that
-module, run `pnpm run paraglide:compile` to refresh the generated output. If the pipeline check
-started reaching app modules such as `data/item-variants.ts` after an import change, trace the new
-dependency too. Keep message lookups in the app so shared engine logic can run outside Vite.
+`LOCALE_CODES` in `src/lib/types/locale.ts` is the authoritative UI locale list. The pipeline's
+`src/lib/data/locales.json` must match it in order. `src/lib/i18n/locale-path.ts` handles canonical
+locale prefixes and leaves infrastructure URLs bare. The root layout resolves the target URL's
+locale, while the server hook isolates the locale of each request.
 
 ## Adding a new UI string (agents & humans)
 
-When translating `messages/*.json`, run `pnpm run game-term -- cosmetic` to find the game’s wording.
-You can also pass a phrase, for example `pnpm run game-term -- "select cosmetic"`. The command
-searches the game’s cached English source text for a case-insensitive substring & prints each
-matching key with its text in all eight locales. Compare entries by context: for example,
+When reviewing UI translations, run `pnpm run game-term -- cosmetic` to find the game’s wording. You
+can also pass a phrase, for example `pnpm run game-term -- "select cosmetic"`. The command searches
+the game’s cached English source text for a case-insensitive substring & prints each matching key
+with its text in all eight locales. Compare entries by context: for example,
 `misc_local/select_cosmetic` is the customization menu label.
 
 The command reads the extracted tables in `pipeline/input/vX.Y.Z/assets/localization/` for
@@ -237,45 +220,48 @@ different English from the displayed match, the command prints that source benea
 The command writes no files. If the tables are missing, see
 [Pipeline setup](../pipeline/README.md#setup--commands).
 
-1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
-   feature area — e.g. `feedback_submit_button`, `about_maintainer_intro`).
-2. Add the same key to all 7 other `messages/<locale>.json` files (`es`, `fr`, `ja`, `ko`, `ru`,
-   `zh-Hans`, `zh-Hant`), translated. Machine translation & review is the finished translation,
-   because the project has no native speakers of anything but English. Don't list a missing
-   native-speaker review as a gap in a PR. Reports from players are the one later correction; see
-   [Improving a translation](#improving-a-translation-humans). Match the game's regional variant and
-   terminology; see [Regional variants](#regional-variants).
-3. Run `pnpm run paraglide:compile` to regenerate `src/lib/paraglide`.
-4. Use the generated message in your component: `import * as m from "#lib/paraglide/messages.js"`,
-   then `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly
-   in a `.svelte` file.
-5. Run `pnpm run lint` to catch any hardcoded template text you forgot to wrap. The
-   `no-hardcoded-ui-text` rule applies to app templates by default.
+1. Write the English where it appears. Svelte components and routes are scanned by default. Name new
+   TypeScript helpers that format copy in the current UI locale `*-messages.ts` under `src/lib` or
+   `src/routes`. Keep the whole sentence in one string or template literal so translators can move
+   its placeholders.
+2. `pnpm run dev` adds newly encountered messages to the catalogs as you edit and visit pages. Run
+   `pnpm run messages:extract` before review to scan every source file and remove obsolete entries.
+   Review the catalog diff, fill missing translations, and keep the numbered placeholders intact.
+   Identical English with different meanings can use `@wc-context: …`. Use `@wc-include` for missed
+   copy and `@wc-ignore` for technical literals.
+3. Run `pnpm run check:i18n` and `pnpm run lint`. Check the new copy in context, including in a
+   language whose layout, word order, or plural forms differ from English.
 
-### Sentences around links & icons
+With `GEMINI_API_KEY` already in your environment, run `WUCHALE_TRANSLATE=1 pnpm run dev` for live
+drafts or `WUCHALE_TRANSLATE=1 pnpm run messages:extract` for a repository-wide pass. Both let
+[Wuchale draft translations](https://wuchale.dev/guides/ai/). The provider receives the source
+messages it is asked to translate. Review its drafts for regional usage and game terms before
+committing. Installation, CI, and normal builds use the checked-in translations and require no
+credentials.
 
-A sentence that wraps a link or icon is one message with a placeholder per element, never fragments
-glued around it, since fragments force English word order. Render it with `messageParts` from
-`src/lib/utils/message-parts.ts` (`about/+page.svelte` is the model) and place each slot in a
-snippet or `{#each}`; a message that drops a placeholder throws.
+### Plurals and rich text
 
-The `ui/` `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
-`showCloseButton={false}` & render `dialog-close-button.svelte`, which uses `common_close`.
+Write ``plural(count, [`${count} result`, `${count} results`])`` with the Wuchale-generated
+`plural.js` helper for English singular and plural forms. Wuchale applies the target locale’s plural
+rules and catalog forms. Write links and icons inline in a complete Svelte sentence; the catalog
+represents the elements with numbered tags that a translation can move. When markup is chosen at
+runtime, `messageParts` can splice structured pieces into a translated sentence.
+
+The `ui/` dialog primitive defaults to an English “Close” label. Product dialogs pass
+`showCloseButton={false}` and use the localized `dialog-close-button.svelte` instead.
 
 ### Page metadata & manifest
 
-`SITE_NAME` is the product name, a proper noun that is the same in every locale (`app_name`). Every
-page's title and description come from messages through `localizedPageLoad`. `static/manifest.json`
-is a single static file, so it stays English and declares `"lang": "en"` & `"id": "/"`; a per-locale
-manifest would need a route and a locale-aware `<link rel="manifest">`.
+`SITE_NAME` is the product name and stays the same in every locale. Route titles and descriptions
+are extracted from their page load functions, which receive the destination locale.
+`static/manifest.json` is a single English file. A per-locale manifest would need a route and a
+locale-aware `<link rel="manifest">`.
 
 ### Offline page
 
-The service worker serves `src/service-worker/offline.html` with no Paraglide runtime, so its text
-comes from `%m.<key>%` slots instead: `offlinePagePlugin` (`src/lib/build/offline-page.ts`) reads
-every locale's `messages/<locale>.json` at build time, falling back to English as Paraglide does.
-Only plain-text messages fit; the build throws for one with placeholders. The worker picks the URL's
-locale prefix, then the last-used locale, then English, and sets `<html lang>` & `dir` to match.
+`scripts/lib/offline-copy.ts` supplies the English for the static offline template. The build fills
+its text slots from `offline.json` and checks that the values are plain text. The worker selects the
+URL locale, then the last-used locale, then English, and sets the document language and direction.
 
 ### Regional variants
 
@@ -322,10 +308,10 @@ These rules apply to every locale:
 - **Carry the voice, not the orthography.** The English talks like a chill, helpful friend: it
   addresses the reader as "you", speaks as "we", reassures, and allows a little goofiness ("Oops,
   forgot to put in your email!"); [voice.md](voice.md) defines it. Keep that register in every
-  locale within that language's own UI conventions, using one form of address in every message of a
-  locale (see the table below). Don't carry over marks that are only English house style: `en.json`
-  uses `&` for close pairs ("Questions & requests"), but other locales write their own conjunction
-  (y, et, and so on). In Spanish, y becomes e before an i sound ("datos e imágenes").
+  locale within that language's own UI conventions, using the form of address listed below. Don't
+  carry over marks that are only English house style: English uses `&` for close pairs ("Questions &
+  requests"), but other locales write their own conjunction (y, et, and so on). In Spanish, y
+  becomes e before an i sound ("datos e imágenes").
 - **Native punctuation.** `zh-Hans` and `zh-Hant` use full-width punctuation (`，：（）！`) and `…`,
   not ASCII `, : ( ) !` or `...`. French puts a no-break space (U+00A0) before `? ! : ;` & `»` and
   after `«`, so a line never wraps to start with the mark, and writes the curly apostrophe (’).
@@ -342,93 +328,27 @@ These rules apply to every locale:
 
 ## Tooling
 
-Three checks exist. None is a full localization safety net; see
-[Limits of the tooling](#limits-of-the-tooling).
+Use `inLocale(locale, read)` for synchronous message lookups in a locale different from the current
+page or request, such as bilingual search or metadata preloading. Load the target catalog before
+entering the scope. On the server, ordinary lookups use the request locale across asynchronous work.
 
-### Key-shape check (`pnpm run check:i18n`)
+[The decision record](decisions/2026-11-12-wuchale-source-extraction.md) explains why the app uses
+Wuchale and links the measurements and probes behind it.
 
-`scripts/check-translation-keys.ts` compares the flattened key set of every `messages/<locale>.json`
-against `messages/en.json` and fails on any missing or extra key. It checks **shape only, not
-content** — a translation can legitimately equal its English source (a short string, a proper noun)
-or still be a stale machine translation; this check only prevents a PR from adding an English string
-without adding the corresponding key everywhere else. CI runs it on every pull request, and it's
-part of `pnpm run verify`.
+`pnpm run check:i18n` checks every source adapter and catalog without writing files. It fails if
+extraction would change the catalog, if a message is obsolete, or if any of the eight locales lacks
+a translation or has invalid placeholders or plural forms. Changing the English creates a new source
+identity. After extraction it needs translations again; unchanged messages keep theirs. The same
+check runs locally and in CI, with no merge base or allowlist.
 
-### Stale-translation check (`pnpm run check:locale-sync`)
+`pnpm run messages:compile` only builds the ignored runtime files from the checked-in catalogs.
+Worktree setup and installation use this path, so stale extraction can’t be silently fixed before CI
+checks it.
 
-`scripts/check-locale-sync.ts` catches what the key-shape check cannot: an English value that
-changed while a locale’s value for the same key did not. It compares the merge base of `--base`
-(default `origin/main`) with the working tree, flattening every `messages/<locale>.json`, & lists
-each `(locale, key)` where English changed and that locale’s value is identical to the one it had at
-the base. A locale that changed the key (even to the same text as English) passes. Added & removed
-keys are not its concern; the key-shape check owns them.
-
-When an English value changes, each locale’s value must be retranslated in the same PR, or the key
-must go on the allowlist.
-
-CI runs it as the “Locale sync” job on pull requests that touch `messages/`, the check, or the
-allowlist, using `--base HEAD^1`, the base branch tip of the PR’s merge checkout. It does not run on
-pushes or in `pnpm run verify`, which have no PR base to compare against; run it locally with
-`pnpm run check:locale-sync` (after `git fetch origin main`, or pass `-- --base <ref>`).
-
-When the English change needs no new translation (a punctuation fix, a proper noun that is the same
-in every script), add an entry to `scripts/locale-sync-allowlist.json`:
-
-```json
-[
-  {
-    "english": "Mistria Field Guide!",
-    "key": "app_name",
-    "locale": "ja",
-    "reason": "Only the trailing punctuation changed; the Japanese title is unaffected."
-  }
-]
-```
-
-Each entry names one key, one locale, the English text it was reviewed against, & a non-empty
-reason. It applies only while English still equals that text, so a later edit to the English value
-is checked again; an entry for a key or locale that does not exist fails the check, as does a
-malformed file. Entries are reviewed like any other change, so delete one when its key is
-retranslated.
-
-### ESLint rule (`local/no-hardcoded-ui-text`)
-
-A custom rule in `eslint-rules/no-hardcoded-ui-text.ts` walks the Svelte template AST and flags:
-
-- Literal text nodes containing letters (not just punctuation/whitespace/digits).
-- Literal values on text-bearing attributes (`title`, `alt`, `placeholder`, `aria-label`, etc).
-
-It exempts `<code>`, `<kbd>`, `<pre>`, and `<samp>` content (file paths, keys, code snippets aren't
-translated) and anything inside `<script>`/`<style>`. It cannot distinguish a proper noun ("Fields
-of Mistria", a person's name) from ordinary prose — those need a
-`<!-- eslint-disable local/no-hardcoded-ui-text -- reason -->` /
-`<!-- eslint-enable local/no-hardcoded-ui-text -->` pair around the element, with a reason.
-
-The rule applies to every `src/**/*.svelte` file except `src/lib/components/ui/**`, development
-routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these exceptions narrow
-so new app templates receive the rule automatically.
-
-## Limits of the tooling
-
-Be honest with yourself (and reviewers) about what this catches:
-
-- The ESLint rule only sees Svelte template syntax. It cannot verify that a displayed field like
-  `entity.name` is actually locale-aware — that depends on whether the pipeline extractor for that
-  category reads the game's translation tables. As of this writing, every pipeline category emits
-  its names through per-locale chunks (`src/lib/data/locales/<locale>/<category>.json`) and
-  `tracker-data.json` carries no display names, so the remaining risk is app-authored text. A future
-  field added to the contract as English-only would render fine and pass lint.
-- The key-shape check cannot verify translation quality or that a value has actually been translated
-  (as opposed to copy-pasted from English). The stale-translation check only sees that a locale’s
-  value changed in the same PR as English; it cannot tell whether the new text is a correct
-  translation, & it accepts any edit to the locale value, whatever the reason.
-- The stale-translation check matches keys by name, so renaming a key & editing its English in the
-  same PR looks like an added key & a removed one, & passes without any retranslation. Treat a
-  rename that also rewords the English as a changed value yourself.
-- The ESLint rule covers app templates by default, but it does not inspect user-facing strings
-  assembled in scripts or data. Review those strings when adding new features.
-
-Do your best with these; don't treat a green CI run as proof that a feature is fully localized.
+Extraction can miss strings assembled dynamically, passed from unscanned scripts, or excluded by its
+heuristics. Check the extracted references after changing display text. CI checks completeness and
+structure; it can’t tell whether a translation is correct or whether an English game-data field
+should have come from a name chunk.
 
 ## Fonts
 

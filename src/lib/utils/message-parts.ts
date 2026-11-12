@@ -8,7 +8,7 @@ const SLOT_PATTERN = /([^]*)/u;
 /**
  * Renders a localized message whose placeholders hold markup (a link, an icon) rather than text.
  * `render` receives a `slot` function that swaps a name for a private-use marker, so it passes the
- * markers into the message (`m.about_maintainer({ studio: slot("studio") })`); the rendered string
+ * markers into the message (for example, by passing `slot("studio")` as an input). The rendered string
  * is split back apart at the markers, and each locale's word order decides where the slots land.
  * A message that drops a placeholder throws, since a silently missing link is a translation bug.
  */

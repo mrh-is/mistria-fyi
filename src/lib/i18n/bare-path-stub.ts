@@ -1,13 +1,13 @@
 import localeManifest from "../data/locales.json" with { type: "json" };
 import { SITE_NAME, SITE_ORIGIN } from "../data/site.js";
 import { LOCALE_CODES } from "../types/locale.js";
-import { PARAGLIDE_OPTIONS } from "./paraglide-options.js";
+import { BASE_LOCALE, LOCALE_COOKIE } from "./locale-runtime.js";
 import { PRERENDERED_ROUTES } from "./prerender-entries.js";
 
 import type { LocaleCode, LocaleManifest } from "../types/locale.js";
 
-/** The locale a visitor with no usable preference lands in; Paraglide's `baseLocale`. */
-const FALLBACK_LOCALE: LocaleCode = "en";
+/** The locale a visitor with no usable preference lands in. */
+const FALLBACK_LOCALE: LocaleCode = BASE_LOCALE;
 
 /**
  * Every bare path with a page behind it: the root and each route's unprefixed slug. There is no
@@ -22,12 +22,12 @@ export function barePathStubFile(barePath: string): string {
   return barePath === "/" ? "index.html" : `${barePath.slice(1)}.html`;
 }
 
-const COOKIE_PREFIX = `${PARAGLIDE_OPTIONS.cookieName}=`;
+const COOKIE_PREFIX = `${LOCALE_COOKIE}=`;
 
 /**
  * Picks the locale the way the server did before pages were prerendered: the stored preference
  * cookie (percent-decoded, as SvelteKit's cookie parser did), then the browser's languages (each full tag, then its base language, matched without
- * regard to case, as Paraglide's negotiation does), then English. It keeps the path, query, &
+ * regard to case), then English. It keeps the path, query, &
  * fragment, and `location.replace` keeps the stub out of the history, so Back skips it. One text
  * for every stub, so one CSP hash allows them all.
  */

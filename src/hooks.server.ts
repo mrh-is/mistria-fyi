@@ -1,14 +1,25 @@
 import { sequence } from "@sveltejs/kit/hooks";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 import { BARE_PATHS, renderBarePathStub } from "#lib/i18n/bare-path-stub.js";
-import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
-import { getTextDirection, isLocale, locales } from "#lib/paraglide/runtime.js";
-import { paraglideMiddleware } from "#lib/paraglide/server.js";
+import { isUnlocalizedPath, localeFromPath } from "#lib/i18n/locale-path.js";
+import {
+  BASE_LOCALE,
+  getTextDirection,
+  isLocale,
+  LOCALE_COOKIE,
+  setServerLocaleReader,
+} from "#lib/i18n/locale-runtime.js";
 import { withSecurityHeaders } from "#lib/security/security-headers.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import type { Handle } from "@sveltejs/kit/hooks";
 
-const LOCALES_BY_LOWERCASE = new Map(locales.map((locale) => [locale.toLowerCase(), locale]));
+import type { LocaleCode } from "#lib/types/locale.js";
+
+const LOCALES_BY_LOWERCASE = new Map(LOCALE_CODES.map((locale) => [locale.toLowerCase(), locale]));
+const requestLocale = new AsyncLocalStorage<LocaleCode>();
+setServerLocaleReader(() => requestLocale.getStore());
 
 /**
  * The path with its first segment in canonical locale casing (`/zh-hans/almanac` →
@@ -20,17 +31,6 @@ function canonicalLocalePath(pathname: string): string | undefined {
   if (isLocale(firstSegment)) return undefined;
   const locale = LOCALES_BY_LOWERCASE.get(firstSegment.toLowerCase());
   return locale === undefined ? undefined : ["", locale, ...rest].join("/");
-}
-
-function hasLocalePrefix(pathname: string): boolean {
-  const firstSegment = pathname.split("/")[1];
-  return isLocale(firstSegment);
-}
-
-function isUnlocalizedPath(pathname: string): boolean {
-  return UNLOCALIZED_PATH_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
 }
 
 const BARE_PATH_SET: ReadonlySet<string> = new Set(BARE_PATHS);
@@ -46,7 +46,7 @@ const BARE_PATH_SET: ReadonlySet<string> = new Set(BARE_PATHS);
 export const barePathStub: Handle = ({ event, resolve }) => {
   const { pathname } = event.url;
 
-  if (isUnlocalizedPath(pathname) || hasLocalePrefix(pathname)) {
+  if (isUnlocalizedPath(pathname) || localeFromPath(pathname)) {
     return resolve(event);
   }
 
@@ -65,15 +65,17 @@ export const barePathStub: Handle = ({ event, resolve }) => {
   });
 };
 
-const paraglideHandle: Handle = ({ event, resolve }) =>
-  // `event.request` is read-only in SvelteKit 3, so the middleware's de-localized request is unused;
-  // routing already de-localizes through the `reroute` hook in `hooks.ts`.
-  paraglideMiddleware(event.request, ({ locale }) =>
+export const localizedHandle: Handle = ({ event, resolve }) => {
+  const preference = event.cookies.get(LOCALE_COOKIE);
+  const locale =
+    localeFromPath(event.url.pathname) ?? (isLocale(preference) ? preference : BASE_LOCALE);
+  return requestLocale.run(locale, () =>
     resolve(event, {
       transformPageChunk: ({ html }) =>
         html.replace("%lang%", locale).replace("%dir%", getTextDirection(locale)),
     }),
   );
+};
 
 /**
  * Cloudflare Pages applies `_headers` to static files only, never to Function responses. Responses
@@ -84,4 +86,4 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
 export const securityHeaders: Handle = async ({ event, resolve }) =>
   withSecurityHeaders(await resolve(event));
 
-export const handle: Handle = sequence(securityHeaders, barePathStub, paraglideHandle);
+export const handle: Handle = sequence(securityHeaders, barePathStub, localizedHandle);

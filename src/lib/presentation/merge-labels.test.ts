@@ -93,11 +93,23 @@ describe("formatMergeCount", () => {
     );
   });
 
+  it.each([
+    [1, "этаж"],
+    [21, "этаж"],
+    [3, "этажа"],
+    [22, "этажа"],
+    [5, "этажей"],
+    [11, "этажей"],
+  ])("selects the Russian form for %i floors", (count, noun) => {
+    expect(formatMergeCount("mineFloor", count, "ru")).toBe(`Этажи шахт: +${count} ${noun}`);
+  });
+
   it("formats a boolean field without a count prefix", () => {
     expect(formatMergeCount("hasUpperFloor", 1, "en")).toBe("Upper floor unlocked");
     expect(formatMergeCount("reachedSeason", 1, "en")).toBe("Season progression updated");
     expect(formatMergeCount("childChoice", 1, "en")).toBe("Child choice updated");
     expect(formatMergeCount("breakUpsDisabled", 1, "en")).toBe("Break-ups disabled");
+    expect(formatMergeCount("breakUpsDisabled", 1, "es")).toBe("Rupturas desactivadas");
   });
 
   it("returns a label for every previously omitted field when non-zero", () => {

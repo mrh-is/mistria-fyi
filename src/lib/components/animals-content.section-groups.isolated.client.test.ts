@@ -5,7 +5,6 @@ import AnimalsContent from "#lib/components/animals-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { getMaxMineFloor } from "#lib/engine/progress.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -49,14 +48,12 @@ it("holds a sub-section finished by a row toggle, then moves it under Completed"
   vi.useFakeTimers();
   await fireEvent.click(toggle);
   await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 10);
-  expect(
-    screen.queryByRole("heading", { level: 2, name: m.common_completed_heading() }),
-  ).toBeNull();
+  expect(screen.queryByRole("heading", { level: 2, name: "Completed" })).toBeNull();
 
   await vi.advanceTimersByTimeAsync(10);
   const completedHeading = screen.getByRole("heading", {
     level: 2,
-    name: m.common_completed_heading(),
+    name: "Completed",
   });
   await fireEvent.click(within(completedHeading).getByRole("button"));
   const mountTrigger = screen.getByRole("button", { name: mountName });

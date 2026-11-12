@@ -207,8 +207,8 @@ project review. File it as one issue, with the findings as its acceptance criter
 2. **Check references.** Look for closed issues described as tracking something, private issues no
    reader can open, renamed headings, & moved paths.
 3. **Replace copies with links.** A number, a string, or a list copied from code goes stale. Point
-   to the constant or the file instead. For example, `docs/sync-setup.md` names `messages/en.json`
-   instead of repeating its text.
+   to the constant or the file instead. For example, `docs/sync-setup.md` names the sync components
+   instead of repeating their text.
 4. **Compare docs with their tools.** A command in a doc should match what the tool expects, such as
    `scripts/machine-doctor.ts` for browser installs.
 5. **Remove what nothing uses.** Search for inbound links to each doc. Delete a doc with none unless

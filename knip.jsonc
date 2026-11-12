@@ -11,6 +11,10 @@
         "src/hooks.ts",
         // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
         "relay/worker.ts",
+        // Wuchale injects loader imports and generates the JS peers of these declarations.
+        "wuchale.config.ts",
+        "src/lib/i18n/catalogs/*.loader.ts",
+        "src/lib/i18n/catalogs/.wuchale/*.d.ts",
       ],
       "ignore": [
         // `scripts/locale-fonts/` is its own pnpm package with its own scripts & dependencies.
@@ -21,8 +25,6 @@
         "docs/design/*/generator/**",
       ],
       "ignoreDependencies": [
-        // Registered by name in project.inlang/settings.json, never imported.
-        "@inlang/plugin-message-format",
         // `cloudflare:workers` is a Workers runtime module, but Knip reads the `cloudflare` prefix as
         // the npm SDK of the same name & reports it unlisted. We do not use that package.
         "cloudflare",

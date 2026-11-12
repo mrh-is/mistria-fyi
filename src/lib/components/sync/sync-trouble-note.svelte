@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { stopSyncing } from "#lib/sync/sharing.js";
@@ -17,21 +16,42 @@
   const copy = $derived.by((): undefined | { body?: string; title: string } => {
     switch (status.kind) {
       case "asking":
-        return waiting ? { title: m.sync_question_waiting() } : undefined;
+        return waiting
+          ? { title: "Your save file has a question for you. Nothing changes until you answer." }
+          : undefined;
       case "blocked":
-        return { title: m.sync_blocked() };
+        return {
+          title:
+            "Before we can sync your save file, this device’s data needs a look. Head to Data to sort it out.",
+        };
       case "retired":
-        return { body: m.sync_retired_body(), title: m.sync_retired_title() };
+        return {
+          body: "If it made a new code, scan it here. Or stop syncing and keep tracking by hand.",
+          title: "Your computer stopped sharing this save file",
+        };
       case "switch-failed":
-        return { body: m.sync_switch_failed_body(), title: m.sync_switch_failed_title() };
+        return {
+          body: "Your progress is safe! This save file is a different farm, but we couldn’t back up the one here, so nothing changed. We’ll try again with your next save file.",
+          title: "We didn’t switch farms",
+        };
       case "unreadable":
-        return { body: m.sync_unreadable_away_body(), title: m.sync_unreadable_away_title() };
+        return {
+          body: "Your progress is safe! For more info, check Mistria Field Guide on your computer.",
+          title: "Your computer is having trouble reading your save file",
+        };
       case "update-computer":
-        return { title: m.sync_update_computer() };
+        return {
+          title: "The field guide on your computer needs a refresh to keep your save file syncing.",
+        };
       case "update-here":
-        return { title: m.sync_update_here() };
+        return {
+          title: "The field guide on this device needs a refresh to keep your save file syncing.",
+        };
       case "write-failed":
-        return { body: m.sync_write_failed_body(), title: m.sync_write_failed_title() };
+        return {
+          body: "Your progress is safe! This device wouldn’t let us store it. It might be out of space. We’ll try again with your next save file, or you can try now.",
+          title: "We couldn’t store your latest save file",
+        };
       default:
         return undefined;
     }
@@ -50,7 +70,7 @@
     {#if copy.body}<p>{copy.body}</p>{/if}
     {#if status.kind === "retired"}
       <div class="sync-trouble__actions">
-        <Button size="sm" href={localizedHref("sync")}>{m.sync_retired_action()}</Button>
+        <Button size="sm" href={localizedHref("sync")}>Scan the code</Button>
         <Button
           size="sm"
           variant="outline"
@@ -58,12 +78,12 @@
             stopOpen = true;
           }}
         >
-          {m.sync_retired_stop()}
+          <!-- @wc-context: sync retired stop -->Stop syncing
         </Button>
       </div>
     {:else if status.kind === "blocked"}
       <div class="sync-trouble__actions">
-        <Button size="sm" href={localizedHref("data")}>{m.sync_panel_settings()}</Button>
+        <Button size="sm" href={localizedHref("data")}>Sync & data settings</Button>
       </div>
     {:else if status.kind === "update-here"}
       <div class="sync-trouble__actions">
@@ -73,7 +93,7 @@
             globalThis.location.reload();
           }}
         >
-          {m.sync_update_refresh()}
+          Refresh
         </Button>
       </div>
     {:else if status.kind === "write-failed"}
@@ -84,7 +104,7 @@
             syncReceiver.refresh();
           }}
         >
-          {m.sync_try_again()}
+          <!-- @wc-context: sync try again -->Try again
         </Button>
       </div>
     {:else if waiting}
@@ -95,7 +115,7 @@
             syncReceiver.reopenQuestion();
           }}
         >
-          {m.sync_question_open()}
+          Answer it
         </Button>
       </div>
     {/if}
@@ -108,16 +128,20 @@
 
 <SyncTagDialog
   bind:open={stopOpen}
-  title={m.sync_stop_title()}
-  body={m.sync_stop_body()}
+  title="Stop syncing?"
+  body="Your progress stays right here, and you’ll check things off by hand from now on. If you sync your save file again later, it’ll start fresh."
   actions={[
     {
-      label: m.sync_stop_cancel(),
+      label: "Cancel",
       onclick: () => {
         stopOpen = false;
       },
     },
-    { label: m.sync_stop_confirm(), onclick: () => void confirmStop(), primary: true },
+    {
+      label: /* @wc-context: sync stop confirm */ "Stop syncing",
+      onclick: () => void confirmStop(),
+      primary: true,
+    },
   ]}
 />
 

@@ -1,10 +1,10 @@
 import { localizedPageLoad } from "#lib/data/page-load.js";
-import * as m from "#lib/paraglide/messages.js";
 
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = localizedPageLoad([], (locale) => ({
-  description: m.privacy_page_description({}, { locale }),
-  title: m.privacy_title({}, { locale }),
+export const load: PageLoad = localizedPageLoad([], () => ({
+  description:
+    "Read how the Mistria Field Guide stores your Fields of Mistria progress, handles feedback, and protects your privacy.",
+  title: "Privacy policy",
   toolbar: "hidden",
 }));

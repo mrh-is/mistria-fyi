@@ -1,5 +1,4 @@
 <script lang="ts">
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
   import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
@@ -36,20 +35,23 @@
   }
 
   const copy = $derived.by((): { actions: SyncDialogAction[]; body: string; title: string } => {
-    const notNow: SyncDialogAction = { label: m.sync_question_later(), onclick: later };
+    const notNow: SyncDialogAction = {
+      label: /* @wc-context: sync question later */ "Not now",
+      onclick: later,
+    };
     switch (question.kind) {
       case "farm":
         return {
           actions: [
             notNow,
             {
-              label: m.sync_farm_question_new(),
+              label: "Nope, it’s a new farm",
               onclick: () => {
                 answer("new-farm");
               },
             },
             {
-              label: m.sync_farm_question_same(),
+              label: "Yep, same farm",
               onclick: () => {
                 answer("same-farm");
               },
@@ -57,43 +59,43 @@
             },
           ],
           body: question.farmName
-            ? m.sync_farm_question_body({ farm: question.farmName })
-            : m.sync_farm_question_body_unnamed(),
-          title: m.sync_farm_question_title(),
+            ? `This save file is for ${question.farmName}, but we can’t tell which farm the progress here belongs to.`
+            : "We found a farm in this save file, but we can’t tell which farm the progress here belongs to.",
+          title: "Is this the farm you’ve been tracking?",
         };
       case "older-save":
         return {
           actions: [
             notNow,
             {
-              label: m.sync_older_keep(),
+              label: "Keep what’s here",
               onclick: () => {
                 answer("keep");
               },
             },
             {
-              label: m.sync_older_accept(),
+              label: "Go back to it",
               onclick: () => {
                 answer("accept");
               },
               primary: true,
             },
           ],
-          body: m.sync_older_body(),
-          title: m.sync_older_title(),
+          body: "This save file has less playtime than the last one we read, so it looks like you loaded an older save. Anything you checked off by hand sticks around either way.",
+          title: "Go back to an older save file?",
         };
       case "facts":
         return {
           actions: [
             notNow,
             {
-              label: m.sync_facts_keep(),
+              label: "Keep mine",
               onclick: () => {
                 answer("keep");
               },
             },
             {
-              label: m.sync_facts_accept(),
+              label: "Use the save file",
               onclick: () => {
                 answer("accept");
               },
@@ -101,7 +103,7 @@
             },
           ],
           body: factsQuestionBody(question, page.data.locale),
-          title: m.sync_facts_title(),
+          title: "Your save file sees this differently",
         };
       case "replace-backup": {
         const date = new Intl.DateTimeFormat(page.data.locale, { dateStyle: "medium" }).format(
@@ -110,9 +112,9 @@
         return {
           actions: [
             notNow,
-            { label: m.sync_replace_save(), onclick: saveOldBackup },
+            { label: "Save the old one first", onclick: saveOldBackup },
             {
-              label: m.sync_replace_confirm(),
+              label: "Replace it",
               onclick: () => {
                 answer("accept");
               },
@@ -120,9 +122,9 @@
             },
           ],
           body: question.farmName
-            ? m.sync_replace_body({ date, farm: question.farmName })
-            : m.sync_replace_body_unnamed({ date }),
-          title: m.sync_replace_title(),
+            ? `This save file is a different farm, so we’ll back up the one here. That replaces your backup of ${question.farmName}, from ${date}.`
+            : `This save file is a different farm, so we’ll back up the one here. That replaces your backup from ${date}.`,
+          title: "Only one farm backup fits",
         };
       }
     }

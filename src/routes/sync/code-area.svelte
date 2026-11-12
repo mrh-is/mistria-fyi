@@ -7,7 +7,6 @@
 
   import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { buildFollowLink } from "#lib/sync/follow.js";
@@ -111,15 +110,18 @@
     <div class="code-area__paused" role="status">
       <IconPlayerPause aria-hidden="true" />
       <div>
-        <p class="code-area__paused-title">{m.sync_paused_title()}</p>
-        <p>{m.sync_paused_setup()}</p>
+        <p class="code-area__paused-title">Sync is paused for now</p>
+        <p>
+          We’ve paused save file syncing for a bit to keep things running smoothly. It’ll turn back
+          on by itself, usually by tomorrow. You can make your code later from Data.
+        </p>
       </div>
     </div>
   {:else}
     <div class="code-area__frame">
       {#if codeState === "shown" && qr}
         <img
-          alt={m.sync_code_alt()}
+          alt="Code for syncing your save file"
           src={qr.dataUrl}
           width={qr.displayPixels}
           height={qr.displayPixels}
@@ -127,41 +129,46 @@
       {:else if codeState === "making"}
         <p class="code-area__making" role="status">
           <IconLoader2 class="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          {m.sync_making_code()}
+          Generating the code…
         </p>
       {:else}
         <Button variant="outline" size="sm" onclick={show}>
           <IconEye />
-          {m.sync_phone_show()}
+          Show code
         </Button>
       {/if}
     </div>
-    <p class="code-area__stream">{m.sync_phone_stream()}</p>
+    <p class="code-area__stream">Live on stream? Maybe don’t show this bit.</p>
     <div class="code-area__link">
       <Button variant="outline" size="sm" disabled={codeState === "making"} onclick={copyLink}>
         <IconLink />
-        {copied ? m.sync_find_copied() : m.sync_phone_copy_link()}
+        {copied ? "Copied!" : "Copy link"}
       </Button>
-      <span>{m.sync_phone_copy_link_sub()}</span>
+      <span>For a computer with no camera</span>
     </div>
     {#if failure === "unreachable"}
       <StatusNote tone="warning">
-        <p class="font-semibold">{m.sync_unreachable_title()}</p>
-        <p>{m.sync_unreachable_body()}</p>
+        <p class="font-semibold">We can’t connect right now</p>
+        <p>We’ll keep trying, or you can try again.</p>
         <Button class="mt-2" size="sm" variant="outline" onclick={show}>
-          {m.sync_try_again()}
+          <!-- @wc-context: sync try again -->Try again
         </Button>
       </StatusNote>
     {:else if failure === "refused"}
       <StatusNote tone="warning">
-        <p class="font-semibold">{m.sync_refused_title()}</p>
-        <p>{m.sync_refused_share_body()}</p>
+        <p class="font-semibold">Sync said no to that one</p>
+        <p>
+          We got through, but it wouldn’t make your code this time. Nothing is lost, and this isn’t
+          anything you did. Trying again usually sorts it out.
+        </p>
         <Button class="mt-2" size="sm" variant="outline" onclick={show}>
-          {m.sync_try_again()}
+          <!-- @wc-context: sync try again -->Try again
         </Button>
       </StatusNote>
     {:else if failure === "too-many"}
-      <StatusNote tone="warning">{m.sync_too_many()}</StatusNote>
+      <StatusNote tone="warning"
+        >Whoa, that’s a lot of new codes! Give it a few minutes and try again.</StatusNote
+      >
     {/if}
   {/if}
 </div>

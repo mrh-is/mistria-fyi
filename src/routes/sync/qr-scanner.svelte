@@ -3,7 +3,6 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
 
   import { closeScanner, startQrCamera } from "./qr.js";
 
@@ -27,7 +26,9 @@
 
   async function start(): Promise<void> {
     if (!video || !overlay) {
-      onerror(m.sync_error_camera_init());
+      onerror(
+        "Hmm, we couldn’t start your camera. If another app is using it, close that app and try again, or paste the link below instead.",
+      );
       return;
     }
     let started: ClosableScanner;
@@ -39,8 +40,12 @@
     } catch (error) {
       const denied =
         (error instanceof Error || error instanceof DOMException) &&
-        error.name === "NotAllowedError";
-      onerror(denied ? m.sync_error_camera_denied() : m.sync_error_camera_init());
+        error.name === /* @wc-ignore */ "NotAllowedError";
+      onerror(
+        denied
+          ? "The field guide doesn’t have permission to use your camera. You can allow it in your browser’s settings, or paste the link from your gaming computer below instead."
+          : "Hmm, we couldn’t start your camera. If another app is using it, close that app and try again, or paste the link below instead.",
+      );
       return;
     }
     // The scanner closed while the camera permission prompt was open.
@@ -64,7 +69,7 @@
 
 <svelte:window
   onkeydown={(event) => {
-    if (event.key === "Escape") onclose();
+    if (event.key === /* @wc-ignore */ "Escape") onclose();
   }}
 />
 
@@ -73,13 +78,13 @@
   class="fixed inset-0 z-50 grid place-items-center bg-black"
   role="dialog"
   aria-modal="true"
-  aria-label={m.sync_scan()}
+  aria-label="Scan the code"
 >
   <div class="relative">
     <video
       bind:this={video}
       class="block max-h-dvh max-w-full"
-      aria-label={m.sync_camera_feed_aria()}
+      aria-label="Camera feed for QR code scanning"
       autoplay
       muted
       playsinline
@@ -96,7 +101,7 @@
     size="icon"
     variant="secondary"
     onclick={onclose}
-    aria-label={m.sync_close_camera_aria()}
+    aria-label="Close camera"
   >
     <Icon.UI type="dismiss" />
   </Button>

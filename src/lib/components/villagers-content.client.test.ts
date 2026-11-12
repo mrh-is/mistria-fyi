@@ -6,7 +6,6 @@ import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
 import { buildVillagerRoster } from "#lib/engine/villager-roster.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -26,7 +25,9 @@ describe("VillagersContent localization", () => {
     const toggle = await view.findByRole("switch", {
       name: getName("ui", "disable_break_ups", "en"),
     });
-    expect(view.getByText(m.villagers_break_ups_hint())).toBeVisible();
+    expect(
+      view.getByText("Match this to your game’s setting before you get engaged."),
+    ).toBeVisible();
     expect(view.container).not.toHaveTextContent(
       getName("ui", "disable_break_ups_description", "en"),
     );
@@ -42,11 +43,11 @@ describe("VillagersContent localization", () => {
       userState.setVillagerRelationship("adeline" as VillagerId, relationship);
       const view = renderWithFeedback(VillagersContent, { locale: "en" });
       expect(view.queryByRole("switch")).not.toBeInTheDocument();
-      const line = view.getByText(m.villagers_break_ups_enabled());
+      const line = view.getByText("Break-ups enabled");
       const roster = view.getByTestId("villager-roster");
       expect(roster.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       userState.setBreakUpsDisabled(true);
-      await waitFor(() => expect(view.getByText(m.villagers_break_ups_disabled())).toBeVisible());
+      await waitFor(() => expect(view.getByText("Break-ups disabled")).toBeVisible());
       expect(view.queryByRole("switch")).not.toBeInTheDocument();
     },
   );

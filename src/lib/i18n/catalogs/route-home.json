@@ -1,0 +1,24 @@
+[
+  {
+    "translations": {
+      "en": "<0/> Mistria Field Guide",
+      "ja": "<0/> Mistria Field Guide",
+      "zh-Hans": "<0/> Mistria Field Guide",
+      "zh-Hant": "<0/> Mistria Field Guide",
+      "es": "<0/> Mistria Field Guide",
+      "fr": "<0/> Mistria Field Guide",
+      "ko": "<0/> Mistria Field Guide",
+      "ru": "<0/> Mistria Field Guide"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

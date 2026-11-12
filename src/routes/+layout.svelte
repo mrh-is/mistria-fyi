@@ -13,6 +13,7 @@
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import RouteMain from "#lib/components/route-main.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
+  import SkipLink from "#lib/components/skip-link.svelte";
   import SyncReceiverHost from "#lib/components/sync/sync-receiver-host.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { Toaster } from "#lib/components/ui/sonner/index.js";
@@ -21,14 +22,15 @@
   import { showStarterItemsToast, VISIBLE_TOASTS } from "#lib/effects/undo-toast.js";
   import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
-  import * as m from "#lib/paraglide/messages.js";
-  import { getTextDirection } from "#lib/paraglide/runtime.js";
+  import { getTextDirection } from "#lib/i18n/locale-runtime.js";
   import { keepLocaleOffline } from "#lib/pwa/offline-locales.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { keepRetiring } from "#lib/sync/sharing.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
+
+  import ErrorPage from "./+error.svelte";
 
   let { children } = $props();
   const feedbackContext = setFeedbackContext(new FeedbackContext());
@@ -44,7 +46,7 @@
 
   onMount(() => {
     userState.loadFromStorage();
-    void trackingReminders.opened();
+    if (!page.data.catalogLoadFailed) void trackingReminders.opened();
     // A retire the relay hasn't confirmed yet tries again on every visit, then with backoff & on
     // coming back online for as long as the page is open.
     const stopRetiring = keepRetiring();
@@ -58,6 +60,7 @@
     page.status >= 400 ? errorPageMetadata(page.status, page.data.locale) : page.data.metadata,
   );
   $effect(() => {
+    if (page.data.catalogLoadFailed) return;
     // Read progress and the dialog state so closing an install nudge can reveal a due backup.
     void userState.factCount;
     void userState.trackingLane;
@@ -91,6 +94,7 @@
   });
 
   $effect(() => {
+    if (page.data.catalogLoadFailed) return;
     const batch = userState.starterItems;
     return batch && untrack(() => showStarterItemsToast(batch.count, batch.undo, batch.dismiss));
   });
@@ -100,24 +104,24 @@
   {#if fontStylesheet}
     <link rel="stylesheet" href={fontStylesheet} />
   {/if}
+  {#if page.data.catalogLoadFailed}
+    <title>503</title>
+  {/if}
 </svelte:head>
 
-<SeoHead {metadata} pathname={page.url.pathname} />
-
-<!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
-{#key page.data.locale}
+{#if page.data.catalogLoadFailed}
+  <main class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe">
+    <ErrorPage catalogLoadFailed />
+  </main>
+{:else}
+  <SeoHead {metadata} pathname={page.url.pathname} />
   <div
     class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
       ? 'pb-safe-offset-18'
       : ''}"
     inert={overlayActive ? true : undefined}
   >
-    <a
-      class="sr-only focus:not-sr-only focus:absolute focus:z-[var(--z-dialog)] focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
-      href="#main-content"
-    >
-      {m.skip_to_main_content()}
-    </a>
+    <SkipLink />
     <RouteMain>
       {@render children()}
     </RouteMain>
@@ -144,7 +148,5 @@
   <InstallNudgeDialog />
   <SyncReceiverHost />
   <PencilFilter />
-{/key}
-
-<!-- Outside the locale key: a pending update must survive a client-side locale switch. -->
-<AppUpdater />
+  <AppUpdater />
+{/if}

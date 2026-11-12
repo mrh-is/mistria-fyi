@@ -1,17 +1,66 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { renderBarePathStub } from "#lib/i18n/bare-path-stub.js";
+import { getLocale, inLocale } from "#lib/i18n/locale-runtime.js";
 
-import { barePathStub, securityHeaders } from "./hooks.server.js";
+import { barePathStub, localizedHandle, securityHeaders } from "./hooks.server.js";
 
 import type { RequestEvent } from "@sveltejs/kit";
 
-function makeEvent(path: string): RequestEvent {
+function makeEvent(path: string, preference?: string): RequestEvent {
   return {
+    cookies: { get: () => preference },
     request: new Request(`https://mistria-fyi.test${path}`),
     url: new URL(`https://mistria-fyi.test${path}`),
   } as unknown as RequestEvent;
 }
+
+describe("request locale", () => {
+  it("keeps overlapping requests isolated and prefers the route locale over the cookie", async () => {
+    const firstRequest = Promise.withResolvers<undefined>();
+    const spanish = localizedHandle({
+      event: makeEvent("/es/about", "ja"),
+      resolve: async (_event, options) => {
+        await firstRequest.promise;
+        return new Response(
+          await options?.transformPageChunk?.({ done: true, html: `${getLocale()} %lang% %dir%` }),
+        );
+      },
+    });
+    const japanese = await localizedHandle({
+      event: makeEvent("/unknown", "ja"),
+      resolve: async () => {
+        const override = inLocale("en", () => [
+          getLocale(),
+          inLocale("fr", getLocale),
+          getLocale(),
+        ]);
+        await Promise.resolve();
+        return new Response([...override, getLocale()].join(" "));
+      },
+    });
+    firstRequest.resolve(undefined);
+
+    expect(await japanese.text()).toBe("en fr en ja");
+    const spanishResponse = await spanish;
+    expect(await spanishResponse.text()).toBe("es es ltr");
+  });
+
+  it("restores the request locale when a synchronous lookup throws", async () => {
+    const response = await localizedHandle({
+      event: makeEvent("/es/about"),
+      resolve: () => {
+        expect(() =>
+          inLocale("en", () => {
+            throw new Error("Missing catalog");
+          }),
+        ).toThrow("Missing catalog");
+        return Promise.resolve(new Response(getLocale()));
+      },
+    });
+    expect(await response.text()).toBe("es");
+  });
+});
 
 const PASS_THROUGH = new Response("pass-through");
 

@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 import { CATEGORY_KEYS } from "#lib/engine/categories.js";
 
 import { _pageEntries, GET as getSitemap } from "../../routes/sitemap.xml/+server.js";
-import { locales, localizeUrl } from "../paraglide/runtime.js";
+import { localizeUrl } from "../i18n/locale-path.js";
+import { LOCALE_CODES as locales } from "../types/locale.js";
 import { categoryKeyForPathname } from "./categories.js";
 import { errorPageMetadata, pageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
 
@@ -13,7 +14,7 @@ import type { PageMetadata } from "./page-metadata.js";
 
 /**
  * Runs every rendered page's `load()` as the base locale would render it, with the minimal event
- * the loads read: the root layout's resolved locale.
+ * the loads read: the destination URL and the root layout's resolved locale.
  */
 function pageMetadataEntries() {
   return _pageEntries().then((pageEntries) =>
@@ -21,6 +22,7 @@ function pageMetadataEntries() {
       pageEntries.map(async (entry) => {
         const data = (await entry.pageModule.load({
           parent: () => Promise.resolve({ locale: "en" }),
+          url: new URL(entry.path ? `/en/${entry.path}` : "/en", SITE_ORIGIN),
         } as never)) as { metadata: PageMetadata };
         return { ...entry, metadata: data.metadata };
       }),
@@ -140,9 +142,15 @@ describe("localized metadata", () => {
       import("../../routes/+page.js"),
       import("../../routes/everything/+page.js"),
     ]);
-    const event = { parent: () => Promise.resolve({ locale: "ja" }) } as never;
-    const home = (await loadHome(event)) as { metadata: PageMetadata };
-    const all = (await loadAll(event)) as { metadata: PageMetadata };
+    const event = { parent: () => Promise.resolve({ locale: "ja" }) };
+    const home = (await loadHome({
+      ...event,
+      url: new URL("/ja", SITE_ORIGIN),
+    } as never)) as { metadata: PageMetadata };
+    const all = (await loadAll({
+      ...event,
+      url: new URL("/ja/everything", SITE_ORIGIN),
+    } as never)) as { metadata: PageMetadata };
 
     expect(home.metadata.title).toBe(SITE_NAME);
     expect(home.metadata.description).toContain("Fields of Mistria");
@@ -162,7 +170,7 @@ describe("crawler files", () => {
     const expected = entries
       .filter(({ metadata }) => metadata.robots === undefined)
       .flatMap(({ path }) =>
-        locales.map((locale) => localizeUrl(new URL(path, SITE_ORIGIN), { locale }).href),
+        locales.map((locale) => localizeUrl(new URL(path, SITE_ORIGIN), locale).href),
       );
 
     expect(locations).toEqual(expected);
@@ -175,10 +183,10 @@ describe("crawler files", () => {
     const sitemap = await sitemapResponse.text();
 
     expect(sitemap).toContain(
-      `<xhtml:link rel="alternate" hreflang="ja" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "ja" }).href}" />`,
+      `<xhtml:link rel="alternate" hreflang="ja" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), "ja").href}" />`,
     );
     expect(sitemap).toContain(
-      `<xhtml:link rel="alternate" hreflang="en" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "en" }).href}" />`,
+      `<xhtml:link rel="alternate" hreflang="en" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), "en").href}" />`,
     );
     expect(sitemap).toContain(
       `<xhtml:link rel="alternate" hreflang="x-default" href="${SITE_ORIGIN}/almanac" />`,

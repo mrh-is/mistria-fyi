@@ -2,8 +2,6 @@ import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
-
 import type { PersistenceFailureKind } from "#lib/stores/user-state.svelte.js";
 
 const failure = vi.hoisted(() => ({ kind: "unavailable" as PersistenceFailureKind }));
@@ -54,9 +52,11 @@ describe("PersistenceWarning", () => {
   it("offers a backup right in the toast when a save fails", async () => {
     const [title, options] = await shownToast("unavailable");
 
-    expect(title).toBe(m.persistence_warning_title());
-    expect(options.description).toMatch(m.persistence_warning());
-    expect(options.action?.label).toBe(m.persistence_warning_backup());
+    expect(title).toBe("We couldn’t save your last change");
+    expect(options.description).toMatch(
+      "Your browser won’t let the field guide store anything. Check your settings to make sure storage isn’t full or turned off. For now, make a backup so you don’t lose your changes.",
+    );
+    expect(options.action?.label).toBe("Make a backup");
     options.action?.onClick();
     // The in-memory export, without the reminder bookkeeping whose storage write would fail again.
     expect(downloadJson).toHaveBeenCalledExactlyOnceWith('{"in":"memory"}', "backup");
@@ -67,8 +67,10 @@ describe("PersistenceWarning", () => {
   it("explains a load the browser refused, with nothing to back up", async () => {
     const [title, options] = await shownToast("load-blocked");
 
-    expect(title).toBe(m.persistence_warning_load_title());
-    expect(options.description).toMatch(m.persistence_warning_load());
+    expect(title).toBe("We can’t reach your saved progress");
+    expect(options.description).toMatch(
+      "Your browser won’t let the field guide read its storage, so your progress isn’t showing. Nothing has been erased. Check your settings to make sure storage isn’t turned off, then reload the page.",
+    );
     expect(options.action).toBeUndefined();
   });
 });

@@ -2,7 +2,6 @@
   import Stepper from "#lib/components/stepper.svelte";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -72,7 +71,7 @@
 
 <div class="mine-floor-record" data-mine-floor-record data-compact={compact} {@attach reportable}>
   {#if compact}
-    <span class="floor-label">{m.mines_floor_progress_compact_label()}</span>
+    <span class="floor-label">Floor progress</span>
   {/if}
 
   {#if !compact}
@@ -80,10 +79,7 @@
       <span class="biome-readout" aria-live="polite">
         <strong>{getName("mines", currentBiome.id, locale)}</strong>
         <span
-          >{m.mines_floor_range({
-            start: currentBiome.floors.start,
-            end: currentBiome.floors.end,
-          })}</span
+          >{/* @wc-include */ `floors ${currentBiome.floors.start}–${currentBiome.floors.end}`}</span
         >
       </span>
     {/if}
@@ -102,10 +98,10 @@
   <Stepper
     accentColor="var(--color-category-mines)"
     decrementDisabled={floor <= 0}
-    decrementLabel={m.mines_floor_up()}
+    decrementLabel="Go up one floor"
     incrementDisabled={floor >= maxFloor}
-    incrementLabel={m.mines_floor_down()}
-    label={m.mines_floor_group_aria({ floor, max: maxFloor })}
+    incrementLabel="Go down one floor"
+    label={`Mine floor, ${floor} of ${maxFloor}`}
     onDecrement={() => {
       updateFloor(floor - 1);
     }}
@@ -114,9 +110,9 @@
     }}
   >
     <span class="floor-readout">
-      <span>{m.mines_floor_label()}</span>
+      <span>Floor</span>
       <input
-        aria-label={m.mines_floor_input_aria()}
+        aria-label="Mine floor"
         type="number"
         inputmode="numeric"
         min="0"
@@ -132,10 +128,7 @@
     <span class="biome-readout" aria-live="polite">
       <strong>{getName("mines", currentBiome.id, locale)}</strong>
       <span
-        >{m.mines_floor_range({
-          start: currentBiome.floors.start,
-          end: currentBiome.floors.end,
-        })}</span
+        >{/* @wc-include */ `floors ${currentBiome.floors.start}–${currentBiome.floors.end}`}</span
       >
     </span>
   {/if}

@@ -2,7 +2,6 @@ import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import RankRecordHarness from "#lib/components/rank-record.test-harness.svelte";
-import * as m from "#lib/paraglide/messages.js";
 
 describe("RankRecord", () => {
   it.each([
@@ -48,9 +47,9 @@ describe("RankRecord", () => {
       rank: { levels: { start: 10, end: 19 } },
       spoilered: true,
     });
-    expect(view.getByRole("button", { name: m.spoiler_reveal_aria() })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Reveal spoiler" })).toBeInTheDocument();
     expect(view.queryByRole("listitem", { name: /Secret rank/ })).not.toBeInTheDocument();
-    await fireEvent.click(view.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
     expect(view.getByText("Secret rank")).toBeVisible();
   });
 });

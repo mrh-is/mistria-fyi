@@ -4,7 +4,6 @@
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import { countShelfRows, filteredCounts } from "#lib/engine/shelves.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -107,7 +106,7 @@
   {isAnimalComplete}
   {locale}
   lookups={baseLookups}
-  name={m.animals_cosmetics_section_name()}
+  name="Cosmetics"
   reportCategory="animal-cosmetics"
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: CosmeticId) => {

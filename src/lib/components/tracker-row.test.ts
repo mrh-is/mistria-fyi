@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
@@ -26,9 +25,9 @@ describe("TrackerRow", () => {
         sprite: "spr_ui_item_cherry_cobbler",
       },
     });
-    const cover = queries.getByRole("button", { name: m.spoiler_reveal_aria() });
+    const cover = queries.getByRole("button", { name: "Reveal spoiler" });
     expect(cover.querySelector("[aria-hidden='true']")?.textContent).toContain("Cherry Cobbler");
-    expect(queries.getByRole("button", { name: m.tracker_row_check_spoilered() })).toBeTruthy();
+    expect(queries.getByRole("button", { name: "Check spoilered item" })).toBeTruthy();
     expect(container.querySelector<HTMLElement>("[data-sprite-slot]")?.dataset.spriteSlot).toBe(
       "spoilered",
     );
@@ -47,7 +46,7 @@ describe("TrackerRow", () => {
     });
 
     expect(queries.getByText("Cherry Cobbler")).toBeTruthy();
-    expect(queries.queryByRole("button", { name: m.spoiler_reveal_aria() })).toBeNull();
+    expect(queries.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
     expect(container.querySelector<HTMLElement>("[data-sprite-slot]")?.dataset.spriteSlot).toBe(
       "complete",
     );

@@ -11,11 +11,15 @@ describe("localeNameChunks", () => {
       "src/lib/data/locales/en/items.json": { file: "_app/immutable/chunks/Zz9.js" },
       "src/lib/data/locales/en/pets/skins.json": { file: "_app/immutable/chunks/Aa1.js" },
       "src/lib/data/locales/zh-Hans/items.json": { file: "_app/immutable/chunks/Mm5.js" },
+      "src/lib/i18n/catalogs/.wuchale/about.0.zh-Hant.compiled.js": {
+        file: "_app/immutable/chunks/Ui8.js",
+      },
     };
 
     expect(localeNameChunks(manifest)).toEqual({
       en: ["/_app/immutable/chunks/Aa1.js", "/_app/immutable/chunks/Zz9.js"],
       "zh-Hans": ["/_app/immutable/chunks/Mm5.js"],
+      "zh-Hant": ["/_app/immutable/chunks/Ui8.js"],
     });
   });
 

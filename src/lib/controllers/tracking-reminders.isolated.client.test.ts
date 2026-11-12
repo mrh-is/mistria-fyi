@@ -17,6 +17,8 @@ async function open(ios = true) {
     storage: { persist },
     userAgent: ios ? "iPhone Safari" : "Firefox",
   });
+  const { loadSharedUi } = await import("#lib/i18n/shared-ui.js");
+  await loadSharedUi("en");
   const { userState } = await import("#lib/stores/user-state.svelte.js");
   const { trackingReminders } = await import("./tracking-reminders.svelte.js");
   userState.loadFromStorage();

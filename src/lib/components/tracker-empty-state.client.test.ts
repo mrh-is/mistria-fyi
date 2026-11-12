@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
 import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
 afterEach(() => {
@@ -15,7 +14,7 @@ describe("TrackerEmptyState", () => {
     toolbarState.filterPanelAvailable = true;
     render(TrackerEmptyState);
 
-    await fireEvent.click(screen.getByRole("button", { name: m.no_items_match_filters_link() }));
+    await fireEvent.click(screen.getByRole("button", { name: "your current filters" }));
 
     expect(toolbarState.filterPanelRequest).toBe(1);
   });
@@ -24,9 +23,7 @@ describe("TrackerEmptyState", () => {
     render(TrackerEmptyState);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(m.no_items_match_filters({ filters: m.no_items_match_filters_link() })),
-    ).toBeInTheDocument();
+    expect(screen.getByText(`Nothing matches your current filters.`)).toBeInTheDocument();
   });
 
   it("shows the parent's message instead", () => {

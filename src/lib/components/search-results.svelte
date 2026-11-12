@@ -11,7 +11,8 @@
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { searchAllCategories } from "#lib/engine/search.js";
-  import * as m from "#lib/paraglide/messages.js";
+  import { hasAcquisitionUi, loadAcquisitionUi } from "#lib/i18n/acquisition-ui.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -40,26 +41,26 @@
 
   let { locale, query }: { locale: LocaleCode; query: string } = $props();
 
-  // Search spans every category, so it needs every category's chunk for the active locale, plus
-  // English because `searchAllCategories` also matches English terms, rather than the per-route subset a
-  // category page awaits in `load()`. The fetch happens here, on first search-open, not at page
-  // load; `loadNames` caches per chunk for the session, so re-opening search or retyping never
-  // re-fetches. Until the chunks land, the `$derived` name lookups below must not run, since
-  // they'd throw on an unloaded chunk. Seeded synchronously (hence `untrack`: the initial prop
-  // value is all that's wanted) so an already-cached locale renders results on the first paint
-  // with no loading flash.
-  let namesLocale = $state<LocaleCode | undefined>(
-    untrack(() => (hasSearchNames(locale) ? locale : undefined)),
+  // Search matches game names and item variants in both the current locale and English.
+  // Wait for both before projecting results. Seed from the cache to avoid a loading flash
+  // when reopening search.
+  let readyLocale = $state<LocaleCode | undefined>(
+    untrack(() => (hasSearchCopy(locale) ? locale : undefined)),
   );
-  let namesError = $state(false);
+  let searchLoadError = $state(false);
   let retryToken = $state(0);
-  let namesReady = $derived(namesLocale === locale);
+  let searchReady = $derived(readyLocale === locale);
 
-  function hasSearchNames(searchLocale: LocaleCode): boolean {
-    return hasNames(searchLocale, NAME_CHUNKS) && hasNames("en", NAME_CHUNKS);
+  function hasSearchCopy(searchLocale: LocaleCode): boolean {
+    return (
+      hasNames(searchLocale, NAME_CHUNKS) &&
+      hasNames("en", NAME_CHUNKS) &&
+      hasAcquisitionUi(searchLocale) &&
+      hasAcquisitionUi("en")
+    );
   }
 
-  function retryNames(): void {
+  function retrySearchLoad(): void {
     retryToken += 1;
   }
 
@@ -68,20 +69,25 @@
     // Referenced only to make the effect re-run on retry; the value itself is unused.
     const _retryToken = retryToken;
 
-    namesError = false;
-    if (hasSearchNames(targetLocale)) {
-      namesLocale = targetLocale;
+    searchLoadError = false;
+    if (hasSearchCopy(targetLocale)) {
+      readyLocale = targetLocale;
       return;
     }
     let cancelled = false;
     void (async () => {
       try {
-        await Promise.all([loadNames(targetLocale, NAME_CHUNKS), loadNames("en", NAME_CHUNKS)]);
+        await Promise.all([
+          loadNames(targetLocale, NAME_CHUNKS),
+          loadNames("en", NAME_CHUNKS),
+          loadAcquisitionUi(targetLocale),
+          loadAcquisitionUi("en"),
+        ]);
       } catch {
-        if (!cancelled) namesError = true;
+        if (!cancelled) searchLoadError = true;
         return;
       }
-      if (!cancelled) namesLocale = targetLocale;
+      if (!cancelled) readyLocale = targetLocale;
     })();
     return () => {
       cancelled = true;
@@ -102,7 +108,7 @@
   // The same timed reveal as category lists: all matches arrive without scrolling or a button.
   // Gate the total too, so creating the controller cannot read names before their chunks load.
   const reveal = createRowReveal(
-    () => (namesReady ? results.length : 0),
+    () => (searchReady ? results.length : 0),
     () => `${locale}:${query}`,
   );
   let shown = $derived(results.slice(0, reveal.count));
@@ -233,22 +239,24 @@
   } as const satisfies Record<SearchCategoryKey, ReportCategory>;
 </script>
 
-{#if namesError}
+{#if searchLoadError}
   <div class="search-results__error" role="alert">
-    <p>{m.search_error()}</p>
-    <button type="button" onclick={retryNames}>{m.action_retry()}</button>
+    <p>We couldn’t load search. Check that you’re online, then try again.</p>
+    <button type="button" onclick={retrySearchLoad}
+      ><!-- @wc-context: action retry -->Try again</button
+    >
   </div>
-{:else if !namesReady}
-  <p class="search-results__loading" role="status" aria-live="polite">{m.search_loading()}</p>
+{:else if !searchReady}
+  <p class="search-results__loading" role="status" aria-live="polite">Loading search…</p>
 {:else}
   <div class="search-results" data-tracker-list>
     <p class="search-results__count">
-      {m.search_results_count({ count: results.length })}
+      {plural(results.length, [`${results.length} result`, `${results.length} results`])}
     </p>
     <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
       {results.length === 0
-        ? m.search_no_results()
-        : m.search_results_count({ count: results.length })}
+        ? "No items found"
+        : plural(results.length, [`${results.length} result`, `${results.length} results`])}
     </p>
 
     <div
@@ -322,7 +330,7 @@
     </div>
 
     {#if results.length === 0}
-      <p class="search-results__empty">{m.search_no_results()}</p>
+      <p class="search-results__empty">No items found</p>
     {/if}
   </div>
 {/if}

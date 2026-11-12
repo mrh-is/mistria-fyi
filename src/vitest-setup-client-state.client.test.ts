@@ -2,7 +2,7 @@ import { toast } from "svelte-sonner";
 import { describe, expect, it, vi } from "vitest";
 
 import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { getLocale, overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { PROGRESS_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { theme } from "#lib/stores/theme.svelte.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";

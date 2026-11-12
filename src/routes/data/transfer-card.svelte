@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Button } from "#lib/components/ui/button/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import DataCard from "./data-card.svelte";
@@ -9,11 +8,20 @@
     $props();
 </script>
 
-<DataCard bind:open title={m.transfer_card_title()} summary={m.transfer_card_summary()}>
+<DataCard
+  bind:open
+  title="Transfer to another device"
+  summary="Take your progress to another device."
+>
   <div class="flex flex-col gap-3">
-    <p class="text-sm text-muted-foreground">{m.transfer_sync_guidance()}</p>
-    <Button href={localizedHref("sync")}>{m.transfer_sync_action()}</Button>
-    <p class="text-sm text-muted-foreground">{m.transfer_backup_guidance()}</p>
-    <Button variant="outline" onclick={onOpenBackup}>{m.transfer_open_backup_action()}</Button>
+    <p class="text-sm text-muted-foreground">
+      With sync, your other device gets your gaming computer’s save file.
+    </p>
+    <Button href={localizedHref("sync")}>Set up sync</Button>
+    <p class="text-sm text-muted-foreground">
+      To move anything you check off by hand, export a backup here, send the file to your other
+      device, and restore it there. Restoring replaces that device’s progress in the field guide.
+    </p>
+    <Button variant="outline" onclick={onOpenBackup}>Go to Backup & restore</Button>
   </div>
 </DataCard>

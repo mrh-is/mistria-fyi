@@ -1,4 +1,5 @@
-import * as m from "#lib/paraglide/messages.js";
+import plural from "#lib/i18n/catalogs/plural.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { formatNumber } from "#lib/utils/format.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -11,7 +12,7 @@ interface MergeCountLabel {
    */
   boolean?: boolean;
   /** Localized display text for this entry, given its non-zero count. */
-  format: (inputs: { count: number; countText: string }, options: { locale: LocaleCode }) => string;
+  format: (count: number, countText: string) => string;
 }
 
 /**
@@ -20,31 +21,52 @@ interface MergeCountLabel {
  * or loses a field.
  */
 export const MERGE_COUNT_LABELS = {
-  almanac: { format: m.merge_label_almanac },
-  almanacRecipes: { format: m.merge_label_almanac_recipes },
-  animalCosmetics: { format: m.merge_label_animal_cosmetics },
-  animals: { format: m.merge_label_animals },
+  almanac: { format: (_count, countText) => `Almanac: +${countText}` },
+  almanacRecipes: { format: (_count, countText) => `Recipes: +${countText}` },
+  animalCosmetics: { format: (_count, countText) => `Animal cosmetics: +${countText}` },
+  animals: { format: (_count, countText) => `Animal variants: +${countText}` },
   breakUpsDisabled: {
     boolean: true,
-    format: m.merge_label_break_ups_disabled,
+    format: () => /* @wc-context: save import summary */ "Break-ups disabled",
   },
-  childChoice: { boolean: true, format: m.merge_label_child_choice },
-  cosmetics: { format: m.merge_label_cosmetics },
-  hasUpperFloor: { boolean: true, format: m.merge_label_has_upper_floor },
-  heartLevels: { format: m.merge_label_heart_levels },
-  mineFloor: { format: m.merge_label_mine_floor },
-  mountAppearances: { format: m.merge_label_mount_appearances },
-  museum: { format: m.merge_label_museum },
-  perks: { format: m.merge_label_perks },
-  petCosmetics: { format: m.merge_label_pet_cosmetics },
-  petSkins: { format: m.merge_label_pet_skins },
-  quests: { format: m.merge_label_quests },
-  reachedSeason: { boolean: true, format: m.merge_label_reached_season },
-  renown: { format: m.merge_label_renown },
-  skillLevels: { format: m.merge_label_skill_levels },
-  spells: { format: m.merge_label_spells },
+  childChoice: { boolean: true, format: () => "Child choice updated" },
+  cosmetics: { format: (_count, countText) => `Cosmetics: +${countText}` },
+  hasUpperFloor: { boolean: true, format: () => "Upper floor unlocked" },
+  heartLevels: {
+    format: (count, countText) =>
+      plural(count, [
+        `Villager hearts: +${countText} relationship updated`,
+        `Villager hearts: +${countText} relationships updated`,
+      ]),
+  },
+  mineFloor: {
+    format: (count, countText) =>
+      plural(count, [`Mine floor: +${countText} floor`, `Mine floor: +${countText} floors`]),
+  },
+  mountAppearances: { format: (_count, countText) => `Mount appearances: +${countText}` },
+  museum: { format: (_count, countText) => `Museum donations: +${countText}` },
+  perks: { format: (_count, countText) => `Perks: +${countText}` },
+  petCosmetics: { format: (_count, countText) => `Pet cosmetics: +${countText}` },
+  petSkins: { format: (_count, countText) => `Pet skins: +${countText}` },
+  quests: { format: (_count, countText) => `Quests: +${countText}` },
+  reachedSeason: {
+    boolean: true,
+    format: () => "Season progression updated",
+  },
+  renown: {
+    format: (count, countText) =>
+      plural(count, [`Renown: +${countText} level`, `Renown: +${countText} levels`]),
+  },
+  skillLevels: {
+    format: (count, countText) =>
+      plural(count, [
+        `Skills: +${countText} skill updated`,
+        `Skills: +${countText} skills updated`,
+      ]),
+  },
+  spells: { format: (_count, countText) => `Spells: +${countText}` },
   villagerRelationships: {
-    format: m.merge_label_villager_relationships,
+    format: (_count, countText) => `Villager relationships: +${countText}`,
   },
 } as const satisfies Record<keyof MergeCounts, MergeCountLabel>;
 
@@ -60,10 +82,7 @@ export function formatMergeCount(
   locale: LocaleCode,
 ): null | string {
   if (count === 0) return null;
-  return MERGE_COUNT_LABELS[key].format(
-    { count, countText: formatNumber(count, locale) },
-    { locale },
-  );
+  return inLocale(locale, () => MERGE_COUNT_LABELS[key].format(count, formatNumber(count, locale)));
 }
 
 /** Sum all values in a `MergeCounts` object. */

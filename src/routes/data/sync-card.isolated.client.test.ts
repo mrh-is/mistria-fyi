@@ -2,7 +2,6 @@ import { cleanup, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
-import * as m from "#lib/paraglide/messages.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
@@ -22,9 +21,9 @@ async function renderData(): Promise<void> {
 describe("Data's sync card", () => {
   it("appears on the Data page", async () => {
     await renderData();
-    expect(screen.getByRole("heading", { name: m.sync_card_title() })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Save file sync" })).toBeVisible();
     expect(
-      screen.getByRole("button", { name: (name) => name.includes(m.import_card_title()) }),
+      screen.getByRole("button", { name: (name) => name.includes("Import from save file") }),
     ).toBeVisible();
   });
 });

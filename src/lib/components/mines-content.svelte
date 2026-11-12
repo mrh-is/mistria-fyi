@@ -19,7 +19,6 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -157,7 +156,7 @@
     {#if key === "floors"}
       <ExpandableSection
         {locale}
-        name={m.mines_floor_progress_section()}
+        name="Floor progress"
         progress={mineFloorProgress(userState.state.progress)}
         reportCategory="mines"
         reportEntityId="floors"

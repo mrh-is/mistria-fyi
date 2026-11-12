@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRowList from "#lib/components/tracker-row-list.svelte";
 import { INITIAL_ROW_BUDGET, RESTORE_SLACK } from "#lib/controllers/row-reveal.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
 
 const row = createRawSnippet<[string]>((item) => ({
   render: () => `<div data-tracker-row data-source-state="none">${item()}</div>`,
@@ -67,9 +66,7 @@ describe("TrackerRowList", () => {
   it("shows the empty note when there are no rows", () => {
     renderList({ items: [] });
 
-    expect(
-      screen.getByText(m.no_items_match_filters({ filters: m.no_items_match_filters_link() })),
-    ).toBeInTheDocument();
+    expect(screen.getByText(`Nothing matches your current filters.`)).toBeInTheDocument();
   });
 
   it("omits the empty note when the parent owns it", () => {

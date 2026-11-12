@@ -1,6 +1,7 @@
 <script lang="ts">
   import { SITE_NAME, SITE_ORIGIN } from "#lib/data/page-metadata.js";
-  import { deLocalizeHref, locales, localizeHref } from "#lib/paraglide/runtime.js";
+  import { localizePath, stripLocale } from "#lib/i18n/locale-path.js";
+  import { LOCALE_CODES } from "#lib/types/locale.js";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
 
@@ -13,11 +14,11 @@
   // included on purpose: a page must list itself alongside the others for the set to be valid,
   // matching what `sitemap.xml` emits.
   let alternateLocaleHrefs = $derived(
-    locales.map((locale) => ({ href: localizeHref(deLocalizeHref(pathname), { locale }), locale })),
+    LOCALE_CODES.map((locale) => ({ href: localizePath(pathname, locale), locale })),
   );
   // The bare path picks each visitor's locale (cookie, then browser languages, then English), which
   // is what `x-default` asks for.
-  let defaultHref = $derived(new URL(deLocalizeHref(pathname), SITE_ORIGIN).href);
+  let defaultHref = $derived(new URL(stripLocale(pathname), SITE_ORIGIN).href);
 </script>
 
 <svelte:head>

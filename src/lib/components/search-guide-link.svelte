@@ -1,7 +1,6 @@
 <script lang="ts">
   import IconArrowRight from "@tabler/icons-svelte-runes/icons/arrow-right";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -15,14 +14,14 @@
 
 {#if query}
   <p class="search-guide">
-    {m.search_guide_prompt({}, { locale })}
+    Don’t see what you’re looking for?
     <a
       href={localizedHref("", { locale })}
       onclick={() => {
         toolbarState.carrySearchToNextPage();
       }}
     >
-      {m.search_guide_link({ query }, { locale })}
+      {`Search the entire Field Guide for “${query}”`}
       <IconArrowRight class="size-4 shrink-0" aria-hidden="true" />
     </a>
   </p>

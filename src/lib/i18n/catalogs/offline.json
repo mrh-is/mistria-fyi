@@ -1,0 +1,112 @@
+[
+  {
+    "translations": {
+      "en": "Field note · No signal",
+      "ja": "フィールドノート · 圏外",
+      "zh-Hans": "野外笔记 · 无信号",
+      "zh-Hant": "野外筆記 · 無訊號",
+      "es": "Nota de campo · Sin señal",
+      "fr": "Note de terrain · Pas de réseau",
+      "ko": "필드 노트 · 신호 없음",
+      "ru": "Полевая заметка · Нет сигнала"
+    },
+    "references": [
+      {
+        "file": "scripts/lib/offline-copy.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Mistria Field Guide · Offline",
+      "ja": "Mistria Field Guide · オフライン",
+      "zh-Hans": "Mistria Field Guide · 离线",
+      "zh-Hant": "Mistria Field Guide · 離線",
+      "es": "Mistria Field Guide · Sin conexión",
+      "fr": "Mistria Field Guide · Hors ligne",
+      "ko": "Mistria Field Guide · 오프라인",
+      "ru": "Mistria Field Guide · Нет сети"
+    },
+    "references": [
+      {
+        "file": "scripts/lib/offline-copy.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The Mistria Field Guide needs an internet connection to load for the first time. Your progress is safe on this device, and it’ll be right here when you’re back online.",
+      "ja": "Mistria Field Guide を初めて読み込むにはインターネット接続が必要です。進捗はこの端末に無事に保存されていて、オンラインに戻ればちゃんとここにあります。",
+      "zh-Hans": "首次加载 Mistria Field Guide 需要联网。你的进度安全地保存在这台设备上，重新联网后它们都会在这里。",
+      "zh-Hant": "第一次載入 Mistria Field Guide 需要連上網路。你的進度安全地儲存在這台裝置上，重新連上網路後它們都會在這裡。",
+      "es": "Mistria Field Guide necesita conexión a internet para cargarse la primera vez. Tu progreso está a salvo en este dispositivo y seguirá aquí cuando vuelvas a tener conexión.",
+      "fr": "Mistria Field Guide a besoin d’une connexion internet pour se charger la première fois. Votre progression est en sécurité sur cet appareil, et elle sera là quand vous serez de nouveau en ligne.",
+      "ko": "Mistria Field Guide를 처음 불러오려면 인터넷 연결이 필요해요. 진행 상황은 이 기기에 안전하게 있고, 다시 온라인이 되면 그대로 여기 있을 거예요.",
+      "ru": "Для первой загрузки Mistria Field Guide нужно подключение к интернету. Ваш прогресс в безопасности на этом устройстве, и он будет здесь, когда вы снова будете в сети."
+    },
+    "references": [
+      {
+        "file": "scripts/lib/offline-copy.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Try again",
+      "ja": "もう一度試す",
+      "zh-Hans": "重试",
+      "zh-Hant": "重試",
+      "es": "Reintentar",
+      "fr": "Réessayer",
+      "ko": "다시 시도",
+      "ru": "Повторить"
+    },
+    "references": [
+      {
+        "file": "scripts/lib/offline-copy.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "You’re offline",
+      "ja": "オフラインです",
+      "zh-Hans": "你已离线",
+      "zh-Hant": "你已離線",
+      "es": "Estás sin conexión",
+      "fr": "Vous êtes hors ligne",
+      "ko": "오프라인 상태예요",
+      "ru": "Нет подключения к сети"
+    },
+    "references": [
+      {
+        "file": "scripts/lib/offline-copy.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

@@ -76,21 +76,18 @@ describe("switching to a code without a save", () => {
       .mockResolvedValueOnce({ kind: "applied", save: { modified: 1_700_000_000_000 } });
     vi.stubGlobal("localStorage", memoryStorage({ [PROGRESS_KEY]: document_() }));
 
-    const [{ userState }, { default: SyncPage }, messages] = await Promise.all([
+    const [{ userState }, { default: SyncPage }] = await Promise.all([
       import("#lib/stores/user-state.svelte.js"),
       import("./+page.svelte"),
-      import("#lib/paraglide/messages.js"),
     ]);
     userState.loadFromStorage();
     render(SyncPage);
     await tick();
     await tick();
-    await fireEvent.click(screen.getByRole("button", { name: messages.sync_switch_confirm() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Switch it" }));
     await tick();
 
-    expect(
-      await screen.findByRole("heading", { name: messages.sync_waiting_title() }),
-    ).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Almost there" })).toBeVisible();
     expect(userState.syncLane).toEqual({ key: CURRENT_KEY, kind: "following" });
     expect(userState.state.progress.renown).toBe(3);
     expect(mocks.switchCode).toHaveBeenCalledTimes(1);

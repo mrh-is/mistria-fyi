@@ -71,7 +71,7 @@ creates `.worktrees/<slug>` on a matching branch from the refreshed `origin/<sta
 the main checkout, removes the worktree & branch again if a later step fails, refuses to run if
 `.worktrees/` is not gitignored, links `pipeline/input/` & every `.worktreeinclude` entry from the
 main checkout, and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks,
-Paraglide output, & `svelte-kit sync`). The link & install steps live in
+generated UI messages, & `svelte-kit sync`). The link & install steps live in
 `scripts/setup-worktree.ts`, which skips entries already present or missing from the main checkout.
 Both scripts run under Node so Windows behaves the same; see
 [Worktrees & Verification on Windows](#worktrees--verification-on-windows).
@@ -454,7 +454,7 @@ state in `beforeEach`: the reset undoes a file’s top-level code before its fir
 | `userState`               | Clears browser storage before loading & resetting the store. Flushes the reset’s effects before clearing storage again.                                                                                  |
 | `toolbarState`            | Clears search, filters, disclosure state, panel clearance, & page registrations.                                                                                                                         |
 | `$app/state`              | `pageStub.reset()` restores the English page, HTTP 200, & `updated.current`.                                                                                                                             |
-| `theme` & Paraglide       | Restores the system theme & original locale getter. Removes the document’s dark class & test theme-color meta tag.                                                                                       |
+| `theme` & locale          | Restores the system theme & default locale reader. Removes the document’s dark class & test theme-color meta tag.                                                                                        |
 | Row-reveal scheduler      | Unmount cancels each list’s frames. The shared reset clears the queue, frame budget, & cached height.                                                                                                    |
 | Reload holds              | Unmount releases component-owned holds. A hold that remains fails the test that left it, then teardown clears it.                                                                                        |
 | Sync notice & toasts      | Clears the sync notice, Sonner’s queue, & its removal timers. The receiver & courier stay idle in the shared project. Tests that drive them run in `client-isolated`.                                    |
@@ -530,20 +530,20 @@ step, `pnpm run verify -- --step=audit`, stays available.
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see
 [accessibility testing](accessibility-testing.md) and [PWA verification](pwa-verification.md). Its
-“CI passed” job aggregates the merge checks & accepts skipped audits, locale-sync, & browser jobs.
-Scheduled reporting jobs stay outside that gate, so it is the one check to require for merging.
+“CI passed” job aggregates the merge checks & accepts skipped audits & browser jobs. Scheduled
+reporting jobs stay outside that gate, so it is the one check to require for merging.
 
 ### Linting & formatting
 
 `pnpm run lint` runs five tools, each covering what the others can't:
 
-| Tool       | Config                | Covers                                                                                                              |
-| ---------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| oxfmt      | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type                                  |
-| oxlint     | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint                              |
-| ESLint     | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables, & `no-hardcoded-ui-text` |
-| Stylelint  | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                                                    |
-| ShellCheck | `.shellcheckrc`       | Every tracked `*.sh`, through `pnpm run lint:shell`, which uses the system `shellcheck`                             |
+| Tool       | Config                | Covers                                                                                    |
+| ---------- | --------------------- | ----------------------------------------------------------------------------------------- |
+| oxfmt      | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type        |
+| oxlint     | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint    |
+| ESLint     | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables |
+| Stylelint  | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                          |
+| ShellCheck | `.shellcheckrc`       | Every tracked `*.sh`, through `pnpm run lint:shell`, which uses the system `shellcheck`   |
 
 oxlint enables every category except `nursery`, with the `eslint`, `typescript`, `unicorn`, `oxc`,
 `import`, `promise`, `node`, & `jsdoc` plugins (plus `vitest` for `*.test.ts`), and adds
@@ -601,9 +601,8 @@ script, switch on a local variable and use `return value satisfies never;` in th
 The same test checks that oxfmt formats `.svelte` files. That needs `.oxfmtrc.json`'s `svelte`
 option; without it, `oxfmt --check` skips every `.svelte` file without saying so.
 
-ESLint's template rules include two local ones in `eslint-rules/`: `no-hardcoded-ui-text` (see
-[localization](localization.md)) and `no-raw-internal-href`, which rejects literal internal routes
-like `href="/about"` and accepts `localizedHref(...)` or any other expression. It replaces
+The local ESLint rule `no-raw-internal-href` rejects literal internal routes like `href="/about"`
+and accepts `localizedHref(...)` or any other expression. It replaces
 `svelte/no-navigation-without-resolve`, which needs type information to recognize `localizedHref()`.
 
 #### Oxlint rule decisions

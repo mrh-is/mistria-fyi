@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
-import { overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
@@ -25,7 +24,7 @@ describe("TrackerRow localized checkbox labels", () => {
     { locale: "zh-Hans", plain: "勾选Window", variant: "勾选Window，Oak" },
     { locale: "zh-Hant", plain: "勾選Window", variant: "勾選Window，Oak" },
   ])("includes the variant only when present in $locale", async ({ locale, plain, variant }) => {
-    overwriteGetLocale(() => locale);
+    pageStub.data.locale = locale;
     const view = renderWithFeedback(TrackerRow, {
       display: { mode: "incomplete" },
       fact: "almanac/window",
@@ -81,18 +80,14 @@ describe("TrackerRow reportable metadata", () => {
       variant: "Oak",
     });
 
-    expect(
-      screen.getByRole("button", { name: m.tracker_row_check_spoilered() }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Check spoilered item" })).toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
         name: (name) => name.includes(itemName),
       }),
     ).toBeNull();
-    await fireEvent.click(screen.getByRole("button", { name: m.spoiler_reveal_aria() }));
-    expect(
-      screen.getByRole("button", { name: m.tracker_row_check({ name: `${itemName}, Oak` }) }),
-    ).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+    expect(screen.getByRole("button", { name: `Check ${itemName}, Oak` })).toBeInTheDocument();
   });
 
   it("tells the toggle whether the name was still covered, so the guard can word its dialog", async () => {
@@ -106,13 +101,11 @@ describe("TrackerRow reportable metadata", () => {
       reportEntityId: "copper_ore",
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: m.tracker_row_check_spoilered() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Check spoilered item" }));
     expect(onToggle).toHaveBeenLastCalledWith(true);
 
-    await fireEvent.click(screen.getByRole("button", { name: m.spoiler_reveal_aria() }));
-    await fireEvent.click(
-      screen.getByRole("button", { name: m.tracker_row_check({ name: "Copper Ore" }) }),
-    );
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Check Copper Ore" }));
     expect(onToggle).toHaveBeenLastCalledWith(false);
   });
 
@@ -129,7 +122,7 @@ describe("TrackerRow reportable metadata", () => {
 
     expect(view.container.querySelector("[data-sprite-slot='spoilered']")).toBeTruthy();
 
-    await fireEvent.click(screen.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
 
     expect(view.container.querySelector("[data-sprite-slot='ready']")).toBeTruthy();
     expect(screen.getByText("Turnip")).toBeInTheDocument();
@@ -386,7 +379,7 @@ describe("TrackerRow sprite preview", () => {
     expect(screen.queryByRole("button", { name: /in color/ })).toBeNull();
     expect(previewLayer(view.container)).toBeNull();
 
-    await fireEvent.click(screen.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
     await fireEvent.click(
       screen.getByRole("button", { name: "Show Animated Clouds Window in color" }),
     );

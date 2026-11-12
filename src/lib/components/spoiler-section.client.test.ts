@@ -3,7 +3,6 @@ import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import SpoilerSection from "#lib/components/spoiler-section.svelte";
-import * as m from "#lib/paraglide/messages.js";
 
 const children = createRawSnippet(() => ({
   render: () => `<p data-testid="revealed-section">Revealed section</p>`,
@@ -16,7 +15,7 @@ describe("SpoilerSection", () => {
     const header = view.container.querySelector("[data-section-trigger]");
     expect(header?.tagName).toBe("DIV");
     expect(view.getAllByRole("button")).toHaveLength(1);
-    expect(header).toContainElement(view.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    expect(header).toContainElement(view.getByRole("button", { name: "Reveal spoiler" }));
     expect(view.queryByTestId("revealed-section")).not.toBeInTheDocument();
   });
 
@@ -49,7 +48,7 @@ describe("SpoilerSection", () => {
   it("renders the section itself once the spoiler is revealed", async () => {
     const view = render(SpoilerSection, { children, name: "Town Quests", spoilered: true });
 
-    await fireEvent.click(view.getByRole("button", { name: m.spoiler_reveal_aria() }));
+    await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
 
     expect(view.getByTestId("revealed-section")).toBeInTheDocument();
     expect(view.container.querySelector("[data-section-trigger]")).not.toBeInTheDocument();

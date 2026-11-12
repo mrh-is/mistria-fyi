@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { locales, localizeHref } from "#lib/paraglide/runtime.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { localizePath } from "./locale-path.js";
 import { PRERENDER_ENTRIES, PRERENDERED_ROUTES } from "./prerender-entries.js";
 
 /** Every page route on disk as its unprefixed path (`""` for the home page), groups dropped. */
@@ -23,9 +24,9 @@ describe("prerender entries", () => {
     );
   });
 
-  it("lists every prerendered route at Paraglide's prefixed path in every locale", () => {
-    const localized = locales.flatMap((locale) =>
-      PRERENDERED_ROUTES.map((route) => localizeHref(route || "/", { locale })),
+  it("lists every prerendered route at its prefixed path in every locale", () => {
+    const localized = LOCALE_CODES.flatMap((locale) =>
+      PRERENDERED_ROUTES.map((route) => localizePath(route || "/", locale)),
     );
     expect(PRERENDER_ENTRIES.filter((entry) => entry !== "/sitemap.xml").toSorted()).toEqual(
       localized.toSorted(),

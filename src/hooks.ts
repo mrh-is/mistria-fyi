@@ -1,10 +1,9 @@
-import { deLocalizeUrl } from "#lib/paraglide/runtime.js";
+import { stripLocale } from "#lib/i18n/locale-path.js";
 
 import type { Reroute } from "@sveltejs/kit/hooks";
 
 /**
  * SvelteKit matches routes against the de-localized pathname (e.g. `/ja/almanac` → `/almanac`),
- * so every route file stays unprefixed on disk. `hooks.server.ts` restores the locale prefix in
- * the response via `paraglideMiddleware`.
+ * so every route file stays unprefixed on disk. The public URL retains its locale prefix.
  */
-export const reroute: Reroute = ({ url }) => deLocalizeUrl(url).pathname;
+export const reroute: Reroute = ({ url }) => stripLocale(url.pathname);

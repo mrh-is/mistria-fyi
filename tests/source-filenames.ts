@@ -15,12 +15,10 @@ function walk(directory: string): string[] {
 function violates(path: string): boolean {
   const name = posix.basename(path);
   const stem = name.replace(/^\+/, "").split(".")[0] ?? "";
-  // Generated or framework files with their own conventions (paraglide output, `$types`).
+  // Generated or framework files have their own conventions.
   return stem !== "" && !stem.startsWith("$") && !kebab.test(stem);
 }
 
 export function sourceFilenameOffenders(directory: string): string[] {
-  return walk(directory).filter(
-    (path) => /\.(?:svelte|ts)$/.test(path) && !path.includes("/paraglide/") && violates(path),
-  );
+  return walk(directory).filter((path) => /\.(?:svelte|ts)$/.test(path) && violates(path));
 }

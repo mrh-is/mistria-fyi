@@ -2,7 +2,6 @@ import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 describe("CosmeticsContent", () => {
@@ -12,6 +11,6 @@ describe("CosmeticsContent", () => {
     const view = renderWithFeedback(CosmeticsContent, { locale: "en" });
     await tick();
 
-    expect(view.getByRole("heading", { level: 2, name: m.shelf_to_do() })).toBeInTheDocument();
+    expect(view.getByRole("heading", { level: 2, name: "To do" })).toBeInTheDocument();
   });
 });

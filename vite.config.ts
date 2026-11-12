@@ -1,6 +1,5 @@
 import "#scripts/lib/require-pinned-node";
 
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,8 +9,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
+import { wuchale } from "wuchale/vite";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import {
+  aboutMetadataFile,
+  aboutSvelteFiles,
+  acquisitionFiles,
+  errorMetadataFile,
+  errorSvelteFile,
+  routeMetadataFiles,
+  sharedLocaleFiles,
+  sharedScriptFiles,
+} from "./scripts/lib/wuchale-source-files.js";
 import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import {
@@ -24,7 +34,6 @@ import { withHeadersFile } from "./src/lib/build/headers-file.js";
 import { licensesPlugin, noticeBlock } from "./src/lib/build/licenses.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { offlinePagePlugin } from "./src/lib/build/offline-page.js";
-import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { PRERENDER_ENTRIES } from "./src/lib/i18n/prerender-entries.js";
 import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
 import { cspDirectives } from "./src/lib/security/csp-directives.js";
@@ -84,7 +93,7 @@ const retry = process.env.CI ? 1 : 0;
 
 /**
  * The root test options a plain-Node project would otherwise inherit with `extends: true`. Those
- * projects skip the app's Vite plugins (SvelteKit, Tailwind, Paraglide), so they restate these.
+ * projects skip the app's Vite plugins (SvelteKit, Tailwind, Wuchale), so they restate these.
  */
 const plainNodeTestOptions = {
   hookTimeout: loadTolerantTimeoutMs,
@@ -163,6 +172,7 @@ export default defineConfig(({ command }) => ({
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
   },
   plugins: [
+    wuchale({ configPath: path.join(import.meta.dirname, "wuchale.config.ts") }),
     tailwindcss(),
     sveltekit({
       adapter: withBarePathStubs(
@@ -191,10 +201,18 @@ export default defineConfig(({ command }) => ({
     localeNameChunksPlugin(),
     offlinePagePlugin(),
     licensesPlugin({
-      // Paraglide compiles its runtime into src/lib/paraglide/ from this package.
-      generatedFrom: { "src/lib/paraglide/": "@inlang/paraglide-js" },
       stylesheets: ["src/app.css"],
       vendored: [
+        {
+          declared: "MIT",
+          licenseText: () =>
+            noticeBlock(
+              readFileSync(path.join(import.meta.dirname, "THIRD-PARTY-NOTICES.md"), "utf8"),
+              "## Wuchale runtime",
+            ),
+          name: "Wuchale runtime notice",
+          prefix: "src/lib/i18n/catalogs/.wuchale/",
+        },
         {
           declared: "MIT",
           licenseText: () =>
@@ -207,8 +225,17 @@ export default defineConfig(({ command }) => ({
         },
       ],
     }),
-    paraglideVitePlugin(PARAGLIDE_OPTIONS),
-    svelteCssCachePlugin(),
+    svelteCssCachePlugin([
+      aboutMetadataFile,
+      ...aboutSvelteFiles,
+      ...acquisitionFiles,
+      errorMetadataFile,
+      errorSvelteFile,
+      ...routeMetadataFiles,
+      ...sharedLocaleFiles,
+      ...sharedScriptFiles,
+      "scripts/lib/offline-copy.ts",
+    ]),
   ],
   resolve: { alias: libAlias },
   server: {
@@ -219,9 +246,7 @@ export default defineConfig(({ command }) => ({
     strictPort: Boolean(process.env.PORT),
     watch: {
       // Miniflare (the adapter's platform proxy) writes its SQLite state under `.wrangler/` as the
-      // dev server starts. Paraglide's plugin recompiles on any watch event that arrives before its
-      // first build finishes, so those writes made it rewrite `src/lib/paraglide` mid-request; the
-      // SSR reload that followed swapped Svelte instances under the first render and failed it (#91).
+      // dev server starts. These writes aren't source edits.
       ignored: ["**/.wrangler/**"],
     },
   },

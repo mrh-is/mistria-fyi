@@ -1,14 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import CategoryCard from "#lib/components/category-card.svelte";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 describe("CategoryCard", () => {
-  const defaultGetLocale = getLocale;
-
   afterEach(() => {
-    overwriteGetLocale(defaultGetLocale);
+    overwriteGetLocale();
   });
 
   it("renders a named category stripe with progress and a decorative ribbon", () => {

@@ -2,8 +2,6 @@
   import IconMinus from "@tabler/icons-svelte-runes/icons/minus";
   import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
 
-  import * as m from "#lib/paraglide/messages.js";
-
   import type { Snippet } from "svelte";
 
   let {
@@ -36,7 +34,9 @@
   class="stepper"
   style:--stepper-accent-color={accentColor}
   role={label ? "group" : undefined}
-  aria-label={label && value ? m.stepper_group_label({ label, value }) : label}
+  aria-label={label && value
+    ? /* @wc-context: stepper group label */ /* @wc-include */ `${label}, ${value}`
+    : label}
 >
   <button
     type="button"

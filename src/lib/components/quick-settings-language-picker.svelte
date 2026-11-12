@@ -6,7 +6,6 @@
 
   import localeManifest from "#lib/data/locales.json";
   import { getName } from "#lib/data/names.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { localePreference } from "#lib/stores/locale-preference.svelte.js";
   import { page } from "$app/state";
 
@@ -18,7 +17,7 @@
   const locales = localeManifest as LocaleManifest;
   let currentLocale = $derived(page.data.locale);
   let currentLocaleName = $derived(
-    locales.find(({ tag }) => tag === currentLocale)?.displayName ?? "English",
+    locales.find(({ tag }) => tag === currentLocale)?.displayName ?? /* @wc-ignore */ "English",
   );
   // Named in the reader's own language ("Japanese", not "日本語"), since it sits inside a sentence.
   let languageNames = $derived(new Intl.DisplayNames([currentLocale], { type: "language" }));
@@ -37,7 +36,7 @@
     <button
       aria-controls="language-picker-options"
       aria-expanded={open}
-      aria-label={m.settings_choose_language()}
+      aria-label="Choose language"
       class="language-setting__trigger"
       type="button"
       onclick={() => {
@@ -51,7 +50,7 @@
 
   {#if open}
     <div
-      aria-label={m.settings_languages_group_aria()}
+      aria-label="Languages"
       class="language-setting__options"
       id="language-picker-options"
       role="group"
@@ -67,7 +66,7 @@
         >
           <span>{locale.displayName}</span>
           {#if locale.status === "beta"}
-            <span aria-label={m.settings_beta_translation_aria()} class="language-setting__beta">
+            <span aria-label="Beta translation" class="language-setting__beta">
               <IconBeta class="size-3" />
             </span>
           {/if}
@@ -79,9 +78,7 @@
         role="status"
       >
         {#if unavailableLocale}
-          {m.settings_language_offline({
-            language: languageNames.of(unavailableLocale) ?? unavailableLocale,
-          })}
+          {`Go online to download the ${languageNames.of(unavailableLocale) ?? unavailableLocale} text, then try again.`}
         {/if}
       </p>
     </div>

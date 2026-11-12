@@ -2,7 +2,6 @@ import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import MineFloorRecordHarness from "#lib/components/mine-floor-record.test-harness.svelte";
-import * as m from "#lib/paraglide/messages.js";
 
 import type { MinesBiome, MinesBiomeId } from "#lib/types/tracker-data.js";
 
@@ -47,14 +46,14 @@ describe("MineFloorRecord", () => {
 
   it("clamps direct edits and ignores empty or invalid values", async () => {
     const view = render(MineFloorRecordHarness, { biomes, initialFloor: 10 });
-    const input = view.getByRole("spinbutton", { name: m.mines_floor_input_aria() });
+    const input = view.getByRole("spinbutton", { name: "Mine floor" });
     expect(input).toHaveAttribute("min", "0");
     expect(input).toHaveAttribute("max", "60");
 
     await fireEvent.input(input, { target: { value: "100" } });
     await fireEvent.change(input);
     expect(input).toHaveValue(60);
-    expect(view.getByRole("button", { name: m.mines_floor_down() })).toBeDisabled();
+    expect(view.getByRole("button", { name: "Go down one floor" })).toBeDisabled();
 
     await fireEvent.input(input, { target: { value: "" } });
     await fireEvent.change(input);
@@ -63,8 +62,8 @@ describe("MineFloorRecord", () => {
 
   it("uses adjacent bounded controls and supports a compact record", async () => {
     const view = render(MineFloorRecordHarness, { biomes, compact: true, initialFloor: 0 });
-    const up = view.getByRole("button", { name: m.mines_floor_up() });
-    const down = view.getByRole("button", { name: m.mines_floor_down() });
+    const up = view.getByRole("button", { name: "Go up one floor" });
+    const down = view.getByRole("button", { name: "Go down one floor" });
 
     expect(up).toBeDisabled();
     expect(view.queryByTestId("mine-survey")).not.toBeInTheDocument();

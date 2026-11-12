@@ -7,7 +7,6 @@
   import { getName } from "#lib/data/names.js";
   import { getMaxRenownLevel } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -48,7 +47,7 @@
 {/if}
 
 {#if !compact}
-  <ul class="rank-register" aria-label={m.renown_rank_register_aria()}>
+  <ul class="rank-register" aria-label="Town rank register">
     {#each trackerData.renown.townRanks as rank, index (index)}
       {#if matchesSearch(rank.levels.start, index)}
         <RankRecord

@@ -121,8 +121,7 @@ package ships no license text. Instead of weakening that check, list the package
 | `pnpm run preview`            | Preview the production build locally                               |
 | `pnpm run build`              | Production build (Cloudflare Pages)                                |
 | `pnpm run check`              | SvelteKit type checking                                            |
-| `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
-| `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
+| `pnpm run check:i18n`         | Verify Wuchale extraction and translation completeness             |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
 | `pnpm run knip`               | Find unused files, exports, & dependencies                         |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, directive reasons, & ShellCheck  |

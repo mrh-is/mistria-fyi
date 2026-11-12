@@ -1,0 +1,71 @@
+import { ROUTE_UI_GROUPS } from "../../src/lib/i18n/route-ui-groups.ts";
+
+export const aboutSvelteFiles = [
+  "src/routes/about/about-copy.svelte",
+  "src/lib/components/ai-disclosure-dialog.svelte",
+];
+
+export const aboutMetadataFile = "src/routes/about/about-metadata.ts";
+
+export const errorSvelteFile = "src/routes/+error.svelte";
+export const errorMetadataFile = "src/lib/data/page-metadata.ts";
+export const dataErrorMessagesFile = "src/routes/data/data-error-messages.ts";
+
+export const uiMessageHelperGlob = "src/{lib,routes}/**/*-messages.ts";
+
+export const sharedScriptFiles = [
+  "src/lib/controllers/tracking-reminders.svelte.ts",
+  "src/lib/presentation/shelves.ts",
+  "src/lib/utils/format.ts",
+  uiMessageHelperGlob,
+];
+
+export const sharedLocaleFiles = [
+  "src/lib/components/sync/sync-question-copy.ts",
+  "src/lib/data/categories.ts",
+  "src/lib/data/source-filters.ts",
+  "src/lib/effects/undo-toast.ts",
+  "src/lib/presentation/merge-labels.ts",
+  "src/lib/presentation/quest-sections.ts",
+];
+
+export const acquisitionFiles = [
+  "src/lib/data/item-variants.ts",
+  "src/lib/presentation/source-labels.ts",
+  "src/lib/sources/source-names.ts",
+  "src/lib/sources/source-segments.ts",
+];
+
+export const routeSvelteFiles = ROUTE_UI_GROUPS.map(({ pattern }) => pattern);
+
+export const routeMetadataFiles = [
+  "src/routes/(category)/almanac/+page.ts",
+  "src/routes/(category)/animals/+page.ts",
+  "src/routes/(category)/cosmetics/+page.ts",
+  "src/routes/(category)/mines/+page.ts",
+  "src/routes/(category)/museum/+page.ts",
+  "src/routes/(category)/quests/+page.ts",
+  "src/routes/(category)/recipes/+page.ts",
+  "src/routes/(category)/renown/+page.ts",
+  "src/routes/(category)/skills/+page.ts",
+  "src/routes/(category)/villagers/+page.ts",
+  "src/routes/+page.ts",
+  "src/routes/data/+page.ts",
+  "src/routes/everything/+page.ts",
+  "src/routes/privacy/+page.ts",
+  "src/routes/sync/+page.ts",
+];
+
+/** Components and routes use source extraction unless they have their own catalog or are fixtures. */
+export const sharedSvelteFiles = {
+  ignore: [
+    "**/*.test-harness.svelte",
+    "src/lib/components/ui/**",
+    "src/routes/dev/icons/**",
+    "src/routes/dev/og-image/**",
+    ...aboutSvelteFiles,
+    errorSvelteFile,
+    ...routeSvelteFiles,
+  ],
+  include: ["src/lib/components/**/*.svelte", "src/routes/**/*.svelte"],
+};

@@ -4,7 +4,6 @@ import { beforeEach, expect, it, vi } from "vitest";
 import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -39,16 +38,16 @@ function renderError() {
 }
 
 async function openReport() {
-  const button = screen.getByRole("button", { name: m.error_report_action() });
+  const button = screen.getByRole("button", { name: "Report this error" });
   button.focus();
   await fireEvent.click(button);
-  return screen.findByRole("textbox", { name: m.feedback_message_label() });
+  return screen.findByRole("textbox", { name: "Message" });
 }
 
 it("offers reports for errors, without offering one for missing pages", () => {
   pageStub.status = 404;
   renderError();
-  expect(screen.queryByRole("button", { name: m.error_report_action() })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Report this error" })).toBeNull();
 });
 
 it("opens an editable draft without submitting, and cancels without sending", async () => {
@@ -56,7 +55,7 @@ it("opens an editable draft without submitting, and cancels without sending", as
   vi.stubGlobal("fetch", fetchMock);
   renderError();
   const message = await openReport();
-  expect(message).toHaveValue(m.error_generic());
+  expect(message).toHaveValue("Something went wrong on our end, but your progress is safe.");
   expect(screen.getByText(/public GitHub issue/)).toBeInTheDocument();
   expect(screen.getByTestId("overlay-state")).toHaveTextContent("active");
   await fireEvent.input(message, { target: { value: "I was checking my museum progress." } });
@@ -66,7 +65,7 @@ it("opens an editable draft without submitting, and cancels without sending", as
   });
   expect(fetchMock).not.toHaveBeenCalled();
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: m.error_report_action() })).toHaveFocus(),
+    expect(screen.getByRole("button", { name: "Report this error" })).toHaveFocus(),
   );
 });
 
@@ -75,13 +74,11 @@ it("submits only reviewed text and existing versions by default", async () => {
   vi.stubGlobal("fetch", fetchMock);
   renderError();
   const message = await openReport();
-  expect(
-    screen.getByRole("checkbox", { name: m.feedback_attach_progress_label() }),
-  ).not.toBeChecked();
-  expect(screen.getByRole("checkbox", { name: m.feedback_wants_reply_label() })).not.toBeChecked();
-  expect(screen.queryByRole("checkbox", { name: m.feedback_attach_sync_log() })).toBeNull();
+  expect(screen.getByRole("checkbox", { name: "Attach progress" })).not.toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "Email me back" })).not.toBeChecked();
+  expect(screen.queryByRole("checkbox", { name: "Attach sync log" })).toBeNull();
   await fireEvent.input(message, { target: { value: "My reviewed report" } });
-  await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
+  await fireEvent.click(screen.getByRole("button", { name: "Send" }));
   await waitFor(() => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -109,8 +106,8 @@ it("returns to ordinary feedback after navigation, without reopening the report"
   await waitFor(() => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
-  await fireEvent.click(screen.getByRole("button", { name: m.toolbar_send_feedback() }));
-  expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue("");
+  await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+  expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
 });
 
 it.each([true, false])(
@@ -123,18 +120,18 @@ it.each([true, false])(
     );
     renderError();
     await openReport();
-    const progress = screen.getByRole("checkbox", { name: m.feedback_attach_progress_label() });
-    const contact = screen.getByRole("checkbox", { name: m.feedback_wants_reply_label() });
+    const progress = screen.getByRole("checkbox", { name: "Attach progress" });
+    const contact = screen.getByRole("checkbox", { name: "Email me back" });
     await fireEvent.click(progress);
     await fireEvent.click(contact);
-    await fireEvent.input(screen.getByRole("textbox", { name: m.feedback_email_aria() }), {
+    await fireEvent.input(screen.getByRole("textbox", { name: "Your email" }), {
       target: { value: "reporter@example.com" },
     });
     if (!include) {
       await fireEvent.click(progress);
       await fireEvent.click(contact);
     }
-    await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
@@ -157,8 +154,8 @@ it.each(["server", "network"])("keeps the edited report after a %s failure", asy
   renderError();
   const message = await openReport();
   await fireEvent.input(message, { target: { value: "Keep this report" } });
-  await fireEvent.click(screen.getByRole("button", { name: m.feedback_send_action() }));
-  await screen.findByRole("button", { name: m.feedback_copy_action() });
+  await fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  await screen.findByRole("button", { name: "Copy" });
   expect(message).toHaveValue("Keep this report");
-  expect(screen.getByRole("dialog", { name: m.toolbar_send_feedback() })).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "Send feedback" })).toBeInTheDocument();
 });

@@ -1,3 +1,8 @@
+import { posix, resolve } from "node:path";
+import { normalizePath } from "vite";
+
+import { uiMessageHelperGlob } from "./lib/wuchale-source-files.js";
+
 import type { Plugin } from "vite";
 import type { CacheKeyIdGeneratorContext } from "vitest/node";
 
@@ -18,11 +23,22 @@ export function skipsFsModuleCache({
   return id.endsWith(".svelte") && sourceCode.includes("<style");
 }
 
-/** Keeps styled Svelte components out of Vitest's fs module cache; see `skipsFsModuleCache`. */
-export function svelteCssCachePlugin(): Plugin {
+/** Keeps transforms that depend on plugin state out of Vitest's fs module cache. */
+export function svelteCssCachePlugin(wuchaleSources: readonly string[]): Plugin {
+  const catalogSources = new Set(wuchaleSources.map((file) => normalizePath(resolve(file))));
+  const uiMessageHelpers = normalizePath(resolve(uiMessageHelperGlob));
+  const appDirectory = `${normalizePath(resolve("src"))}/`;
   return {
     configureVitest({ defineCacheKeyGenerator }) {
-      defineCacheKeyGenerator((context) => (skipsFsModuleCache(context) ? false : undefined));
+      // A catalog edit can reorder Wuchale's numeric message indices in an unchanged source file.
+      defineCacheKeyGenerator((context) =>
+        skipsFsModuleCache(context) ||
+        (context.id.startsWith(appDirectory) && context.id.endsWith(".svelte")) ||
+        posix.matchesGlob(normalizePath(context.id), uiMessageHelpers) ||
+        catalogSources.has(normalizePath(context.id))
+          ? false
+          : undefined,
+      );
     },
     name: "mistria:svelte-css-cache",
   };

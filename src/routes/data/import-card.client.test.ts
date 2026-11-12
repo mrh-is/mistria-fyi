@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
-import * as m from "#lib/paraglide/messages.js";
 import { PROGRESS_STORAGE_KEY, QUARANTINE_STORAGE_KEY } from "#lib/stores/storage-keys.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -20,7 +19,7 @@ beforeEach(async () => {
 
 async function importFiles(files: File[]) {
   renderWithFeedback(ImportCard, { open: true });
-  await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
+  await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
     target: { files },
   });
 }
@@ -28,7 +27,7 @@ async function importFiles(files: File[]) {
 describe("finding the save file", () => {
   it("keeps the key caps & file suffix inside each step's sentence", async () => {
     renderWithFeedback(ImportCard, { open: true });
-    await fireEvent.click(screen.getByRole("button", { name: m.import_where_is_save() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Where is my save file?" }));
 
     const dialog = await screen.findByRole("dialog");
     const steps = within(dialog)
@@ -42,7 +41,7 @@ describe("finding the save file", () => {
 describe("save import", () => {
   it("offers a next step after success without a desktop transfer callback", async () => {
     await importFiles([buildSavFile({ player: { items_acquired: [] } })]);
-    const next = await screen.findByRole("link", { name: m.import_view_progress() });
+    const next = await screen.findByRole("link", { name: "See what’s left" });
     expect(next).toBeVisible();
     expect(next).toHaveAttribute("href", "/en/everything");
   });
@@ -66,26 +65,26 @@ describe("save import", () => {
     );
     const before = userState.exportBackup();
     await importFiles([save]);
-    const dialog = await screen.findByRole("dialog", { name: m.import_farm_title() });
+    const dialog = await screen.findByRole("dialog", { name: "This save is for a different farm" });
     expect(userState.exportBackup()).toBe(before);
-    await fireEvent.click(within(dialog).getByRole("button", { name: m.import_farm_cancel() }));
+    await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
     expect(userState.exportBackup()).toBe(before);
 
-    await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
+    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
       target: { files: [save] },
     });
     const retry = await screen.findByRole("dialog");
-    await fireEvent.click(within(retry).getByRole("button", { name: m.import_farm_merge() }));
+    await fireEvent.click(within(retry).getByRole("button", { name: "Merge progress" }));
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
     expect(userState.state.progress.renown).toBe(7);
     expect(userState.state.lastImport?.identity.saveNumber).toBe("456");
-    const source = screen.getByText(m.merge_imported_from({ files: "game-456-autosave.sav" }));
+    const source = screen.getByText("Imported from game-456-autosave.sav");
     expect(source).not.toBeVisible();
     expect(screen.queryByText("Imported from player.json")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: m.import_view_progress() })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "See what’s left" })).toHaveAttribute(
       "href",
       "/en/everything",
     );
@@ -112,14 +111,16 @@ describe("save import", () => {
 
     await importFiles([save]);
     const dialog = await screen.findByRole("dialog", {
-      name: m.sync_farm_question_title(),
+      name: "Is this the farm you’ve been tracking?",
     });
     expect(userState.exportBackup()).toBe(before);
-    await fireEvent.click(within(dialog).getByRole("button", { name: m.import_farm_cancel() }));
+    await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
     expect(dialog).toBeInTheDocument();
     expect(dialog).toHaveAttribute("data-state", "closed");
-    expect(dialog).toHaveTextContent(m.sync_farm_question_title());
-    expect(dialog).toHaveTextContent(m.import_farm_unnumbered_description());
+    expect(dialog).toHaveTextContent("Is this the farm you’ve been tracking?");
+    expect(dialog).toHaveTextContent(
+      "We can’t tell which farm this save belongs to. If you merge it, we’ll add its progress to what you’ve already tracked.",
+    );
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
 
     expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(stored);
@@ -137,9 +138,9 @@ describe("save import", () => {
     const history = await screen.findByTestId("last-import");
     expect(history).toHaveTextContent("Fern · Ada");
     expect(history).toHaveTextContent("Last imported now");
-    expect(history).toHaveTextContent(m.import_unknown_version());
+    expect(history).toHaveTextContent("unknown version");
     expect(screen.getByText(/Created in unknown version/)).not.toBeVisible();
-    expect(history.querySelector("summary")).toHaveTextContent(m.import_save_details());
+    expect(history.querySelector("summary")).toHaveTextContent("Save details");
     expect(userState.state.lastImport?.identity).toEqual({
       creationVersion: null,
       saveNumber: null,
@@ -160,7 +161,7 @@ describe("save import", () => {
     renderWithFeedback(ImportCard, { open: true });
     expect(screen.getByTestId("last-import")).toHaveTextContent("Save #123456 · Created in 0.11.7");
     expect(screen.getByTestId("last-import")).toHaveTextContent("Last imported 2 minutes ago");
-    await fireEvent.change(screen.getByLabelText(m.import_file_input_aria()), {
+    await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
       target: { files: [new File(["{"], "player.json")] },
     });
     await screen.findByRole("alert");
@@ -169,27 +170,23 @@ describe("save import", () => {
 
   it("announces no new data on a repeated import after a successful source-file summary", async () => {
     renderWithFeedback(ImportCard, { open: true });
-    const input = screen.getByLabelText(m.import_file_input_aria());
+    const input = screen.getByLabelText("Choose save files to import");
     const files = [buildSavFile({ player: { items_acquired: [] } })];
 
     await fireEvent.change(input, { target: { files } });
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
-    expect(
-      screen.getByText(m.merge_imported_from({ files: "game-1315159680-autosave.sav" })),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(m.merge_imported_from({ files: "game-1315159680-autosave.sav" })),
-    ).not.toBeVisible();
-    expect(screen.getByRole("link", { name: m.import_view_progress() })).toBeVisible();
+    expect(screen.getByText("Imported from game-1315159680-autosave.sav")).toBeInTheDocument();
+    expect(screen.getByText("Imported from game-1315159680-autosave.sav")).not.toBeVisible();
+    expect(screen.getByRole("link", { name: "See what’s left" })).toBeVisible();
     expect(screen.queryByRole("alert")).toBeNull();
 
     await fireEvent.change(input, { target: { files } });
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent(m.data_no_new_data_import());
+      expect(screen.getByRole("status")).toHaveTextContent("No new data to import");
     });
-    expect(screen.getByText(m.data_no_new_data_import(), { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("No new data to import", { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -201,14 +198,10 @@ describe("save import", () => {
     ]);
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
-    expect(
-      screen.getByText(m.merge_imported_from({ files: "game-1315159680-autosave.sav" })),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(m.import_warnings_summary({ count: 1 }), { exact: true }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Imported from game-1315159680-autosave.sav")).toBeInTheDocument();
+    expect(screen.getByText("1 warnings", { exact: true })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -220,7 +213,7 @@ describe("save import", () => {
     ]);
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent(m.import_status_completed());
+      expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
     expect(userState.lastSavePlaytime).toBe(3600.25);
     expect(userState.provenanceOf(`cosmetics/${cosmeticId}`)).toEqual({
@@ -252,7 +245,7 @@ describe("save import", () => {
       await importFiles(files);
     } else {
       renderWithFeedback(ImportCard, { open: true });
-      await fireEvent.drop(screen.getByRole("button", { name: m.import_browse_files() }), {
+      await fireEvent.drop(screen.getByRole("button", { name: "browse files" }), {
         dataTransfer: { files },
       });
     }
@@ -289,7 +282,7 @@ describe("save import atomicity", () => {
 
       await importFiles([buildSavFile({ player: { items_acquired: ["turnip"] } })]);
       expect(await screen.findByRole("alert")).toHaveTextContent(
-        m.persistence_warning_newer_data(),
+        "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
       );
       expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(newer);
       expect(localStorage.getItem(QUARANTINE_STORAGE_KEY)).toBe(quarantine);
@@ -319,7 +312,7 @@ describe("save import atomicity", () => {
 describe("save import file picker", () => {
   it("filters the picker to save files on desktop", () => {
     renderWithFeedback(ImportCard, { open: true });
-    expect(screen.getByLabelText(m.import_file_input_aria())).toHaveAttribute("accept", ".sav");
+    expect(screen.getByLabelText("Choose save files to import")).toHaveAttribute("accept", ".sav");
   });
 
   it("drops the accept filter on iPadOS, which reports a desktop Mac user agent", async () => {
@@ -330,7 +323,7 @@ describe("save import file picker", () => {
     });
     renderWithFeedback(ImportCard, { open: true });
     await waitFor(() => {
-      expect(screen.getByLabelText(m.import_file_input_aria())).not.toHaveAttribute("accept");
+      expect(screen.getByLabelText("Choose save files to import")).not.toHaveAttribute("accept");
     });
   });
 
