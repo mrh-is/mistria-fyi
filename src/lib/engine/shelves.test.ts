@@ -12,9 +12,28 @@ import {
 
 import type { ShelfRow } from "./shelves.js";
 
-const todo: ShelfRow = { completed: false, doable: true, doableAnywhere: true, shown: true };
-const waiting: ShelfRow = { completed: false, doable: false, doableAnywhere: false, shown: true };
-const done: ShelfRow = { completed: true, doable: false, doableAnywhere: false, shown: true };
+const sourceDisclosure = { hiddenCount: 0, visibleSources: [] };
+const todo: ShelfRow = {
+  completed: false,
+  doable: true,
+  doableAnywhere: true,
+  shown: true,
+  sourceDisclosure,
+};
+const waiting: ShelfRow = {
+  completed: false,
+  doable: false,
+  doableAnywhere: false,
+  shown: true,
+  sourceDisclosure,
+};
+const done: ShelfRow = {
+  completed: true,
+  doable: false,
+  doableAnywhere: false,
+  shown: true,
+  sourceDisclosure,
+};
 /** Doable only through a source the filters hide, though another source keeps it on the page. */
 const doableElsewhere: ShelfRow = { ...waiting, doableAnywhere: true };
 const hiddenTodo: ShelfRow = { ...doableElsewhere, shown: false };
