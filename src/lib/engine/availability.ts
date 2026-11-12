@@ -1,15 +1,21 @@
 import { trackerData } from "#lib/data/index.js";
+import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import { evaluateAvailabilityCondition, extractDisplayBadges } from "./availability-condition.js";
 import { isConditionVisible } from "./visibility.js";
 
 import type { WorldDay } from "#lib/engine/world-state.js";
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
-import type { TrackerData } from "#lib/types/tracker-data.js";
+import type { QuestId, QuestType, TrackerData } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 import type { AvailabilityContext, DisplayBadges } from "./availability-condition.js";
 import type { UserProgressionState } from "./visibility.js";
+
+const questTypeById = new Map<QuestId, QuestType>();
+for (const [type, quests] of recordEntries(trackerData.quests)) {
+  for (const questId of recordKeys(quests)) questTypeById.set(questId, type);
+}
 
 /** What decides whether a row is doable: today's season & weather, & the player's recorded progress. */
 export interface DayContext {
@@ -67,18 +73,13 @@ export function isSourceVisible(source: Source, state: UserProgressionState): bo
     return false;
   }
   if (source.type === "quest") {
-    for (const [type, quests] of Object.entries(trackerData.quests)) {
-      const quest = quests[source.questId];
-      if (
-        Object.hasOwn(quests, source.questId) &&
-        (!isConditionVisible(quest.visibility, state) ||
-          !isConditionVisible(
-            trackerData.categoryVisibility[type as keyof typeof trackerData.categoryVisibility],
-            state,
-          ))
-      ) {
-        return false;
-      }
+    const type = questTypeById.get(source.questId);
+    if (
+      type &&
+      (!isConditionVisible(trackerData.quests[type][source.questId].visibility, state) ||
+        !isConditionVisible(trackerData.categoryVisibility[type], state))
+    ) {
+      return false;
     }
   }
   return true;

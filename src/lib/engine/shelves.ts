@@ -1,6 +1,11 @@
-import { isDoableToday, isRowShown } from "#lib/engine/availability.js";
+import { getSourceDisclosure, isDoableToday, isRowShown } from "#lib/engine/availability.js";
 
-import type { AvailabilityRow, DayContext, ShowsSource } from "#lib/engine/availability.js";
+import type {
+  AvailabilityRow,
+  DayContext,
+  ShowsSource,
+  SourceDisclosure,
+} from "#lib/engine/availability.js";
 import type { CategoryProgress } from "#lib/engine/progress.js";
 
 /**
@@ -19,6 +24,8 @@ export interface ShelfRow {
   doableAnywhere: boolean;
   /** Whether the row matches the page's filters. */
   shown: boolean;
+  /** Available on source-backed rows for shelf reasons & the hidden-source count. */
+  sourceDisclosure?: SourceDisclosure;
 }
 
 /** How many rows each shelf loses to the filters. */
@@ -107,12 +114,16 @@ export function shelfFacts(
   showsSource?: ShowsSource,
 ): ShelfRow {
   const shown = isRowShown(row.sources, showsSource);
-  if (completed) return { completed, doable: false, doableAnywhere: false, shown };
+  const sourceDisclosure = getSourceDisclosure(row.sources, ctx.progressionState);
+  if (completed) {
+    return { completed, doable: false, doableAnywhere: false, shown, sourceDisclosure };
+  }
   const doableAnywhere = isDoableToday(row, ctx);
   return {
     completed,
     doable: doableAnywhere && (showsSource === undefined || isDoableToday(row, ctx, showsSource)),
     doableAnywhere,
     shown,
+    sourceDisclosure,
   };
 }

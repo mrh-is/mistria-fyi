@@ -64,6 +64,7 @@ describe("source projection", () => {
           availability: { type: "season", seasons: ["fall"] },
           storeId: "balor",
         }),
+        // Merri is gated in tracker data; keep this fixture focused on its seasonal availability.
         source({ type: "store", storeId: "unlisted_store" }),
       ]),
     ];

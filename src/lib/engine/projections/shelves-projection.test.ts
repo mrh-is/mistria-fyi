@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
-import { getSourceDisclosure, isSourceDoable } from "#lib/engine/availability.js";
+import { isSourceDoable } from "#lib/engine/availability.js";
 import { getAllProgress, getCategoryProgress } from "#lib/engine/categories.js";
 import { createProgressContext } from "#lib/engine/progress.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
@@ -154,30 +154,42 @@ describe("shelves across the real tracker data", () => {
   it("keeps the worked spoiler examples on shelves set only by visible sources", () => {
     const corn = trackerData.items["corn" as ItemId].sources;
     const spring = context();
-    const springCorn = getSourceDisclosure(corn, spring.progressionState);
-    expect(springCorn.hiddenCount).toBe(2);
-    expect(rowShelf(shelfFacts({ sources: corn }, false, spring))).toBe("notNow");
+    const springCorn = shelfFacts({ sources: corn }, false, spring);
+    expect(springCorn.sourceDisclosure?.hiddenCount).toBe(2);
+    expect(springCorn.sourceDisclosure?.visibleSources.map(({ type }) => type)).toEqual(["crop"]);
+    expect(rowShelf(springCorn)).toBe("notNow");
 
     const summerDateOnly = {
       ...spring,
       worldState: { ...spring.worldState, season: "summer" as const },
     };
-    expect(getSourceDisclosure(corn, summerDateOnly.progressionState).hiddenCount).toBe(2);
+    expect(shelfFacts({ sources: corn }, false, summerDateOnly).sourceDisclosure?.hiddenCount).toBe(
+      2,
+    );
 
     const summer = context("summer", { reachedSeason: "summer" });
-    expect(getSourceDisclosure(corn, summer.progressionState).hiddenCount).toBe(1);
-    expect(rowShelf(shelfFacts({ sources: corn }, false, summer))).toBe("todo");
+    const summerCorn = shelfFacts({ sources: corn }, false, summer);
+    expect(summerCorn.sourceDisclosure?.hiddenCount).toBe(1);
+    expect(summerCorn.sourceDisclosure?.visibleSources.map(({ type }) => type)).toEqual([
+      "store",
+      "crop",
+    ]);
+    expect(rowShelf(summerCorn)).toBe("todo");
 
     const marigold = trackerData.items["marigold" as ItemId].sources;
-    const marigoldSources = getSourceDisclosure(marigold, context("winter").progressionState);
-    expect(marigoldSources.hiddenCount).toBe(3);
-    expect(marigoldSources.visibleSources.some((source) => source.type === "letter")).toBe(false);
+    const marigoldFacts = shelfFacts({ sources: marigold }, false, context("winter"));
+    expect(marigoldFacts.sourceDisclosure?.hiddenCount).toBe(3);
+    expect(
+      marigoldFacts.sourceDisclosure?.visibleSources.some(({ type }) => type === "letter"),
+    ).toBe(false);
 
     const planter = trackerData.items["spring_festival_planter" as ItemId].sources;
-    const summerPlanter = getSourceDisclosure(planter, summer.progressionState);
-    expect(summerPlanter.hiddenCount).toBe(1);
-    expect(summerPlanter.visibleSources.some((source) => source.type === "quest")).toBe(false);
-    expect(rowShelf(shelfFacts({ sources: planter }, false, summer))).toBe("notNow");
+    const summerPlanter = shelfFacts({ sources: planter }, false, summer);
+    expect(summerPlanter.sourceDisclosure?.hiddenCount).toBe(1);
+    expect(
+      summerPlanter.sourceDisclosure?.visibleSources.some(({ type }) => type === "quest"),
+    ).toBe(false);
+    expect(rowShelf(summerPlanter)).toBe("notNow");
 
     const tulip = trackerData.items["tulip" as ItemId].sources;
     const tulipState = {
@@ -188,10 +200,12 @@ describe("shelves across the real tracker data", () => {
         ["request_for_pink_scallop_shell" as QuestId]: "unavailable" as const,
       },
     };
-    expect(getSourceDisclosure(tulip, tulipState).hiddenCount).toBe(3);
-    expect(
-      rowShelf(shelfFacts({ sources: tulip }, false, { ...spring, progressionState: tulipState })),
-    ).toBe("todo");
+    const tulipFacts = shelfFacts({ sources: tulip }, false, {
+      ...spring,
+      progressionState: tulipState,
+    });
+    expect(tulipFacts.sourceDisclosure?.hiddenCount).toBe(3);
+    expect(rowShelf(tulipFacts)).toBe("todo");
   });
 
   it("never lifts a category up a shelf by narrowing its filters", () => {
