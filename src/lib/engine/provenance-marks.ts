@@ -4,7 +4,7 @@
  * row's mark never changes but no two rows match. Pure: `tracker-checkbox.svelte` renders it.
  *
  * Every mark is drawn in the checkbox's 28-unit viewBox. The order of the random draws fixes each
- * mark, so keep it stable. See `https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-provenance-marks.md`.
+ * mark, so keep it stable. See `https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-30-provenance-marks.md`.
  */
 import type { ProvenanceSource } from "./provenance.js";
 

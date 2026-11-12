@@ -6,7 +6,7 @@ The player inks it (`manual`), the save stamps it (`save`), we pencil it in (`in
 old records were typed (`unknown`).
 
 Status: approved on the PR that adds this folder, with option A for quests. The decision record is
-[2026-10-30-provenance-marks](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-provenance-marks.md).
+[2026-10-30-provenance-marks](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-30-provenance-marks.md).
 The app draws them from `src/lib/engine/provenance-marks.ts`.
 
 ## What’s here

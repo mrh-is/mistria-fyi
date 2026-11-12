@@ -5,7 +5,7 @@ const config = {
   ignoreFiles: [
     // Where the tokens are defined, so it's the one place literals belong.
     "src/app.css",
-    // The ui/ components, forked from shadcn-svelte (see https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-own-ui-components.md).
+    // The ui/ components, forked from shadcn-svelte (see https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-20-own-ui-components.md).
     "src/lib/components/ui/**",
     // Generated.
     "src/lib/fonts/**",
