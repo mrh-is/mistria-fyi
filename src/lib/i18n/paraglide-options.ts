@@ -35,6 +35,9 @@ export const PARAGLIDE_OPTIONS = {
   // Plain TypeScript projects need declarations; SvelteKit can infer types from the generated JS.
   emitTsDeclarations: true,
   outdir: "./src/lib/paraglide",
+  // Keep the standalone paraglide:compile output aligned with Vite and available to Vitest
+  // imports from src/lib/paraglide/messages.js.
+  outputStructure: "message-modules",
   project: "./project.inlang",
   routeStrategies: UNLOCALIZED_PATH_PREFIXES.map((prefix) => ({
     exclude: true as const,
