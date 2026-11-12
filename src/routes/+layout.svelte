@@ -66,8 +66,6 @@
     void trackingReminders.checkBackup();
   });
   let hasToolbar = $derived(metadata.toolbar !== "hidden");
-  let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
-  let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
   // Toasts sit 8 pixels above the toolbar (12 pixels of inset plus 44-pixel buttons), or above an
   // open toolbar panel so they never cover it.
@@ -107,10 +105,13 @@
 
 <!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
 {#key page.data.locale}
-  <BookShell {hasToolbar} inert={overlayActive}>
+  <BookShell {hasToolbar}>
+    {#snippet tools()}
+      <ToolbarFooter {metadata} />
+    {/snippet}
     <!-- Until each screen's redesign lands, its content keeps the phone-width column it was built for. -->
     <div
-      class="mx-auto flex min-h-[inherit] max-w-lg flex-col px-safe landscape-phone:max-w-none {hasToolbar
+      class="mx-auto flex w-full max-w-lg flex-1 flex-col px-safe landscape-phone:max-w-none {hasToolbar
         ? 'pb-safe-offset-18'
         : ''}"
     >
@@ -125,8 +126,6 @@
       </RouteMain>
     </div>
   </BookShell>
-
-  <ToolbarFooter {metadata} bind:this={toolbarFooter} />
 
   <Toaster
     position="bottom-center"

@@ -7,13 +7,15 @@
   import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
   import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
 
+  import { getBookPanels } from "#lib/components/book/book-panels.svelte.js";
   import ThumbTabIcon from "#lib/components/book/thumb-tab-icon.svelte";
   import { thumbTabKeyForPathname, thumbTabs } from "#lib/components/book/thumb-tab-list.js";
   import * as m from "#lib/paraglide/messages.js";
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
-  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
+
+  const panels = getBookPanels();
 
   let tabs = $derived(thumbTabs(page.data.locale));
   let current = $derived(thumbTabKeyForPathname(deLocalizeHref(page.url.pathname)));
@@ -40,8 +42,8 @@
     <button
       class="thumb-index__row thumb-index__row--tool"
       type="button"
-      onclick={() => {
-        toolbarState.requestPanel("feedback");
+      onclick={(event) => {
+        panels.open("feedback", event.currentTarget);
       }}
     >
       <IconMessageReport class="size-4" />
@@ -53,8 +55,8 @@
       class="thumb-index__row thumb-index__row--tool"
       type="button"
       aria-controls="quick-settings-panel"
-      onclick={() => {
-        toolbarState.requestPanel("settings");
+      onclick={(event) => {
+        panels.open("settings", event.currentTarget);
       }}
     >
       <IconSettings class="size-4" />

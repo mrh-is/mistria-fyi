@@ -16,6 +16,7 @@ import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 const navigation = vi.hoisted(() => ({
   afterNavigate:
     vi.fn<(callback: (navigation: { type: string; shallow: boolean }) => void) => void>(),
+  onNavigate: vi.fn(),
 }));
 vi.mock("$app/navigation", () => navigation);
 
@@ -28,8 +29,9 @@ function afterNavigate(): void {
   }
 }
 
+// The shell makes the page inert while a panel is open or the picker runs.
 function overlayState() {
-  return screen.getByTestId("overlay-state").textContent;
+  return screen.getByTestId("page-content").closest("[inert]") ? "active" : "inactive";
 }
 
 function renderToolbar(toolbar?: PageMetadataInput["toolbar"]) {
@@ -105,22 +107,22 @@ describe("ToolbarFooter panels", () => {
     },
   );
 
-  it("opens & closes a panel the thumb-tab rail asks for", async () => {
+  it("opens & closes a panel from the rail's Settings", async () => {
     renderToolbar();
-    toolbarState.requestPanel("settings");
-    await tick();
+    await fireEvent.click(settingsButton());
     expect(settingsButton()).toHaveAttribute("aria-expanded", "true");
-    expect(toolbarState.activePanel).toBe("settings");
-    toolbarState.requestPanel("settings");
-    await tick();
+    await screen.findByRole("dialog", { name: m.toolbar_quick_settings() });
+    await fireEvent.click(settingsButton());
     expect(settingsButton()).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("doesn't replay a rail request made before the toolbar mounted", async () => {
-    toolbarState.requestPanel("settings");
+  it("keeps the rail's tools live but the tabs inert behind an open panel", async () => {
     renderToolbar();
-    await tick();
-    expect(settingsButton()).toHaveAttribute("aria-expanded", "false");
+    await fireEvent.click(screen.getByRole("button", { name: m.toolbar_send_feedback() }));
+    await screen.findByRole("dialog", { name: m.toolbar_send_feedback() });
+    const tabs = document.querySelector(`nav[aria-label="${m.book_tabs_label()}"]`);
+    expect(tabs).toHaveAttribute("inert");
+    expect(settingsButton().closest("[inert]")).toBeNull();
   });
 
   it("lists the thumb tabs in the Contents panel", async () => {
@@ -479,8 +481,8 @@ describe("ToolbarFooter picker state", () => {
     await fireEvent.click(screen.getByRole("button", { name: m.toolbar_send_feedback() }));
     await fireEvent.click(await screen.findByRole("button", { name: m.feedback_pick_action() }));
 
-    // `FeedbackPanel` starts picking; the toolbar and the root layout's `inert` (mirrored by the
-    // harness through `isOverlayActive`) are other components reading the same context.
+    // `FeedbackPanel` starts picking; the toolbar and the shell's `inert` are other components
+    // reading the same context.
     await waitFor(() => {
       expect(toolbarNav()).toHaveAttribute("hidden");
       expect(overlayState()).toBe("active");

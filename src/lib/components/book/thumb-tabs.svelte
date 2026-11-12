@@ -1,21 +1,18 @@
 <script lang="ts">
-  import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
-  import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
   import IconTags from "@tabler/icons-svelte-runes/icons/tags";
 
+  import RailTool from "#lib/components/book/rail-tool.svelte";
   import ThumbTabIcon from "#lib/components/book/thumb-tab-icon.svelte";
   import { thumbTabKeyForPathname, thumbTabs } from "#lib/components/book/thumb-tab-list.js";
   import * as m from "#lib/paraglide/messages.js";
   import { deLocalizeHref } from "#lib/paraglide/runtime.js";
-  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
-  // Pages without the toolbar (legal & dev pages) have no panels for Settings & Send a note to open.
-  // While a panel or dialog is open, the tabs go inert like the page: a click on one through the
-  // scrim would navigate & discard a feedback draft. Send a note & Settings stay live to toggle panels.
-  let { hasToolbar, inert = false }: { hasToolbar: boolean; inert?: boolean } = $props();
+  // While a panel or dialog is open, the tabs go inert like the page: a click on one would navigate
+  // & discard a feedback draft.
+  let { inert = false }: { inert?: boolean } = $props();
 
   let tabs = $derived(thumbTabs(page.data.locale));
   let current = $derived(thumbTabKeyForPathname(deLocalizeHref(page.url.pathname)));
@@ -34,86 +31,44 @@
   }}
 />
 
-<div class="rail">
-  <nav
-    class="thumb-tabs"
-    class:thumb-tabs--labeled={labeled}
-    aria-label={m.book_tabs_label()}
-    inert={inert || undefined}
+<nav
+  class="thumb-tabs"
+  class:thumb-tabs--labeled={labeled}
+  aria-label={m.book_tabs_label()}
+  inert={inert || undefined}
+>
+  <RailTool
+    aria-label={m.book_tabs_show_names()}
+    aria-pressed={labeled}
+    onclick={() => {
+      labeled = !labeled;
+    }}
   >
-    <button
-      class="rail__tool thumb-tabs__names"
-      type="button"
-      aria-label={m.book_tabs_show_names()}
-      aria-pressed={labeled}
-      onclick={() => {
-        labeled = !labeled;
-      }}
-    >
-      <IconTags class="size-4" />
-    </button>
-    <ul class="thumb-tabs__list">
-      {#each tabs as tab (tab.key)}
-        <li class="thumb-tabs__item">
-          <a
-            class="thumb-tab"
-            class:thumb-tab--home={tab.key === "home"}
-            class:thumb-tab--everything={tab.key === "everything"}
-            href={localizedHref(tab.path)}
-            aria-current={tab.key === current ? "page" : undefined}
-            style:--thumb-tab-color={tab.color}
-            style:--thumb-tab-ink={tab.ink}
-          >
-            <span class="thumb-tab__face">
-              <ThumbTabIcon key={tab.key} class="size-4" />
-            </span>
-            <span class="thumb-tab__name">{tab.name}</span>
-          </a>
-        </li>
-      {/each}
-    </ul>
-  </nav>
-
-  {#if hasToolbar}
-    <div class="rail__meta">
-      <button
-        class="rail__tool"
-        type="button"
-        aria-label={m.toolbar_send_feedback()}
-        aria-expanded={toolbarState.activePanel === "feedback"}
-        onclick={() => {
-          toolbarState.requestPanel("feedback");
-        }}
-      >
-        <IconMessageReport class="size-4" />
-      </button>
-      <button
-        class="rail__tool"
-        type="button"
-        aria-label={m.toolbar_quick_settings()}
-        aria-expanded={toolbarState.activePanel === "settings"}
-        aria-controls="quick-settings-panel"
-        onclick={() => {
-          toolbarState.requestPanel("settings");
-        }}
-      >
-        <IconSettings class="size-4" />
-      </button>
-    </div>
-  {/if}
-</div>
+    <IconTags class="size-4" />
+  </RailTool>
+  <ul class="thumb-tabs__list">
+    {#each tabs as tab (tab.key)}
+      <li class="thumb-tabs__item">
+        <a
+          class="thumb-tab"
+          class:thumb-tab--home={tab.key === "home"}
+          class:thumb-tab--everything={tab.key === "everything"}
+          href={localizedHref(tab.path)}
+          aria-current={tab.key === current ? "page" : undefined}
+          style:--thumb-tab-color={tab.color}
+          style:--thumb-tab-ink={tab.ink}
+        >
+          <span class="thumb-tab__face">
+            <ThumbTabIcon key={tab.key} class="size-4" />
+          </span>
+          <span class="thumb-tab__name">{tab.name}</span>
+        </a>
+      </li>
+    {/each}
+  </ul>
+</nav>
 
 <style>
-  .rail {
-    position: sticky;
-    top: 0;
-    display: flex;
-    height: 100dvh;
-    flex-direction: column;
-    padding-block: clamp(0.5rem, 3dvh, var(--size-book-margin));
-    view-transition-name: book-rail;
-  }
-
   .thumb-tabs {
     display: flex;
     min-height: 0;
@@ -236,44 +191,9 @@
     }
   }
 
-  .rail__meta {
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    gap: 0.375rem;
-    padding-top: 0.5rem;
-  }
-
-  /* Quiet tools: an outline on the cloth, brighter when you point at them. */
-  .rail__tool {
-    display: grid;
-    width: 2rem;
-    height: 2rem;
-    flex: none;
-    margin-left: 0.25rem;
-    place-items: center;
-    border: 1px solid color-mix(in srgb, var(--color-cover-ink) 22%, transparent);
-    background: none;
-    color: var(--color-cover-ink-muted);
-    transition:
-      color 150ms ease-out,
-      border-color 150ms ease-out;
-  }
-
-  .rail__tool:is(:hover, :focus-visible, [aria-expanded="true"], [aria-pressed="true"]) {
-    border-color: color-mix(in srgb, var(--color-cover-ink) 60%, transparent);
-    color: var(--color-cover-ink);
-  }
-
-  .rail__tool:focus-visible {
-    outline: 2px solid var(--color-cover-ink);
-    outline-offset: 2px;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .thumb-tab__face,
-    .thumb-tab__name,
-    .rail__tool {
+    .thumb-tab__name {
       transition: none;
     }
   }

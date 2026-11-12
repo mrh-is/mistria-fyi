@@ -151,7 +151,6 @@
   --color-page-gutter: rgb(30 44 52 / 10%);
   --shadow-page: 2px 2px 0 #e2e7e7, 4px 4px 0 #d6dddd, 0 10px 30px rgb(8 16 22 / 38%);
   --shadow-thumb-tab: inset 0 -2px 0 rgb(0 0 0 / 14%), 1px 1px 2px rgb(0 0 0 / 25%);
-  --size-book-header-height: 4.25rem;
   --size-book-margin: 1.5rem;
   --size-book-rail-width: 3.5rem;
   --size-book-wire-width: 2.5rem;
@@ -631,58 +630,31 @@ html:lang(ru) {
 }
 
 /*
- * Page turns (round four of #477): the page slides off the desk while the next one comes in under
- * it, ending in a settle of at most 2px, so the desk is never bare. `route-main.svelte` starts the
- * view transition and skips it under reduced motion, which leaves a plain cut. Only the page moves;
- * the cover, the wire, the thumb tabs, & the toolbar have names of their own so they swap in place
- * above it instead of being captured into the root snapshot under it. `--book-turn-shift` lines the
- * old page's snapshot up with where it was on screen, since the document's scroll can change in
- * between.
+ * Page turns. `page-turn.ts` (the book shell's navigation hook) adds `book-turning` to the root for
+ * each turn and animates the page's snapshots; these rules hold everything else still. The cover,
+ * the wire, the rail, & the toolbar have names of their own, so they swap in place above the page
+ * instead of being captured into the root snapshot under it. Other view transitions get the
+ * browser's defaults.
  */
-::view-transition-group(*),
-::view-transition-old(*),
-::view-transition-new(*) {
+:root.book-turning::view-transition-group(*),
+:root.book-turning::view-transition-old(*),
+:root.book-turning::view-transition-new(*) {
   animation: none;
 }
 
-::view-transition-old(*) {
+:root.book-turning::view-transition-old(*) {
   display: none;
 }
 
-::view-transition-old(book-page),
-::view-transition-new(book-page) {
+:root.book-turning::view-transition-old(book-page),
+:root.book-turning::view-transition-new(book-page) {
   mix-blend-mode: normal;
 }
 
-::view-transition-old(book-page) {
+/* The old page slides off over the new one. */
+:root.book-turning::view-transition-old(book-page) {
   display: block;
   z-index: 1;
-  translate: 0 var(--book-turn-shift, 0px);
-  animation: book-page-off 420ms cubic-bezier(0.55, 0, 0.75, 0.3) both;
-}
-
-::view-transition-new(book-page) {
-  animation: book-page-in 520ms cubic-bezier(0.45, 0.05, 0.25, 1) both;
-}
-
-@keyframes book-page-off {
-  to {
-    transform: translateX(-104%) rotate(-0.6deg);
-  }
-}
-
-@keyframes book-page-in {
-  from {
-    transform: translateX(32px);
-  }
-
-  72% {
-    transform: translateX(-2px);
-  }
-
-  to {
-    transform: none;
-  }
 }
 
 /* Toasts (an Undo, say) stay above the page while it turns. */

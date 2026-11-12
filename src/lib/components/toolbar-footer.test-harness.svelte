@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
-  import ThumbTabs from "#lib/components/book/thumb-tabs.svelte";
+  import BookShell from "#lib/components/book/book-shell.svelte";
   import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
   import { pageMetadata } from "#lib/data/page-metadata.js";
   import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -14,13 +14,13 @@
     metadata = { description: "Test page.", title: "Test" },
   }: { feedbackContext: FeedbackContext; metadata?: PageMetadataInput } = $props();
 
-  let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
-  let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
-
   setFeedbackContext(untrack(() => feedbackContext));
 </script>
 
-<!-- The rail holds Send a note & Settings at book widths, so the toolbar is tested with it. -->
-<ThumbTabs hasToolbar={metadata.toolbar !== "hidden"} />
-<ToolbarFooter metadata={pageMetadata(metadata)} bind:this={toolbarFooter} />
-<p data-testid="overlay-state">{overlayActive ? "active" : "inactive"}</p>
+<!-- The toolbar renders in the book shell, which owns its panels & holds Send a note & Settings on the rail at book widths. -->
+<BookShell hasToolbar={metadata.toolbar !== "hidden"}>
+  {#snippet tools()}
+    <ToolbarFooter metadata={pageMetadata(metadata)} />
+  {/snippet}
+  <p data-testid="page-content">Page</p>
+</BookShell>

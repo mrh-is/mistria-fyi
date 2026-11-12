@@ -8,7 +8,7 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 // The receiver's surfaces, against a following device that has every reason to show them.
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
-vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn() }));
+vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn(), onNavigate: vi.fn() }));
 
 const PROGRESS_KEY = "mistria-fyi:progress";
 const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
