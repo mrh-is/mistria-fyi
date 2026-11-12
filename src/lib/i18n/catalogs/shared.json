@@ -1830,35 +1830,6 @@
   },
   {
     "translations": {
-      "en": "Clear “{0}”",
-      "ja": "「{0}」を消す",
-      "zh-Hans": "清除“{0}”",
-      "zh-Hant": "清除「{0}」",
-      "es": "Borrar «{0}»",
-      "fr": "Effacer « {0} »",
-      "ko": "“{0}” 지우기",
-      "ru": "Очистить запрос «{0}»"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/search-guide-link.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "query"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Click the autosave in File Explorer and press Ctrl+C. Then come back here and press Ctrl+V.",
       "ja": "エクスプローラーで autosave をクリックして Ctrl+C を押します。ここに戻って Ctrl+V を押してください。",
       "zh-Hans": "在文件资源管理器中点击 autosave，按 Ctrl+C。然后回到这里按 Ctrl+V。",
@@ -2601,6 +2572,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Don’t see what you’re looking for? <0/>",
+      "ja": "お探しのものが見つかりませんか？ <0/>",
+      "zh-Hans": "没有找到想要的内容？ <0/>",
+      "zh-Hant": "沒找到你要找的嗎？ <0/>",
+      "es": "¿No ves lo que buscas? <0/>",
+      "fr": "Vous ne trouvez pas ce que vous cherchez ? <0/>",
+      "ko": "찾는 항목이 없나요? <0/>",
+      "ru": "Не нашли, что искали? <0/>"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/search-guide-link.svelte",
         "refs": [
           null
         ]
@@ -6803,14 +6796,14 @@
       "ja": "フィールドガイド全体から「{0}」を検索",
       "zh-Hans": "在整本田野指南中搜索“{0}”",
       "zh-Hant": "在整本田野指南中搜尋「{0}」",
-      "es": "Buscar «{0}» en toda la guía",
+      "es": "Buscar «{0}» en toda la guía de campo",
       "fr": "Chercher « {0} » dans tout le guide de terrain",
       "ko": "필드 가이드 전체에서 “{0}” 검색",
       "ru": "Искать «{0}» во всём полевом справочнике"
     },
     "references": [
       {
-        "file": "src/lib/components/search-guide-messages.ts",
+        "file": "src/lib/components/search-guide-link.svelte",
         "refs": [
           {
             "placeholders": [
@@ -7567,28 +7560,6 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Still looking for something? <0/> <1/>",
-      "ja": "まだお探しですか？ <0/> <1/>",
-      "zh-Hans": "还在找吗？ <0/> <1/>",
-      "zh-Hant": "還在找嗎？ <0/> <1/>",
-      "es": "¿Sigues buscando algo? <0/> <1/>",
-      "fr": "Vous cherchez toujours quelque chose ? <0/> <1/>",
-      "ko": "아직 찾고 있나요? <0/> <1/>",
-      "ru": "Всё ещё ищете? <0/> <1/>"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/search-guide-link.svelte",
         "refs": [
           null
         ]
