@@ -217,6 +217,11 @@ which `src/hooks.server.ts` also reads. The Vite plugin and `pnpm run paraglide:
 behaves the same whichever wrote it last. Don't call the `paraglide-js compile` CLI directly; it
 takes only a few options as flags and would emit a runtime with the default strategy.
 
+Both compilers emit `messages.d.ts` alongside `messages.js`. If a check reports TS7016 for that
+module, run `pnpm run paraglide:compile` to refresh the generated output. If the pipeline check
+started reaching app modules such as `data/item-variants.ts` after an import change, trace the new
+dependency too. Keep message lookups in the app so shared engine logic can run outside Vite.
+
 ## Adding a new UI string (agents & humans)
 
 When translating `messages/*.json`, look up in-game terms in
