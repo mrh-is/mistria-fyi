@@ -14,14 +14,24 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 
 const navigation = vi.hoisted(() => ({
-  afterNavigate: vi.fn<(callback: (navigation: { shallow: boolean }) => void) => void>(),
+  afterNavigate:
+    vi.fn<(callback: (navigation: { type: string; shallow: boolean }) => void) => void>(),
+  onNavigate: vi.fn(),
 }));
 vi.mock("$app/navigation", () => navigation);
 
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
+// Both the toolbar & the thumb tabs listen, so a navigation reaches every registered callback.
+function afterNavigate(): void {
+  for (const [onNavigated] of navigation.afterNavigate.mock.calls) {
+    onNavigated({ type: "link", shallow: false });
+  }
+}
+
+// The shell makes the page inert while a panel is open or the picker runs.
 function overlayState() {
-  return screen.getByTestId("overlay-state").textContent;
+  return screen.getByTestId("page-content").closest("[inert]") ? "active" : "inactive";
 }
 
 function renderToolbar(toolbar?: PageMetadataInput["toolbar"]) {
@@ -35,7 +45,10 @@ function renderToolbar(toolbar?: PageMetadataInput["toolbar"]) {
 }
 
 function toolbarNav() {
-  return screen.getByRole("navigation", { hidden: true });
+  // By label, not role: a picking toolbar is `hidden`, and the thumb tabs are a navigation too.
+  const nav = document.querySelector(`nav[aria-label="${m.toolbar_nav_label()}"]`);
+  if (!(nav instanceof HTMLElement)) throw new Error("no toolbar navigation");
+  return nav;
 }
 
 function settingsButton() {
@@ -93,6 +106,33 @@ describe("ToolbarFooter panels", () => {
       ).toHaveFocus();
     },
   );
+
+  it("opens & closes a panel from the rail's Settings", async () => {
+    renderToolbar();
+    await fireEvent.click(settingsButton());
+    expect(settingsButton()).toHaveAttribute("aria-expanded", "true");
+    await screen.findByRole("dialog", { name: m.toolbar_quick_settings() });
+    await fireEvent.click(settingsButton());
+    expect(settingsButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("keeps the rail's tools live but the tabs inert behind an open panel", async () => {
+    renderToolbar();
+    await fireEvent.click(screen.getByRole("button", { name: m.toolbar_send_feedback() }));
+    await screen.findByRole("dialog", { name: m.toolbar_send_feedback() });
+    const tabs = document.querySelector(`nav[aria-label="${m.book_tabs_label()}"]`);
+    expect(tabs).toHaveAttribute("inert");
+    expect(settingsButton().closest("[inert]")).toBeNull();
+  });
+
+  it("lists the thumb tabs in the Contents panel", async () => {
+    renderToolbar();
+    await fireEvent.click(screen.getByRole("button", { name: m.book_contents() }));
+    await screen.findByRole("heading", { name: m.book_contents() });
+    const panel = document.querySelector("#contents-panel");
+    if (!(panel instanceof HTMLElement)) throw new Error("no Contents panel");
+    expect(within(panel).getAllByRole("link")).toHaveLength(12);
+  });
 
   it("opens one panel at a time and reflects the open panel in aria-expanded", async () => {
     renderToolbar();
@@ -188,7 +228,7 @@ describe("ToolbarFooter panels", () => {
     await screen.findByRole("dialog", { name: m.toolbar_quick_settings() });
 
     pageStub.navigate("/en/museum");
-    navigation.afterNavigate.mock.calls[0]?.[0]({ shallow: false });
+    afterNavigate();
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -209,7 +249,7 @@ describe("ToolbarFooter panels", () => {
       "Draft feedback",
     );
     pageStub.navigate("/en/museum");
-    navigation.afterNavigate.mock.calls[0]?.[0]({ shallow: false });
+    afterNavigate();
     await tick();
     await fireEvent.click(feedbackButton);
     expect(screen.getByRole("textbox", { name: m.feedback_message_label() })).toHaveValue("");
@@ -250,8 +290,9 @@ describe("ToolbarFooter panels", () => {
   it("renders nothing while hidden", () => {
     renderToolbar("hidden");
 
-    expect(screen.queryByRole("navigation")).toBeNull();
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("navigation", { name: m.toolbar_nav_label() })).toBeNull();
+    expect(screen.queryByRole("button", { name: m.toolbar_search() })).toBeNull();
+    expect(screen.queryByRole("button", { name: m.toolbar_quick_settings() })).toBeNull();
   });
 });
 
@@ -384,7 +425,7 @@ describe("ToolbarFooter clock", () => {
   it("puts search, filter, & clock in that order, so the tab sits at the screen edge", () => {
     renderToolbar({ clock: true, filter: true, search: true });
 
-    const buttons = within(screen.getByRole("navigation")).getAllByRole("button");
+    const buttons = within(toolbarNav()).getAllByRole("button");
     expect(buttons.slice(-3).map((button) => button.getAttribute("aria-label"))).toEqual([
       "Search",
       "Visibility filters",
@@ -440,8 +481,8 @@ describe("ToolbarFooter picker state", () => {
     await fireEvent.click(screen.getByRole("button", { name: m.toolbar_send_feedback() }));
     await fireEvent.click(await screen.findByRole("button", { name: m.feedback_pick_action() }));
 
-    // `FeedbackPanel` starts picking; the toolbar and the root layout's `inert` (mirrored by the
-    // harness through `isOverlayActive`) are other components reading the same context.
+    // `FeedbackPanel` starts picking; the toolbar and the shell's `inert` are other components
+    // reading the same context.
     await waitFor(() => {
       expect(toolbarNav()).toHaveAttribute("hidden");
       expect(overlayState()).toBe("active");

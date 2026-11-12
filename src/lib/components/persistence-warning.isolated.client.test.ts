@@ -64,11 +64,13 @@ describe("PersistenceWarning", () => {
     expect(dismissPersistenceWarning).toHaveBeenCalledTimes(1);
   });
 
-  it("explains a load the browser refused, with nothing to back up", async () => {
-    const [title, options] = await shownToast("load-blocked");
-
-    expect(title).toBe(m.persistence_warning_load_title());
-    expect(options.description).toMatch(m.persistence_warning_load());
-    expect(options.action).toBeUndefined();
-  });
+  it.each<PersistenceFailureKind>(["load-blocked", "newer-data", "unreadable"])(
+    "leaves %s, which blocks every edit, to the page's notice instead of a toast",
+    async (kind) => {
+      failure.kind = kind;
+      render(PersistenceWarning);
+      await tick();
+      expect(toastError).not.toHaveBeenCalled();
+    },
+  );
 });
