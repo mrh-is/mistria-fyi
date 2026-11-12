@@ -102,10 +102,13 @@ it("returns to ordinary feedback after navigation, without reopening the report"
   renderError();
   await openReport();
   pageStub.navigate("/en/museum");
-  const afterNavigate = navigation.afterNavigate.mock.calls[0][0] as (event: {
-    shallow: boolean;
-  }) => void;
-  afterNavigate({ shallow: false });
+  // The layout's toolbar & thumb tabs both listen, so the navigation reaches every listener.
+  for (const [onNavigated] of navigation.afterNavigate.mock.calls) {
+    (onNavigated as (event: { type: string; shallow: boolean }) => void)({
+      type: "link",
+      shallow: false,
+    });
+  }
   await waitFor(() => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
