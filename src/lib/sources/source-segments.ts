@@ -1,4 +1,5 @@
 import plural from "#lib/i18n/catalogs/plural.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import {
   formatBiomeName,
   formatStoreName,
@@ -79,36 +80,36 @@ type VisibilityLookup<T> = Partial<Record<keyof T, VisibilityCondition>>;
 
 const SPOILERED: SourceSegment = { spoilered: true };
 
-type LocalizedLabel = (locale: LocaleCode) => string;
+type LocalizedLabel = () => string;
 
 const CRAFTING_STATION_LABELS: Record<CraftingStationId, LocalizedLabel> = {
-  blacksmithing: (_locale) => "Forge",
-  dragon_forge: (_locale) => "Dragon Forge",
-  kitchen: (_locale) => "Kitchen",
-  mill: (_locale) => "Mill",
-  stone_refinery: (_locale) => "Stone Refinery",
-  woodcrafting: (_locale) => "Crafting Station",
+  blacksmithing: () => "Forge",
+  dragon_forge: () => "Dragon Forge",
+  kitchen: () => "Kitchen",
+  mill: () => "Mill",
+  stone_refinery: () => "Stone Refinery",
+  woodcrafting: () => "Crafting Station",
 };
 
 const UPGRADE_MESSAGES: Record<UpgradeId, LocalizedLabel> = {
-  adept_kitchen: (_locale) => "Upgrade to the adept kitchen",
-  cozy_kitchen: (_locale) => "Upgrade to the cozy kitchen",
-  farm_bridge: (_locale) => "Expand your farm",
-  stairs: (_locale) => "Upgrade your home a fourth time",
+  adept_kitchen: () => "Upgrade to the adept kitchen",
+  cozy_kitchen: () => "Upgrade to the cozy kitchen",
+  farm_bridge: () => "Expand your farm",
+  stairs: () => "Upgrade your home a fourth time",
 };
 
 /** A store's `upgradeAction`; a store without one reads as upgrading. */
 const STORE_ACTION_CLAUSES: Record<StoreUpgradeAction, LocalizedLabel> = {
-  repair: (_locale) => /* @wc-include */ "after repairing",
+  repair: () => /* @wc-include */ "after repairing",
 };
 
 const SLOT_MARKER = /(\d+)/;
 
-export function buildBiomeLabel(
-  biomeId: MinesBiomeId,
-  lookups: SegmentLookups,
-  _locale = lookups.locale,
-): Segments {
+export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups): Segments {
+  return inLocale(lookups.locale, () => formatBiomeLabel(biomeId, lookups));
+}
+
+function formatBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups): Segments {
   const biome = requireBiome(biomeId, lookups.biomes);
 
   const condition: VisibilityCondition = { type: "mineFloor", floor: biome.floors.start };
@@ -128,11 +129,11 @@ export function buildBiomeLabel(
   ];
 }
 
-export function buildPerkLabel(
-  perkId: PerkId,
-  lookups: SegmentLookups,
-  _locale = lookups.locale,
-): Segments {
+export function buildPerkLabel(perkId: PerkId, lookups: SegmentLookups): Segments {
+  return inLocale(lookups.locale, () => formatPerkLabel(perkId, lookups));
+}
+
+function formatPerkLabel(perkId: PerkId, lookups: SegmentLookups): Segments {
   const perk = requireEntry(lookups.perks, perkId, "perks");
 
   const skill = requireEntry(lookups.skillNames, perk.skillId, "skillNames");
@@ -155,11 +156,11 @@ export function buildPerkLabel(
   ];
 }
 
-export function buildSourceSegments(
-  source: Source,
-  lookups: SegmentLookups,
-  _locale = lookups.locale,
-): Segments {
+export function buildSourceSegments(source: Source, lookups: SegmentLookups): Segments {
+  return inLocale(lookups.locale, () => formatSourceSegments(source, lookups));
+}
+
+function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments {
   const { locale } = lookups;
 
   switch (source.type) {
@@ -249,7 +250,7 @@ export function buildSourceSegments(
       const festival = requireEntry(lookups.festivals, source.festivalId, "festivals").name;
       const festivalDate = lookups.festivals[source.festivalId]?.date;
       const date = festivalDate
-        ? formatDateLabel(festivalDate.season, festivalDate.day, lookups.seasonNames, locale)
+        ? formatDate(festivalDate.season, festivalDate.day, lookups.seasonNames)
         : undefined;
       if (!source.storeId) {
         return [date ? `Obtain at the ${festival} (${date})` : `Obtain at the ${festival}`];
@@ -280,26 +281,26 @@ export function buildSourceSegments(
     case "mine_floor":
       return [`Reach Mines floor ${String(source.floor)}`];
     case "mine": {
-      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      const biomeLabel = formatBiomeLabel(source.biomeId, lookups);
       return fillMessage((slot) => `Mine in ${slot(biomeLabel)}`);
     }
     case "mine_fish": {
       if (!source.biomeId) return ["Fish in the Mines"];
-      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      const biomeLabel = formatBiomeLabel(source.biomeId, lookups);
       return fillMessage((slot) => `Fish in ${slot(biomeLabel)}`);
     }
     case "mines_chest": {
-      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      const biomeLabel = formatBiomeLabel(source.biomeId, lookups);
       if (!source.perkId) {
         return fillMessage((slot) => `Find in a Treasure Chest in ${slot(biomeLabel)}`);
       }
-      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      const perkLabel = formatPerkLabel(source.perkId, lookups);
       return fillMessage(
         (slot) => `Find in a Treasure Chest in ${slot(biomeLabel)}, with ${slot(perkLabel)}`,
       );
     }
     case "mines_dig_site": {
-      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      const biomeLabel = formatBiomeLabel(source.biomeId, lookups);
       if (!source.perkId) {
         return fillMessage((slot) => `Dig up in ${slot(biomeLabel)}`);
       }
@@ -326,13 +327,13 @@ export function buildSourceSegments(
       ];
     }
     case "perk": {
-      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      const perkLabel = formatPerkLabel(source.perkId, lookups);
       return fillMessage((slot) => `Unlock ${slot(perkLabel)}`);
     }
     case "horse_statue":
       return buildHorseStatueSegments(source, lookups);
     case "perk_drop": {
-      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      const perkLabel = formatPerkLabel(source.perkId, lookups);
       return fillMessage((slot) => `Random drop with ${slot(perkLabel)}`);
     }
     case "proposal": {
@@ -345,24 +346,24 @@ export function buildSourceSegments(
       const { day, season, year } = source.triggerDate;
       const date = year
         ? `${lookups.seasonNames[season]} ${String(day)}, Year ${String(year)}`
-        : formatDateLabel(season, day, lookups.seasonNames, locale);
+        : formatDate(season, day, lookups.seasonNames);
       return [`Receive in a letter after reaching ${date}`];
     }
     case "recipe": {
       const recipe = requireEntry(lookups.recipeNames, source.recipeId, "recipeNames");
       const stationId = requireEntry(lookups.recipeStations, source.recipeId, "recipeStations");
-      const station = CRAFTING_STATION_LABELS[stationId](_locale);
+      const station = CRAFTING_STATION_LABELS[stationId]();
       return productionSourceLabel(`Craft at ${station} via ${recipe}`, source.visibility);
     }
     case "renown":
       return [`Get the town rank to level ${String(source.level)}`];
     case "ritual_chamber": {
-      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      const perkLabel = formatPerkLabel(source.perkId, lookups);
       return fillMessage((slot) => `Craft at the Ritual Chamber with ${slot(perkLabel)}`);
     }
     case "scroll_bundle": {
       const storeName = buildStoreName(source.storeId, lookups);
-      const qualifier = buildStoreQualifier(source, lookups);
+      const qualifier = formatStoreQualifier(source, lookups);
       const bundleName = requireEntry(lookups.itemNames, source.bundleItemId, "itemNames");
       const bundleSegment: SourceSegment =
         lookups.entityVisibility && lookups.entityVisibility.type !== "always"
@@ -384,7 +385,7 @@ export function buildSourceSegments(
     }
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
-      const qualifier = buildStoreQualifier(source, lookups);
+      const qualifier = formatStoreQualifier(source, lookups);
       return fillMessage((slot) =>
         qualifier
           ? `Purchase from ${slot(storeName)} (${slot(qualifier)})`
@@ -404,7 +405,7 @@ export function buildSourceSegments(
       return [`Harvest from ${sapling}`];
     }
     case "upgrade":
-      return [UPGRADE_MESSAGES[source.upgradeId](locale)];
+      return [UPGRADE_MESSAGES[source.upgradeId]()];
 
     case "wedding":
       return ["Receive after getting married"];
@@ -426,6 +427,13 @@ export function buildStoreQualifier(
   source: Source & { type: "scroll_bundle" | "store"; storeId: StoreId },
   lookups: SegmentLookups,
 ): SourceSegment | undefined {
+  return inLocale(lookups.locale, () => formatStoreQualifier(source, lookups));
+}
+
+function formatStoreQualifier(
+  source: Source & { type: "scroll_bundle" | "store"; storeId: StoreId },
+  lookups: SegmentLookups,
+): SourceSegment | undefined {
   const { locale } = lookups;
   const sourceVisibility = source.visibility;
   if (!sourceVisibility || sourceVisibility.type === "always") return undefined;
@@ -436,7 +444,7 @@ export function buildStoreQualifier(
     storeGate.type !== "always" &&
     visibilityContains(sourceVisibility, storeGate);
   const storeAction = hasStoreGate
-    ? storeActionClause(lookups.stores[source.storeId]?.upgradeAction, locale)
+    ? storeActionClause(lookups.stores[source.storeId]?.upgradeAction)
     : undefined;
   const storeQuestIds = storeGate ? collectQuestIds(storeGate) : new Set<QuestId>();
   const stockClauses = source.availability
@@ -465,13 +473,21 @@ export function formatDateLabel(
   season: Season,
   day: number,
   seasonNames: SegmentLookups["seasonNames"],
-  _locale: LocaleCode,
+  locale: LocaleCode,
+): string {
+  return inLocale(locale, () => formatDate(season, day, seasonNames));
+}
+
+function formatDate(
+  season: Season,
+  day: number,
+  seasonNames: SegmentLookups["seasonNames"],
 ): string {
   return /* @wc-include */ `${seasonNames[season]} ${String(day)}`;
 }
 
 /** One "after one of" option: its first clause in branch form, any further ones appended. */
-function branchLabel(clauses: StoreClause[], _locale: LocaleCode): string {
+function branchLabel(clauses: StoreClause[]): string {
   return clauses
     .map(({ branch, clause }, index) => (index === 0 ? branch : /* @wc-include */ `, ${clause}`))
     .join("");
@@ -480,7 +496,6 @@ function branchLabel(clauses: StoreClause[], _locale: LocaleCode): string {
 function buildCookingChallengeSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   const recipeName = source.challengeRecipeId
     ? requireEntry(lookups.recipeNames, source.challengeRecipeId, "recipeNames")
@@ -502,7 +517,6 @@ function buildCookingChallengeSegments(
 function buildCrownQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const subject = crownRequestSubject(questName);
@@ -523,7 +537,6 @@ function buildCrownQuestSegments(
 function buildFetchQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   const villagerId = lookups.questVillagerIds[source.questId];
   const villagerName = villagerId
@@ -552,7 +565,6 @@ function buildFetchQuestSegments(
 function buildHeartQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
@@ -576,11 +588,7 @@ function buildHeartQuestSegments(
 }
 
 /** Each reviewed cutscene's own wording; the game names none of them. */
-function buildCutsceneLabel(
-  cutsceneId: CutsceneSourceId,
-  lookups: SegmentLookups,
-  _locale = lookups.locale,
-): string {
+function buildCutsceneLabel(cutsceneId: CutsceneSourceId, lookups: SegmentLookups): string {
   switch (cutsceneId) {
     case "elsie_dating_tutorial": {
       const villager = requireEntry(lookups.villagerNames, "elsie" as VillagerId, "villagerNames");
@@ -594,7 +602,6 @@ function buildCutsceneLabel(
 function buildHorseStatueSegments(
   source: Source & { type: "horse_statue" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   // A mount perk needs the mount itself; its row is hidden until that mount is revealed.
   if ("mountAppearanceId" in source) {
@@ -627,7 +634,6 @@ function buildLocationList(locationIds: LocationId[] | undefined, lookups: Segme
 function buildMissionQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
@@ -674,7 +680,6 @@ function buildStoreName(storeId: StoreId, lookups: SegmentLookups): Segments {
 function buildStoryQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
-  _locale = lookups.locale,
 ): Segments {
   const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
@@ -724,7 +729,6 @@ function describeStoreAvailability(
   condition: AvailabilityCondition,
   lookups: SegmentLookups,
   storeQuestIds: ReadonlySet<QuestId>,
-  _locale = lookups.locale,
 ): StoreClause[] | undefined {
   switch (condition.type) {
     case "all":
@@ -742,7 +746,7 @@ function describeStoreAvailability(
       );
       if (branches.some((branch) => !branch || branch.length === 0)) return undefined;
       const options = formatAlternatives(
-        branches.map((branch) => branchLabel(branch ?? [], lookups.locale)),
+        branches.map((branch) => branchLabel(branch ?? [])),
         lookups.locale,
       );
       return [same(/* @wc-include */ `after one of: ${options}`)];
@@ -885,19 +889,19 @@ function joinSegments(...parts: (SourceSegment | SourceSegment[])[]): Segments {
   return merged as Segments;
 }
 
-function monsterName(monsterId: string, lookups: SegmentLookups, _locale = lookups.locale): string {
+function monsterName(monsterId: string, lookups: SegmentLookups): string {
   if (monsterId === "any") return /* @wc-include */ "any monster";
   return requireEntry(lookups.monsterNames, monsterId, "monsterNames");
 }
 
-function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups, _locale = lookups.locale): string {
+function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups): string {
   const perk = requireEntry(lookups.perks, perkId, "perks");
   const skill = requireEntry(lookups.skillNames, perk.skillId, "skillNames");
   return /* @wc-include */ `the ${perk.name} perk (${skill} tier ${String(perk.tier)})`;
 }
 
-function storeActionClause(action: StoreUpgradeAction | undefined, _locale: LocaleCode): string {
-  return action ? STORE_ACTION_CLAUSES[action](_locale) : /* @wc-include */ "after upgrading";
+function storeActionClause(action: StoreUpgradeAction | undefined): string {
+  return action ? STORE_ACTION_CLAUSES[action]() : /* @wc-include */ "after upgrading";
 }
 
 function visibilityContains(

@@ -1,11 +1,12 @@
 import { getName, getNameTable } from "#lib/data/names.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { recordMap } from "#lib/utils/record.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { LocationId, PetSkinId } from "#lib/types/tracker-data.js";
 
-type NameMessage = (locale: LocaleCode) => string;
-type VariantMessage = (monster: string, locale: LocaleCode) => string;
+type NameMessage = () => string;
+type VariantMessage = (monster: string) => string;
 
 /**
  * Source locations the game never names: the farm, the Mines as a whole, & the dungeon have no
@@ -13,16 +14,16 @@ type VariantMessage = (monster: string, locale: LocaleCode) => string;
  * reads the pipeline's `locations` chunk.
  */
 const UNNAMED_LOCATION_MESSAGES = {
-  dungeon: (_locale) => /* @wc-include */ "the dungeon",
-  farm: (_locale) => /* @wc-include */ "your farm",
-  mines: (_locale) => /* @wc-include */ "the Mines",
+  dungeon: () => /* @wc-include */ "the dungeon",
+  farm: () => /* @wc-include */ "your farm",
+  mines: () => /* @wc-include */ "the Mines",
 } satisfies Record<string, NameMessage>;
 
 /** Water types have no game name at all, so these are interim machine translations. */
 const WATER_MESSAGES = {
-  ocean: (_locale) => "Ocean",
-  pond: (_locale) => "Pond",
-  river: (_locale) => "River",
+  ocean: () => "Ocean",
+  pond: () => "Pond",
+  river: () => "River",
 } satisfies Record<string, NameMessage>;
 
 /** Locations a source names through the game's own `locations` chunk. */
@@ -38,19 +39,19 @@ const GAME_NAMED_LOCATIONS = [
 ] as const;
 
 const VARIANT_MESSAGES = {
-  blue: (monster, _locale) => /* @wc-include */ `${monster} (blue)`,
-  cool: (monster, _locale) => /* @wc-include */ `${monster} (cool)`,
-  copper: (monster, _locale) => /* @wc-include */ `${monster} (copper)`,
-  gold: (monster, _locale) => /* @wc-include */ `${monster} (gold)`,
-  green: (monster, _locale) => /* @wc-include */ `${monster} (green)`,
-  iron: (monster, _locale) => /* @wc-include */ `${monster} (iron)`,
-  mistril: (monster, _locale) => /* @wc-include */ `${monster} (mistril)`,
-  orange: (monster, _locale) => /* @wc-include */ `${monster} (orange)`,
-  orange_mini: (monster, _locale) => `${monster} (small orange)`,
-  pink: (monster, _locale) => /* @wc-include */ `${monster} (pink)`,
-  purple: (monster, _locale) => /* @wc-include */ `${monster} (purple)`,
-  red: (monster, _locale) => /* @wc-include */ `${monster} (red)`,
-  silver: (monster, _locale) => /* @wc-include */ `${monster} (silver)`,
+  blue: (monster) => /* @wc-include */ `${monster} (blue)`,
+  cool: (monster) => /* @wc-include */ `${monster} (cool)`,
+  copper: (monster) => /* @wc-include */ `${monster} (copper)`,
+  gold: (monster) => /* @wc-include */ `${monster} (gold)`,
+  green: (monster) => /* @wc-include */ `${monster} (green)`,
+  iron: (monster) => /* @wc-include */ `${monster} (iron)`,
+  mistril: (monster) => /* @wc-include */ `${monster} (mistril)`,
+  orange: (monster) => /* @wc-include */ `${monster} (orange)`,
+  orange_mini: (monster) => `${monster} (small orange)`,
+  pink: (monster) => /* @wc-include */ `${monster} (pink)`,
+  purple: (monster) => /* @wc-include */ `${monster} (purple)`,
+  red: (monster) => /* @wc-include */ `${monster} (red)`,
+  silver: (monster) => /* @wc-include */ `${monster} (silver)`,
 } satisfies Record<string, VariantMessage>;
 
 /**
@@ -144,19 +145,21 @@ export function buildLocationNames(locale: LocaleCode): Record<NamedLocationId, 
     ...gameNames,
     // The Bell Tower's upper floor (its hidden chest) has no `name`; it shares the building's.
     bell_tower_f2: gameNames.bell_tower_f1,
-    ...recordMap(UNNAMED_LOCATION_MESSAGES, (message) => message(locale)),
+    ...inLocale(locale, () => recordMap(UNNAMED_LOCATION_MESSAGES, (message) => message())),
   };
 }
 
 /** Monster names, composed from family & variant in every locale (see {@link MonsterFamily}). */
 export function buildMonsterNames(locale: LocaleCode): Record<NamedMonsterId, string> {
   const families: Record<NamedMonsterId, MonsterFamily> = MONSTER_FAMILIES;
-  return recordMap(families, ({ family, variant }) => {
-    const monster = getName("pets/skins", family, locale);
-    return variant ? VARIANT_MESSAGES[variant](monster, locale) : monster;
-  });
+  return inLocale(locale, () =>
+    recordMap(families, ({ family, variant }) => {
+      const monster = getName("pets/skins", family, locale);
+      return variant ? VARIANT_MESSAGES[variant](monster) : monster;
+    }),
+  );
 }
 
 export function buildWaterNames(locale: LocaleCode): Record<NamedWaterType, string> {
-  return recordMap(WATER_MESSAGES, (message) => message(locale));
+  return inLocale(locale, () => recordMap(WATER_MESSAGES, (message) => message()));
 }

@@ -6,7 +6,7 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
   ["cosmetics", "cosmetics/subcategories", ...SEGMENT_LOOKUP_NAME_CHUNKS],
-  (_locale) => ({
+  () => ({
     accent: categoryColor("cosmetics"),
     description: "Track wardrobe & appearance unlocks in Fields of Mistria.",
     title: "Cosmetics",

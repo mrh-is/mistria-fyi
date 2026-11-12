@@ -382,7 +382,7 @@ describe("CI workflow browser suites", () => {
     "tests/accessibility/routes.spec.ts",
     "src/lib/i18n/catalogs/shared.json",
     "scripts/lib/wuchale-storage.js",
-    "wuchale.config.js",
+    "wuchale.config.ts",
     "_headers",
     "scripts/playwright-preview.ts",
     "scripts/playwright-preview-owner.ts",

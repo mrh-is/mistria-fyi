@@ -2,6 +2,7 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { questSources } from "#lib/engine/projections/quests.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { displayQuestName } from "#lib/utils/en-grammar.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -77,7 +78,7 @@ export function buildQuestSections(
       .filter(([id]) => !PREGNANCY_QUEST_IDS.has(id))
       .map(([id]) => questRow(questType, id, locale));
     if (questType === "heart") {
-      const craving = cravingRow(completed, locale);
+      const craving = inLocale(locale, () => cravingRow(completed, locale));
       if (craving) sortable.push(craving);
     }
     if (sortable.length === 0) continue;
@@ -86,7 +87,12 @@ export function buildQuestSections(
     const duplicateNames = findDuplicateNames(sortable.map(({ row }) => row.displayName));
     const rows = sortable.map(({ row, villager }) =>
       row.kind === "quest"
-        ? { ...row, subtitle: questSubtitle(row, villager, questType, duplicateNames, locale) }
+        ? {
+            ...row,
+            subtitle: inLocale(locale, () =>
+              questSubtitle(row, villager, questType, duplicateNames, locale),
+            ),
+          }
         : row,
     );
     sections.push({ questType, rows });
@@ -126,7 +132,7 @@ function comparator(
 
 function cravingRow(
   completed: DeepReadonly<ProgressState>,
-  _locale: LocaleCode,
+  locale: LocaleCode,
 ): SortableRow | undefined {
   const craving = getCravingQuest(completed);
   if (!craving.applicable) return undefined;
@@ -140,7 +146,7 @@ function cravingRow(
       questId: craving.questId,
       subtitle:
         craving.questId && craving.villagerId
-          ? getName("villagers", craving.villagerId, _locale)
+          ? getName("villagers", craving.villagerId, locale)
           : undefined,
       villagerId: craving.villagerId,
     },
@@ -189,14 +195,14 @@ function questSubtitle(
   villager: undefined | VillagerId,
   questType: QuestType,
   duplicateNames: Set<string>,
-  _locale: LocaleCode,
+  locale: LocaleCode,
 ): string | undefined {
   if (!villager) return undefined;
   const duplicated = duplicateNames.has(row.displayName);
   if (questType !== "fetch" && questType !== "heart" && !duplicated) return undefined;
-  const villagerName = getName("villagers", villager, _locale);
+  const villagerName = getName("villagers", villager, locale);
   const rewardRecipeName =
-    questType === "fetch" ? fetchRewardRecipeName(row.id, _locale) : undefined;
+    questType === "fetch" ? fetchRewardRecipeName(row.id, locale) : undefined;
   return duplicated && rewardRecipeName
     ? /* @wc-include */ `${villagerName} · ${rewardRecipeName}`
     : villagerName;

@@ -14,7 +14,7 @@ it("extracts a new UI message helper during development without registration", a
   vi.stubEnv("NODE_ENV", "development");
   const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));
   try {
-    const base = await getConfig(fileURLToPath(new URL("../wuchale.config.js", import.meta.url)));
+    const base = await getConfig(fileURLToPath(new URL("../wuchale.config.ts", import.meta.url)));
     const config: Config = {
       ...base,
       adapters: { "shared-script": base.adapters["shared-script"] },
@@ -25,7 +25,7 @@ it("extracts a new UI message helper during development without registration", a
     const catalogs = join(root, config.localesDir);
     await mkdir(sourceDirectory, { recursive: true });
     await mkdir(catalogs, { recursive: true });
-    await writeFile(join(catalogs, "shared-script.loader.js"), "export {};\n");
+    await writeFile(join(catalogs, "shared-script.loader.ts"), "export {};\n");
 
     const hub = await Hub.create("dev", config, root);
     const source = join(sourceDirectory, "backup-messages.ts");
@@ -33,7 +33,7 @@ it("extracts a new UI message helper during development without registration", a
     await writeFile(source, code);
     const result = await hub.transform(code, source);
 
-    expect(result.code).toContain("shared-script.loader.js");
+    expect(result.code).toContain("shared-script.loader.ts");
     expect(await readFile(join(catalogs, "shared.json"), "utf8")).toContain("Download a backup");
     expect(await checkCatalogs(config, root)).toContain(
       "Missing or incomplete es translation: Download a backup",
@@ -47,7 +47,7 @@ it("extracts a new UI message helper during development without registration", a
 it("discovers new components and requires translations again when their English changes", async () => {
   const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));
   try {
-    const base = await getConfig(fileURLToPath(new URL("../wuchale.config.js", import.meta.url)));
+    const base = await getConfig(fileURLToPath(new URL("../wuchale.config.ts", import.meta.url)));
     const config: Config = {
       ...base,
       adapters: { shared: base.adapters.shared },
@@ -59,7 +59,7 @@ it("discovers new components and requires translations again when their English 
     const source = join(components, "new-feature.svelte");
     await mkdir(components, { recursive: true });
     await mkdir(join(root, config.localesDir), { recursive: true });
-    await writeFile(join(root, config.localesDir, "shared.loader.js"), "export {};\n");
+    await writeFile(join(root, config.localesDir, "shared.loader.ts"), "export {};\n");
     await writeFile(source, "<button>Open your notebook</button>\n");
 
     const extract = async () => {

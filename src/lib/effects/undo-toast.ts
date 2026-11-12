@@ -2,7 +2,7 @@ import { toast } from "svelte-sonner";
 
 import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
 import plural from "#lib/i18n/catalogs/plural.js";
-import { getLocale } from "#lib/i18n/locale-runtime.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -24,12 +24,21 @@ export function questToastMessage(
   name: string,
   state: QuestState,
   newlyAdded: readonly RecipeId[],
-  _locale: LocaleCode,
+  locale: LocaleCode,
+): string {
+  return inLocale(locale, () => formatQuestToast(name, state, newlyAdded, locale));
+}
+
+function formatQuestToast(
+  name: string,
+  state: QuestState,
+  newlyAdded: readonly RecipeId[],
+  locale: LocaleCode,
 ): string {
   if (state === "obtained") return `Started “${name}”`;
   if (state === "none") return `Reset “${name}”`;
   if (newlyAdded.length === 1) {
-    const [recipe] = recipeDisplayNames([...newlyAdded], _locale);
+    const [recipe] = recipeDisplayNames([...newlyAdded], locale);
     return `Checked off “${name}” and unlocked “${recipe}”`;
   }
   if (newlyAdded.length > 1) {
@@ -52,19 +61,20 @@ export function showQuestToast(
   locale: LocaleCode,
   onUndo: () => void,
 ): void {
-  showStackedUndoToast(`quest:${name}`, questToastMessage(name, state, newlyAdded, locale), onUndo);
+  inLocale(locale, () => {
+    showStackedUndoToast(
+      `quest:${name}`,
+      formatQuestToast(name, state, newlyAdded, locale),
+      onUndo,
+    );
+  });
 }
 
 /**
  * Show a toast with an "Undo" action for check-off state changes. Toasts for different items
  * stack; a second toast for the same item replaces its first.
  */
-export function showUndoToast(
-  itemName: string,
-  completed: boolean,
-  onUndo: () => void,
-  _locale = getLocale(),
-): void {
+export function showUndoToast(itemName: string, completed: boolean, onUndo: () => void): void {
   const message = completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
   showStackedUndoToast(`item:${itemName}`, message, onUndo);
 }
@@ -74,7 +84,6 @@ export function showStarterItemsToast(
   count: number,
   undo: () => void,
   dismiss: () => void,
-  _locale = getLocale(),
 ): () => void {
   const id = toast(`We checked off your starter items (${count})`, {
     cancel: { label: "Undo starter checks", onClick: undo },
@@ -91,12 +100,7 @@ export function clearUndoToasts(): void {
   undoToasts.clear();
 }
 
-function showStackedUndoToast(
-  key: string,
-  message: string,
-  onUndo: () => void,
-  _locale = getLocale(),
-): void {
+function showStackedUndoToast(key: string, message: string, onUndo: () => void): void {
   // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
   if (userState.trackingLaneNeeded) return;
   const previous = undoToasts.get(key);

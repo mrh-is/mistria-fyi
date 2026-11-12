@@ -6,9 +6,6 @@
   import { messageParts } from "#lib/utils/message-parts.js";
 
   import type { Shelf } from "#lib/engine/shelves.js";
-  import type { LocaleCode } from "#lib/types/locale.js";
-
-  let { locale: _locale }: { locale: LocaleCode } = $props();
 
   let query = $derived(toolbarState.searchQuery.trim());
   // Reading the count walks the page's rows, so it waits until there's a note to give.

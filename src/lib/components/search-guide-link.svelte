@@ -7,7 +7,7 @@
   import type { LocaleCode } from "#lib/types/locale.js";
 
   /** Sits after a page's rows: an extra tool for a search the page didn't answer. */
-  let { locale: _locale }: { locale: LocaleCode } = $props();
+  let { locale }: { locale: LocaleCode } = $props();
 
   let query = $derived(toolbarState.searchQuery.trim());
 </script>
@@ -16,7 +16,7 @@
   <p class="search-guide">
     Don’t see what you’re looking for?
     <a
-      href={localizedHref("", { locale: _locale })}
+      href={localizedHref("", { locale })}
       onclick={() => {
         toolbarState.carrySearchToNextPage();
       }}

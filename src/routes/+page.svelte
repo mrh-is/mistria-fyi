@@ -24,6 +24,7 @@
   // than preserving a deep offset over reserved space; completion & undo keep the same query.
   $effect.pre(() => {
     const _query = toolbarState.searchQuery;
+    // Reset scroll on a locale navigation, even when the query carries over.
     const _locale = data.locale;
     if (content) content.scrollTop = 0;
   });

@@ -110,7 +110,7 @@
       <option value="source">Source</option>
     </select>
   </label>
-  <PageSearchStatus locale={data.locale} />
+  <PageSearchStatus />
   {#if grouping === "source"}
     <SourceContent locale={data.locale} {anchor} {progress} />
   {:else}

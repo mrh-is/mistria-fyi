@@ -30,7 +30,7 @@
 <div class="min-w-0" style="--primary: {color}">
   <PageHeader title={name} {progress} category={key} />
   <div class="flex flex-col gap-4 px-4 pt-4 pb-4">
-    <PageSearchStatus locale={data.locale} />
+    <PageSearchStatus />
     {@render children()}
     <SearchGuideLink locale={data.locale} />
   </div>

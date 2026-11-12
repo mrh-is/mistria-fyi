@@ -21,7 +21,6 @@ import {
   routeMetadataFiles,
   routeSvelteFiles,
   sharedLocaleFiles,
-  sharedLocaleSvelteFiles,
   sharedScriptFiles,
 } from "./scripts/lib/wuchale-source-files.js";
 import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
@@ -174,7 +173,7 @@ export default defineConfig(({ command }) => ({
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
   },
   plugins: [
-    wuchale({ configPath: path.join(import.meta.dirname, "wuchale.config.js") }),
+    wuchale({ configPath: path.join(import.meta.dirname, "wuchale.config.ts") }),
     tailwindcss(),
     sveltekit({
       adapter: withBarePathStubs(
@@ -236,7 +235,6 @@ export default defineConfig(({ command }) => ({
       ...routeMetadataFiles,
       ...routeSvelteFiles,
       ...sharedLocaleFiles,
-      ...sharedLocaleSvelteFiles,
       ...sharedScriptFiles,
       "scripts/lib/offline-copy.ts",
     ]),

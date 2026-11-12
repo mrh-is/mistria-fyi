@@ -1,7 +1,7 @@
 import { loadNames } from "#lib/data/names.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { localeFromPath } from "#lib/i18n/locale-path.js";
-import { getLocale } from "#lib/i18n/locale-runtime.js";
+import { getLocale, inLocale } from "#lib/i18n/locale-runtime.js";
 import { loadMetadataUi } from "#lib/i18n/metadata-ui.js";
 
 import type { NameChunk } from "#lib/data/names.js";
@@ -31,6 +31,7 @@ export function localizedPageLoad(
       loadNames(targetLocale, categories),
       loadMetadataUi(targetLocale),
     ]);
-    return { metadata: pageMetadata(metadata(locale)) };
+    // Preloading can run while the browser is still on the previous locale.
+    return { metadata: inLocale(locale, () => pageMetadata(metadata(locale))) };
   };
 }

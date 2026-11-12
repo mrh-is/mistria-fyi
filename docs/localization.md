@@ -323,6 +323,14 @@ These rules apply to every locale:
 
 ## Tooling
 
+Use `inLocale(locale, read)` for synchronous message lookups in a locale different from the current
+page or request, such as bilingual search or metadata preloading. Load the target catalog before
+entering the scope. On the server, ordinary lookups use the request locale across asynchronous work.
+
+The production [cold payload](../spikes/wuchale/compare-cold-app.js) and
+[warm navigation](../spikes/wuchale/compare-warm-app.ts) probes are retained for the
+[Paraglide 3 rematch](https://github.com/mrh-is/mistria-fyi/issues/669).
+
 `pnpm run check:i18n` checks every source adapter and catalog without writing files. It fails if
 extraction would change the catalog, if a message is obsolete, or if any of the eight locales lacks
 a translation or has invalid placeholders or plural forms. Changing the English creates a new source

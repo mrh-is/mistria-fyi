@@ -12,11 +12,11 @@ import {
   routeMetadataFiles,
   routeSvelteFiles,
   sharedLocaleFiles,
-  sharedLocaleSvelteFiles,
   sharedScriptFiles,
   sharedSvelteFiles,
-} from "./scripts/lib/wuchale-source-files.js";
-import { partitionedStorage } from "./scripts/lib/wuchale-storage.js";
+} from "#scripts/lib/wuchale-source-files";
+import { partitionedStorage } from "#scripts/lib/wuchale-storage";
+
 import { ROUTE_UI_GROUPS, SYNC_CODE_SOURCE } from "./src/lib/i18n/route-ui-groups.ts";
 import { LOCALE_CODES } from "./src/lib/types/locale.ts";
 
@@ -25,11 +25,8 @@ const errorStorage = partitionedStorage(["errors"], () => "errors");
 const sharedStorage = partitionedStorage(["shared"], () => "shared");
 const instanceRuntime = {
   // A module script can run before the route loads its catalog. Only instances read it.
-  initReactive: (
-    /** @type {unknown} */ _scope,
-    /** @type {string} */ _file,
-    /** @type {{ module: boolean }} */ context,
-  ) => (context.module ? null : false),
+  initReactive: (_scope: unknown, _file: string, context: { module: boolean }) =>
+    context.module ? null : false,
 };
 const routeStorage = partitionedStorage(
   [...ROUTE_UI_GROUPS.map(({ shard }) => `route-${shard}`), "route-shared"],
@@ -62,7 +59,6 @@ export default defineConfig({
     acquisition: scriptAdapter({
       files: acquisitionFiles,
       loader: "custom",
-      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, "_locale)") } },
       storage: partitionedStorage(["acquisition"], () => "acquisition"),
     }),
     "data-errors": scriptAdapter({
@@ -82,15 +78,12 @@ export default defineConfig({
       files: errorMetadataFile,
       loader: "custom",
       loading: { direct: true },
-      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, ", _locale)") } },
       storage: errorStorage,
     }),
     metadata: scriptAdapter({
       // Route-group directory names contain literal parentheses in SvelteKit.
       files: routeMetadataFiles.map((file) => file.replaceAll("(", "[(]").replaceAll(")", "[)]")),
       loader: "custom",
-      // Preloading uses the callback's target locale, even while the active page is different.
-      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, "_locale)") } },
       storage: partitionedStorage(["metadata"], () => "metadata"),
     }),
     offline: scriptAdapter({
@@ -117,17 +110,6 @@ export default defineConfig({
     "shared-locale": scriptAdapter({
       files: sharedLocaleFiles,
       loader: "custom",
-      // Presentation helpers receive the locale of the data they format.
-      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, "_locale)") } },
-      storage: sharedStorage,
-    }),
-    "shared-locale-svelte": adapter({
-      files: sharedLocaleSvelteFiles,
-      loader: "custom",
-      runtime: {
-        // Read the prop lazily: Wuchale inserts the runtime declaration before $props().
-        reactive: { wrapInit: (expr) => `$derived.by(() => ${expr.replace(/\)$/u, "_locale)")})` },
-      },
       storage: sharedStorage,
     }),
     "shared-script": scriptAdapter({

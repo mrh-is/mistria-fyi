@@ -1,23 +1,22 @@
-/// <reference lib="es2023.array" />
-/// <reference types="node" />
-
 import path from "node:path";
 import { getKey } from "wuchale";
 
-/** @typedef {Omit<import("wuchale").Item, "translations"> & { translations: Record<string, string | string[]> }} Row */
+import type { Item, StorageFactory } from "wuchale";
 
-/** @param {string} left @param {string} right */
-function compare(left, right) {
+type Row = Omit<Item, "translations"> & { translations: Record<string, string | string[]> };
+
+function compare(left: string, right: string): number {
   return left < right ? -1 : Number(left !== right);
 }
 
-/** @param {string[]} shards @param {(item: import("wuchale").Item) => string} shardFor @returns {import("wuchale").StorageFactory} */
-export function partitionedStorage(shards, shardFor) {
+export function partitionedStorage(
+  shards: string[],
+  shardFor: (item: Item) => string,
+): StorageFactory {
   return ({ fs, localesDir, root, sourceLocale }) => {
     const directory = path.resolve(root, localesDir);
     const files = shards.map((shard) => path.join(directory, `${shard}.json`));
-    /** @param {import("wuchale").Item} item */
-    const identity = (item) => {
+    const identity = (item: Item) => {
       const source = item.translations.get(sourceLocale);
       if (!source?.length) throw new Error(`Missing source message in ${directory}`);
       return getKey(source, item.context);
@@ -26,12 +25,11 @@ export function partitionedStorage(shards, shardFor) {
       files,
       key: JSON.stringify(files.toSorted()),
       async load() {
-        /** @type {Map<string, import("wuchale").Item>} */
-        const items = new Map();
+        const items = new Map<string, Item>();
         const contents = await Promise.all(files.map(async (file) => fs.read(file)));
         for (const [index, file] of files.entries()) {
           const content = contents[index];
-          const rows = /** @type {Row[]} */ (content === null ? [] : JSON.parse(content));
+          const rows = content === null ? [] : (JSON.parse(content) as Row[]);
           for (const row of rows) {
             const item = { ...row, translations: new Map(Object.entries(row.translations)) };
             const id = identity(item);
@@ -44,9 +42,8 @@ export function partitionedStorage(shards, shardFor) {
         }
         return [...items.values()];
       },
-      /** @param {import("wuchale").Item[]} items */
       async save(items) {
-        const partitions = new Map(shards.map((shard) => [shard, /** @type {Row[]} */ ([])]));
+        const partitions = new Map<string, Row[]>(shards.map((shard) => [shard, []]));
         for (const item of items.toSorted((a, b) => compare(identity(a), identity(b)))) {
           partitions.get(shardFor(item))?.push({
             ...item,

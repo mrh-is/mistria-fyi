@@ -7,10 +7,10 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
   ["animals", "mount", "pets/cosmetic_sets", "pets/skins", ...SEGMENT_LOOKUP_NAME_CHUNKS],
-  (_locale) => ({
+  (locale) => ({
     accent: categoryColor("animals"),
     description: "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
-    title: getName("ui", "animals", _locale),
+    title: getName("ui", "animals", locale),
     toolbar: { clock: true, filter: true, search: true },
   }),
 );

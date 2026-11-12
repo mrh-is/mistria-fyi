@@ -2,6 +2,7 @@ import { trackerData } from "#lib/data/index.js";
 import { nameCollator } from "#lib/data/names.js";
 import { sourceFilterLabel } from "#lib/data/source-filters.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { buildSourceSegments } from "#lib/sources/source-segments.js";
 
 import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
@@ -10,12 +11,16 @@ import type { SourceSection, SourceTypeGroup } from "#lib/presentation/source-gr
 import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
-export function sourceTypeLabel(group: SourceTypeGroup, _locale: LocaleCode): string {
+export function sourceTypeLabel(group: SourceTypeGroup, locale: LocaleCode): string {
+  return inLocale(locale, () => formatSourceTypeLabel(group, locale));
+}
+
+function formatSourceTypeLabel(group: SourceTypeGroup, locale: LocaleCode): string {
   if (group === "quests") return "Quests";
   if (group === "gifts") return "Spouse gifts";
   if (group === "monsters") return "Monsters";
   if (group === "progress") return /* @wc-context: everything progress */ "Progress";
-  return sourceFilterLabel(group, _locale);
+  return sourceFilterLabel(group, locale);
 }
 
 /** Names come from the same localized tables & gated sentences as acquisition cards. */

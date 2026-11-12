@@ -63,12 +63,6 @@ pipeline/output
 /.claude/settings.local.json
 CLAUDE.local.md
 
-# Isolated Wuchale spike build and generated catalog modules
-/spikes/wuchale/build/
-/spikes/wuchale/catalogs/.wuchale/*
-!/spikes/wuchale/catalogs/.wuchale/*.d.ts
-/spikes/wuchale/catalogs/data.js
-/spikes/wuchale/catalogs/plural.js
 /src/lib/i18n/catalogs/.wuchale/*
 !/src/lib/i18n/catalogs/.wuchale/*.d.ts
 /src/lib/i18n/catalogs/data.js

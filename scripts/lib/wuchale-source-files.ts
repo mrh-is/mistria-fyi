@@ -36,11 +36,6 @@ export const acquisitionFiles = [
   "src/lib/sources/source-segments.ts",
 ];
 
-export const sharedLocaleSvelteFiles = [
-  "src/lib/components/page-search-status.svelte",
-  "src/lib/components/search-guide-link.svelte",
-];
-
 export const routeSvelteFiles = ROUTE_UI_GROUPS.map(({ pattern }) => pattern);
 
 export const routeMetadataFiles = [
@@ -71,7 +66,6 @@ export const sharedSvelteFiles = {
     ...aboutSvelteFiles,
     errorSvelteFile,
     ...routeSvelteFiles,
-    ...sharedLocaleSvelteFiles,
   ],
   include: ["src/lib/components/**/*.svelte", "src/routes/**/*.svelte"],
 };

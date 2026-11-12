@@ -32,11 +32,25 @@ export function setServerLocaleReader(reader: () => LocaleCode | undefined): voi
   readServerLocale = reader;
 }
 
-/** Existing synchronous message callers can omit an explicit locale. */
+let localeOverride: LocaleCode | undefined;
 let testLocale: (() => LocaleCode) | undefined;
 
+/** Overrides message lookup for one synchronous call, including any nested lookups. */
+export function inLocale<T>(
+  locale: LocaleCode,
+  read: () => T & (T extends PromiseLike<unknown> ? never : unknown),
+): T {
+  const previous = localeOverride;
+  localeOverride = locale;
+  try {
+    return read();
+  } finally {
+    localeOverride = previous;
+  }
+}
+
 export function getLocale(): LocaleCode {
-  const scoped = testLocale?.() ?? readServerLocale?.();
+  const scoped = localeOverride ?? testLocale?.() ?? readServerLocale?.();
   if (scoped) return scoped;
   if (typeof location === "undefined") return BASE_LOCALE;
   return localeFromPath(location.pathname) ?? readLocaleCookie() ?? BASE_LOCALE;

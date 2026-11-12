@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { renderBarePathStub } from "#lib/i18n/bare-path-stub.js";
-import { getLocale } from "#lib/i18n/locale-runtime.js";
+import { getLocale, inLocale } from "#lib/i18n/locale-runtime.js";
 
 import { barePathStub, localizedHandle, securityHeaders } from "./hooks.server.js";
 
@@ -30,15 +30,35 @@ describe("request locale", () => {
     const japanese = await localizedHandle({
       event: makeEvent("/unknown", "ja"),
       resolve: async () => {
+        const override = inLocale("en", () => [
+          getLocale(),
+          inLocale("fr", getLocale),
+          getLocale(),
+        ]);
         await Promise.resolve();
-        return new Response(getLocale());
+        return new Response([...override, getLocale()].join(" "));
       },
     });
     firstRequest.resolve(undefined);
 
-    expect(await japanese.text()).toBe("ja");
+    expect(await japanese.text()).toBe("en fr en ja");
     const spanishResponse = await spanish;
     expect(await spanishResponse.text()).toBe("es es ltr");
+  });
+
+  it("restores the request locale when a synchronous lookup throws", async () => {
+    const response = await localizedHandle({
+      event: makeEvent("/es/about"),
+      resolve: () => {
+        expect(() =>
+          inLocale("en", () => {
+            throw new Error("Missing catalog");
+          }),
+        ).toThrow("Missing catalog");
+        return Promise.resolve(new Response(getLocale()));
+      },
+    });
+    expect(await response.text()).toBe("es");
   });
 });
 

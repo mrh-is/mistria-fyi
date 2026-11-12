@@ -1,5 +1,6 @@
 import { getName, nameCollator } from "#lib/data/names.js";
 import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -20,27 +21,27 @@ export interface CategoryInfo {
 const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
   almanac: (locale) => getName("ui", "almanac", locale),
   animals: (locale) => getName("ui", "animals", locale),
-  cosmetics: (_locale) => "Cosmetics",
-  mines: (_locale) => "Mines",
+  cosmetics: () => "Cosmetics",
+  mines: () => "Mines",
   museum: (locale) => getName("ui", "museum", locale),
-  quests: (_locale) => "Quests",
-  recipes: (_locale) => "Recipes",
+  quests: () => "Quests",
+  recipes: () => "Recipes",
   renown: (locale) => getName("ui", "renown", locale),
   skills: (locale) => getName("ui", "skills", locale),
   villagers: (locale) => getName("ui", "villagers", locale),
 };
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string> = {
-  almanac: (_locale) => "Crops, fish, forage, & more",
-  animals: (_locale) => "Breeds, variants, & cosmetics",
-  cosmetics: (_locale) => "Wardrobe & appearance",
-  mines: (_locale) => "Floors & spells",
-  museum: (_locale) => "Collections & donations",
-  quests: (_locale) => "Story & requests",
-  recipes: (_locale) => "Cooking & crafting",
+  almanac: () => "Crops, fish, forage, & more",
+  animals: () => "Breeds, variants, & cosmetics",
+  cosmetics: () => "Wardrobe & appearance",
+  mines: () => "Floors & spells",
+  museum: () => "Collections & donations",
+  quests: () => "Story & requests",
+  recipes: () => "Cooking & crafting",
   renown: (locale) => getName("ui", "town_rank", locale),
   skills: (locale) => getName("ui", "skill_levels", locale),
-  villagers: (_locale) => "Friendship & relationships",
+  villagers: () => "Friendship & relationships",
 };
 
 /** A category's color as a CSS `var()` reference; the one lookup that needs no locale. */
@@ -50,12 +51,12 @@ export function categoryColor<Key extends CategoryKey>(key: Key): `var(--color-c
 
 /** Lookup a single category by key. */
 export function categoryForKey(key: CategoryKey, locale: LocaleCode): CategoryInfo {
-  return {
+  return inLocale(locale, () => ({
     color: categoryColor(key),
     description: CATEGORY_DESCRIPTIONS[key](locale),
     href: CATEGORIES[key].route,
     name: CATEGORY_NAMES[key](locale),
-  };
+  }));
 }
 
 /** Look up a category key from its public route. */
@@ -65,7 +66,7 @@ export function categoryKeyForPathname(pathname: string): CategoryKey | undefine
 
 /** Display name for a category, or the raw key when it isn't a known category. */
 export function categoryNameForKey(key: string, locale: LocaleCode): string {
-  return isCategoryKey(key) ? CATEGORY_NAMES[key](locale) : key;
+  return isCategoryKey(key) ? inLocale(locale, () => CATEGORY_NAMES[key](locale)) : key;
 }
 
 export function sortCategoryKeysByName(
@@ -74,8 +75,8 @@ export function sortCategoryKeysByName(
 ): CategoryKey[] {
   return [...keys].toSorted((left, right) => {
     const nameOrder = nameCollator(locale).compare(
-      CATEGORY_NAMES[left](locale),
-      CATEGORY_NAMES[right](locale),
+      categoryNameForKey(left, locale),
+      categoryNameForKey(right, locale),
     );
     return nameOrder === 0 ? left.localeCompare(right) : nameOrder;
   });

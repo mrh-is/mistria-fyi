@@ -7,11 +7,11 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = localizedPageLoad(
   ["dates", "items", ...SEGMENT_LOOKUP_NAME_CHUNKS],
-  (_locale) => ({
+  (locale) => ({
     accent: categoryColor("almanac"),
     description:
       "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
-    title: getName("ui", "almanac", _locale),
+    title: getName("ui", "almanac", locale),
     toolbar: { clock: true, filter: true, search: true },
   }),
 );

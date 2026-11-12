@@ -4,9 +4,9 @@ import { localizedPageLoad } from "#lib/data/page-load.js";
 
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = localizedPageLoad(["town-ranks"], (_locale) => ({
+export const load: PageLoad = localizedPageLoad(["town-ranks"], (locale) => ({
   accent: categoryColor("renown"),
   description: "Track your town rank, renown, & rewards in Fields of Mistria.",
-  title: getName("ui", "renown", _locale),
+  title: getName("ui", "renown", locale),
   toolbar: { search: true },
 }));

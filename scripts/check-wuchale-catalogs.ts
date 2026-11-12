@@ -1,16 +1,16 @@
-/// <reference types="node" />
+import "#scripts/lib/require-pinned-node";
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { getConfig, Hub } from "wuchale";
 
-/** @param {import("wuchale").Config} config @param {string} root */
-export async function checkCatalogs(config, root) {
+import type { Config, FS } from "wuchale";
+
+export async function checkCatalogs(config: Config, root: string): Promise<string[]> {
   // Wuchale's check uses an in-memory extraction pass. Supply no-op writes so CI never
   // changes the translator files, even when the source and catalogs disagree.
-  /** @type {import("wuchale").FS} */
-  const fs = {
+  const fs: FS = {
     exists: async (file) => (await fs.read(file)) !== null,
     mkdir: () => undefined,
     async read(file) {
@@ -60,7 +60,7 @@ export async function checkCatalogs(config, root) {
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
-  const configPath = path.resolve(process.argv[2] ?? "wuchale.config.js");
+  const configPath = path.resolve(process.argv[2] ?? "wuchale.config.ts");
   const config = await getConfig(configPath);
   const errors = await checkCatalogs(config, path.dirname(configPath));
   if (errors.length > 0) {

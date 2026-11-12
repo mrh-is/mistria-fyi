@@ -11,15 +11,12 @@
         "src/hooks.ts",
         // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
         "relay/worker.ts",
-        // This separate SvelteKit fixture has its own Vite config and generated module graph.
-        "spikes/wuchale/{*.js,src/**/*.{js,svelte}}",
-        // The production benchmark is run directly with tsx.
+        // Production benchmarks are run directly.
+        "spikes/wuchale/compare-cold-app.js",
         "spikes/wuchale/compare-warm-app.ts",
         // Wuchale injects loader imports and generates the JS peers of these declarations.
-        "spikes/wuchale/catalogs/*.svelte.js",
-        "spikes/wuchale/catalogs/.wuchale/*.d.ts",
-        "wuchale.config.js",
-        "src/lib/i18n/catalogs/*.loader.js",
+        "wuchale.config.ts",
+        "src/lib/i18n/catalogs/*.loader.ts",
         "src/lib/i18n/catalogs/.wuchale/*.d.ts",
       ],
       "ignore": [
@@ -35,8 +32,6 @@
         // the npm SDK of the same name & reports it unlisted. We do not use that package.
         "cloudflare",
       ],
-      // The separate spike's Vite config resolves these fixture aliases.
-      "ignoreUnresolved": ["#fixture-ui", "#fixture-search", "#fixture-settings"],
     },
     "pipeline": {
       // The atlas CLI starts through `cd pipeline && tsx src/atlas/main.ts`, which Knip does not follow.

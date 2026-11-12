@@ -24,7 +24,7 @@ function report(visible: number, filtered: Partial<FilteredCounts> = {}): void {
 async function search(query: string) {
   toolbarState.openSearch();
   toolbarState.setSearchQuery(query);
-  const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+  const view = renderWithFeedback(PageSearchStatus);
   await tick();
   return view;
 }
@@ -37,7 +37,7 @@ describe("PageSearchStatus", () => {
   // Client test files share this store, so a search left open would filter their pages.
 
   it("stays quiet without a search", () => {
-    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    const view = renderWithFeedback(PageSearchStatus);
 
     expect(view.getByRole("status")).toHaveTextContent("");
     expect(view.container.querySelector("[data-page-search-status]")).toBeNull();
@@ -73,7 +73,7 @@ describe("PageSearchStatus", () => {
     report(3, { todo: 2 });
     toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
     toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
-    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    const view = renderWithFeedback(PageSearchStatus);
     await tick();
 
     expect(view.getByRole("status")).toHaveTextContent("2 To do items are being filtered out.");
@@ -87,7 +87,7 @@ describe("PageSearchStatus", () => {
     report(0);
     toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
     toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
-    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    const view = renderWithFeedback(PageSearchStatus);
     await tick();
 
     expect(view.getByRole("status")).toHaveTextContent("Your filters leave nothing on this page.");
