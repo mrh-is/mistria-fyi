@@ -279,7 +279,7 @@ describe("the notes", () => {
     await renderNote();
     report({ upload: "update" });
     await tick();
-    expect(screen.getByText(/This tracker needs a refresh/u)).toBeVisible();
+    expect(screen.getByText(/The field guide on this device needs a refresh/u)).toBeVisible();
     expect(screen.getByRole("button", { name: m.sync_update_refresh() })).toBeVisible();
     expect(screen.queryByText(m.sync_unreachable_title())).toBeNull();
   });

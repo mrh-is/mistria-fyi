@@ -69,9 +69,11 @@
       <li>{m.privacy_feedback_item_email()}</li>
     </ul>
     <p>
-      {m.privacy_feedback_public_before_bold()} <strong>{m.privacy_feedback_public_bold()}</strong>
-      {m.privacy_feedback_public_middle_sync_log()}
-      <strong>{m.privacy_feedback_public_bold2()}</strong>.
+      {#each messageParts( (slot) => m.privacy_feedback_public_body( { issue: slot("issue"), visible: slot("visible") } ) ) as part, index (index)}
+        {#if typeof part === "string"}{part}{:else if part.slot === "issue"}<strong
+            >{m.privacy_feedback_public_bold()}</strong
+          >{:else}<strong>{m.privacy_feedback_public_bold2()}</strong>{/if}
+      {/each}
     </p>
     <p>
       {m.privacy_feedback_email_storage()}

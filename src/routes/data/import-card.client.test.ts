@@ -25,6 +25,20 @@ async function importFiles(files: File[]) {
   });
 }
 
+describe("finding the save file", () => {
+  it("keeps the key caps & file suffix inside each step's sentence", async () => {
+    renderWithFeedback(ImportCard, { open: true });
+    await fireEvent.click(screen.getByRole("button", { name: m.import_where_is_save() }));
+
+    const dialog = await screen.findByRole("dialog");
+    const steps = within(dialog)
+      .getAllByRole("listitem")
+      .map((step) => step.textContent.replaceAll(/\s+/gu, " ").trim());
+    expect(steps).toContain("Press Win + R to open the Run dialog");
+    expect(steps).toContain("Drag the file ending in -autosave.sav onto the drop zone above.");
+  });
+});
+
 describe("save import", () => {
   it("offers a next step after success without a desktop transfer callback", async () => {
     await importFiles([buildSavFile({ player: { items_acquired: [] } })]);

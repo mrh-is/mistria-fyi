@@ -77,7 +77,7 @@ describe("OverallProgress", () => {
 
     expect(
       queries.getByRole("img", {
-        name: new RegExp(`^Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%$`),
+        name: new RegExp(`^Всего выполнено 0 из ${formatNumber(expectedTotal, "ru")}, 0\u00A0%$`),
       }),
     ).toBeTruthy();
   });

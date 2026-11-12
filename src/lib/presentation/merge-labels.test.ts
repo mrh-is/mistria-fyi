@@ -87,8 +87,10 @@ describe("formatMergeCount", () => {
   });
 
   it("uses the supplied locale for both wording and grouped numbers", () => {
-    expect(formatMergeCount("almanac", 1737, "fr")).toBe("Almanach : +1\u202F737");
-    expect(formatMergeCount("mineFloor", 1234, "fr")).toBe("Étage de mine : +1\u202F234 étages");
+    expect(formatMergeCount("almanac", 1737, "fr")).toBe("Catalogue\u00A0: +1\u202F737");
+    expect(formatMergeCount("mineFloor", 1234, "fr")).toBe(
+      "Étage de mine\u00A0: +1\u202F234 étages",
+    );
   });
 
   it("formats a boolean field without a count prefix", () => {

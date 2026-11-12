@@ -115,16 +115,18 @@ describe("privacy page sync sections", () => {
     const warnings: Record<string, string> = {
       en: "Avoid including personal information",
       es: "Evita incluir información personal",
-      fr: "Évitez d'inclure des informations personnelles",
+      fr: "Évitez d’inclure des informations personnelles",
       ja: "個人情報を含めないでください",
-      ko: "개인정보를 포함하지 마세요",
+      ko: "개인정보는 넣지 마세요",
       ru: "Не указывайте личную информацию",
       "zh-Hans": "请不要在留言中包含个人信息",
       "zh-Hant": "請不要在留言中包含個人資訊",
     };
 
     for (const locale of locales) {
-      expect(m.privacy_feedback_public_middle_sync_log({}, { locale })).toContain(warnings[locale]);
+      expect(m.privacy_feedback_public_body({ issue: "", visible: "" }, { locale })).toContain(
+        warnings[locale],
+      );
     }
   });
 });

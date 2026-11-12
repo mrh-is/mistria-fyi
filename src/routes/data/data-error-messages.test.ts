@@ -30,7 +30,7 @@ describe("data error messages", () => {
     overwriteGetLocale(() => "fr");
 
     expect(formatSaveImportWarning({ code: "not-a-list", path: "player.perks" })).toBe(
-      "player.perks n’est pas une liste ; ignoré",
+      "player.perks n’est pas une liste\u00A0; ignoré",
     );
   });
 
