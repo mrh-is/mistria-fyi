@@ -8,24 +8,12 @@ describe("parseCliOptions", () => {
   it("accepts the documented flags and one assets directory", () => {
     expect(parseCliOptions(["--", "input/assets", "--version=2.3.4", "--sprites"])).toEqual({
       assetsDir: "input/assets",
-      gameTermLexiconOnly: false,
       parseOnly: false,
       parseProfile: undefined,
       sprites: true,
       version: "2.3.4",
       villagerSpritesOnly: false,
     });
-  });
-
-  it("accepts the lexicon-only flag with a version and rejects other extraction modes", () => {
-    expect(
-      parseCliOptions(["--game-term-lexicon-only", "--version=current"]).gameTermLexiconOnly,
-    ).toBe(true);
-    for (const flag of ["--parse-only", "--sprites", "--villager-sprites-only"]) {
-      expect(() => parseCliOptions(["--game-term-lexicon-only", flag])).toThrow(
-        /cannot be combined/,
-      );
-    }
   });
 
   it.each(["--sprite", "--version", "--parse-profile=other"])(
