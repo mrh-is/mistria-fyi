@@ -11,8 +11,11 @@ vi.mock("#lib/data/names.js", () => names);
 
 const { load } = await import("./+layout.js");
 
-async function run(pathname: string): Promise<{ locale: string }> {
-  return (await load({ url: new URL(pathname, "https://mistria.fyi") } as never)) as {
+async function run(pathname: string, routeId: null | string): Promise<{ locale: string }> {
+  return (await load({
+    route: { id: routeId },
+    url: new URL(pathname, "https://mistria.fyi"),
+  } as never)) as {
     locale: string;
   };
 }
@@ -23,13 +26,13 @@ describe("root layout locale", () => {
   });
 
   it("uses the request locale for unprefixed errors", async () => {
-    const data = await run("/unknown");
+    const data = await run("/unknown", null);
     expect(data.locale).toBe("ja");
     expect(names.loadNames).toHaveBeenCalledWith("ja", ["ui"]);
   });
 
   it("resolves the target URL independently of the active locale", async () => {
-    const data = await run("/ru");
+    const data = await run("/ru", "/");
     expect(data.locale).toBe("ru");
     expect(runtime.getLocale).not.toHaveBeenCalled();
   });

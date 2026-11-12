@@ -1,4 +1,5 @@
 import { loadNames } from "#lib/data/names.js";
+import { loadAcquisitionUi } from "#lib/i18n/acquisition-ui.js";
 import { localeFromPath } from "#lib/i18n/locale-path.js";
 import { getLocale } from "#lib/i18n/locale-runtime.js";
 import { loadRouteUi } from "#lib/i18n/route-ui.js";
@@ -20,11 +21,17 @@ export const prerender = true;
  * The `ui` chunk (the game's own vocabulary: category names, seasons, quest types, …) is awaited
  * here because sitewide chrome reads it on every route.
  */
-export const load: LayoutLoad = async ({ url }) => {
+export const load: LayoutLoad = async ({ route, url }) => {
   const locale = localeFromPath(url.pathname) ?? getLocale();
+  const usesAcquisitionCopy =
+    route.id === "/everything" || route.id?.startsWith("/(category)/") === true;
   const [, catalogLoadFailed] = await Promise.all([
     loadNames(locale, ["ui"]),
-    Promise.all([loadSharedUi(locale), loadRouteUi(locale, url.pathname)]).then(
+    Promise.all([
+      loadSharedUi(locale),
+      loadRouteUi(locale, url.pathname),
+      usesAcquisitionCopy ? loadAcquisitionUi(locale) : undefined,
+    ]).then(
       () => false,
       (error: unknown) => {
         // Keep the root layout available when a browser cannot fetch a catalog.

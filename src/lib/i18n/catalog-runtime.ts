@@ -5,6 +5,7 @@ import type { CatalogModule, Runtime } from "wuchale/runtime";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 interface CatalogRuntime {
+  has: (locale: LocaleCode) => boolean;
   load: (locale: LocaleCode) => Promise<void>;
   read: (locale: LocaleCode) => Runtime;
 }
@@ -15,6 +16,7 @@ export function createCatalogRuntime(
 ): CatalogRuntime {
   const runtimes = new Map<LocaleCode, Runtime>();
   return {
+    has: (locale) => runtimes.has(locale),
     async load(locale: LocaleCode): Promise<void> {
       if (runtimes.has(locale)) return;
       const catalog = await loadCatalog(locale);

@@ -15,6 +15,7 @@ import { getAppVersion } from "./scripts/app-version.js";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
+  acquisitionFiles,
   errorMetadataFile,
   errorSvelteFile,
   routeMetadataFiles,
@@ -229,6 +230,7 @@ export default defineConfig(({ command }) => ({
     svelteCssCachePlugin([
       aboutMetadataFile,
       ...aboutSvelteFiles,
+      ...acquisitionFiles,
       errorMetadataFile,
       errorSvelteFile,
       ...routeMetadataFiles,

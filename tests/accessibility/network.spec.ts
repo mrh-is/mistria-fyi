@@ -5,14 +5,14 @@ import { ROUTE_UI_GROUPS, SYNC_CODE_SOURCE } from "../../src/lib/i18n/route-ui-g
 import { expect, isolateNetwork, test } from "../browser/test.js";
 import { gotoApplication } from "./support/application-state.js";
 
-function catalogAsset(catalog: string): string {
+function catalogAsset(catalog: string, locale = "es"): string {
   const manifest = JSON.parse(
     readFileSync(
       new URL("../../.svelte-kit/output/client/.vite/manifest.json", import.meta.url),
       "utf8",
     ),
   ) as Record<string, { file: string }>;
-  return manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.es.compiled.js`].file;
+  return manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.${locale}.compiled.js`].file;
 }
 
 test("Home starts its metadata catalog while shared copy is pending", async ({ page }) => {
@@ -67,14 +67,39 @@ test("Only Data requests save-import diagnostics", async ({ page }) => {
   expect(requests).toBe(1);
 });
 
+test("Home defers acquisition copy until bilingual search needs it", async ({ page }) => {
+  const spanish = catalogAsset("acquisition.0");
+  const english = catalogAsset("acquisition.0", "en");
+  const requested = new Set<string>();
+  await page.route(
+    (url) => url.pathname === `/${spanish}` || url.pathname === `/${english}`,
+    (route) => {
+      requested.add(new URL(route.request().url()).pathname.slice(1));
+      return route.continue();
+    },
+  );
+
+  await gotoApplication(page, "/es");
+  expect(requested.size).toBe(0);
+  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
+  await page.getByRole("textbox", { name: "Buscar elementos" }).fill("turnip");
+  await expect.poll(() => requested).toEqual(new Set([spanish, english]));
+  await expect(page.getByRole("status").filter({ hasText: /^\d+ resultados?$/u })).toBeVisible();
+
+  requested.clear();
+  await gotoApplication(page, "/es/almanac");
+  expect(requested).toEqual(new Set([spanish]));
+});
+
 const dataGroup = routePatterns.indexOf(
   ROUTE_UI_GROUPS.find(({ shard }) => shard === "data")?.pattern ?? "",
 );
-for (const { catalog, warmShared } of [
+for (const { catalog, path = "/es/data", warmShared } of [
   { catalog: "shared.0", warmShared: false },
   { catalog: `route.${dataGroup}`, warmShared: false },
   { catalog: `route.${dataGroup}`, warmShared: true },
   { catalog: "data-errors.0", warmShared: false },
+  { catalog: "acquisition.0", path: "/es/almanac", warmShared: false },
 ]) {
   test(`recovers in Spanish when the ${catalog} catalog is unavailable (${warmShared ? "warm" : "cold"} shared copy)`, async ({
     page,
@@ -91,7 +116,7 @@ for (const { catalog, warmShared } of [
       await page.getByRole("button", { exact: true, name: "Ajustes rápidos" }).click();
       await page.getByRole("link", { exact: true, name: "Datos" }).click();
     } else {
-      await page.goto("/es/data");
+      await page.goto(path);
     }
     await expect(
       page.getByText("Algo ha fallado por nuestra parte, pero tu progreso está a salvo."),

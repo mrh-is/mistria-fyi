@@ -198,6 +198,30 @@ These measurements cover the two app integrations at their current split points.
 evaluation still needs warm navigation and locale-switch timings, worker cache-fill bytes, and the
 same live authoring and translation-review tasks on both branches.
 
+### Feature catalog loading
+
+The F3 follow-up moves save-import diagnostics to Data and acquisition and item-variant copy to
+category routes and Everything. On Home, bilingual search loads the acquisition catalog for the
+active locale and English when opened. Page metadata starts loading alongside the root layout.
+Production Chromium confirmed that cold Spanish Home starts its metadata request while the shared
+catalog is held open. The previous build waited for shared copy.
+
+The same cold probe compared the prior Wuchale head (`e509ff15`) with the feature splits. Both used
+the same tracker data and Spanish routes, with the worker blocked through hydration.
+
+| Spanish route | Before requests | Before gzip bytes | After requests | After gzip bytes | Byte change |
+| ------------- | --------------: | ----------------: | -------------: | ---------------: | ----------: |
+| Home          |              70 |           326,049 |             70 |          324,861 |      −1,188 |
+| Almanac       |              94 |           392,282 |             95 |          392,777 |        +495 |
+| Data          |              65 |           351,989 |             66 |          351,401 |        −588 |
+| About         |              58 |           306,639 |             58 |          305,510 |      −1,129 |
+
+In fresh worker-controlled sessions, Spanish Home filled both Spanish and English locale assets.
+Cache Storage contained all 62 locale assets (146,880 gzip bytes) before the split and all 66
+(147,728 gzip bytes) afterward. These are the individually compressed sizes of the locale assets
+identified in the Vite manifest. The cold route table excludes this background cache fill. Spanish
+Home could open bilingual search offline on its first use and then hydrate About on its first visit.
+
 Upstream references: [Svelte adapter](https://wuchale.dev/adapters/svelte/),
 [catalog loading](https://wuchale.dev/guides/loading/),
 [storage contract](https://wuchale.dev/guides/storage/), and [CLI](https://wuchale.dev/guides/cli/).

@@ -1,5 +1,6 @@
 import { afterAll, vi } from "vitest";
 
+import { loadAcquisitionUi } from "#lib/i18n/acquisition-ui.js";
 import { ROUTE_UI_GROUPS } from "#lib/i18n/route-ui-groups.js";
 import { loadRouteUi } from "#lib/i18n/route-ui.js";
 import { loadSharedUi } from "#lib/i18n/shared-ui.js";
@@ -16,6 +17,7 @@ vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 const routePaths = [...new Set(ROUTE_UI_GROUPS.flatMap(({ paths }) => paths))];
 await Promise.all(
   LOCALE_CODES.flatMap((locale) => [
+    loadAcquisitionUi(locale),
     loadSharedUi(locale),
     ...routePaths.map((path) => loadRouteUi(locale, `/${path}`)),
   ]),

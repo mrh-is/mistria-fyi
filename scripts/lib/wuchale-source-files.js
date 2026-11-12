@@ -23,11 +23,14 @@ export const sharedScriptFiles = [
 export const sharedLocaleFiles = [
   "src/lib/components/sync/sync-question-copy.ts",
   "src/lib/data/categories.ts",
-  "src/lib/data/item-variants.ts",
   "src/lib/data/source-filters.ts",
   "src/lib/effects/undo-toast.ts",
   "src/lib/presentation/merge-labels.ts",
   "src/lib/presentation/quest-sections.ts",
+];
+
+export const acquisitionFiles = [
+  "src/lib/data/item-variants.ts",
   "src/lib/presentation/source-labels.ts",
   "src/lib/sources/source-names.ts",
   "src/lib/sources/source-segments.ts",

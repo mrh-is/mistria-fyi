@@ -5,6 +5,7 @@ import { adapter as scriptAdapter } from "wuchale/adapter-vanilla";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
+  acquisitionFiles,
   dataErrorMessagesFile,
   errorMetadataFile,
   errorSvelteFile,
@@ -57,6 +58,12 @@ export default defineConfig({
       // This opt-in file has one function with a runtime parameter supplied by the page load.
       runtime: { plain: { wrapInit: () => "_runtime" } },
       storage: aboutStorage,
+    }),
+    acquisition: scriptAdapter({
+      files: acquisitionFiles,
+      loader: "custom",
+      runtime: { plain: { wrapInit: (expr) => expr.replace(/\)$/u, "_locale)") } },
+      storage: partitionedStorage(["acquisition"], () => "acquisition"),
     }),
     "data-errors": scriptAdapter({
       files: dataErrorMessagesFile,

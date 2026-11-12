@@ -68,10 +68,7 @@ test("keeps the visited locale offline and leaves other locales to download on d
   await expect(page).toHaveURL(/\/en$/);
 });
 
-test("hydrates About offline on its first visit after caching the current locale", async ({
-  context,
-  page,
-}) => {
+test("runs bilingual search and hydrates an unopened route offline", async ({ context, page }) => {
   await page.goto("/es");
   await waitForControl(page);
   await expect
@@ -79,6 +76,10 @@ test("hydrates About offline on its first visit after caching the current locale
     .toEqual(["/es/about"]);
 
   await goOffline(context);
+  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
+  await page.getByRole("textbox", { name: "Buscar elementos" }).fill("Request for a Turnip");
+  await expect(page.getByRole("button", { name: "Marcar Encargo de nabo" })).toBeVisible();
+
   const response = await page.goto("/es/about");
   expect(response?.fromServiceWorker()).toBe(true);
   await waitForHydration(page);
