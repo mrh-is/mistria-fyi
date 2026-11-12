@@ -7,6 +7,7 @@
   import { onMount, untrack } from "svelte";
 
   import AppUpdater from "#lib/components/app-updater.svelte";
+  import BookShell from "#lib/components/book/book-shell.svelte";
   import InstallNudgeDialog from "#lib/components/install-nudge-dialog.svelte";
   import LaneChooserDialog from "#lib/components/lane-chooser-dialog.svelte";
   import PencilFilter from "#lib/components/pencil-filter.svelte";
@@ -65,8 +66,6 @@
     void trackingReminders.checkBackup();
   });
   let hasToolbar = $derived(metadata.toolbar !== "hidden");
-  let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
-  let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
   // Toasts sit 8 pixels above the toolbar (12 pixels of inset plus 44-pixel buttons), or above an
   // open toolbar panel so they never cover it.
@@ -106,24 +105,27 @@
 
 <!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
 {#key page.data.locale}
-  <div
-    class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background px-safe landscape-phone:max-w-none {hasToolbar
-      ? 'pb-safe-offset-18'
-      : ''}"
-    inert={overlayActive ? true : undefined}
-  >
-    <a
-      class="sr-only focus:not-sr-only focus:absolute focus:z-[var(--z-dialog)] focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
-      href="#main-content"
+  <BookShell {hasToolbar}>
+    {#snippet tools()}
+      <ToolbarFooter {metadata} />
+    {/snippet}
+    <!-- Until each screen's redesign lands, its content keeps the phone-width column it was built for. -->
+    <div
+      class="mx-auto flex w-full max-w-lg flex-1 flex-col px-safe landscape-phone:max-w-none {hasToolbar
+        ? 'pb-safe-offset-18'
+        : ''}"
     >
-      {m.skip_to_main_content()}
-    </a>
-    <RouteMain>
-      {@render children()}
-    </RouteMain>
-  </div>
-
-  <ToolbarFooter {metadata} bind:this={toolbarFooter} />
+      <a
+        class="sr-only focus:not-sr-only focus:absolute focus:z-[var(--z-dialog)] focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
+        href="#main-content"
+      >
+        {m.skip_to_main_content()}
+      </a>
+      <RouteMain>
+        {@render children()}
+      </RouteMain>
+    </div>
+  </BookShell>
 
   <Toaster
     position="bottom-center"

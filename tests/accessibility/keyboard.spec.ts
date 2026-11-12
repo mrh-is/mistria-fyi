@@ -17,10 +17,11 @@ test.describe("keyboard and focus accessibility", () => {
 
   test("toolbar controls follow a predictable focus order", critical, async ({ page }) => {
     await gotoApplication(page, "/");
-    const tools = page.getByRole("navigation", { name: "Tracker tools" });
-    await tools.getByRole("button", { name: "Quick settings" }).focus();
+    // At book widths Send a note & Settings sit on the thumb-tab rail, ahead of the page tools.
+    await page.getByRole("button", { exact: true, name: "Send feedback" }).focus();
     await page.keyboard.press("Tab");
-    await expect(tools.getByRole("button", { name: "Send feedback" })).toBeFocused();
+    await expect(page.getByRole("button", { exact: true, name: "Quick settings" })).toBeFocused();
+    const tools = page.getByRole("navigation", { name: "Tracker tools" });
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: "Search" })).toBeFocused();
     await page.keyboard.press("Tab");
@@ -29,9 +30,7 @@ test.describe("keyboard and focus accessibility", () => {
 
   test("feedback dialog contains focus and restores it on Escape", critical, async ({ page }) => {
     await gotoApplication(page, "/");
-    const trigger = page
-      .getByRole("navigation", { name: "Tracker tools" })
-      .getByRole("button", { name: "Send feedback" });
+    const trigger = page.getByRole("button", { exact: true, name: "Send feedback" });
     await trigger.focus();
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog", { name: "Send feedback" });
@@ -46,10 +45,7 @@ test.describe("keyboard and focus accessibility", () => {
 
   test("feedback extras card & preview sheet close one layer at a time", async ({ page }) => {
     await gotoApplication(page, "/");
-    await page
-      .getByRole("navigation", { name: "Tracker tools" })
-      .getByRole("button", { name: "Send feedback" })
-      .click();
+    await page.getByRole("button", { exact: true, name: "Send feedback" }).click();
     const form = page.getByRole("dialog", { name: "Send feedback" });
     await form.getByRole("button", { name: "What the extras send" }).click();
     const card = page.getByRole("dialog", { name: "What the extras send" });

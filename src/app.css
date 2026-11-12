@@ -67,6 +67,10 @@
    the gutter layouts (`(min-width: 701px) and (min-height: 501px)` in components) stay off, so the
    two conditions never overlap. Media queries can't read custom properties, so keep them in sync. */
 @custom-variant landscape-phone (@media (orientation: landscape) and (max-height: 500px));
+/* The bound book: a page on the cover with thumb tabs down its right edge. Below this size the page
+ * fills the screen & the thumb tabs fold into the toolbar's Contents panel. Scoped CSS repeats the
+ * query, since CSS has no shared media-query names yet. */
+@custom-variant book (@media (min-width: 48rem) and (min-height: 34rem));
 
 :root {
   --radius: 2px;
@@ -130,6 +134,26 @@
   --color-home-accent-foreground: var(--color-ribbon-foreground);
   /* Gilt edge on the ribbon of a completed category */
   --color-ribbon-fill: #d4a72c;
+
+  /*
+   * The book shell: the cloth cover the page lies on, & the wire that binds it. Placeholder values
+   * from round ten's mockup until the styling-token pass (#477) settles the cooler palette.
+   */
+  --color-cover: #2b4550;
+  --color-cover-deep: #1d313a;
+  --color-cover-ink: #e9f1f3;
+  --color-cover-ink-muted: #a7bac0;
+  --color-cover-vignette: rgb(8 16 22 / 36%);
+  --color-wire: #9aa2a9;
+  --color-wire-highlight: #dfe4e8;
+  --color-wire-hole: #2a3036;
+  --color-page-under: #dfe5e5;
+  --color-page-gutter: rgb(30 44 52 / 10%);
+  --shadow-page: 2px 2px 0 #e2e7e7, 4px 4px 0 #d6dddd, 0 10px 30px rgb(8 16 22 / 38%);
+  --shadow-thumb-tab: inset 0 -2px 0 rgb(0 0 0 / 14%), 1px 1px 2px rgb(0 0 0 / 25%);
+  --size-book-margin: 1.5rem;
+  --size-book-rail-width: 3.5rem;
+  --size-book-wire-width: 2.5rem;
 
   /* shadcn semantic tokens mapped to Field Guide */
   --background: var(--color-paper);
@@ -237,6 +261,18 @@
   --color-hue-brown: #9a7848;
   --color-home-accent: #a87838;
   --color-home-accent-foreground: #101014;
+
+  --color-cover: #16232a;
+  --color-cover-deep: #0e171c;
+  --color-cover-ink: #dfe8ea;
+  --color-cover-ink-muted: #8ea2a8;
+  --color-cover-vignette: rgb(0 0 0 / 45%);
+  --color-wire: #7d858c;
+  --color-wire-highlight: #b9c0c6;
+  --color-wire-hole: #0b0d10;
+  --color-page-under: #1c1c20;
+  --color-page-gutter: rgb(0 0 0 / 28%);
+  --shadow-page: 2px 2px 0 #1a1a1e, 4px 4px 0 #141417, 0 10px 30px rgb(0 0 0 / 55%);
 
   --card: #2a2a2e;
   --card-foreground: var(--color-ink);
@@ -512,8 +548,13 @@ html:lang(ru) {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+  /* The book's cloth cover shows wherever the page doesn't, overscroll included. */
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: var(--color-cover);
+    background-image:
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 3%) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgb(0 0 0 / 6%) 0 1px, transparent 1px 3px);
     font-family: var(--font-body);
     overscroll-behavior-y: contain;
     -webkit-tap-highlight-color: transparent;
@@ -586,4 +627,37 @@ html:lang(ru) {
   :focus-visible {
     outline-width: 3px;
   }
+}
+
+/*
+ * Page turns. `page-turn.ts` (the book shell's navigation hook) adds `book-turning` to the root for
+ * each turn and animates the page's snapshots; these rules hold everything else still. The cover,
+ * the wire, the rail, & the toolbar have names of their own, so they swap in place above the page
+ * instead of being captured into the root snapshot under it. Other view transitions get the
+ * browser's defaults.
+ */
+:root.book-turning::view-transition-group(*),
+:root.book-turning::view-transition-old(*),
+:root.book-turning::view-transition-new(*) {
+  animation: none;
+}
+
+:root.book-turning::view-transition-old(*) {
+  display: none;
+}
+
+:root.book-turning::view-transition-old(book-page),
+:root.book-turning::view-transition-new(book-page) {
+  mix-blend-mode: normal;
+}
+
+/* The old page slides off over the new one. */
+:root.book-turning::view-transition-old(book-page) {
+  display: block;
+  z-index: 1;
+}
+
+/* Toasts (an Undo, say) stay above the page while it turns. */
+[data-sonner-toaster] {
+  view-transition-name: book-toasts;
 }

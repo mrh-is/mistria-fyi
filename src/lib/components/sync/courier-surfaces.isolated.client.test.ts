@@ -11,7 +11,7 @@ import type { CourierOptions, CourierStatus } from "#lib/sync/courier.js";
 import type { RelayClient, RetireResult } from "#lib/sync/follow.js";
 
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
-vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn() }));
+vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn(), goto: vi.fn(), onNavigate: vi.fn() }));
 // Drawing a code needs a canvas, which the test environment doesn't have.
 vi.mock("../../../routes/sync/qr.js", () => ({
   generateFollowQr: () =>

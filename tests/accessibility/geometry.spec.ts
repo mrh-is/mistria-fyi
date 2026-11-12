@@ -148,6 +148,8 @@ test("feedback extras info button keeps its own tap area above the first row", a
   // The panel flies in, so measure it only once it has settled.
   await page.emulateMedia({ reducedMotion: "reduce" });
   await gotoApplication(page, "/");
+  // On a phone, Send a note is in the toolbar's Contents panel.
+  await page.getByRole("button", { exact: true, name: "Contents" }).click();
   await page.getByRole("button", { exact: true, name: "Send feedback" }).click();
   const info = page
     .getByRole("dialog", { name: "Send feedback" })
