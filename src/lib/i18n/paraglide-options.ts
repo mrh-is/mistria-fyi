@@ -32,6 +32,8 @@ export const PARAGLIDE_OPTIONS = {
   // Set explicitly so a library upgrade or default change can't silently reset every player's
   // language. Renaming it is a breaking change (see docs/app-architecture.md's public contract).
   cookieName: "mistria-fyi-locale",
+  // Plain TypeScript projects need declarations; SvelteKit can infer types from the generated JS.
+  emitTsDeclarations: true,
   outdir: "./src/lib/paraglide",
   project: "./project.inlang",
   routeStrategies: UNLOCALIZED_PATH_PREFIXES.map((prefix) => ({
