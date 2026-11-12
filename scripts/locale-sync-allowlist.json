@@ -1048,5 +1048,113 @@
     "key": "undo_unmarked",
     "locale": "zh-Hant",
     "reason": "Only the English quote marks changed (straight to curly); this locale already uses its own quotation marks."
+  },
+  {
+    "english": "To move anything you check off by hand, export a backup here, send the file to your other device, and restore it there. Restoring replaces that device’s progress in the field guide.",
+    "key": "transfer_backup_guidance",
+    "locale": "fr",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "To move anything you check off by hand, export a backup here, send the file to your other device, and restore it there. Restoring replaces that device’s progress in the field guide.",
+    "key": "transfer_backup_guidance",
+    "locale": "ru",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
+    "key": "sync_waiting",
+    "locale": "es",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
+    "key": "sync_waiting",
+    "locale": "fr",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
+    "key": "sync_waiting",
+    "locale": "ja",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
+    "key": "sync_waiting",
+    "locale": "ko",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
+    "key": "sync_waiting",
+    "locale": "ru",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
+    "key": "sync_waiting",
+    "locale": "zh-Hans",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+    "key": "sync_ios_app_steps",
+    "locale": "es",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+    "key": "sync_ios_app_steps",
+    "locale": "fr",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+    "key": "sync_ios_app_steps",
+    "locale": "ja",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+    "key": "sync_ios_app_steps",
+    "locale": "ko",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+    "key": "sync_ios_app_steps",
+    "locale": "ru",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+    "key": "sync_ios_app_steps",
+    "locale": "zh-Hans",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "The field guide on your computer needs a refresh to keep your save file syncing.",
+    "key": "sync_update_computer",
+    "locale": "es",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "The field guide on your computer needs a refresh to keep your save file syncing.",
+    "key": "sync_update_computer",
+    "locale": "fr",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "The field guide on your computer needs a refresh to keep your save file syncing.",
+    "key": "sync_update_computer",
+    "locale": "zh-Hans",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
+  },
+  {
+    "english": "The field guide on your computer needs a refresh to keep your save file syncing.",
+    "key": "sync_update_computer",
+    "locale": "zh-Hant",
+    "reason": "English swapped “tracker” for “the field guide”; this locale already named the guide."
   }
 ]

@@ -1263,13 +1263,13 @@ describe("buildSourceSegments — localized rendering", () => {
   it("drops English articles from store & chest names outside English", () => {
     expect(
       buildSourceSegments({ type: "store", storeId: "general" as StoreId }, FR_LOOKUPS),
-    ).toEqual(["Acheter à : Magasin général"]);
+    ).toEqual(["Acheter à\u00A0: Magasin général"]);
     expect(
       buildSourceSegments(
         { type: "treasure_chest", tier: "gold" as TreasureChestTierId },
         FR_LOOKUPS,
       ),
-    ).toEqual(["Pêcher : Coffre au trésor en or"]);
+    ).toEqual(["Pêcher\u00A0: Coffre au trésor en or"]);
   });
 
   it("renders the biome label with the locale's floor range & spoilering", () => {
@@ -1302,7 +1302,7 @@ describe("buildSourceSegments — localized rendering", () => {
         },
         lookups,
       ),
-    ).toEqual(["Pêcher : Étang, Rivière ou Mer"]);
+    ).toEqual(["Pêcher\u00A0: Étang, Rivière ou Mer"]);
   });
 
   it("places gated segments where the locale's word order puts them", () => {
@@ -1410,7 +1410,7 @@ describe("buildSourceSegments — localized rendering", () => {
       "ロイヤルリクエスト「作物」を完了する",
     ]);
     expect(render("fr", "Requête royale : récoltes")).toEqual([
-      "Terminer la requête royale : récoltes",
+      "Terminer la requête royale\u00A0: récoltes",
     ]);
   });
 
@@ -1429,7 +1429,7 @@ describe("buildSourceSegments — localized rendering", () => {
       });
     expect(render("en", "The Caldosian Vault")).toEqual(["Complete the Caldosian Vault quest"]);
     expect(render("fr", "La chambre forte caldosienne")).toEqual([
-      "Terminer la quête : La chambre forte caldosienne",
+      "Terminer la quête\u00A0: La chambre forte caldosienne",
     ]);
   });
 });

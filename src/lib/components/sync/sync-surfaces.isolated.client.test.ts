@@ -227,8 +227,8 @@ describe("the notes", () => {
 
   it.each([
     ["unreadable", m.sync_unreadable_away_title()],
-    ["update-computer", "The tracker on your computer needs a refresh"],
-    ["update-here", "This tracker needs a refresh"],
+    ["update-computer", "The field guide on your computer needs a refresh"],
+    ["update-here", "The field guide on this device needs a refresh"],
     ["retired", m.sync_retired_title()],
     ["switch-failed", m.sync_switch_failed_title()],
     ["write-failed", m.sync_write_failed_title()],
