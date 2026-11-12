@@ -145,7 +145,7 @@ describe("PageSearchStatus", () => {
     await tick();
 
     const link = view.getByRole("link", { name: "Search the entire Field Guide for “zzz”" });
-    expect(view.getByText("Don’t see what you’re looking for?")).toBeInTheDocument();
+    expect(view.getByText("Still looking for something?")).toBeInTheDocument();
 
     link.addEventListener("click", (event) => {
       event.preventDefault();
@@ -153,6 +153,16 @@ describe("PageSearchStatus", () => {
     await fireEvent.click(link);
     toolbarState.finishSearchAfterNavigation();
     expect(toolbarState.searchQuery).toBe("zzz");
+  });
+
+  it("clears the current search from the guide link area", async () => {
+    toolbarState.setSearchQuery("zzz");
+    const view = renderWithFeedback(SearchGuideLink, { locale: "en" });
+
+    await fireEvent.click(view.getByRole("button", { name: "Clear “zzz”" }));
+
+    expect(toolbarState.searchQuery).toBe("");
+    expect(view.queryByRole("button", { name: "Clear “zzz”" })).toBeNull();
   });
 
   it("offers nothing without a search", () => {

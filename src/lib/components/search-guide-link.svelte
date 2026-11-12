@@ -1,6 +1,8 @@
 <script lang="ts">
   import IconArrowRight from "@tabler/icons-svelte-runes/icons/arrow-right";
 
+  import { searchGuideLinkLabel } from "#lib/components/search-guide-messages.js";
+  import { inLocale } from "#lib/i18n/locale-runtime.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -14,16 +16,19 @@
 
 {#if query}
   <p class="search-guide">
-    Don’t see what you’re looking for?
+    Still looking for something?
     <a
       href={localizedHref("", { locale })}
       onclick={() => {
         toolbarState.carrySearchToNextPage();
       }}
     >
-      {`Search the entire Field Guide for “${query}”`}
+      {inLocale(locale, () => searchGuideLinkLabel(query))}
       <IconArrowRight class="size-4 shrink-0" aria-hidden="true" />
     </a>
+    <button type="button" onclick={() => toolbarState.setSearchQuery("")}>
+      {`Clear “${query}”`}
+    </button>
   </p>
 {/if}
 
@@ -38,7 +43,8 @@
     font-size: var(--text-xs);
   }
 
-  .search-guide a {
+  .search-guide a,
+  .search-guide button {
     display: inline-flex;
     min-height: 44px;
     align-items: center;
