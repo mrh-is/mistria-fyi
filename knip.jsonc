@@ -11,9 +11,6 @@
         "src/hooks.ts",
         // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
         "relay/worker.ts",
-        // Production benchmarks are run directly.
-        "spikes/wuchale/compare-cold-app.js",
-        "spikes/wuchale/compare-warm-app.ts",
         // Wuchale injects loader imports and generates the JS peers of these declarations.
         "wuchale.config.ts",
         "src/lib/i18n/catalogs/*.loader.ts",
