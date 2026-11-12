@@ -24,8 +24,8 @@ export interface ShelfRow {
   doableAnywhere: boolean;
   /** Whether the row matches the page's filters. */
   shown: boolean;
-  /** Available on source-backed rows for shelf reasons & the hidden-source count. */
-  sourceDisclosure?: SourceDisclosure;
+  /** Visible sources & hidden-source count for shelf reasons and spoiler disclosure. */
+  sourceDisclosure: SourceDisclosure;
 }
 
 /** How many rows each shelf loses to the filters. */

@@ -155,22 +155,22 @@ describe("shelves across the real tracker data", () => {
     const corn = trackerData.items["corn" as ItemId].sources;
     const spring = context();
     const springCorn = shelfFacts({ sources: corn }, false, spring);
-    expect(springCorn.sourceDisclosure?.hiddenCount).toBe(2);
-    expect(springCorn.sourceDisclosure?.visibleSources.map(({ type }) => type)).toEqual(["crop"]);
+    expect(springCorn.sourceDisclosure.hiddenCount).toBe(2);
+    expect(springCorn.sourceDisclosure.visibleSources.map(({ type }) => type)).toEqual(["crop"]);
     expect(rowShelf(springCorn)).toBe("notNow");
 
     const summerDateOnly = {
       ...spring,
       worldState: { ...spring.worldState, season: "summer" as const },
     };
-    expect(shelfFacts({ sources: corn }, false, summerDateOnly).sourceDisclosure?.hiddenCount).toBe(
+    expect(shelfFacts({ sources: corn }, false, summerDateOnly).sourceDisclosure.hiddenCount).toBe(
       2,
     );
 
     const summer = context("summer", { reachedSeason: "summer" });
     const summerCorn = shelfFacts({ sources: corn }, false, summer);
-    expect(summerCorn.sourceDisclosure?.hiddenCount).toBe(1);
-    expect(summerCorn.sourceDisclosure?.visibleSources.map(({ type }) => type)).toEqual([
+    expect(summerCorn.sourceDisclosure.hiddenCount).toBe(1);
+    expect(summerCorn.sourceDisclosure.visibleSources.map(({ type }) => type)).toEqual([
       "store",
       "crop",
     ]);
@@ -178,17 +178,17 @@ describe("shelves across the real tracker data", () => {
 
     const marigold = trackerData.items["marigold" as ItemId].sources;
     const marigoldFacts = shelfFacts({ sources: marigold }, false, context("winter"));
-    expect(marigoldFacts.sourceDisclosure?.hiddenCount).toBe(3);
+    expect(marigoldFacts.sourceDisclosure.hiddenCount).toBe(3);
     expect(
-      marigoldFacts.sourceDisclosure?.visibleSources.some(({ type }) => type === "letter"),
+      marigoldFacts.sourceDisclosure.visibleSources.some(({ type }) => type === "letter"),
     ).toBe(false);
 
     const planter = trackerData.items["spring_festival_planter" as ItemId].sources;
     const summerPlanter = shelfFacts({ sources: planter }, false, summer);
-    expect(summerPlanter.sourceDisclosure?.hiddenCount).toBe(1);
-    expect(
-      summerPlanter.sourceDisclosure?.visibleSources.some(({ type }) => type === "quest"),
-    ).toBe(false);
+    expect(summerPlanter.sourceDisclosure.hiddenCount).toBe(1);
+    expect(summerPlanter.sourceDisclosure.visibleSources.some(({ type }) => type === "quest")).toBe(
+      false,
+    );
     expect(rowShelf(summerPlanter)).toBe("notNow");
 
     const tulip = trackerData.items["tulip" as ItemId].sources;
@@ -204,7 +204,7 @@ describe("shelves across the real tracker data", () => {
       ...spring,
       progressionState: tulipState,
     });
-    expect(tulipFacts.sourceDisclosure?.hiddenCount).toBe(3);
+    expect(tulipFacts.sourceDisclosure.hiddenCount).toBe(3);
     expect(rowShelf(tulipFacts)).toBe("todo");
   });
 

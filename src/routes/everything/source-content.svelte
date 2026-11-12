@@ -17,6 +17,7 @@
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+  import { getSourceDisclosure } from "#lib/engine/availability.js";
   import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
@@ -275,6 +276,7 @@
           doable: shownDoable.has(entry.key),
           doableAnywhere: doableAnywhere.has(entry.key),
           shown: visibleKeys.has(entry.key),
+          sourceDisclosure: getSourceDisclosure(entry.sources, userState.progressionState),
         },
       ]),
     );
