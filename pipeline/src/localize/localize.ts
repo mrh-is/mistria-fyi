@@ -183,7 +183,7 @@ export function deriveKey(category: string, id: string, field?: string): string 
   return field === undefined ? `${category}/${id}` : `${category}/${id}/${field}`;
 }
 
-function readTranslationTable(
+export function readTranslationTable(
   assetsDir: string,
   gameLanguage: GameLanguageCode,
   directory: TranslationDirectory,

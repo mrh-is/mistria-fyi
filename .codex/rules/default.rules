@@ -23,6 +23,7 @@ prefix_rule(
             "pipeline",
             "pipeline:assets",
             "pipeline:atlas",
+            "game-term",
             "prepare",
             "preview",
             "sprites:manifest",
