@@ -1,3 +1,5 @@
+import { trackerData } from "#lib/data/index.js";
+
 import { evaluateAvailabilityCondition, extractDisplayBadges } from "./availability-condition.js";
 import { isConditionVisible } from "./visibility.js";
 
@@ -32,10 +34,60 @@ export interface AvailabilityRow {
 /** Which sources a page's filters show; omitted, every source shows. */
 export type ShowsSource = (source: Source) => boolean;
 
+export interface SourceDisclosure {
+  hiddenCount: number;
+  visibleSources: Source[];
+}
+
+/** Separate visible sources from spoiler-gated ones without consulting date or availability. */
+export function getSourceDisclosure(
+  sources: readonly Source[],
+  state: UserProgressionState,
+): SourceDisclosure {
+  const visibleSources = sources.filter((source) => isSourceVisible(source, state));
+  return { hiddenCount: sources.length - visibleSources.length, visibleSources };
+}
+
+/** Whether all spoiler gates attached to a source and its related entities have opened. */
+export function isSourceVisible(source: Source, state: UserProgressionState): boolean {
+  if ("visibility" in source && !isConditionVisible(source.visibility, state)) {
+    return false;
+  }
+  if (
+    "storeId" in source &&
+    source.storeId &&
+    !isConditionVisible(trackerData.stores[source.storeId]?.visibility, state)
+  ) {
+    return false;
+  }
+  if (
+    "villagerId" in source &&
+    !isConditionVisible(trackerData.villagers[source.villagerId]?.visibility, state)
+  ) {
+    return false;
+  }
+  if (source.type === "quest") {
+    for (const [type, quests] of Object.entries(trackerData.quests)) {
+      const quest = quests[source.questId];
+      if (
+        Object.hasOwn(quests, source.questId) &&
+        (!isConditionVisible(quest.visibility, state) ||
+          !isConditionVisible(
+            trackerData.categoryVisibility[type as keyof typeof trackerData.categoryVisibility],
+            state,
+          ))
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 /**
  * Whether the player can act on a row today. A locked row never can. A row without sources always
- * can; any other row needs a doable source among those the filters show (#501), so a hidden shop
- * can't keep a spring insect doable in summer.
+ * can; any other row needs a visible, doable source among those the filters show (#501), so a
+ * hidden shop can't keep a spring insect doable in summer.
  */
 export function isDoableToday(
   row: AvailabilityRow,
@@ -61,7 +113,7 @@ export function isRowShown(
  * predicates, date unlocks) count as met, & time of day never counts against it.
  */
 export function isSourceDoable(source: Source, ctx: DayContext): boolean {
-  if (!isConditionVisible(getSourceVisibility(source), ctx.progressionState)) return false;
+  if (!isSourceVisible(source, ctx.progressionState)) return false;
   const mineFloor = sourceMineFloor(source, ctx.mines);
   if (mineFloor !== undefined && ctx.progressionState.mineFloor < mineFloor) return false;
   if (source.type === "festival" || source.type === "festival_activity") {
@@ -187,10 +239,6 @@ function assumeIgnoredLeavesMet(
  */
 function getAvailabilityCondition(source: Source): AvailabilityCondition | undefined {
   return "availability" in source ? source.availability : undefined;
-}
-
-function getSourceVisibility(source: Source): undefined | VisibilityCondition {
-  return "visibility" in source ? source.visibility : undefined;
 }
 
 /**

@@ -64,11 +64,11 @@ describe("source projection", () => {
           availability: { type: "season", seasons: ["fall"] },
           storeId: "balor",
         }),
-        source({ type: "store", storeId: "merri" }),
+        source({ type: "store", storeId: "unlisted_store" }),
       ]),
     ];
     const sections = projectSourceGroups(rows, userState.progressContext);
-    expect(sections.map((s) => s.id)).toEqual(["store-balor", "store-merri"]);
+    expect(sections.map((s) => s.id)).toEqual(["store-balor", "store-unlisted_store"]);
     expect(sections[0].rows).toHaveLength(1);
     expect(sections[0].rows[0].doable).toBe(false);
     expect(sections[0].state).toBe("later");
@@ -92,6 +92,15 @@ describe("source projection", () => {
     expect(section.total).toBe(1);
     expect(section.completed).toBe(1);
     expect(section.state).toBe("done");
+  });
+
+  it("does not make a row doable through a hidden store", () => {
+    const [section] = projectSourceGroups(
+      [row("secret stock", [source({ type: "store", storeId: "merri" })])],
+      userState.progressContext,
+    );
+    expect(section.rows[0].doable).toBe(false);
+    expect(section.spoilered).toBe(true);
   });
 
   it("keeps source spoilers independent of row spoilers and rolls hidden rows into Later", () => {
