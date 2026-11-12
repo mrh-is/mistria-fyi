@@ -34,6 +34,7 @@
       "Bash(pnpm run pipeline *)",
       "Bash(pnpm run pipeline:assets *)",
       "Bash(pnpm run pipeline:atlas *)",
+      "Bash(pnpm run game-term *)",
       "Bash(pnpm exec vitest *)",
       "Bash(pnpm exec svelte-check *)",
       "Bash(pnpm exec svelte-kit *)",

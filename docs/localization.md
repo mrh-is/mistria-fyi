@@ -224,14 +224,18 @@ dependency too. Keep message lookups in the app so shared engine logic can run o
 
 ## Adding a new UI string (agents & humans)
 
-When translating `messages/*.json`, look up in-game terms in
-`pipeline/output/game-term-lexicon.json`. Run `pnpm run pipeline:assets -- --game-term-lexicon-only`
-if the file is missing or its `version` differs from `CURRENT_GAME_VERSION` in
-`pipeline/src/game-version.ts`. Look up the English term under `locales.en`, then use the same
-native key under the target locale. For example, `locations/water_seal/name` gives `水の封印` in
-`ja`, so the game uses `封印` for the seal. The lexicon also covers Almanac category labels and
-skill names. The song crystal category is omitted while its Japanese translation is missing. The
-lexicon lives outside the app's bundled data.
+When translating `messages/*.json`, run `pnpm run game-term -- cosmetic` to find the game’s wording.
+You can also pass a phrase, for example `pnpm run game-term -- "select cosmetic"`. The command
+searches the game’s cached English source text for a case-insensitive substring & prints each
+matching key with its text in all eight locales. Compare entries by context: for example,
+`misc_local/select_cosmetic` is the customization menu label.
+
+The command reads the extracted tables in `pipeline/input/vX.Y.Z/assets/localization/` for
+`CURRENT_GAME_VERSION`. It prints “(missing)” for absent or blank translations. The English is the
+text cached for translation, so it can differ from the latest English in `fiddle/`. If a locale used
+different English from the displayed match, the command prints that source beneath its translation.
+The command writes no files. If the tables are missing, see
+[Pipeline setup](../pipeline/README.md#setup--commands).
 
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
    feature area — e.g. `feedback_submit_button`, `about_maintainer_intro`).

@@ -16,7 +16,6 @@ import { publishFiles } from "./emit/publish.js";
 import { extractSprites, extractVillagerSprites, publishSprites } from "./emit/sprites.js";
 import { requireCraftingMenus } from "./extract/recipe-menus.js";
 import { extractVillagerIconSprites } from "./extract/villagers.js";
-import { stageGameTermLexicon } from "./localize/game-term-lexicon.js";
 import { assertGameLanguageMapExhaustive } from "./localize/locale-codes.js";
 import { createAssetsLocalizer, generateLocaleManifest } from "./localize/localize.js";
 import { validateReviewedGameFacts } from "./overrides/validate.js";
@@ -165,17 +164,6 @@ async function main(): Promise<void> {
     return;
   }
   console.log(`  Game version: ${version}\n`);
-  if (options.gameTermLexiconOnly) {
-    const file = stageGameTermLexicon(
-      PIPELINE_ROOT,
-      version,
-      fiddle,
-      createAssetsLocalizer(assetsDir),
-    );
-    publishFiles([file]);
-    console.log(`  Published: ${file.path}`);
-    return;
-  }
   requireCraftingMenus(fiddle);
 
   console.log("Step 2: Evaluating expressions...");
