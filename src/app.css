@@ -70,7 +70,7 @@
 /* The bound book: a page on the cover with thumb tabs down its right edge. Below this size the page
  * fills the screen & the thumb tabs fold into the toolbar's Contents panel. Scoped CSS repeats the
  * query, since CSS has no shared media-query names yet. */
-@custom-variant book (@media (min-width: 48rem) and (min-height: 32rem));
+@custom-variant book (@media (min-width: 48rem) and (min-height: 34rem));
 
 :root {
   --radius: 2px;

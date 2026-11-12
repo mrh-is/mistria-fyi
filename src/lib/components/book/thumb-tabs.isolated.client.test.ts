@@ -66,4 +66,11 @@ describe("ThumbTabs", () => {
     render(ThumbTabs, { hasToolbar: false });
     expect(screen.queryByRole("button", { name: m.toolbar_quick_settings() })).toBeNull();
   });
+
+  it("goes inert while a panel is open, so a tab can't navigate away from a draft", () => {
+    render(ThumbTabs, { hasToolbar: true, inert: true });
+    expect(tabs()).toHaveAttribute("inert");
+    const feedback = screen.getByRole("button", { name: m.toolbar_send_feedback() });
+    expect(feedback.closest("[inert]")).toBeNull();
+  });
 });

@@ -599,7 +599,7 @@
   /* At book widths (the media query matches the `book` variant in app.css), the page tools sit in
      the header row across the top of the page, under the wire & left of the thumb tabs, and scroll
      away with it. The page's padding reserves the row. */
-  @media (min-width: 48rem) and (min-height: 32rem) {
+  @media (min-width: 48rem) and (min-height: 34rem) {
     .floating-tool--phone {
       display: none;
     }

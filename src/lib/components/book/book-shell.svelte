@@ -23,7 +23,7 @@
   </div>
   <BookWire />
   <div class="book__rail">
-    <ThumbTabs {hasToolbar} />
+    <ThumbTabs {hasToolbar} {inert} />
   </div>
 </div>
 
@@ -60,7 +60,7 @@
   }
 
   /* Matches the `book` variant in app.css. */
-  @media (min-width: 48rem) and (min-height: 32rem) {
+  @media (min-width: 48rem) and (min-height: 34rem) {
     .book {
       grid-template-columns:
         var(--size-book-wire-width)

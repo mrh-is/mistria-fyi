@@ -13,7 +13,9 @@
   import { page } from "$app/state";
 
   // Pages without the toolbar (legal & dev pages) have no panels for Settings & Send a note to open.
-  let { hasToolbar }: { hasToolbar: boolean } = $props();
+  // While a panel or dialog is open, the tabs go inert like the page: a click on one through the
+  // scrim would navigate & discard a feedback draft. Send a note & Settings stay live to toggle panels.
+  let { hasToolbar, inert = false }: { hasToolbar: boolean; inert?: boolean } = $props();
 
   let tabs = $derived(thumbTabs(page.data.locale));
   let current = $derived(thumbTabKeyForPathname(deLocalizeHref(page.url.pathname)));
@@ -33,7 +35,12 @@
 />
 
 <div class="rail">
-  <nav class="thumb-tabs" class:thumb-tabs--labeled={labeled} aria-label={m.book_tabs_label()}>
+  <nav
+    class="thumb-tabs"
+    class:thumb-tabs--labeled={labeled}
+    aria-label={m.book_tabs_label()}
+    inert={inert || undefined}
+  >
     <button
       class="rail__tool thumb-tabs__names"
       type="button"

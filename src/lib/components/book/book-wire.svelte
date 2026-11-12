@@ -51,7 +51,7 @@
   }
 
   /* Matches the `book` variant in app.css. */
-  @media (min-width: 48rem) and (min-height: 32rem) {
+  @media (min-width: 48rem) and (min-height: 34rem) {
     .book-wire__down {
       display: block;
     }
