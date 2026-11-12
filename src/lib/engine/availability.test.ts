@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { getDisplayBadges, isDoableToday, isRowShown, isSourceDoable } from "./availability.js";
+import {
+  getDisplayBadges,
+  getSourceDisclosure,
+  isDoableToday,
+  isRowShown,
+  isSourceDoable,
+} from "./availability.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type {
@@ -91,6 +97,15 @@ describe("isSourceDoable", () => {
       expect(isSourceDoable(src(undefined, repairVisibility), spring)).toBe(false);
     });
 
+    it("classifies a source with an unmet reveal gate as later", () => {
+      const balor = src(
+        { type: "reachedSeason", season: "summer" },
+        { type: "reachedSeason", season: "summer" },
+      );
+      expect(isSourceDoable(balor, spring)).toBe(false);
+      expect(isSourceDoable(balor, context("summer", { reachedSeason: "summer" }))).toBe(true);
+    });
+
     it("stops applying once spoilers are shown", () => {
       const shown = context("spring", { showSpoilers: true });
       expect(isSourceDoable(src(undefined, repairVisibility), shown)).toBe(true);
@@ -99,6 +114,31 @@ describe("isSourceDoable", () => {
     it("still applies an unmet gate when spoilers are shown", () => {
       const shown = context("spring", { showSpoilers: true });
       expect(isSourceDoable(src(repairGate, repairVisibility), shown)).toBe(false);
+    });
+  });
+
+  describe("source disclosure", () => {
+    it("returns only visible sources and counts each hidden source independently", () => {
+      const visible = src();
+      const hidden = src(undefined, repairVisibility);
+      expect(getSourceDisclosure([visible, hidden, hidden], spring.progressionState)).toEqual({
+        hiddenCount: 2,
+        visibleSources: [visible],
+      });
+    });
+
+    it("reveals hidden sources only when their own gate is met or spoilers are shown", () => {
+      const hidden = src(undefined, repairVisibility);
+      const repaired = context("spring", { questVisibility: { [repairQuest]: "completed" } });
+      const spoilers = context("spring", { showSpoilers: true });
+      expect(getSourceDisclosure([hidden], repaired.progressionState)).toEqual({
+        hiddenCount: 0,
+        visibleSources: [hidden],
+      });
+      expect(getSourceDisclosure([hidden], spoilers.progressionState)).toEqual({
+        hiddenCount: 0,
+        visibleSources: [hidden],
+      });
     });
   });
 
