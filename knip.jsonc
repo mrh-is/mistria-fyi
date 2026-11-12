@@ -29,8 +29,8 @@
       ],
     },
     "pipeline": {
-      // The atlas CLI starts through `cd pipeline && tsx src/atlas/main.ts`, which Knip does not follow.
-      "entry": ["src/main.ts", "src/atlas/main.ts"],
+      // Knip does not follow package scripts that start with `cd pipeline`.
+      "entry": ["src/main.ts", "src/atlas/main.ts", "src/game-term.ts"],
     },
   },
   "ignoreIssues": {
