@@ -14,7 +14,7 @@ import type { PageMetadata } from "./page-metadata.js";
 
 /**
  * Runs every rendered page's `load()` as the base locale would render it, with the minimal event
- * the loads read: the root layout's resolved locale.
+ * the loads read: the destination URL and the root layout's resolved locale.
  */
 function pageMetadataEntries() {
   return _pageEntries().then((pageEntries) =>
@@ -22,6 +22,7 @@ function pageMetadataEntries() {
       pageEntries.map(async (entry) => {
         const data = (await entry.pageModule.load({
           parent: () => Promise.resolve({ locale: "en" }),
+          url: new URL(entry.path ? `/en/${entry.path}` : "/en", SITE_ORIGIN),
         } as never)) as { metadata: PageMetadata };
         return { ...entry, metadata: data.metadata };
       }),
@@ -141,9 +142,15 @@ describe("localized metadata", () => {
       import("../../routes/+page.js"),
       import("../../routes/everything/+page.js"),
     ]);
-    const event = { parent: () => Promise.resolve({ locale: "ja" }) } as never;
-    const home = (await loadHome(event)) as { metadata: PageMetadata };
-    const all = (await loadAll(event)) as { metadata: PageMetadata };
+    const event = { parent: () => Promise.resolve({ locale: "ja" }) };
+    const home = (await loadHome({
+      ...event,
+      url: new URL("/ja", SITE_ORIGIN),
+    } as never)) as { metadata: PageMetadata };
+    const all = (await loadAll({
+      ...event,
+      url: new URL("/ja/everything", SITE_ORIGIN),
+    } as never)) as { metadata: PageMetadata };
 
     expect(home.metadata.title).toBe(SITE_NAME);
     expect(home.metadata.description).toContain("Fields of Mistria");

@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 
+import { patterns as routePatterns } from "../../src/lib/i18n/catalogs/.wuchale/route.proxy.js";
+import { ROUTE_UI_GROUPS, SYNC_CODE_SOURCE } from "../../src/lib/i18n/route-ui-groups.js";
 import { expect, isolateNetwork, test } from "../browser/test.js";
 import { gotoApplication } from "./support/application-state.js";
 
@@ -13,8 +15,28 @@ function catalogAsset(catalog: string): string {
   return manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.es.compiled.js`].file;
 }
 
+test("Home starts its metadata catalog while shared copy is pending", async ({ page }) => {
+  const metadata = catalogAsset("metadata.0");
+  const shared = catalogAsset("shared.0");
+  let sharedRequested = false;
+  let metadataRequested = false;
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === `/${metadata}`) metadataRequested = true;
+  });
+  await page.route(`**/${shared}`, async (route) => {
+    sharedRequested = true;
+    // Hold shared copy to demonstrate that it does not gate the metadata request.
+    if (!metadataRequested) await page.waitForRequest(`**/${metadata}`, { timeout: 5000 });
+    await route.continue();
+  });
+
+  await gotoApplication(page, "/es");
+  expect(sharedRequested).toBe(true);
+  expect(metadataRequested).toBe(true);
+});
+
 test("Data and Sync request the sync-code copy and Home skips it", async ({ page }) => {
-  const asset = `/${catalogAsset("route.6")}`;
+  const asset = `/${catalogAsset(`route.${routePatterns.indexOf(SYNC_CODE_SOURCE)}`)}`;
   let requests = 0;
   await page.route(`**${asset}`, async (route) => {
     requests += 1;
@@ -29,10 +51,30 @@ test("Data and Sync request the sync-code copy and Home skips it", async ({ page
   expect(requests).toBe(2);
 });
 
+test("Only Data requests save-import diagnostics", async ({ page }) => {
+  const asset = catalogAsset("data-errors.0");
+  let requests = 0;
+  await page.route(`**/${asset}`, async (route) => {
+    requests += 1;
+    await route.continue();
+  });
+
+  await gotoApplication(page, "/es");
+  await gotoApplication(page, "/es/almanac");
+  await gotoApplication(page, "/es/sync");
+  expect(requests).toBe(0);
+  await gotoApplication(page, "/es/data");
+  expect(requests).toBe(1);
+});
+
+const dataGroup = routePatterns.indexOf(
+  ROUTE_UI_GROUPS.find(({ shard }) => shard === "data")?.pattern ?? "",
+);
 for (const { catalog, warmShared } of [
   { catalog: "shared.0", warmShared: false },
-  { catalog: "route.2", warmShared: false },
-  { catalog: "route.2", warmShared: true },
+  { catalog: `route.${dataGroup}`, warmShared: false },
+  { catalog: `route.${dataGroup}`, warmShared: true },
+  { catalog: "data-errors.0", warmShared: false },
 ]) {
   test(`recovers in Spanish when the ${catalog} catalog is unavailable (${warmShared ? "warm" : "cold"} shared copy)`, async ({
     page,

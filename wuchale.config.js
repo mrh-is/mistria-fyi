@@ -5,6 +5,7 @@ import { adapter as scriptAdapter } from "wuchale/adapter-vanilla";
 import {
   aboutMetadataFile,
   aboutSvelteFiles,
+  dataErrorMessagesFile,
   errorMetadataFile,
   errorSvelteFile,
   routeMetadataFiles,
@@ -56,6 +57,11 @@ export default defineConfig({
       // This opt-in file has one function with a runtime parameter supplied by the page load.
       runtime: { plain: { wrapInit: () => "_runtime" } },
       storage: aboutStorage,
+    }),
+    "data-errors": scriptAdapter({
+      files: dataErrorMessagesFile,
+      loader: "custom",
+      storage: partitionedStorage(["data-errors"], () => "data-errors"),
     }),
     errors: adapter({
       files: errorSvelteFile,
@@ -118,7 +124,7 @@ export default defineConfig({
       storage: sharedStorage,
     }),
     "shared-script": scriptAdapter({
-      files: sharedScriptFiles,
+      files: { ignore: [dataErrorMessagesFile], include: sharedScriptFiles },
       loader: "custom",
       storage: sharedStorage,
     }),

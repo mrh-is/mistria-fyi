@@ -9,6 +9,7 @@ export const aboutMetadataFile = "src/routes/about/about-metadata.ts";
 
 export const errorSvelteFile = "src/routes/+error.svelte";
 export const errorMetadataFile = "src/lib/data/page-metadata.ts";
+export const dataErrorMessagesFile = "src/routes/data/data-error-messages.ts";
 
 export const uiMessageHelperGlob = "src/{lib,routes}/**/*-messages.ts";
 
