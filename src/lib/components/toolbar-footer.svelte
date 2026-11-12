@@ -596,17 +596,30 @@
     }
   }
 
-  /* At book widths (the media query matches the `book` variant in app.css), the page tools sit at
-     the foot of the page, beside the thumb-tab rail, instead of centered under a phone column. */
+  /* At book widths (the media query matches the `book` variant in app.css), the page tools sit in
+     the header row across the top of the page, under the wire & left of the thumb tabs, and scroll
+     away with it. The page's padding reserves the row. */
   @media (min-width: 48rem) and (min-height: 32rem) {
     .floating-tool--phone {
       display: none;
     }
 
     .toolbar {
-      right: calc(var(--size-book-rail-width) + var(--size-book-margin) + 0.75rem);
-      left: auto;
+      position: absolute;
+      top: calc(var(--size-book-margin) + 0.75rem);
+      right: calc(var(--size-book-rail-width) + 1.25rem);
+      bottom: auto;
+      left: calc(var(--size-book-margin) + var(--size-book-wire-width) + 1.25rem);
       max-width: none;
+    }
+
+    .floating-tool {
+      box-shadow: none;
+    }
+
+    .sync-tool__slip {
+      top: calc(100% + 8px);
+      bottom: auto;
     }
   }
 </style>

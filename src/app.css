@@ -151,6 +151,7 @@
   --color-page-gutter: rgb(30 44 52 / 10%);
   --shadow-page: 2px 2px 0 #e2e7e7, 4px 4px 0 #d6dddd, 0 10px 30px rgb(8 16 22 / 38%);
   --shadow-thumb-tab: inset 0 -2px 0 rgb(0 0 0 / 14%), 1px 1px 2px rgb(0 0 0 / 25%);
+  --size-book-header-height: 4.25rem;
   --size-book-margin: 1.5rem;
   --size-book-rail-width: 3.5rem;
   --size-book-wire-width: 2.5rem;

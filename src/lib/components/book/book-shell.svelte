@@ -8,6 +8,7 @@
 <script lang="ts">
   import BookWire from "#lib/components/book/book-wire.svelte";
   import ThumbTabs from "#lib/components/book/thumb-tabs.svelte";
+  import WriteBlockedNotice from "#lib/components/book/write-blocked-notice.svelte";
 
   import type { Snippet } from "svelte";
 
@@ -17,6 +18,7 @@
 
 <div class="book">
   <div class="book__page" inert={inert || undefined}>
+    <WriteBlockedNotice />
     {@render children()}
   </div>
   <BookWire />
@@ -80,8 +82,10 @@
       pointer-events: none;
     }
 
+    /* The top of the page is the shell's header row, where the toolbar's page tools sit. */
     .book__page {
       min-height: calc(100dvh - 2 * var(--size-book-margin));
+      padding-top: var(--size-book-header-height);
       margin-block: var(--size-book-margin);
       background-image: linear-gradient(to right, var(--color-page-gutter), transparent 1.25rem);
       grid-area: 1 / 2;
