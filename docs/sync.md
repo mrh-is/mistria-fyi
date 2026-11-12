@@ -6,7 +6,7 @@ save: it runs the importer on each one with its own tracker data. Only the save 
 stay on the device where they were made. There are no logins & no readable player data on a server.
 This document is the design for implementers; the tracking epic is #123, each section below names
 the issues that build it, & the reasons behind the main forks are in
-[the save-driven sync record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-20-save-driven-sync.md)
+[the save-driven sync record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-20-save-driven-sync.md)
 & [the follow-the-save record](decisions/2026-10-28-sync-follow-the-save.md). The setup journey,
 screens, & copy are in [sync-setup.md](sync-setup.md).
 
@@ -80,7 +80,7 @@ The gaming PC with Chrome 156, Edge 156, & Firefox 159, & an iPhone on iOS 18.7,
 
 Two checks wait for hardware: Android opening the installed app from a scanned URL (#341), & Steam
 Deck save access, the SD card, & Flatpak Steam (#238). Launch doesn’t wait for them (see
-[the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-31-courier-probe-findings.md)):
+[the decision record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-31-courier-probe-findings.md)):
 a failure there changes which device or browser a player is told to use, not the courier, relay, or
 envelope. Record the results in this document & flag any failed assumption on #123. Early- &
 late-game v1.0.8 field presence is recorded in
@@ -208,7 +208,7 @@ token writes.
 Version 1 pins HKDF-SHA-256 (empty salt) & AES-GCM, with a random 96-bit nonce per envelope & the
 protocol version, mailbox ID, & counter as authenticated data, with no negotiation. A different
 suite means a new protocol version. The byte layouts are in
-[the format record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-follow-envelope-format.md).
+[the format record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-30-follow-envelope-format.md).
 
 ### Mailboxes
 
@@ -263,7 +263,7 @@ One Durable Object per mailbox ID.
   singleton about once every 30 seconds (creates also reach it through admission), & rejected
   traffic still costs Worker requests. A zone WAF rate rule, shared with feedback at 10 requests per
   10 seconds per address, protects the relay before the Worker runs
-  ([decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-shared-edge-rate-rule.md));
+  ([decision](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-30-shared-edge-rate-rule.md));
   distributed abuse can still exhaust Free quotas. Tighter caps, an edge block, or Workers Paid come
   first if usage approaches the limit.
 - **Expiry.** An envelope is deleted 30 days after it was uploaded. A mailbox with no upload for a
@@ -304,7 +304,7 @@ Built in #133: `src/lib/sync/follow.ts` (keys, link, envelope, & relay client) &
 (#131), on `/sync` & Data's sync card. See
 [the decision record](decisions/2026-10-28-sync-follow-the-save.md); the envelope's byte layout is
 in
-[the format record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-30-follow-envelope-format.md).
+[the format record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-30-follow-envelope-format.md).
 
 - **Lanes.** Each device is in exactly one lane: its save is on this computer (the courier), its
   save is on another device (a follower), or it tracks by hand, the default. Joining a syncing lane
@@ -425,7 +425,7 @@ apply silently, apply & tell, ask first, or keep local & tell, chosen by `POLICY
 provenance (`manual`, `inferred`, `save`, `unknown`, or none) & fact kind (tick, level, quest) in
 each direction, then by the guardrails below. The receiver (#135) asks the questions, calls it again
 with the answers, & writes the result in one write. See
-[the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-21-sync-apply-rules.md).
+[the decision record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-21-sync-apply-rules.md).
 
 ### Questions
 
@@ -451,7 +451,7 @@ dependent difference; a changed reason or effect requires a new answer.
   save was applied, or against a save whose playtime couldn’t be read) lets a save advance it &
   tells, but asks before moving backward. For example, a save may finish a quest obtained by hand
   without asking; the finish records `save`, while `obtainedSource` stays `manual`. See
-  [the amendment](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-11-01-manual-sync-without-playtime.md).
+  [the amendment](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-11-01-manual-sync-without-playtime.md).
 - An `unknown` fact lets the save add a fact still at its default & is promoted to `save` when the
   save agrees. Replacing an existing value (raising a level, advancing a quest), removing, or
   lowering asks, once per field.
@@ -522,7 +522,7 @@ local value.
   romances forbidden by its break-ups setting, stays local & tells; sync never invents a cascade
   over manual facts. This covers incomplete relationship evidence too. A manual import still merges
   additively through `mergeHousehold`; backup restore still replaces. See
-  [the household decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-29-household-save-facts.md).
+  [the household decision](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-29-household-save-facts.md).
 
 Property & scenario tests (`sync-apply.test.ts`) cover the rollback, untick, renamed-ID,
 farm-switch, & pre-provenance cases.
@@ -575,7 +575,7 @@ behavior, which is acceptable.
 
 This reverses today’s consent-based update flow, in which a “Refresh” toast waits for the player to
 accept the waiting worker (public #71, recorded in
-[the app update detection decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-16-app-update-detection.md)).
+[the app update detection decision](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-16-app-update-detection.md)).
 The change is built in #111, & #111’s PR is the one that supersedes that decision record & updates
 pwa-verification.md & the Public contract section of
 [app-architecture.md](app-architecture.md#7-public-contract). This document does not edit them.
@@ -618,7 +618,7 @@ names. The app still uses it for sync. The log leaves it out, & the progress att
 the value was present. The preview & API use the same projection.
 
 Privacy follows the
-[source-based feedback redaction decision](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-31-source-based-feedback-redaction.md).
+[source-based feedback redaction decision](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-31-source-based-feedback-redaction.md).
 The collector checks each unknown ID’s diagnostic path against an explicit list of game-owned
 sources before retaining it. Unclassified sources produce `[redacted]`, even when the ID looks
 harmless. The extractor’s path type requires each new ID source to be classified. Names, paths, raw

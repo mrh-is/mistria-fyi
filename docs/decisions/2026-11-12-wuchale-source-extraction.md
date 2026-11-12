@@ -9,7 +9,7 @@ kept app-authored UI text behind message keys, in one large catalog per locale: 
 in several files, which made agent-written copy & translations hard to review (#438).
 
 [#607](https://github.com/mrh-is/mistria-fyi/pull/607) migrated the whole app to Wuchale & was
-measured against Paraglide 3.2.2 on the same main revision (`4bac3531`). Cold Spanish page loads
+measured against Paraglide 3.2.2 on the same main revision (`e920bf8a`). Cold Spanish page loads
 requested 17–20% less gzip JavaScript (69–90 KB) on Home, Almanac, Data, & About. Navigation &
 language switching showed no measurable difference
 ([measurements](https://github.com/mrh-is/mistria-fyi/pull/607#issuecomment-6835412890), using the

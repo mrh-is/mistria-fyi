@@ -1,7 +1,7 @@
 # Automatic app updates at each page's safe moment
 
 Supersedes
-[App update detection](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-16-app-update-detection.md)
+[App update detection](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-16-app-update-detection.md)
 and the consent-based update flow it preserved (#360). Detection itself is unchanged.
 
 Note: Transfer holds no longer exist; #433 & #449 removed progress-transfer QR codes.

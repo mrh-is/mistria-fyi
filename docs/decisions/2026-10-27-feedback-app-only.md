@@ -4,7 +4,7 @@
 
 PR #226 merged the GitHub App authentication path. The owner then requested removal of the temporary
 personal access token fallback. The
-[earlier decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-22-feedback-github-app.md#revisit-if)
+[earlier decision record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-22-feedback-github-app.md#revisit-if)
 permits removal after the App cutover; the owner’s request authorizes this follow-up.
 [Issue #242](https://github.com/mrh-is/mistria-fyi/issues/242), filed by the feedback App on October
 27, 2026, confirms that the App files issues in production. Personal token revocation remains
@@ -18,7 +18,7 @@ contract & environment example; retain the App token cache, rejection invalidati
 handling.
 
 Preview builds retain the
-[dry-run behavior](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-27-feedback-preview-dry-run.md)
+[dry-run behavior](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-27-feedback-preview-dry-run.md)
 added on main: they do not require App settings, file GitHub issues, or persist contact emails.
 
 ## Alternatives
