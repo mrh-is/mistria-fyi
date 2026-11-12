@@ -105,7 +105,7 @@
   }
 </script>
 
-<DataCard bind:open title="Backup & restore" summary="Export or restore all tracker data.">
+<DataCard bind:open title="Backup & restore" summary="Export or restore all your field guide data.">
   <div class="flex flex-col gap-2">
     <Button variant="outline" onclick={handleExport}>
       <IconFileUpload />

@@ -236,7 +236,7 @@
   {/key}
 
   <nav
-    aria-label="Tracker tools"
+    aria-label="Field guide tools"
     class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}

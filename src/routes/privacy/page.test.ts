@@ -30,4 +30,15 @@ describe("privacy policy", () => {
     expect(text).toContain("never used to optimize engagement");
     expect(text).toContain("deleted automatically after 90 days");
   });
+
+  it("bolds the public issue & its visibility inside one sentence", () => {
+    const { container, text } = renderToFragment(PrivacyPage, { props: {} });
+
+    const bold = [...container.querySelectorAll("strong")].map((node) => node.textContent);
+    expect(bold).toEqual(expect.arrayContaining(["public issue", "publicly visible"]));
+    expect(text).toContain(
+      "is used to create a public issue on the GitHub issue tracker so I can find",
+    );
+    expect(text).toContain("as these fields will be publicly visible.");
+  });
 });

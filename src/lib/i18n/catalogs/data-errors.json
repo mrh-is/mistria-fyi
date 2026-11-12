@@ -2,12 +2,12 @@
   {
     "translations": {
       "en": "Hmm, we can’t read this as a Fields of Mistria save. It might be damaged, or a different file. Try the newest file that ends in “autosave”.",
-      "ja": "うーん、Fields of Mistria のセーブとして読み込めません。壊れているか、別のファイルかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
-      "zh-Hans": "嗯，没法把它当作 Fields of Mistria 的存档来读取。它可能已损坏，或者是别的文件。试试以“autosave”结尾的最新文件。",
-      "zh-Hant": "嗯，沒辦法把它當作 Fields of Mistria 的存檔來讀取。它可能已損毀，或是別的檔案。試試以「autosave」結尾的最新檔案。",
+      "ja": "うーん、Fields of Mistria のセーブデータとして読み込めません。壊れているか、別のファイルかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
+      "zh-Hans": "嗯，没法把它当作《Fields of Mistria》的存档来读取。它可能已损坏，或者是别的文件。试试以“autosave”结尾的最新文件。",
+      "zh-Hant": "嗯，沒辦法把它當作《Fields of Mistria》的存檔來讀取。它可能已損毀，或是別的檔案。試試以「autosave」結尾的最新檔案。",
       "es": "Mmm, no podemos leer esto como una partida guardada de Fields of Mistria. Puede que esté dañado o que sea otro archivo. Prueba con el archivo más reciente que termine en «autosave».",
-      "fr": "Hum, impossible de lire ceci comme une sauvegarde de Fields of Mistria. Il est peut-être endommagé, ou c’est un autre fichier. Essayez le fichier le plus récent qui se termine par « autosave ».",
-      "ko": "음, 이 파일을 Fields of Mistria 세이브로 읽을 수 없어요. 손상됐거나 다른 파일일 수 있어요. “autosave”로 끝나는 가장 최신 파일을 시도해 보세요.",
+      "fr": "Hum, on n’arrive pas à lire ce fichier comme une sauvegarde de Fields of Mistria. Il est peut-être endommagé, ou c’est un autre fichier. Essayez le fichier le plus récent qui se termine par « autosave ».",
+      "ko": "음, 이 파일을 Fields of Mistria 세이브로 읽을 수 없어요. 손상됐거나 다른 파일일 수 있어요. “autosave”로 끝나는 가장 최근 파일로 해 보세요.",
       "ru": "Хм, не получается прочитать это как сохранение Fields of Mistria. Возможно, файл повреждён или это другой файл. Попробуйте самый новый файл, который заканчивается на «autosave»."
     },
     "references": [
@@ -24,11 +24,11 @@
   {
     "translations": {
       "en": "Mamma mia, that’s a big file. This app can only read save files up to {0}, and that file is {1}. Maybe double-check you picked the right one?",
-      "ja": "マンマミーア、大きなファイルですね。このアプリが読み込めるセーブファイルは {0} までで、このファイルは {1} あります。正しいファイルを選んだか、確認してみてください。",
-      "zh-Hans": "妈妈咪呀，好大的文件。这个应用最多只能读取 {0} 的存档，而这个文件有 {1}。要不要再确认一下选对了文件？",
-      "zh-Hant": "媽媽咪呀，好大的檔案。這個應用程式最多只能讀取 {0} 的存檔，而這個檔案有 {1}。要不要再確認一下選對了檔案？",
+      "ja": "マンマミーア、大きなファイルですね。このアプリが読み込めるセーブデータは {0} までで、このファイルは {1} あります。正しいファイルを選んだか、確認してみてください。",
+      "zh-Hans": "我的妈呀，这文件也太大了吧。这个应用最多只能读取 {0} 的存档，而这个文件有 {1}。要不要再确认一下选对了文件？",
+      "zh-Hant": "我的媽呀，這檔案也太大了吧。這個應用程式最多只能讀取 {0} 的存檔，而這個檔案有 {1}。要不要再確認一下有沒有選對檔案？",
       "es": "¡Mamma mia, qué archivo tan grande! Esta app solo puede leer partidas guardadas de hasta {0}, y ese archivo ocupa {1}. ¿Seguro que has elegido el correcto?",
-      "fr": "Mamma mia, quel gros fichier ! Cette appli ne lit que les sauvegardes jusqu’à {0}, et ce fichier fait {1}. Vous êtes sûr d’avoir choisi le bon ?",
+      "fr": "Mamma mia, quel gros fichier ! Cette appli ne lit que les sauvegardes jusqu’à {0}, et ce fichier fait {1}. Vous pouvez vérifier que c’est bien le bon ?",
       "ko": "맘마미아, 파일이 크네요. 이 앱은 최대 {0}의 세이브 파일만 읽을 수 있는데, 이 파일은 크기가 {1}에 달해요. 맞는 파일을 골랐는지 한번 확인해 보시겠어요?",
       "ru": "Мамма мия, какой большой файл! Приложение читает сохранения только до {0}, а этот файл весит {1}. Может, стоит проверить, тот ли файл вы выбрали?"
     },
@@ -57,12 +57,12 @@
   {
     "translations": {
       "en": "This file unpacks to more than {0}, which is way bigger than a real save. It might be damaged. Try the newest file that ends in “autosave”.",
-      "ja": "このファイルは展開すると {0} を超え、本物のセーブよりずっと大きくなります。壊れているかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
+      "ja": "このファイルは展開すると {0} を超え、本物のセーブデータよりずっと大きくなります。壊れているかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
       "zh-Hans": "这个文件解压后超过 {0}，比真正的存档大得多。它可能已损坏。试试以“autosave”结尾的最新文件。",
       "zh-Hant": "這個檔案解壓縮後超過 {0}，比真正的存檔大得多。它可能已損毀。試試以「autosave」結尾的最新檔案。",
       "es": "Este archivo ocupa más de {0} al descomprimirse, mucho más que una partida guardada real. Puede que esté dañado. Prueba con el archivo más reciente que termine en «autosave».",
-      "fr": "Une fois décompressé, ce fichier dépasse {0}, bien plus qu’une vraie sauvegarde. Il est peut-être endommagé. Essayez le fichier le plus récent qui se termine par « autosave ».",
-      "ko": "이 파일은 압축을 풀면 {0}를 넘어서, 실제 세이브보다 훨씬 커요. 손상됐을 수 있어요. “autosave”로 끝나는 가장 최신 파일을 시도해 보세요.",
+      "fr": "Une fois décompressé, ce fichier dépasse {0}, bien plus qu’une vraie sauvegarde. Il est peut-être endommagé. Essayez le fichier le plus récent qui se termine par « autosave ».",
+      "ko": "이 파일은 압축을 풀면 {0}를 넘어서, 실제 세이브보다 훨씬 커요. 손상됐을 수 있어요. “autosave”로 끝나는 가장 최근 파일로 해 보세요.",
       "ru": "В распакованном виде этот файл больше {0}, а это гораздо больше настоящего сохранения. Возможно, он повреждён. Попробуйте самый новый файл, который заканчивается на «autosave»."
     },
     "references": [
@@ -86,12 +86,12 @@
   {
     "translations": {
       "en": "We couldn’t find any progress in this file. Try the newest file that ends in “autosave”.",
-      "ja": "このファイルに進行状況が見つかりませんでした。「autosave」で終わるいちばん新しいファイルを試してください。",
+      "ja": "このファイルに進捗が見つかりませんでした。「autosave」で終わるいちばん新しいファイルを試してください。",
       "zh-Hans": "这个文件里没有找到任何进度。试试以“autosave”结尾的最新文件。",
       "zh-Hant": "這個檔案裡沒有找到任何進度。試試以「autosave」結尾的最新檔案。",
       "es": "No hemos encontrado ningún progreso en este archivo. Prueba con el archivo más reciente que termine en «autosave».",
-      "fr": "Aucune progression trouvée dans ce fichier. Essayez le fichier le plus récent qui se termine par « autosave ».",
-      "ko": "이 파일에서 진행 상황을 찾지 못했어요. “autosave”로 끝나는 가장 최신 파일을 시도해 보세요.",
+      "fr": "On n’a trouvé aucune progression dans ce fichier. Essayez le fichier le plus récent qui se termine par « autosave ».",
+      "ko": "이 파일에서 진행 상황을 찾지 못했어요. “autosave”로 끝나는 가장 최근 파일로 해 보세요.",
       "ru": "В этом файле не нашлось прогресса. Попробуйте самый новый файл, который заканчивается на «autosave»."
     },
     "references": [
@@ -108,12 +108,12 @@
   {
     "translations": {
       "en": "We couldn’t read the {0} part of this save, so it might be damaged. Try the newest file that ends in “autosave”.",
-      "ja": "このセーブの {0} 部分を読み込めなかったので、壊れているかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
+      "ja": "このセーブデータの {0} 部分を読み込めなかったので、壊れているかもしれません。「autosave」で終わるいちばん新しいファイルを試してください。",
       "zh-Hans": "没能读取这个存档的 {0} 部分，它可能已损坏。试试以“autosave”结尾的最新文件。",
       "zh-Hant": "沒能讀取這個存檔的 {0} 部分，它可能已損毀。試試以「autosave」結尾的最新檔案。",
       "es": "No hemos podido leer la parte {0} de esta partida guardada, así que puede que esté dañada. Prueba con el archivo más reciente que termine en «autosave».",
-      "fr": "Impossible de lire la partie {0} de cette sauvegarde, elle est peut-être endommagée. Essayez le fichier le plus récent qui se termine par « autosave ».",
-      "ko": "이 세이브의 {0} 부분을 읽지 못해서 손상됐을 수 있어요. “autosave”로 끝나는 가장 최신 파일을 시도해 보세요.",
+      "fr": "On n’a pas pu lire la partie {0} de cette sauvegarde, elle est donc peut-être endommagée. Essayez le fichier le plus récent qui se termine par « autosave ».",
+      "ko": "이 세이브의 {0} 부분을 읽지 못해서 손상됐을 수 있어요. “autosave”로 끝나는 가장 최근 파일로 해 보세요.",
       "ru": "Не удалось прочитать часть {0} этого сохранения, так что оно может быть повреждено. Попробуйте самый новый файл, который заканчивается на «autosave»."
     },
     "references": [
@@ -137,11 +137,11 @@
   {
     "translations": {
       "en": "{0} has no recognized progress fields; skipped",
-      "ja": "{0} に認識できる進行状況のフィールドがありません（スキップしました）",
+      "ja": "{0} に認識できる進捗のフィールドがありません（スキップしました）",
       "zh-Hans": "{0} 中没有可识别的进度字段，已跳过",
       "zh-Hant": "{0} 中沒有可辨識的進度欄位，已略過",
       "es": "{0} no tiene campos de progreso reconocidos; omitido",
-      "fr": "{0} ne contient aucun champ de progression reconnu ; ignoré",
+      "fr": "{0} ne contient aucun champ de progression reconnu ; ignoré",
       "ko": "{0}에 인식할 수 있는 진행 필드가 없음, 건너뜀",
       "ru": "В {0} нет распознаваемых полей прогресса; пропущено"
     },
@@ -170,7 +170,7 @@
       "zh-Hans": "{0} 为 {1}，超过最大值 {2}，已按 {3} 导入",
       "zh-Hant": "{0} 為 {1}，超過上限 {2}，已以 {3} 匯入",
       "es": "{0} es {1}, por encima del máximo de {2}; se importó como {3}",
-      "fr": "{0} vaut {1}, au-delà du maximum de {2} ; importé comme {3}",
+      "fr": "{0} vaut {1}, au-delà du maximum de {2} ; importé comme {3}",
       "ko": "{0} 값 {1}이(가) 최대값 {2}을(를) 초과함, {3}(으)로 가져옴",
       "ru": "{0} = {1}, больше максимума {2}; импортировано как {3}"
     },
@@ -211,7 +211,7 @@
       "zh-Hans": "{0} 为 {1}，是负数，已跳过",
       "zh-Hant": "{0} 為 {1}，是負數，已略過",
       "es": "{0} es {1}, un valor negativo; omitido",
-      "fr": "{0} vaut {1}, une valeur négative ; ignoré",
+      "fr": "{0} vaut {1}, une valeur négative ; ignoré",
       "ko": "{0} 값 {1}이(가) 음수임, 건너뜀",
       "ru": "{0} = {1}, отрицательное значение; пропущено"
     },
@@ -244,7 +244,7 @@
       "zh-Hans": "{0} 为 {1}，不是数字，已跳过",
       "zh-Hant": "{0} 為 {1}，不是數字，已略過",
       "es": "{0} es {1}, que no es un número; omitido",
-      "fr": "{0} vaut {1}, qui n’est pas un nombre ; ignoré",
+      "fr": "{0} vaut {1}, qui n’est pas un nombre ; ignoré",
       "ko": "{0} 값 {1}이(가) 숫자가 아님, 건너뜀",
       "ru": "{0} = {1}, не число; пропущено"
     },
@@ -277,7 +277,7 @@
       "zh-Hans": "{0} 不是列表，已跳过",
       "zh-Hant": "{0} 不是清單，已略過",
       "es": "{0} no es una lista; omitido",
-      "fr": "{0} n’est pas une liste ; ignoré",
+      "fr": "{0} n’est pas une liste ; ignoré",
       "ko": "{0}이(가) 목록이 아님, 건너뜀",
       "ru": "{0} не является списком; пропущено"
     },
@@ -306,7 +306,7 @@
       "zh-Hans": "{0} 不是对象，已跳过",
       "zh-Hant": "{0} 不是物件，已略過",
       "es": "{0} no es un objeto; omitido",
-      "fr": "{0} n’est pas un objet ; ignoré",
+      "fr": "{0} n’est pas un objet ; ignoré",
       "ko": "{0}이(가) 객체가 아님, 건너뜀",
       "ru": "{0} не является объектом; пропущено"
     },
@@ -331,11 +331,11 @@
   {
     "translations": {
       "en": "{0}: unreadable entries skipped ({1})",
-      "ja": "{0}: 読み取れない項目をスキップしました（{1}件）",
+      "ja": "{0}：読み取れない項目をスキップしました（{1}件）",
       "zh-Hans": "{0}：已跳过无法读取的条目（{1} 个）",
       "zh-Hant": "{0}：已略過無法讀取的項目（{1} 個）",
       "es": "{0}: entradas ilegibles omitidas ({1})",
-      "fr": "{0} : entrées illisibles ignorées ({1})",
+      "fr": "{0} : entrées illisibles ignorées ({1})",
       "ko": "{0}: 읽을 수 없는 항목 건너뜀 ({1}개)",
       "ru": "{0}: пропущены нечитаемые записи ({1})"
     },
@@ -364,11 +364,11 @@
   {
     "translations": {
       "en": "{0}: unrecognized ID {1}; skipped",
-      "ja": "{0}: 認識できないID {1}（スキップしました）",
+      "ja": "{0}：認識できないID {1}（スキップしました）",
       "zh-Hans": "{0}：无法识别的 ID {1}，已跳过",
       "zh-Hant": "{0}：無法辨識的 ID {1}，已略過",
       "es": "{0}: ID no reconocido {1}; omitido",
-      "fr": "{0} : ID inconnu {1} ; ignoré",
+      "fr": "{0} : ID inconnu {1} ; ignoré",
       "ko": "{0}: 알 수 없는 ID {1}, 건너뜀",
       "ru": "{0}: неизвестный ID {1}; пропущено"
     },

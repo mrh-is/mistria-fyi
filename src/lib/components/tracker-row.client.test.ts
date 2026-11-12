@@ -19,7 +19,7 @@ describe("TrackerRow localized checkbox labels", () => {
     { locale: "es", plain: "Marcar Window", variant: "Marcar Window, Oak" },
     { locale: "fr", plain: "Cocher Window", variant: "Cocher Window, Oak" },
     { locale: "ja", plain: "Windowをチェック", variant: "Window（Oak）をチェック" },
-    { locale: "ko", plain: "Window 선택", variant: "Window(Oak) 선택" },
+    { locale: "ko", plain: "Window 체크", variant: "Window(Oak) 체크" },
     { locale: "ru", plain: "Отметить «Window»", variant: "Отметить «Window, Oak»" },
     { locale: "zh-Hans", plain: "勾选Window", variant: "勾选Window，Oak" },
     { locale: "zh-Hant", plain: "勾選Window", variant: "勾選Window，Oak" },

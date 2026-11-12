@@ -2,13 +2,13 @@
   {
     "translations": {
       "en": "<0/>AI disclosure",
-      "ja": "<0/>AIに関する開示",
+      "ja": "<0/>AIの利用について",
       "zh-Hans": "<0/>AI 使用说明",
       "zh-Hant": "<0/>AI 使用說明",
-      "es": "<0/>Divulgación sobre IA",
-      "fr": "<0/>Divulgation IA",
+      "es": "<0/>Aviso sobre IA",
+      "fr": "<0/>Transparence sur l’IA",
       "ko": "<0/>AI 사용 안내",
-      "ru": "<0/>Раскрытие об ИИ"
+      "ru": "<0/>Об использовании ИИ"
     },
     "references": [
       {
@@ -50,7 +50,7 @@
       "zh-Hans": "借助 AI 完成开发",
       "zh-Hant": "借助 AI 完成開發",
       "es": "Creado con ayuda de IA",
-      "fr": "Réalisé avec l'aide de l'IA",
+      "fr": "Réalisé avec l’aide de l’IA",
       "ko": "AI의 도움으로 제작됨",
       "ru": "Создано с помощью ИИ"
     },
@@ -90,12 +90,12 @@
   {
     "translations": {
       "en": "Fields of Mistria (the game) & all the content therein, including data & images, remain properties of NPC Studio & their respective rightsholders.",
-      "ja": "Fields of Mistria(本作)およびデータや画像を含むすべてのコンテンツは、NPC Studioおよびそれぞれの権利者の所有物です。",
-      "zh-Hans": "Fields of Mistria（游戏本体）及其中包含的所有内容，包括数据与图像，均归 NPC Studio 及其相应权利人所有。",
-      "zh-Hant": "Fields of Mistria（遊戲本體）及其中包含的所有內容，包括資料與圖像，均歸 NPC Studio 及其相應權利人所有。",
+      "ja": "Fields of Mistria（ゲーム本編）と、そこに含まれるデータや画像などすべてのコンテンツは、NPC Studioおよび各権利者に帰属します。",
+      "zh-Hans": "《Fields of Mistria》（游戏本体）及其中包含的所有内容，包括数据与图像，均归 NPC Studio 及其相应权利人所有。",
+      "zh-Hant": "《Fields of Mistria》（遊戲本體）及其中包含的所有內容，包括資料與圖像，均歸 NPC Studio 及其相應權利人所有。",
       "es": "Fields of Mistria (el juego) y todo su contenido, incluidos datos e imágenes, siguen siendo propiedad de NPC Studio y de sus respectivos titulares de derechos.",
       "fr": "Fields of Mistria (le jeu) et tout son contenu, y compris les données et les images, restent la propriété de NPC Studio et de leurs ayants droit respectifs.",
-      "ko": "Fields of Mistria(게임 본체)와 데이터 및 이미지를 포함한 모든 콘텐츠는 NPC Studio 및 각 권리자의 자산입니다.",
+      "ko": "Fields of Mistria(게임 본체)와 데이터, 이미지를 포함한 그 안의 모든 콘텐츠는 NPC Studio와 각 권리자의 자산이에요.",
       "ru": "Fields of Mistria (игра) и всё её содержимое, включая данные и изображения, остаются собственностью NPC Studio и соответствующих правообладателей."
     },
     "references": [
@@ -112,13 +112,13 @@
   {
     "translations": {
       "en": "If this changes how you feel about this app, I respect that, & I want you to be able to make that choice with full information. To see the full details of how AI works in this project, you can check out <0>the GitHub repo</0>, or <1>drop me a line</1>.",
-      "ja": "これによってこのアプリへの印象が変わるとしても、それは理解できますし、十分な情報のもとでそう判断していただけるようにしたいと思っています。このプロジェクトでAIがどのように使われているか詳しく知りたい方は、 <0>GitHubリポジトリ</0>, または <1>メールで連絡</1>.",
-      "zh-Hans": "如果这改变了你对这款应用的看法，我完全理解，也希望你能在充分了解信息的情况下做出选择。若想查看本项目中 AI 使用方式的完整细节，你可以查看 <0>GitHub 仓库</0>, 或 <1>给我发邮件</1>.",
-      "zh-Hant": "如果這改變了你對這款應用程式的看法，我完全理解，也希望你能在充分了解資訊的情況下做出選擇。若想查看本專案中 AI 使用方式的完整細節，你可以查看 <0>GitHub 儲存庫</0>, 或 <1>給我寄信</1>.",
-      "es": "Si esto cambia cómo te sientes respecto a esta aplicación, lo respeto, y quiero que puedas tomar esa decisión con información completa. Para ver todos los detalles sobre cómo se usa la IA en este proyecto, puedes consultar <0>el repositorio de GitHub</0>, o <1>escribirme</1>.",
-      "fr": "Si cela change votre perception de cette application, je le comprends, et je veux que vous puissiez faire ce choix en toute connaissance de cause. Pour voir tous les détails sur la façon dont l'IA est utilisée dans ce projet, vous pouvez consulter <0>le dépôt GitHub</0>, ou <1>m'envoyer un message</1>.",
-      "ko": "이 때문에 이 앱에 대한 마음이 달라지신다면 그 또한 존중하며, 충분한 정보를 바탕으로 선택하실 수 있기를 바랍니다. 이 프로젝트에서 AI가 어떻게 사용되는지 자세히 알아보려면 <0>GitHub 저장소</0>, 또는 <1>저에게 메일 보내기</1>.",
-      "ru": "Если это меняет ваше отношение к приложению, я это уважаю и хочу, чтобы вы могли сделать этот выбор, обладая полной информацией. Чтобы увидеть все подробности о том, как в этом проекте используется ИИ, вы можете заглянуть в <0>репозиторий на GitHub</0>, или <1>написать мне</1>."
+      "ja": "これによってこのアプリへの印象が変わるとしても、それは理解できますし、十分な情報のもとでそう判断していただけるようにしたいと思っています。このプロジェクトでAIがどのように使われているか詳しく知りたい方は、<0>GitHubリポジトリ</0>をご覧いただくか、<1>メールでお気軽にどうぞ</1>。",
+      "zh-Hans": "如果这改变了你对这款应用的看法，我完全理解，也希望你能在充分了解信息的情况下做出选择。若想查看本项目中 AI 使用方式的完整细节，你可以查看 <0>GitHub 仓库</0>，或<1>给我发邮件</1>。",
+      "zh-Hant": "如果這改變了你對這款應用程式的看法，我完全理解，也希望你能在充分了解資訊的情況下做出選擇。若想查看本專案中 AI 使用方式的完整細節，你可以查看 <0>GitHub 儲存庫</0>，或<1>寫信給我</1>。",
+      "es": "Si esto cambia lo que piensas de esta aplicación, lo respeto, y quiero que puedas decidir con toda la información. Para ver todos los detalles sobre cómo se usa la IA en este proyecto, puedes consultar <0>el repositorio de GitHub</0> o <1>escribirme</1>.",
+      "fr": "Si cela change votre perception de cette application, je le comprends, et je veux que vous puissiez faire ce choix en toute connaissance de cause. Pour voir tous les détails sur la façon dont l’IA est utilisée dans ce projet, vous pouvez consulter <0>le dépôt GitHub</0> ou <1>m’écrire un petit mot</1>.",
+      "ko": "이 때문에 앱에 대한 생각이 달라지셨다면 그 마음도 존중해요. 충분한 정보를 알고 선택하실 수 있으면 좋겠어요. 이 프로젝트에서 AI가 어떻게 쓰이는지 자세히 보고 싶다면 <0>GitHub 저장소</0>를 둘러보거나 <1>저에게 메일을 보내 주세요</1>.",
+      "ru": "Если это меняет ваше отношение к приложению, я это уважаю и хочу, чтобы вы могли сделать этот выбор, обладая полной информацией. Чтобы увидеть все подробности о том, как в этом проекте используется ИИ, вы можете заглянуть в <0>репозиторий на GitHub</0> или <1>написать мне</1>."
     },
     "references": [
       {
@@ -135,11 +135,11 @@
     "translations": {
       "en": "Learn about the unofficial Mistria Field Guide for Fields of Mistria.",
       "ja": "Fields of Mistria非公式のMistria Field Guideについて。",
-      "zh-Hans": "了解非官方的 Fields of Mistria 田野指南。",
-      "zh-Hant": "了解非官方的 Fields of Mistria 田野指南。",
+      "zh-Hans": "了解《Fields of Mistria》的非官方 Mistria Field Guide。",
+      "zh-Hant": "了解為《Fields of Mistria》打造的非官方 Mistria Field Guide。",
       "es": "Descubre más sobre la guía no oficial Mistria Field Guide para Fields of Mistria.",
       "fr": "En savoir plus sur le Mistria Field Guide non officiel pour Fields of Mistria.",
-      "ko": "Fields of Mistria용 비공식 Mistria 필드 가이드에 대해 알아보세요.",
+      "ko": "Fields of Mistria용 비공식 Mistria Field Guide에 대해 알아보세요.",
       "ru": "Узнайте больше о неофициальном Mistria Field Guide для Fields of Mistria."
     },
     "references": [
@@ -227,7 +227,7 @@
       "zh-Hant": "問題與請求",
       "es": "Preguntas y solicitudes",
       "fr": "Questions et demandes",
-      "ko": "질문 및 요청",
+      "ko": "질문과 요청",
       "ru": "Вопросы и запросы"
     },
     "references": [
@@ -248,8 +248,8 @@
       "zh-Hans": "随时可以通过反馈工具（底部工具栏中的 <0/> 图标）报告问题！如需反馈更严重的问题，你也可以<1>私下联系我</1>。",
       "zh-Hant": "隨時可以透過回饋工具（底部工具列中的 <0/> 圖示）回報問題！如需回報更嚴重的問題，你也可以<1>私下聯絡我</1>。",
       "es": "Informa de problemas a través de la herramienta de comentarios (el icono <0/> en la barra de herramientas inferior) en cualquier momento. Para algo más serio, también puedes <1>contactarme en privado</1>.",
-      "fr": "Signalez les problèmes via l’outil de retour (l’icône <0/> dans la barre d’outils du bas) à tout moment ! Pour tout ce qui est plus sérieux, vous pouvez aussi <1>me contacter en privé</1>.",
-      "ko": "언제든지 피드백 도구(하단 툴바의 <0/> 아이콘)를 통해 문제를 신고할 수 있습니다! 더 심각한 사안이라면 <1>개인적으로 연락</1>할 수도 있습니다.",
+      "fr": "Signalez les problèmes via l’outil de retour (l’icône <0/> dans la barre d’outils du bas) à tout moment ! Pour tout ce qui est plus sérieux, vous pouvez aussi <1>me contacter en privé</1>.",
+      "ko": "언제든지 피드백 도구(하단 툴바의 <0/> 아이콘)로 문제를 알려 주세요! 더 심각한 일이라면 <1>개인적으로 연락</1>할 수도 있어요.",
       "ru": "Сообщайте о проблемах через инструмент обратной связи (значок <0/> в нижней панели инструментов) в любой момент! По более серьёзным вопросам вы также можете <1>связаться со мной лично</1>."
     },
     "references": [
@@ -266,12 +266,12 @@
   {
     "translations": {
       "en": "The Mistria Field Guide is an independent, unofficial, & noncommercial fan project to help players track their progress in <0/>.",
-      "ja": "Mistria Field Guideは、プレイヤーの進捗記録を助けるための独立した非公式・非営利のファンプロジェクトで、対象は<0/>です。",
-      "zh-Hans": "Mistria 田野指南是一个独立、非官方、非商业的粉丝项目，旨在帮助玩家追踪他们在 <0/> 中的进度。",
-      "zh-Hant": "Mistria 田野指南是一個獨立、非官方、非商業的粉絲專案，旨在幫助玩家追蹤他們在 <0/> 中的進度。",
+      "ja": "Mistria Field Guideは、<0/>のプレイヤーが進捗を記録できるようにするための、独立した非公式・非営利のファンプロジェクトです。",
+      "zh-Hans": "Mistria Field Guide 是一个独立、非官方、非商业的粉丝项目，旨在帮助玩家追踪他们在《<0/>》中的进度。",
+      "zh-Hant": "Mistria Field Guide 是一個獨立、非官方、非商業的粉絲專案，旨在幫助玩家追蹤他們在 <0/> 中的進度。",
       "es": "Mistria Field Guide es un proyecto de fans independiente, no oficial y sin fines comerciales, creado para ayudar a los jugadores a seguir su progreso en <0/>.",
       "fr": "Le Mistria Field Guide est un projet de fan indépendant, non officiel et non commercial destiné à aider les joueurs à suivre leur progression dans <0/>.",
-      "ko": "Mistria 필드 가이드는 플레이어가 진행 상황을 추적할 수 있도록 돕는 독립적이고 비공식적인 비영리 팬 프로젝트로, 대상은 <0/>입니다.",
+      "ko": "Mistria Field Guide는 플레이어가 <0/>의 진행 상황을 기록할 수 있게 돕는, 독립적이고 비공식적인 비영리 팬 프로젝트예요.",
       "ru": "Mistria Field Guide — независимый, неофициальный и некоммерческий фанатский проект, помогающий игрокам отслеживать свой прогресс в <0/>."
     },
     "references": [
@@ -288,13 +288,13 @@
   {
     "translations": {
       "en": "The Mistria Field Guide is developed with the help of AI coding tools. AI agents write code, review pull requests, & help maintain the project, under the supervision of humans (well, just one human).",
-      "ja": "Mistria Field GuideはAIコーディングツールの助けを借りて開発されています。AIエージェントがコードを書き、プルリクエストをレビューし、プロジェクトの維持を手伝っています。すべて人間(といっても一人だけ)の監督のもとで行われています。",
-      "zh-Hans": "Mistria 田野指南是借助 AI 编程工具开发的。AI 代理编写代码、审查拉取请求，并在人类（其实就一个人）的监督下协助维护这个项目。",
-      "zh-Hant": "Mistria 田野指南是借助 AI 程式設計工具開發的。AI 代理編寫程式碼、審查提取請求，並在人類（其實就一個人）的監督下協助維護這個專案。",
+      "ja": "Mistria Field GuideはAIコーディングツールの助けを借りて開発されています。AIエージェントがコードを書き、プルリクエストをレビューし、プロジェクトの維持を手伝っています。すべて人間（といっても一人だけ）の監督のもとで行われています。",
+      "zh-Hans": "Mistria Field Guide 是借助 AI 编程工具开发的。AI 代理编写代码、审查拉取请求，并在人类（其实就一个人）的监督下协助维护这个项目。",
+      "zh-Hant": "Mistria Field Guide 是在 AI 程式開發工具的協助下開發的。AI 代理會撰寫程式碼、審查 pull request，並協助維護這個專案，全程都在人類的監督之下（好吧，其實就一個人）。",
       "es": "Mistria Field Guide se desarrolla con la ayuda de herramientas de codificación con IA. Los agentes de IA escriben código, revisan pull requests y ayudan a mantener el proyecto, bajo la supervisión de humanos (bueno, de un solo humano).",
-      "fr": "Le Mistria Field Guide est développé à l'aide d'outils de codage par IA. Des agents IA écrivent du code, examinent les pull requests et aident à maintenir le projet, sous la supervision d'humains (enfin, d'un seul humain).",
-      "ko": "Mistria 필드 가이드는 AI 코딩 도구의 도움을 받아 개발되고 있습니다. AI 에이전트가 코드를 작성하고, 풀 리퀘스트를 검토하며, 프로젝트 유지 관리를 돕습니다. 모두 사람(사실은 단 한 명)의 감독 아래 이루어집니다.",
-      "ru": "Mistria Field Guide разрабатывается с помощью инструментов ИИ для написания кода. ИИ-агенты пишут код, проверяют pull request'ы и помогают поддерживать проект под наблюдением людей (ну, если точнее, одного человека)."
+      "fr": "Le Mistria Field Guide est développé à l’aide d’outils de codage par IA. Des agents IA écrivent du code, examinent les pull requests et aident à maintenir le projet, sous la supervision d’humains (enfin, d’un seul humain).",
+      "ko": "Mistria Field Guide는 AI 코딩 도구의 도움을 받아 개발하고 있어요. AI 에이전트가 코드를 작성하고, 풀 리퀘스트를 검토하고, 프로젝트 관리를 도와요. 모두 사람(뭐, 딱 한 명이지만요)이 지켜보는 가운데 이뤄져요.",
+      "ru": "Mistria Field Guide разрабатывается с помощью инструментов ИИ для написания кода. ИИ-агенты пишут код, проверяют пул-реквесты и помогают поддерживать проект под наблюдением людей (ну, если точнее, одного человека)."
     },
     "references": [
       {
@@ -315,8 +315,8 @@
       "zh-Hant": "目前的指南資料基於遊戲版本 {0} 產生。遊戲更新後，本指南會在我完成更新前短暫過時。",
       "es": "Los datos actuales de la guía se generaron a partir de la versión del juego {0}. Cuando haya una actualización del juego, esta guía quedará desactualizada brevemente mientras lo actualizo todo.",
       "fr": "Les données actuelles du guide ont été générées à partir de la version {0} du jeu. Lors d’une mise à jour du jeu, ce guide sera brièvement obsolète le temps que je mette tout à jour.",
-      "ko": "현재 가이드 데이터는 게임 버전 {0}을 기준으로 생성되었습니다. 게임이 업데이트되면, 제가 모든 내용을 업데이트하는 동안 이 가이드는 잠시 최신 상태가 아닐 수 있습니다.",
-      "ru": "Текущие данные путеводителя были сгенерированы на основе версии игры {0}. При выходе обновления игры путеводитель ненадолго устареет, пока я всё не обновлю."
+      "ko": "현재 가이드 데이터는 게임 버전 {0} 기준으로 만들었어요. 게임이 업데이트되면 제가 전부 업데이트하는 동안 가이드가 잠시 최신 상태가 아닐 수 있어요.",
+      "ru": "Текущие данные справочника созданы на основе версии игры {0}. Когда выходит обновление игры, справочник ненадолго устаревает, пока я всё не обновлю."
     },
     "references": [
       {
@@ -339,13 +339,13 @@
   {
     "translations": {
       "en": "The guide is maintained by <0/>. It’s not affiliated with, endorsed by, supported by, or sponsored by <1/> (though, call me!).",
-      "ja": "このガイドは<0/>が管理しています。本作は<1/>から提携・承認・支援・スポンサーを受けていません（でも連絡はぜひ！）。",
+      "ja": "このガイドは<0/>が管理しています。<1/>とは提携しておらず、承認・支援・協賛も受けていません（でも、ご連絡お待ちしています！）。",
       "zh-Hans": "本指南由 <0/> 维护。它与 <1/> 没有隶属、认可、支持或赞助关系（不过，欢迎联系我！）。",
-      "zh-Hant": "本指南由 <0/> 維護。它與 <1/> 沒有隸屬、認可、支持或贊助關係（不過，歡迎聯絡我！）。",
-      "es": "La guía la mantiene <0/>. No está afiliada, avalada, respaldada ni patrocinada por <1/> (¡aunque puedes contactarme!).",
-      "fr": "Le guide est maintenu par <0/>. Il n’est ni affilié, ni approuvé, ni soutenu, ni sponsorisé par <1/> (mais appelez-moi quand même !).",
-      "ko": "이 가이드는 <0/>가 관리하고 있습니다. 이 가이드는 <1/>와 제휴, 승인, 지원 또는 후원 관계가 없습니다(그래도 연락은 환영합니다!).",
-      "ru": "Путеводитель поддерживает <0/>. Он не связан с <1/>, не одобрен, не поддерживается и не спонсируется ею (хотя, звоните!)."
+      "zh-Hant": "這份指南由 <0/> 維護，與 <1/> 沒有任何隸屬、認可、支持或贊助關係（不過，歡迎打給我！）。",
+      "es": "La guía la mantiene <0/>. No está afiliada a <1/> ni cuenta con su aval, apoyo o patrocinio (aunque… ¡llamadme!).",
+      "fr": "Le guide est maintenu par <0/>. Il n’est ni affilié, ni approuvé, ni soutenu, ni sponsorisé par <1/> (mais appelez-moi quand même !).",
+      "ko": "이 가이드는 <0/>가 관리해요. <1/>와 제휴하거나 승인, 지원, 후원을 받는 관계는 아니에요(그래도 연락 주시면 반가워요!).",
+      "ru": "Справочник ведёт <0/>. Он никак не связан со студией <1/>, не одобрен, не поддерживается и не спонсируется ею (хотя звоните, если что!)."
     },
     "references": [
       {
@@ -361,12 +361,12 @@
   {
     "translations": {
       "en": "Using the app will never cause your data to be sent to an AI service. The one exception is that if you choose to submit feedback, your message & game progress (if you choose to include it) will probably be seen by an AI. <0>Your email will never be sent.</0>",
-      "ja": "このアプリを使用しても、あなたのデータがAIサービスに送信されることはありません。 唯一の例外は、フィードバックを送信する場合です。その際、メッセージとゲームの進捗(含める場合)はおそらくAIによって確認されます。 <0>メールアドレスが送信されることは決してありません。</0>",
+      "ja": "このアプリを使用しても、あなたのデータがAIサービスに送信されることはありません。 唯一の例外は、フィードバックを送信する場合です。その際、メッセージとゲームの進捗（含める場合）はおそらくAIによって確認されます。 <0>メールアドレスが送信されることは決してありません。</0>",
       "zh-Hans": "使用本应用绝不会导致你的数据被发送给任何 AI 服务。 唯一的例外是：如果你选择提交反馈，你的留言与游戏进度（如果你选择包含它）很可能会被 AI 看到。 <0>你的邮箱地址绝不会被发送。</0>",
-      "zh-Hant": "使用本應用程式絕不會導致你的資料被傳送給任何 AI 服務。 唯一的例外是：如果你選擇提交回饋，你的留言與遊戲進度（如果你選擇包含它）很可能會被 AI 看到。 <0>你的信箱地址絕不會被傳送。</0>",
-      "es": "Usar la aplicación nunca hará que tus datos se envíen a un servicio de IA. La única excepción es que, si decides enviar un comentario, es probable que tu mensaje y tu progreso de juego (si eliges incluirlo) sean vistos por una IA. <0>Tu correo electrónico nunca será enviado.</0>",
-      "fr": "L'utilisation de l'application n'entraînera jamais l'envoi de vos données à un service d'IA. La seule exception concerne l'envoi d'un retour : si vous choisissez d'en envoyer un, votre message et votre progression de jeu (si vous choisissez de l'inclure) seront probablement vus par une IA. <0>Votre e-mail ne sera jamais envoyé.</0>",
-      "ko": "이 앱을 사용한다고 해서 여러분의 데이터가 AI 서비스로 전송되는 일은 없습니다. 유일한 예외는 피드백을 제출하는 경우입니다. 이 경우 메시지와 게임 진행 상황(포함하기로 선택한 경우)을 AI가 확인할 가능성이 있습니다. <0>이메일은 절대 전송되지 않습니다.</0>",
+      "zh-Hant": "使用這個應用程式，絕不會讓你的資料被傳送給 AI 服務。 唯一的例外是：如果你選擇提交回饋，你的留言與遊戲進度（如果你選擇附上）很可能會被 AI 看到。 <0>你的信箱地址絕不會被傳送。</0>",
+      "es": "Usar la aplicación nunca hará que tus datos se envíen a un servicio de IA. La única excepción: si decides enviar comentarios, es probable que una IA vea tu mensaje y tu progreso de juego (si eliges incluirlo). <0>Tu correo electrónico nunca se enviará.</0>",
+      "fr": "L’utilisation de l’application n’entraînera jamais l’envoi de vos données à un service d’IA. La seule exception concerne l’envoi d’un retour : si vous choisissez d’en envoyer un, votre message et votre progression de jeu (si vous choisissez de l’inclure) seront probablement vus par une IA. <0>Votre e-mail ne sera jamais envoyé.</0>",
+      "ko": "이 앱을 쓴다고 해서 데이터가 AI 서비스로 보내지는 일은 절대 없어요. 딱 하나 예외가 있어요. 피드백을 보내기로 하면 메시지와 게임 진행 상황(포함하기로 한 경우)을 AI가 보게 될 가능성이 높아요. <0>이메일은 절대 보내지지 않아요.</0>",
       "ru": "Использование приложения никогда не приведёт к отправке ваших данных в сервис ИИ. Единственное исключение — если вы решите отправить отзыв, ваше сообщение и игровой прогресс (если вы решите его включить), скорее всего, увидит ИИ. <0>Ваш email никогда не будет отправлен.</0>"
     },
     "references": [

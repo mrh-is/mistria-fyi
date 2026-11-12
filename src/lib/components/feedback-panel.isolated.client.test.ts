@@ -784,5 +784,9 @@ describe("FeedbackPanel", () => {
     expect(link).toHaveAttribute("href", "https://github.com/mrh-is/mistria-fyi/issues/new");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link.getAttribute("rel")).toContain("noopener");
+    // One message places the link, so the sentence keeps each locale's word order & punctuation.
+    expect(link.closest("p")?.textContent.replaceAll(/\s+/gu, " ").trim()).toBe(
+      "Our bot check isn’t loading right now. You can still submit feedback on GitHub directly.",
+    );
   });
 });

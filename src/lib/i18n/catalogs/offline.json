@@ -46,7 +46,7 @@
   {
     "translations": {
       "en": "The Mistria Field Guide needs an internet connection to load for the first time. Your progress is safe on this device, and it’ll be right here when you’re back online.",
-      "ja": "Mistria Field Guide を初めて読み込むにはインターネット接続が必要です。進行状況はこの端末に無事に保存されていて、オンラインに戻ればちゃんとここにあります。",
+      "ja": "Mistria Field Guide を初めて読み込むにはインターネット接続が必要です。進捗はこの端末に無事に保存されていて、オンラインに戻ればちゃんとここにあります。",
       "zh-Hans": "首次加载 Mistria Field Guide 需要联网。你的进度安全地保存在这台设备上，重新联网后它们都会在这里。",
       "zh-Hant": "第一次載入 Mistria Field Guide 需要連上網路。你的進度安全地儲存在這台裝置上，重新連上網路後它們都會在這裡。",
       "es": "Mistria Field Guide necesita conexión a internet para cargarse la primera vez. Tu progreso está a salvo en este dispositivo y seguirá aquí cuando vuelvas a tener conexión.",
@@ -68,7 +68,7 @@
   {
     "translations": {
       "en": "Try again",
-      "ja": "再試行",
+      "ja": "もう一度試す",
       "zh-Hans": "重试",
       "zh-Hant": "重試",
       "es": "Reintentar",
@@ -95,7 +95,7 @@
       "zh-Hant": "你已離線",
       "es": "Estás sin conexión",
       "fr": "Vous êtes hors ligne",
-      "ko": "오프라인 상태입니다",
+      "ko": "오프라인 상태예요",
       "ru": "Нет подключения к сети"
     },
     "references": [

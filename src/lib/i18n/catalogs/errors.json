@@ -47,7 +47,7 @@
   {
     "translations": {
       "en": "Something went wrong on our end, but your progress is safe.",
-      "ja": "こちら側で問題が起きましたが、進行状況は無事です。",
+      "ja": "こちら側で問題が起きましたが、進捗は無事です。",
       "zh-Hans": "我们这边出了点问题，不过你的进度很安全。",
       "zh-Hant": "我們這邊出了點問題，不過你的進度很安全。",
       "es": "Algo ha fallado por nuestra parte, pero tu progreso está a salvo.",
@@ -69,18 +69,18 @@
   },
   {
     "translations": {
-      "en": "The requested Fields of Mistria tracker page could not be found.",
-      "ja": "リクエストされたFields of Mistriaのトラッカーページが見つかりませんでした。",
-      "zh-Hans": "找不到所请求的《Fields of Mistria》追踪页面。",
-      "zh-Hant": "找不到所請求的《Fields of Mistria》追蹤頁面。",
-      "es": "No se encontró la página solicitada del tracker de Fields of Mistria.",
-      "fr": "La page demandée du suivi de Fields of Mistria est introuvable.",
-      "ko": "요청하신 Fields of Mistria 트래커 페이지를 찾을 수 없습니다.",
-      "ru": "Запрошенная страница трекера Fields of Mistria не найдена."
+      "en": "This page doesn’t exist. Maybe it wandered off to tend the fields.",
+      "ja": "このページは存在しません。畑の世話に出かけてしまったのかもしれません。",
+      "zh-Hans": "此页面不存在。也许它跑去照料农田了。",
+      "zh-Hant": "此頁面不存在。也許它跑去照料農田了。",
+      "es": "Esta página no existe. Quizá se haya ido a cuidar los campos.",
+      "fr": "Cette page n’existe pas. Elle est peut-être partie s’occuper des champs.",
+      "ko": "없는 페이지예요. 밭일하러 어디론가 나갔나 봐요.",
+      "ru": "Такой страницы нет. Может, она ушла ухаживать за полями."
     },
     "references": [
       {
-        "file": "src/lib/data/page-metadata.ts",
+        "file": "src/routes/+error.svelte",
         "refs": [
           null
         ]
@@ -91,18 +91,18 @@
   },
   {
     "translations": {
-      "en": "This page doesn’t exist. Maybe it wandered off to tend the fields.",
-      "ja": "このページは存在しません。畑の世話に出かけてしまったのかもしれません。",
-      "zh-Hans": "此页面不存在。也许它跑去照料农田了。",
-      "zh-Hant": "此頁面不存在。也許它跑去照料農田了。",
-      "es": "Esta página no existe. Quizá se haya ido a cuidar los campos.",
-      "fr": "Cette page n’existe pas. Elle est peut-être partie s’occuper des champs.",
-      "ko": "이 페이지는 존재하지 않습니다. 밭을 가꾸러 나갔나 봅니다.",
-      "ru": "Такой страницы нет. Может, она ушла ухаживать за полями."
+      "en": "We couldn’t find that page in the field guide.",
+      "ja": "そのページはフィールドガイドに見つかりませんでした。",
+      "zh-Hans": "在田野指南里找不到这个页面。",
+      "zh-Hant": "在田野指南裡找不到這個頁面。",
+      "es": "No hemos encontrado esa página en la guía.",
+      "fr": "On n’a pas trouvé cette page dans le guide.",
+      "ko": "필드 가이드에서 그 페이지를 찾지 못했어요.",
+      "ru": "Такой страницы в справочнике нет."
     },
     "references": [
       {
-        "file": "src/routes/+error.svelte",
+        "file": "src/lib/data/page-metadata.ts",
         "refs": [
           null
         ]

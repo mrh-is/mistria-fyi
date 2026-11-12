@@ -284,7 +284,7 @@ describe("the notes", () => {
     await renderNote();
     report({ upload: "update" });
     await tick();
-    expect(screen.getByText(/This tracker needs a refresh/u)).toBeVisible();
+    expect(screen.getByText(/The field guide on this device needs a refresh/u)).toBeVisible();
     expect(screen.getByRole("button", { name: "Refresh" })).toBeVisible();
     expect(screen.queryByText("We can’t connect right now")).toBeNull();
   });

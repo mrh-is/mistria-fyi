@@ -26,7 +26,8 @@ export const MERGE_COUNT_LABELS = {
   animals: { format: (_count, countText, _locale) => `Animal variants: +${countText}` },
   breakUpsDisabled: {
     boolean: true,
-    format: (_count, _countText, _locale) => "Break-ups disabled",
+    format: (_count, _countText, _locale) =>
+      /* @wc-context: save import summary */ "Break-ups disabled",
   },
   childChoice: { boolean: true, format: (_count, _countText, _locale) => "Child choice updated" },
   cosmetics: { format: (_count, countText, _locale) => `Cosmetics: +${countText}` },

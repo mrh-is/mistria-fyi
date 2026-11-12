@@ -42,7 +42,7 @@ describe("data cards", () => {
     expect(
       container.querySelector("[data-slot='collapsible-trigger']")?.getAttribute("aria-expanded"),
     ).toBe("false");
-    expect(text).toContain("Export or restore all tracker data.");
+    expect(text).toContain("Export or restore all your field guide data.");
   });
 
   it("summarizes the danger zone while collapsed", () => {

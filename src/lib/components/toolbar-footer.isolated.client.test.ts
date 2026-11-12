@@ -226,7 +226,7 @@ describe("ToolbarFooter panels", () => {
 
   it("marks the overlay active and hides the toolbar while the feedback picker runs", async () => {
     const { feedbackContext } = renderToolbar();
-    const nav = screen.getByRole("navigation", { name: "Tracker tools" });
+    const nav = screen.getByRole("navigation", { name: "Field guide tools" });
 
     expect(overlayState()).toBe("inactive");
     feedbackContext.startPicking(() => undefined);

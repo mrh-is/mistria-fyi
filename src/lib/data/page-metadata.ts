@@ -43,7 +43,7 @@ const DEFAULT_TOOLBAR: ToolbarConfig = { clock: false, filter: false, search: fa
 
 export function errorPageMetadata(status: number, _locale: LocaleCode): PageMetadata {
   return pageMetadata({
-    description: "The requested Fields of Mistria tracker page could not be found.",
+    description: "We couldn’t find that page in the field guide.",
     robots: "noindex, nofollow",
     title: String(status),
   });

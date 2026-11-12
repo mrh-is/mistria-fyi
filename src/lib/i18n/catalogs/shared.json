@@ -2,13 +2,13 @@
   {
     "translations": {
       "en": "1. Download a backup of your progress first.",
-      "ja": "1. まず進み具合のバックアップをダウンロードしてね。",
+      "ja": "1. まず進捗のバックアップをダウンロードしてください。",
       "zh-Hans": "1. 先下载一份进度备份。",
       "zh-Hant": "1. 先下載一份進度備份。",
       "es": "1. Primero descarga una copia de seguridad de tu progreso.",
-      "fr": "1. Commence par télécharger une copie de ta progression.",
+      "fr": "1. Commencez par télécharger une copie de sauvegarde de votre progression.",
       "ko": "1. 먼저 진행 상황 백업을 다운로드하세요.",
-      "ru": "1. Сначала скачай резервную копию прогресса."
+      "ru": "1. Сначала скачайте резервную копию прогресса."
     },
     "references": [
       {
@@ -24,13 +24,13 @@
   {
     "translations": {
       "en": "2. Open Share, then choose Add to Home Screen. Open the field guide from its new icon.",
-      "ja": "2. 「共有」から「ホーム画面に追加」を選んで、新しいアイコンから図鑑を開いてね。",
-      "zh-Hans": "2. 打开“分享”，选择“添加到主屏幕”，再从新图标打开图鉴。",
-      "zh-Hant": "2. 開啟「分享」，選擇「加入主畫面」，再從新圖示開啟圖鑑。",
+      "ja": "2. 「共有」から「ホーム画面に追加」を選び、新しいアイコンからフィールドガイドを開いてください。",
+      "zh-Hans": "2. 打开“共享”，选择“添加到主屏幕”，再从新图标打开田野指南。",
+      "zh-Hant": "2. 開啟「分享」，選擇「加入主畫面」，再從新圖示開啟田野指南。",
       "es": "2. Abre Compartir y elige Añadir a pantalla de inicio. Abre la guía desde su nuevo icono.",
-      "fr": "2. Ouvre Partager, puis choisis Sur l’écran d’accueil. Ouvre le guide depuis sa nouvelle icône.",
-      "ko": "2. 공유를 열고 홈 화면에 추가를 선택하세요. 새 아이콘으로 도감을 여세요.",
-      "ru": "2. Открой «Поделиться» и выбери «На экран Домой». Открой справочник через новый значок."
+      "fr": "2. Ouvrez Partager, puis choisissez Sur l’écran d’accueil. Ouvrez le guide depuis sa nouvelle icône.",
+      "ko": "2. 공유를 열고 홈 화면에 추가를 선택하세요. 새 아이콘으로 필드 가이드를 여세요.",
+      "ru": "2. Откройте «Поделиться» и выберите «На экран „Домой“». Откройте справочник через новый значок."
     },
     "references": [
       {
@@ -46,13 +46,13 @@
   {
     "translations": {
       "en": "3. Open Data in the installed app and restore the backup you just downloaded.",
-      "ja": "3. インストールしたアプリの「データ」を開き、ダウンロードしたバックアップを復元してね。",
+      "ja": "3. インストールしたアプリで「データ管理」を開き、ダウンロードしたバックアップを復元してください。",
       "zh-Hans": "3. 在安装后的应用中打开“数据”，恢复刚下载的备份。",
       "zh-Hant": "3. 在安裝後的應用程式中開啟「資料」，還原剛下載的備份。",
       "es": "3. Abre Datos en la aplicación instalada y restaura la copia que acabas de descargar.",
-      "fr": "3. Ouvre Données dans l’application installée et restaure la copie que tu viens de télécharger.",
-      "ko": "3. 설치된 앱에서 데이터를 열고 방금 다운로드한 백업을 복원하세요.",
-      "ru": "3. Открой раздел данных в установленном приложении и восстанови только что скачанную копию."
+      "fr": "3. Ouvrez Données dans l’application installée et restaurez la copie de sauvegarde que vous venez de télécharger.",
+      "ko": "3. 설치된 앱에서 데이터 관리를 열고 방금 다운로드한 백업을 복원하세요.",
+      "ru": "3. Откройте раздел «Данные» в установленном приложении и восстановите только что скачанную резервную копию."
     },
     "references": [
       {
@@ -116,8 +116,8 @@
       "zh-Hans": "<0/> 同步与数据设置",
       "zh-Hant": "<0/> 同步與資料設定",
       "es": "<0/> Ajustes de sincronización y datos",
-      "fr": "<0/> Réglages de synchro et données",
-      "ko": "<0/> 동기화 및 데이터 설정",
+      "fr": "<0/> Réglages de synchro et de données",
+      "ko": "<0/> 동기화와 데이터 설정",
       "ru": "<0/> Настройки синхронизации и данных"
     },
     "references": [
@@ -138,7 +138,7 @@
       "zh-Hans": "<0/>已复制！",
       "zh-Hant": "<0/>已複製！",
       "es": "<0/>¡Copiado!",
-      "fr": "<0/>Copié !",
+      "fr": "<0/>Copié !",
       "ko": "<0/>복사했어요!",
       "ru": "<0/>Скопировано!"
     },
@@ -200,7 +200,7 @@
   {
     "translations": {
       "en": "<0/>Point at something",
-      "ja": "<0/>対象を指定する",
+      "ja": "<0/>指さして選ぶ",
       "zh-Hans": "<0/>指向某个项目",
       "zh-Hant": "<0/>指向某個項目",
       "es": "<0/>Señalar un elemento",
@@ -228,7 +228,7 @@
       "es": "<0/>Privado",
       "fr": "<0/>Privé",
       "ko": "<0/>비공개",
-      "ru": "<0/>Лично"
+      "ru": "<0/>Приватно"
     },
     "references": [
       {
@@ -270,7 +270,7 @@
       "zh-Hans": "<0/>显示剧透吗？",
       "zh-Hant": "<0/>顯示爆雷內容嗎？",
       "es": "<0/>¿Mostrar spoilers?",
-      "fr": "<0/>Afficher les spoilers ?",
+      "fr": "<0/>Afficher les spoilers ?",
       "ko": "<0/>스포일러를 표시할까요?",
       "ru": "<0/>Показывать спойлеры?"
     },
@@ -312,7 +312,7 @@
       "en": "<0/>This goes up as a public GitHub issue, so leave out anything personal.",
       "ja": "<0/>GitHubの公開Issueとして投稿されるので、個人的な情報は書かないでください。",
       "zh-Hans": "<0/>这会作为公开议题发布到 GitHub，所以别写个人信息。",
-      "zh-Hant": "<0/>這會作為公開議題發布到 GitHub，所以別寫個人資訊。",
+      "zh-Hant": "<0/>這會變成 GitHub 上的公開 issue，所以別寫個人資訊喔。",
       "es": "<0/>Esto se publica como una incidencia pública en GitHub, así que no pongas nada personal.",
       "fr": "<0/>Ceci devient un ticket public sur GitHub, alors n’y mettez rien de personnel.",
       "ko": "<0/>GitHub에 공개 이슈로 올라가니 개인적인 내용은 빼 주세요.",
@@ -354,13 +354,13 @@
   {
     "translations": {
       "en": "A Craving",
-      "ja": "つわり",
-      "zh-Hans": "孕期渴望",
-      "zh-Hant": "孕期渴望",
+      "ja": "食べたいもの",
+      "zh-Hans": "嘴馋",
+      "zh-Hant": "莫名嘴饞",
       "es": "Un antojo",
-      "fr": "Une envie",
-      "ko": "입덧",
-      "ru": "Тяга к еде"
+      "fr": "Envie irrépressible",
+      "ko": "갈망",
+      "ru": "Необычный аппетит"
     },
     "references": [
       {
@@ -376,12 +376,12 @@
   {
     "translations": {
       "en": "About",
-      "ja": "アプリについて",
+      "ja": "このガイドについて",
       "zh-Hans": "关于",
       "zh-Hant": "關於",
       "es": "Acerca de",
       "fr": "À propos",
-      "ko": "정보",
+      "ko": "소개",
       "ru": "О проекте"
     },
     "references": [
@@ -403,7 +403,7 @@
       "zh-Hant": "關於來源類型",
       "es": "Acerca de los tipos de fuente",
       "fr": "À propos des types de source",
-      "ko": "획득 경로 유형 안내",
+      "ko": "획득처 유형 안내",
       "ru": "О типах источников"
     },
     "references": [
@@ -421,8 +421,8 @@
     "translations": {
       "en": "About the {0} shelf",
       "ja": "{0}の棚について",
-      "zh-Hans": "关于“{0}”架",
-      "zh-Hant": "關於「{0}」架",
+      "zh-Hans": "关于“{0}”这个架子",
+      "zh-Hant": "關於「{0}」這個架子",
       "es": "Sobre el estante {0}",
       "fr": "À propos de l’étagère {0}",
       "ko": "{0} 선반 정보",
@@ -450,11 +450,11 @@
     "translations": {
       "en": "Active",
       "ja": "アクティブ",
-      "zh-Hans": "使用中",
-      "zh-Hant": "使用中",
+      "zh-Hans": "进行中",
+      "zh-Hant": "進行中",
       "es": "Activo",
       "fr": "Actif",
-      "ko": "활성",
+      "ko": "진행 중",
       "ru": "Активно"
     },
     "references": [
@@ -517,7 +517,7 @@
       "en": "All of Mistria in one place",
       "ja": "ミストリアのすべてをひとつに",
       "zh-Hans": "米斯特里亚的一切，尽在一处",
-      "zh-Hant": "米斯特里亞的一切，盡在一處",
+      "zh-Hant": "米斯翠亞的一切，盡在一處",
       "es": "Todo Mistria en un solo lugar",
       "fr": "Tout Mistria au même endroit",
       "ko": "미스트리아의 모든 것을 한곳에",
@@ -559,12 +559,12 @@
   {
     "translations": {
       "en": "Almanac: +{0}",
-      "ja": "アルマナック：+{0}",
-      "zh-Hans": "年鉴：+{0}",
-      "zh-Hant": "年鑑：+{0}",
+      "ja": "図鑑：+{0}",
+      "zh-Hans": "博物图鉴：+{0}",
+      "zh-Hant": "博物圖鑑：+{0}",
       "es": "Almanaque: +{0}",
-      "fr": "Almanach : +{0}",
-      "ko": "알마낙: +{0}",
+      "fr": "Catalogue : +{0}",
+      "ko": "도감: +{0}",
       "ru": "Альманах: +{0}"
     },
     "references": [
@@ -588,11 +588,11 @@
   {
     "translations": {
       "en": "Already tracking on another device? Scan its QR code to bring your progress here.",
-      "ja": "別の端末ですでに記録していますか？その端末のQRコードをスキャンして、進捗をこちらに転送できます。",
+      "ja": "別の端末ですでに記録していますか？その端末のQRコードを読み取ると、進捗をこちらに持ってこられます。",
       "zh-Hans": "已经在其他设备上记录进度？扫描该设备的二维码，将进度转移到这里。",
       "zh-Hant": "已經在其他裝置上記錄進度？掃描該裝置的 QR code，將進度轉移到這裡。",
       "es": "¿Ya registras tu progreso en otro dispositivo? Escanea su código QR para traerlo aquí.",
-      "fr": "Vous suivez déjà votre progression sur un autre appareil ? Scannez son code QR pour la récupérer ici.",
+      "fr": "Vous suivez déjà votre progression sur un autre appareil ? Scannez son code QR pour la récupérer ici.",
       "ko": "다른 기기에서 이미 기록하고 있나요? 그 기기의 QR 코드를 스캔해 진행 상황을 가져오세요.",
       "ru": "Уже ведёте учёт на другом устройстве? Отсканируйте его QR-код, чтобы перенести прогресс сюда."
     },
@@ -610,13 +610,13 @@
   {
     "translations": {
       "en": "Animal cosmetics: +{0}",
-      "ja": "動物のコスメ：+{0}",
-      "zh-Hans": "动物装饰：+{0}",
-      "zh-Hant": "動物裝飾：+{0}",
-      "es": "Cosméticos de animales: +{0}",
-      "fr": "Cosmétiques d’animaux : +{0}",
-      "ko": "동물 코스메틱: +{0}",
-      "ru": "Косметика животных: +{0}"
+      "ja": "動物の外見アイテム：+{0}",
+      "zh-Hans": "动物装扮：+{0}",
+      "zh-Hant": "動物飾物：+{0}",
+      "es": "Accesorios de animales: +{0}",
+      "fr": "Accessoires d’animaux : +{0}",
+      "ko": "동물 꾸미기 아이템: +{0}",
+      "ru": "Украшения животных: +{0}"
     },
     "references": [
       {
@@ -665,7 +665,7 @@
       "zh-Hans": "动物变体：+{0}",
       "zh-Hant": "動物變體：+{0}",
       "es": "Variantes de animales: +{0}",
-      "fr": "Variantes d’animaux : +{0}",
+      "fr": "Variantes d’animaux : +{0}",
       "ko": "동물 변형: +{0}",
       "ru": "Варианты животных: +{0}"
     },
@@ -788,7 +788,7 @@
       "zh-Hans": "附上同步日志",
       "zh-Hant": "附上同步紀錄",
       "es": "Adjuntar registro de sincronización",
-      "fr": "Joindre le journal de synchronisation",
+      "fr": "Joindre le journal de synchro",
       "ko": "동기화 로그 첨부하기",
       "ru": "Прикрепить журнал синхронизации"
     },
@@ -901,13 +901,13 @@
   {
     "translations": {
       "en": "Based on your tracked progress, it doesn’t seem like you should be able to get this yet. Are you sure?",
-      "ja": "記録された進行状況だと、これはまだ手に入らないはずです。本当にチェックしますか？",
+      "ja": "記録された進捗を見ると、まだこれは手に入らないようです。本当にチェックしますか？",
       "zh-Hans": "根据你记录的进度，你现在似乎还拿不到这个。确定要勾选吗？",
       "zh-Hant": "根據你記錄的進度，你現在似乎還拿不到這個。確定要勾選嗎？",
       "es": "Según tu progreso registrado, parece que todavía no deberías poder conseguir esto. ¿Seguro?",
-      "fr": "D’après votre progression enregistrée, vous ne devriez pas encore pouvoir obtenir ceci. Vous confirmez ?",
+      "fr": "D’après votre progression enregistrée, vous ne devriez pas encore pouvoir obtenir ceci. Vous confirmez ?",
       "ko": "기록된 진행 상황으로는 아직 이걸 얻을 수 없을 것 같아요. 정말 체크할까요?",
-      "ru": "Судя по вашему отмеченному прогрессу, вы пока не должны были это получить. Точно отметить?"
+      "ru": "Судя по отмеченному прогрессу, получать это вам вроде бы ещё рано. Точно отметить?"
     },
     "references": [
       {
@@ -923,11 +923,11 @@
   {
     "translations": {
       "en": "Based on your tracked progress, you haven’t broken the seal on the way there yet. Are you sure?",
-      "ja": "記録された進行状況だと、途中の封印をまだ解いていません。本当に進みますか？",
+      "ja": "記録された進捗を見ると、そこへ行く途中の封印をまだ解いていないようです。本当に進みますか？",
       "zh-Hans": "根据你记录的进度，你还没有打破途中的封印。确定要下去吗？",
       "zh-Hant": "根據你記錄的進度，你還沒有打破途中的封印。確定要下去嗎？",
       "es": "Según tu progreso registrado, todavía no has roto el sello que hay por el camino. ¿Seguro?",
-      "fr": "D’après votre progression enregistrée, vous n’avez pas encore brisé le sceau sur le chemin. Vous confirmez ?",
+      "fr": "D’après votre progression enregistrée, vous n’avez pas encore brisé le sceau sur le chemin. Vous confirmez ?",
       "ko": "기록된 진행 상황으로는 가는 길의 봉인을 아직 풀지 않았어요. 정말 내려갈까요?",
       "ru": "Судя по вашему отмеченному прогрессу, вы ещё не сломали печать на пути туда. Точно спуститься?"
     },
@@ -945,13 +945,13 @@
   {
     "translations": {
       "en": "Before we can check that off, choose how you’ll track your progress. Pick tracking by hand to keep the check-off, or set up syncing from your save file.",
-      "ja": "チェックを付ける前に、記録方法を選んでね。手動を選ぶと、今のチェックを反映するよ。セーブファイルとの同期も設定できるよ。",
-      "zh-Hans": "勾选前，先选一种记录方式吧。选择手动记录，就会保留刚才的勾选；也可以设置同步存档文件。",
-      "zh-Hant": "勾選前，先選一種記錄方式吧。選擇手動記錄，就會保留剛才的勾選；也可以設定同步存檔檔案。",
-      "es": "Antes de marcarlo, elige cómo llevarás tu progreso. Si eliges hacerlo a mano, conservaremos lo que marcaste. También puedes configurar la sincronización de tu archivo de guardado.",
-      "fr": "Avant de cocher ça, choisis comment suivre ta progression. Le suivi à la main conservera ta coche. Tu peux aussi configurer la synchronisation de ton fichier de sauvegarde.",
-      "ko": "체크하기 전에 기록 방법을 골라 주세요. 직접 기록을 고르면 방금 누른 항목도 체크돼요. 저장 파일 동기화를 설정할 수도 있어요.",
-      "ru": "Прежде чем поставить отметку, выбери способ учёта прогресса. При ручном учёте мы сохраним эту отметку. Можно также настроить синхронизацию файла сохранения."
+      "ja": "チェックをつける前に、進捗の記録方法を選んでください。手動での記録を選ぶと、このチェックがそのまま入ります。セーブデータからの同期を設定することもできます。",
+      "zh-Hans": "勾选前，先选一种记录方式吧。选择手动记录，就会保留刚才的勾选；或者也可以设置从存档同步。",
+      "zh-Hant": "要勾選之前，先選好你想怎麼記錄進度。選擇手動記錄，就會保留剛才的勾選；或者也可以設定從存檔同步。",
+      "es": "Antes de marcarlo, elige cómo vas a llevar tu progreso. Elige hacerlo a mano para que se quede marcado, o configura la sincronización de tu partida guardada.",
+      "fr": "Avant de cocher ça, choisissez comment suivre votre progression. Optez pour le suivi à la main pour garder la coche, ou configurez la synchronisation depuis votre fichier de sauvegarde.",
+      "ko": "체크하기 전에 기록 방법을 골라 주세요. 직접 기록을 고르면 방금 누른 항목도 체크돼요. 세이브 파일 동기화를 설정할 수도 있어요.",
+      "ru": "Прежде чем это отметить, решите, как вы будете отслеживать прогресс. Выберите ручной учёт, чтобы отметка осталась, или настройте синхронизацию файла сохранения."
     },
     "references": [
       {
@@ -970,7 +970,7 @@
       "en": "Before we can sync your save file, this device’s data needs a look. Head to Data to sort it out.",
       "ja": "セーブデータを同期する前に、この端末のデータを確認する必要があります。データ管理で解決してください。",
       "zh-Hans": "同步存档之前，需要先检查这台设备上的数据。请前往数据管理处理一下。",
-      "zh-Hant": "同步存檔之前，需要先檢查這台裝置上的資料。請前往資料管理處理一下。",
+      "zh-Hant": "同步存檔之前，需要先檢查一下這台裝置上的資料。請前往「資料」頁面處理。",
       "es": "Antes de sincronizar tu partida guardada, hay que revisar los datos de este dispositivo. Ve a Datos para solucionarlo.",
       "fr": "Avant de synchroniser votre sauvegarde, il faut jeter un œil aux données de cet appareil. Passez par Données pour régler ça.",
       "ko": "세이브 파일을 동기화하기 전에 이 기기의 데이터를 확인해야 해요. 데이터 관리에서 해결하세요.",
@@ -1038,9 +1038,9 @@
       "zh-Hans": "生日：{0}{1}日",
       "zh-Hant": "生日：{0}{1}日",
       "es": "Cumpleaños: {1} de {0}",
-      "fr": "Anniversaire : {1} {0}",
+      "fr": "Anniversaire : {1} {0}",
       "ko": "생일: {0} {1}일",
-      "ru": "День рождения: {1} {0}"
+      "ru": "День рождения: {1}-й день сезона «{0}»"
     },
     "references": [
       {
@@ -1112,9 +1112,9 @@
     "translations": {
       "en": "Break-ups disabled",
       "ja": "別れは無効",
-      "zh-Hans": "已禁用分手",
+      "zh-Hans": "已关闭分手",
       "zh-Hant": "已停用分手",
-      "es": "Rupturas desactivadas",
+      "es": "Rupturas deshabilitadas",
       "fr": "Ruptures désactivées",
       "ko": "이별 비활성화됨",
       "ru": "Расставания отключены"
@@ -1125,7 +1125,24 @@
         "refs": [
           null
         ]
-      },
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Break-ups disabled",
+      "ja": "別れは無効",
+      "zh-Hans": "已关闭分手",
+      "zh-Hant": "已停用分手",
+      "es": "Rupturas desactivadas",
+      "fr": "Ruptures désactivées",
+      "ko": "이별 비활성화됨",
+      "ru": "Расставания отключены"
+    },
+    "context": "save import summary",
+    "references": [
       {
         "file": "src/lib/presentation/merge-labels.ts",
         "refs": [
@@ -1140,9 +1157,9 @@
     "translations": {
       "en": "Break-ups enabled",
       "ja": "別れは有効",
-      "zh-Hans": "已启用分手",
+      "zh-Hans": "已开启分手",
       "zh-Hant": "已啟用分手",
-      "es": "Rupturas activadas",
+      "es": "Rupturas habilitadas",
       "fr": "Ruptures activées",
       "ko": "이별 활성화됨",
       "ru": "Расставания включены"
@@ -1183,13 +1200,13 @@
   {
     "translations": {
       "en": "Breeds, variants, & cosmetics",
-      "ja": "品種・バリアント・コスメ",
-      "zh-Hans": "品种、变体与装饰",
-      "zh-Hant": "品種、變體與裝飾",
-      "es": "Razas, variantes y cosméticos",
-      "fr": "Races, variantes et cosmétiques",
-      "ko": "품종, 변형, 코스메틱",
-      "ru": "Породы, варианты и косметика"
+      "ja": "品種・バリエーション・外見アイテム",
+      "zh-Hans": "品种、变体与装扮",
+      "zh-Hant": "品種、變體與飾物",
+      "es": "Razas, variantes y accesorios",
+      "fr": "Races, variantes et accessoires",
+      "ko": "품종, 변형, 꾸미기 아이템",
+      "ru": "Породы, варианты и украшения"
     },
     "references": [
       {
@@ -1275,7 +1292,7 @@
       "zh-Hans": "取消项目选择",
       "zh-Hant": "取消項目選擇",
       "es": "Cancelar el selector de elementos",
-      "fr": "Annuler la sélection de l'élément",
+      "fr": "Annuler la sélection de l’élément",
       "ko": "항목 선택 취소",
       "ru": "Отменить выбор элемента"
     },
@@ -1297,7 +1314,7 @@
       "zh-Hans": "点击外部区域取消项目选择",
       "zh-Hant": "點選外部區域取消項目選擇",
       "es": "Cancelar el selector de elementos haciendo clic fuera",
-      "fr": "Annuler la sélection en cliquant à l'extérieur",
+      "fr": "Annuler la sélection en cliquant à l’extérieur",
       "ko": "바깥쪽을 클릭해 항목 선택 취소",
       "ru": "Отменить выбор элемента, нажав снаружи"
     },
@@ -1315,11 +1332,11 @@
   {
     "translations": {
       "en": "Can’t drag?",
-      "ja": "ドラッグできない？",
+      "ja": "ドラッグできない場合は？",
       "zh-Hans": "拖不了？",
       "zh-Hant": "拖不了？",
       "es": "¿No puedes arrastrar?",
-      "fr": "Impossible de glisser ?",
+      "fr": "Impossible de glisser ?",
       "ko": "끌어다 놓을 수 없나요?",
       "ru": "Не получается перетащить?"
     },
@@ -1363,7 +1380,7 @@
       "zh-Hans": "勾选这个物品？",
       "zh-Hant": "勾選這個物品？",
       "es": "¿Marcar este objeto?",
-      "fr": "Cocher cet objet ?",
+      "fr": "Cocher cet objet ?",
       "ko": "이 항목을 체크할까요?",
       "ru": "Отметить этот предмет?"
     },
@@ -1385,7 +1402,7 @@
       "zh-Hans": "勾选“{0}”？",
       "zh-Hant": "勾選「{0}」？",
       "es": "¿Marcar {0}?",
-      "fr": "Cocher {0} ?",
+      "fr": "Cocher {0} ?",
       "ko": "{0}을(를) 체크할까요?",
       "ru": "Отметить «{0}»?"
     },
@@ -1412,11 +1429,11 @@
       "en": "Check spoilered item",
       "ja": "ネタバレ項目をチェック",
       "zh-Hans": "勾选剧透物品",
-      "zh-Hant": "勾選爆雷項目",
+      "zh-Hant": "勾選隱藏的項目",
       "es": "Marcar elemento con spoiler",
-      "fr": "Cocher l'élément spoilé",
-      "ko": "스포일러 항목 선택",
-      "ru": "Отметить заспойлеренный предмет"
+      "fr": "Cocher l’élément masqué",
+      "ko": "스포일러 항목 체크",
+      "ru": "Отметить скрытый предмет"
     },
     "references": [
       {
@@ -1443,7 +1460,7 @@
       "zh-Hant": "勾選{0}",
       "es": "Marcar {0}",
       "fr": "Cocher {0}",
-      "ko": "{0} 선택",
+      "ko": "{0} 체크",
       "ru": "Отметить «{0}»"
     },
     "references": [
@@ -1483,10 +1500,10 @@
       "ja": "「{0}」をチェックしました",
       "zh-Hans": "已勾选“{0}”",
       "zh-Hant": "已勾選「{0}」",
-      "es": "«{0}» marcado",
-      "fr": "« {0} » coché",
-      "ko": "“{0}”을(를) 체크했습니다",
-      "ru": "«{0}» отмечено"
+      "es": "Has marcado «{0}»",
+      "fr": "« {0} » coché",
+      "ko": "“{0}”을(를) 체크했어요",
+      "ru": "Отмечено: «{0}»"
     },
     "references": [
       {
@@ -1524,29 +1541,29 @@
         "「{0}」をチェックし、レシピを{1}件解放しました"
       ],
       "zh-Hans": [
-        "已勾选“{0}”，并解锁了 {1} 个配方"
+        "已勾选“{0}”，并解锁了 {1} 个食谱"
       ],
       "zh-Hant": [
         "已勾選「{0}」，並解鎖 {1} 項食譜"
       ],
       "es": [
-        "«{0}» marcado y se desbloqueó {1} receta",
-        "«{0}» marcado y se desbloquearon {1} recetas",
-        "«{0}» marcado y se desbloquearon {1} recetas"
+        "Has marcado «{0}» y desbloqueado {1} receta",
+        "Has marcado «{0}» y desbloqueado {1} recetas",
+        "Has marcado «{0}» y desbloqueado {1} recetas"
       ],
       "fr": [
-        "« {0} » coché, débloquant {1} recette",
-        "« {0} » coché, débloquant {1} recettes",
-        "« {0} » coché, débloquant {1} recettes"
+        "« {0} » coché et {1} recette débloquée",
+        "« {0} » coché et {1} recettes débloquées",
+        "« {0} » coché et {1} recettes débloquées"
       ],
       "ko": [
-        "“{0}”을(를) 체크하고 레시피 {1}개를 해제했습니다"
+        "“{0}”을(를) 체크하고 레시피 {1}개를 해금했어요"
       ],
       "ru": [
-        "«{0}» отмечено, разблокирован {1} рецепт",
-        "«{0}» отмечено, разблокировано {1} рецепта",
-        "«{0}» отмечено, разблокировано {1} рецептов",
-        "«{0}» отмечено, разблокировано {1} рецепта"
+        "Отмечено: «{0}», открыт {1} рецепт",
+        "Отмечено: «{0}», открыто {1} рецепта",
+        "Отмечено: «{0}», открыто {1} рецептов",
+        "Отмечено: «{0}», открыто {1} рецепта"
       ]
     },
     "references": [
@@ -1585,10 +1602,10 @@
       "ja": "「{0}」をチェックし、「{1}」を解放しました",
       "zh-Hans": "已勾选“{0}”，并解锁了“{1}”",
       "zh-Hant": "已勾選「{0}」，並解鎖「{1}」",
-      "es": "«{0}» marcado y se desbloqueó «{1}»",
-      "fr": "« {0} » coché, débloquant « {1} »",
-      "ko": "“{0}”을(를) 체크하고 “{1}”을(를) 해제했습니다",
-      "ru": "«{0}» отмечено, разблокирован рецепт «{1}»"
+      "es": "Has marcado «{0}» y desbloqueado «{1}»",
+      "fr": "« {0} » coché et « {1} » débloqué",
+      "ko": "“{0}”을(를) 체크하고 “{1}”을(를) 해금했어요",
+      "ru": "Отмечено: «{0}», открыт рецепт «{1}»"
     },
     "references": [
       {
@@ -1661,12 +1678,12 @@
     "translations": {
       "en": "Child choice updated",
       "ja": "子供の選択を更新しました",
-      "zh-Hans": "已更新孩子的选择",
+      "zh-Hans": "已更新“要不要孩子”的选择",
       "zh-Hant": "已更新孩子的選擇",
-      "es": "Elección del hijo actualizada",
-      "fr": "Choix de l’enfant mis à jour",
+      "es": "Elección sobre los hijos actualizada",
+      "fr": "Choix concernant les enfants mis à jour",
       "ko": "자녀 선택 업데이트됨",
-      "ru": "Выбор ребёнка обновлён"
+      "ru": "Выбор насчёт детей обновлён"
     },
     "references": [
       {
@@ -1796,7 +1813,7 @@
       "zh-Hans": "清除所选项目",
       "zh-Hant": "清除所選項目",
       "es": "Borrar elemento seleccionado",
-      "fr": "Effacer l'élément sélectionné",
+      "fr": "Effacer l’élément sélectionné",
       "ko": "선택한 항목 지우기",
       "ru": "Очистить выбранный элемент"
     },
@@ -1884,7 +1901,7 @@
       "zh-Hans": "点击“选择存档”，把文件夹位置粘贴到“文件名”框里，然后按 Enter。接着选择 autosave。",
       "zh-Hant": "點一下「選擇存檔」，把資料夾位置貼到「檔案名稱」欄裡，然後按 Enter。接著選擇 autosave。",
       "es": "Haz clic en «Elegir la partida guardada», pega la ubicación de la carpeta en el cuadro Nombre y pulsa Intro. Luego elige el autosave.",
-      "fr": "Cliquez sur « Choisir la sauvegarde », collez l’emplacement du dossier dans le champ Nom du fichier et appuyez sur Entrée. Puis choisissez l’autosave.",
+      "fr": "Cliquez sur « Choisir la sauvegarde », collez l’emplacement du dossier dans le champ Nom du fichier et appuyez sur Entrée. Puis choisissez l’autosave.",
       "ko": "“세이브 파일 선택”을 클릭하고 파일 이름 칸에 폴더 위치를 붙여넣은 뒤 Enter를 누르세요. 그런 다음 autosave를 고르세요.",
       "ru": "Нажмите «Выбрать сохранение», вставьте путь к папке в поле «Имя файла» и нажмите Enter. Затем выберите autosave."
     },
@@ -1906,7 +1923,7 @@
       "zh-Hans": "点击“选择存档”，按 Ctrl+L，粘贴文件夹位置后按 Enter。接着选择 autosave。",
       "zh-Hant": "點一下「選擇存檔」，按 Ctrl+L，貼上資料夾位置後按 Enter。接著選擇 autosave。",
       "es": "Haz clic en «Elegir la partida guardada», pulsa Ctrl+L, pega la ubicación de la carpeta y pulsa Intro. Luego elige el autosave.",
-      "fr": "Cliquez sur « Choisir la sauvegarde », appuyez sur Ctrl+L, collez l’emplacement du dossier et appuyez sur Entrée. Puis choisissez l’autosave.",
+      "fr": "Cliquez sur « Choisir la sauvegarde », appuyez sur Ctrl+L, collez l’emplacement du dossier et appuyez sur Entrée. Puis choisissez l’autosave.",
       "ko": "“세이브 파일 선택”을 클릭하고 Ctrl+L을 누른 뒤 폴더 위치를 붙여넣고 Enter를 누르세요. 그런 다음 autosave를 고르세요.",
       "ru": "Нажмите «Выбрать сохранение», нажмите Ctrl+L, вставьте путь к папке и нажмите Enter. Затем выберите autosave."
     },
@@ -1928,7 +1945,7 @@
       "zh-Hans": "点击“选择存档”，按 Shift-Command-G，粘贴文件夹位置后按 Return。接着选择 autosave。",
       "zh-Hant": "點一下「選擇存檔」，按 Shift-Command-G，貼上資料夾位置後按 Return。接著選擇 autosave。",
       "es": "Haz clic en «Elegir la partida guardada», pulsa Mayús-Comando-G, pega la ubicación de la carpeta y pulsa Retorno. Luego elige el autosave.",
-      "fr": "Cliquez sur « Choisir la sauvegarde », appuyez sur Maj-Commande-G, collez l’emplacement du dossier et appuyez sur Retour. Puis choisissez l’autosave.",
+      "fr": "Cliquez sur « Choisir la sauvegarde », appuyez sur Maj-Commande-G, collez l’emplacement du dossier et appuyez sur Retour. Puis choisissez l’autosave.",
       "ko": "“세이브 파일 선택”을 클릭하고 Shift-Command-G를 누른 뒤 폴더 위치를 붙여넣고 Return을 누르세요. 그런 다음 autosave를 고르세요.",
       "ru": "Нажмите «Выбрать сохранение», нажмите Shift-Command-G, вставьте путь к папке и нажмите Return. Затем выберите autosave."
     },
@@ -1978,7 +1995,7 @@
       "zh-Hans": "关闭反馈",
       "zh-Hant": "關閉回饋",
       "es": "Cerrar comentarios",
-      "fr": "Fermer le retour",
+      "fr": "Fermer le formulaire de retour",
       "ko": "피드백 닫기",
       "ru": "Закрыть форму обратной связи"
     },
@@ -2098,7 +2115,7 @@
       "es": "Completado",
       "fr": "Terminé",
       "ko": "완료",
-      "ru": "Завершено"
+      "ru": "Пройден"
     },
     "context": "rank state completed",
     "references": [
@@ -2137,13 +2154,13 @@
   {
     "translations": {
       "en": "Cosmetics",
-      "ja": "コスメ",
-      "zh-Hans": "装饰",
-      "zh-Hant": "裝飾",
-      "es": "Cosméticos",
-      "fr": "Cosmétiques",
-      "ko": "코스메틱",
-      "ru": "Косметика"
+      "ja": "外見アイテム",
+      "zh-Hans": "装扮",
+      "zh-Hant": "飾物",
+      "es": "Accesorios",
+      "fr": "Accessoires",
+      "ko": "꾸미기 아이템",
+      "ru": "Украшения"
     },
     "references": [
       {
@@ -2165,13 +2182,13 @@
   {
     "translations": {
       "en": "Cosmetics: +{0}",
-      "ja": "コスメ：+{0}",
-      "zh-Hans": "装饰：+{0}",
-      "zh-Hant": "裝飾：+{0}",
-      "es": "Cosméticos: +{0}",
-      "fr": "Cosmétiques : +{0}",
-      "ko": "코스메틱: +{0}",
-      "ru": "Косметика: +{0}"
+      "ja": "外見アイテム：+{0}",
+      "zh-Hans": "装扮：+{0}",
+      "zh-Hant": "飾物：+{0}",
+      "es": "Accesorios: +{0}",
+      "fr": "Accessoires : +{0}",
+      "ko": "꾸미기 아이템: +{0}",
+      "ru": "Украшения: +{0}"
     },
     "references": [
       {
@@ -2219,9 +2236,9 @@
       "ja": "作物・魚・採集など",
       "zh-Hans": "作物、鱼类、采集等",
       "zh-Hant": "作物、魚類、採集等",
-      "es": "Cultivos, peces, forrajeo y más",
+      "es": "Cultivos, peces, recursos naturales y más",
       "fr": "Cultures, poissons, cueillette et plus",
-      "ko": "작물, 물고기, 채집 등",
+      "ko": "작물, 물고기, 채집물 등",
       "ru": "Урожай, рыба, собирательство и другое"
     },
     "references": [
@@ -2288,7 +2305,7 @@
   {
     "translations": {
       "en": "Data",
-      "ja": "データ",
+      "ja": "データ管理",
       "zh-Hans": "数据",
       "zh-Hant": "資料",
       "es": "Datos",
@@ -2400,11 +2417,11 @@
       "en": "Decrease {0} hearts",
       "ja": "{0}のハートを減らす",
       "zh-Hans": "减少{0}的好感度",
-      "zh-Hant": "減少{0}的愛心",
+      "zh-Hant": "降低{0}的好感度",
       "es": "Reducir corazones de {0}",
       "fr": "Diminuer les cœurs de {0}",
       "ko": "{0}의 하트 줄이기",
-      "ru": "Уменьшить количество сердец «{0}»"
+      "ru": "Убавить сердца: {0}"
     },
     "references": [
       {
@@ -2506,7 +2523,7 @@
       "es": "Buceo",
       "fr": "Plongée",
       "ko": "잠수",
-      "ru": "Ныряние"
+      "ru": "Дайвинг"
     },
     "references": [
       {
@@ -2568,9 +2585,9 @@
       "en": "Don’t see what you’re looking for? <0/>",
       "ja": "お探しのものが見つかりませんか？ <0/>",
       "zh-Hans": "没有找到想要的内容？ <0/>",
-      "zh-Hant": "沒有找到想要的內容？ <0/>",
+      "zh-Hant": "沒找到你要找的嗎？ <0/>",
       "es": "¿No ves lo que buscas? <0/>",
-      "fr": "Vous ne trouvez pas ce que vous cherchez ? <0/>",
+      "fr": "Vous ne trouvez pas ce que vous cherchez ? <0/>",
       "ko": "찾는 항목이 없나요? <0/>",
       "ru": "Не нашли, что искали? <0/>"
     },
@@ -2656,11 +2673,11 @@
     "translations": {
       "en": "Edit {0} level, currently {1} of {2}",
       "ja": "{0}レベルを編集、現在{2}中{1}",
-      "zh-Hans": "编辑{0}等级，当前为{2}级中的{1}级",
-      "zh-Hant": "編輯{0}等級，目前為{2}級中的{1}級",
+      "zh-Hans": "编辑{0}等级，当前为{1}/{2}级",
+      "zh-Hant": "編輯{0}等級，目前為{1}級（共{2}級）",
       "es": "Editar nivel de {0}, actualmente {1} de {2}",
       "fr": "Modifier le niveau de {0}, actuellement {1} sur {2}",
-      "ko": "{0} 레벨 편집, 현재 {2}중 {1}",
+      "ko": "{0} 레벨 편집, 현재 {2} 중 {1}",
       "ru": "Изменить уровень «{0}», сейчас {1} из {2}"
     },
     "references": [
@@ -2692,7 +2709,7 @@
   {
     "translations": {
       "en": "Email me back",
-      "ja": "メールで返信してほしい",
+      "ja": "メールで返信希望",
       "zh-Hans": "发邮件回复我",
       "zh-Hant": "寄信回覆我",
       "es": "Respóndeme por correo",
@@ -2787,7 +2804,7 @@
     "translations": {
       "en": "Exactly what goes with your message, once you switch it on.",
       "ja": "オンにすると、メッセージと一緒にこのとおり送られます。",
-      "zh-Hans": "打开后，就会原样随留言发送。",
+      "zh-Hans": "打开后，随留言发送的就是这些内容，一字不差。",
       "zh-Hant": "開啟後，就會原樣隨留言傳送。",
       "es": "Exactamente lo que va con tu mensaje si lo activas.",
       "fr": "Exactement ce qui part avec votre message, une fois que vous l’activez.",
@@ -2811,10 +2828,10 @@
       "ja": "バックアップをエクスポート",
       "zh-Hans": "导出备份",
       "zh-Hant": "匯出備份",
-      "es": "Exportar copia de seguridad",
-      "fr": "Exporter la sauvegarde",
+      "es": "Exportar copia",
+      "fr": "Exporter une copie",
       "ko": "백업 내보내기",
-      "ru": "Экспортировать резервную копию"
+      "ru": "Экспортировать копию"
     },
     "references": [
       {
@@ -2881,7 +2898,7 @@
     "translations": {
       "en": "Farming",
       "ja": "農業",
-      "zh-Hans": "农耕",
+      "zh-Hans": "耕作",
       "zh-Hant": "農耕",
       "es": "Agricultura",
       "fr": "Agriculture",
@@ -2924,10 +2941,10 @@
   {
     "translations": {
       "en": "Fetch quests",
-      "ja": "お使いクエスト",
+      "ja": "お届けリクエスト",
       "zh-Hans": "跑腿任务",
       "zh-Hant": "跑腿任務",
-      "es": "Misiones de recadero",
+      "es": "Encargos",
       "fr": "Quêtes de livraison",
       "ko": "심부름 퀘스트",
       "ru": "Задания на доставку"
@@ -2952,11 +2969,33 @@
       "es": "Inventario de la guía",
       "fr": "Inventaire du guide",
       "ko": "필드 가이드 소지품",
-      "ru": "Инвентарь путеводителя"
+      "ru": "Инвентарь справочника"
     },
     "references": [
       {
         "file": "src/lib/components/source-explainer-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Field guide tools",
+      "ja": "フィールドガイドのツール",
+      "zh-Hans": "田野指南工具",
+      "zh-Hant": "田野指南工具",
+      "es": "Herramientas de la guía",
+      "fr": "Outils du guide",
+      "ko": "필드 가이드 도구",
+      "ru": "Инструменты справочника"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
         ]
@@ -3057,7 +3096,7 @@
     "translations": {
       "en": "Fish traps",
       "ja": "お魚トラップ",
-      "zh-Hans": "捕鱼笼",
+      "zh-Hans": "捕鱼陷阱",
       "zh-Hant": "捕魚籠",
       "es": "Nasas",
       "fr": "Nasses",
@@ -3151,12 +3190,12 @@
   {
     "translations": {
       "en": "Floors & spells",
-      "ja": "フロアと魔法",
+      "ja": "階層と魔法",
       "zh-Hans": "楼层与法术",
       "zh-Hant": "樓層與法術",
       "es": "Pisos y hechizos",
       "fr": "Étages et sorts",
-      "ko": "층과 마법",
+      "ko": "층과 마법 주문",
       "ru": "Этажи и заклинания"
     },
     "references": [
@@ -3173,12 +3212,12 @@
   {
     "translations": {
       "en": "For now, just leave this tab open, and enjoy… whatever is in the new update!",
-      "ja": "今はこのタブを開いたまま、新しいアップデートを楽しんでください！",
-      "zh-Hans": "现在只要让这个标签页开着，然后尽情享受新更新的内容吧！",
-      "zh-Hant": "現在只要讓這個分頁開著，然後盡情享受新更新的內容吧！",
+      "ja": "今はこのタブを開いたままにして、新しいアップデートに入っている…なにかを楽しんでください！",
+      "zh-Hans": "现在只要让这个标签页开着，然后尽情享受……新更新里的那些内容吧！",
+      "zh-Hant": "現在只要讓這個分頁開著，然後好好享受新更新帶來的……不管是什麼吧！",
       "es": "Por ahora, deja esta pestaña abierta y disfruta… ¡de lo que traiga la actualización!",
-      "fr": "Pour l’instant, laissez simplement cet onglet ouvert et profitez… de ce que la mise à jour vous réserve !",
-      "ko": "지금은 이 탭을 열어 두고, 새 업데이트를 즐겨 주세요!",
+      "fr": "Pour l’instant, laissez simplement cet onglet ouvert et profitez… de ce que la mise à jour vous réserve !",
+      "ko": "지금은 이 탭을 열어 두고, 새 업데이트에 뭐가 들었든… 즐겨 주세요!",
       "ru": "А пока просто оставьте эту вкладку открытой и наслаждайтесь… тем, что есть в новом обновлении!"
     },
     "references": [
@@ -3268,11 +3307,11 @@
     "translations": {
       "en": "Getting engaged moves everyone else you’re dating to best friends.",
       "ja": "婚約すると、ほかの交際相手は全員親友になります。",
-      "zh-Hans": "订婚后，其他所有交往对象都会变成挚友。",
+      "zh-Hans": "订婚后，其他所有约会对象都会变成挚友。",
       "zh-Hant": "訂婚後，其他所有交往對象都會變成摯友。",
-      "es": "Al comprometerte, las demás personas con las que sales pasan a ser tus mejores amigos.",
-      "fr": "Les fiançailles font de toutes les autres personnes que vous fréquentez vos meilleurs amis.",
-      "ko": "약혼하면 다른 교제 상대는 모두 절친이 됩니다.",
+      "es": "Al prometerte, todas las demás personas con las que sales pasan a «Gran amistad».",
+      "fr": "Vos fiançailles font passer toutes les autres personnes avec qui vous êtes en couple au statut « Proche ».",
+      "ko": "약혼하면 지금 데이트 중인 다른 상대는 모두 절친이 돼요.",
       "ru": "После помолвки все остальные, с кем вы встречаетесь, станут лучшими друзьями."
     },
     "references": [
@@ -3315,7 +3354,7 @@
       "zh-Hans": "要回到较旧的存档吗？",
       "zh-Hant": "要回到較舊的存檔嗎？",
       "es": "¿Volver a una partida guardada más antigua?",
-      "fr": "Revenir à une sauvegarde plus ancienne ?",
+      "fr": "Revenir à une sauvegarde plus ancienne ?",
       "ko": "예전 세이브 파일로 돌아갈까요?",
       "ru": "Вернуться к более старому сохранению?"
     },
@@ -3359,7 +3398,7 @@
       "zh-Hans": "下降一层",
       "zh-Hant": "下降一層",
       "es": "Bajar un piso",
-      "fr": "Descendre d'un étage",
+      "fr": "Descendre d’un étage",
       "ko": "한 층 아래로",
       "ru": "Спуститься на один этаж"
     },
@@ -3410,7 +3449,7 @@
       "zh-Hans": "上升一层",
       "zh-Hant": "上升一層",
       "es": "Subir un piso",
-      "fr": "Monter d'un étage",
+      "fr": "Monter d’un étage",
       "ko": "한 층 위로",
       "ru": "Подняться на один этаж"
     },
@@ -3466,7 +3505,7 @@
       "zh-Hans": "收到了！",
       "zh-Hant": "收到了！",
       "es": "¡Listo!",
-      "fr": "C’est bon !",
+      "fr": "C’est bon !",
       "ko": "받았어요!",
       "ru": "Готово!"
     },
@@ -3539,7 +3578,7 @@
       "zh-Hans": "下到第 {0} 层？",
       "zh-Hant": "下到第 {0} 層？",
       "es": "¿Bajar al piso {0}?",
-      "fr": "Descendre à l’étage {0} ?",
+      "fr": "Descendre à l’étage {0} ?",
       "ko": "{0}층으로 내려갈까요?",
       "ru": "Спуститься на этаж {0}?"
     },
@@ -3679,7 +3718,7 @@
       "zh-Hans": "嗯，这个文件读不了。请选择以“autosave”结尾的最新文件。",
       "zh-Hant": "嗯，這個檔案讀不了。請選擇以「autosave」結尾的最新檔案。",
       "es": "Vaya, no hemos podido leer ese. Elige el archivo más reciente que termine en «autosave».",
-      "fr": "Hum, impossible de lire celui-là. Choisissez le fichier le plus récent qui se termine par « autosave ».",
+      "fr": "Hum, on n’a pas pu lire celui-là. Choisissez le fichier le plus récent qui se termine par « autosave ».",
       "ko": "음, 그 파일은 읽지 못했어요. “autosave”로 끝나는 가장 최신 파일을 고르세요.",
       "ru": "Хм, этот файл не читается. Выберите самый новый файл, который заканчивается на «autosave»."
     },
@@ -3697,9 +3736,9 @@
   {
     "translations": {
       "en": "Hmmmmmmmmmmmmmm, this doesn’t look like an email…",
-      "ja": "うーん、これはメールアドレスに見えません…",
-      "zh-Hans": "嗯……这看起来不像是邮箱地址……",
-      "zh-Hant": "嗯……這看起來不像是信箱地址……",
+      "ja": "うーーーーーん、これはメールアドレスじゃなさそうです…",
+      "zh-Hans": "嗯嗯嗯嗯嗯嗯嗯……这看起来不太像邮箱地址…",
+      "zh-Hant": "嗯嗯嗯嗯嗯嗯嗯，這看起來不太像信箱耶…",
       "es": "Mmmmmmmmmmmmmm, esto no parece un correo electrónico…",
       "fr": "Hmmmmmmmmmmmmmm, cela ne ressemble pas à un e-mail…",
       "ko": "흐으으으음, 이메일처럼 보이지 않아요…",
@@ -3763,11 +3802,11 @@
   {
     "translations": {
       "en": "How do you wanna track your farm?",
-      "ja": "農場の進み具合をどう記録する？",
+      "ja": "農場の進捗、どうやって記録しますか？",
       "zh-Hans": "想怎么记录农场进度？",
       "zh-Hant": "想怎麼記錄農場進度？",
       "es": "¿Cómo quieres llevar el registro de tu granja?",
-      "fr": "Comment veux-tu suivre ta ferme ?",
+      "fr": "Comment voulez-vous suivre votre ferme ?",
       "ko": "농장 진행 상황을 어떻게 기록할까요?",
       "ru": "Как будем следить за фермой?"
     },
@@ -3789,7 +3828,7 @@
       "ja": "新しいコードを作った場合は、ここで読み取ってください。または同期をやめて、手動で記録を続けましょう。",
       "zh-Hans": "如果它生成了新代码，就在这里扫描。或者停止同步，继续手动记录。",
       "zh-Hant": "如果它產生了新代碼，就在這裡掃描。或者停止同步，繼續手動記錄。",
-      "es": "Si creó un código nuevo, escanéalo aquí. O deja de sincronizar y sigue registrando a mano.",
+      "es": "Si ha creado un código nuevo, escanéalo aquí. O deja de sincronizar y sigue registrando a mano.",
       "fr": "S’il a créé un nouveau code, scannez-le ici. Ou arrêtez la synchro et continuez à noter à la main.",
       "ko": "새 코드를 만들었다면 여기서 스캔하세요. 아니면 동기화를 멈추고 직접 기록을 이어 가세요.",
       "ru": "Если он создал новый код, отсканируйте его здесь. Или остановите синхронизацию и продолжайте отмечать вручную."
@@ -3813,7 +3852,7 @@
       "zh-Hant": "匯入你的《Fields of Mistria》存檔，自動填入進度。",
       "es": "Importa tu partida de Fields of Mistria para completar tu progreso automáticamente.",
       "fr": "Importez votre sauvegarde de Fields of Mistria pour renseigner automatiquement votre progression.",
-      "ko": "Fields of Mistria 저장 파일을 불러와 진행 상황을 자동으로 채우세요.",
+      "ko": "Fields of Mistria 세이브 파일을 불러와 진행 상황을 자동으로 채우세요.",
       "ru": "Импортируйте сохранение Fields of Mistria, чтобы автоматически заполнить прогресс."
     },
     "references": [
@@ -3876,11 +3915,11 @@
       "en": "Increase {0} hearts",
       "ja": "{0}のハートを増やす",
       "zh-Hans": "增加{0}的好感度",
-      "zh-Hant": "增加{0}的愛心",
+      "zh-Hant": "提高{0}的好感度",
       "es": "Aumentar corazones de {0}",
       "fr": "Augmenter les cœurs de {0}",
       "ko": "{0}의 하트 늘리기",
-      "ru": "Увеличить количество сердец «{0}»"
+      "ru": "Прибавить сердца: {0}"
     },
     "references": [
       {
@@ -3936,7 +3975,7 @@
       "zh-Hans": "这是你一直在记录的农场吗？",
       "zh-Hant": "這是你一直在記錄的農場嗎？",
       "es": "¿Es esta la granja que has estado siguiendo?",
-      "fr": "Est-ce la ferme que vous suiviez ?",
+      "fr": "Est-ce la ferme que vous suiviez ?",
       "ko": "지금까지 기록하던 농장이 맞나요?",
       "ru": "Это та ферма, которую вы отслеживали?"
     },
@@ -3954,12 +3993,12 @@
   {
     "translations": {
       "en": "It’s been a while! We made a new code for your save file. Scan it on your other devices to keep your save file syncing.",
-      "ja": "お久しぶりです！セーブデータ用に新しいコードを作りました。同期を続けるには、ほかのデバイスでスキャンしてください。",
+      "ja": "お久しぶりです！セーブデータ用に新しいコードを作りました。セーブデータの同期を続けるには、ほかの端末でこのコードを読み取ってください。",
       "zh-Hans": "好久不见！我们为你的存档生成了新代码。在其他设备上扫描它，才能继续同步存档。",
       "zh-Hant": "好久不見！我們為你的存檔產生了新代碼。在其他裝置上掃描它，才能繼續同步存檔。",
       "es": "¡Ha pasado un tiempo! Hemos creado un código nuevo para tu partida guardada. Escanéalo en tus otros dispositivos para seguir sincronizándola.",
-      "fr": "Ça faisait longtemps ! On a créé un nouveau code pour votre sauvegarde. Scannez-le sur vos autres appareils pour continuer à la synchroniser.",
-      "ko": "오랜만이에요! 세이브 파일용 새 코드를 만들었어요. 계속 동기화하려면 다른 기기에서 스캔하세요.",
+      "fr": "Ça faisait longtemps ! On a créé un nouveau code pour votre sauvegarde. Scannez-le sur vos autres appareils pour continuer à la synchroniser.",
+      "ko": "오랜만이에요! 세이브 파일용 새 코드를 만들었어요. 세이브 파일 동기화를 이어 가려면 다른 기기에서 스캔하세요.",
       "ru": "Давно не виделись! Мы создали новый код для вашего сохранения. Отсканируйте его на других устройствах, чтобы синхронизация продолжалась."
     },
     "references": [
@@ -3998,10 +4037,10 @@
   {
     "translations": {
       "en": "I’ve installed it",
-      "ja": "インストールしたよ",
+      "ja": "インストールしました",
       "zh-Hans": "我已安装",
       "zh-Hant": "我已安裝",
-      "es": "Ya la instalé",
+      "es": "Ya la he instalado",
       "fr": "Je l’ai installée",
       "ko": "설치했어요",
       "ru": "Уже установлено"
@@ -4049,11 +4088,11 @@
   {
     "translations": {
       "en": "Keep mine",
-      "ja": "自分のものを残す",
+      "ja": "自分の記録を残す",
       "zh-Hans": "保留我的",
       "zh-Hant": "保留我的",
       "es": "Quedarme con lo mío",
-      "fr": "Garder les miens",
+      "fr": "Garder ma version",
       "ko": "내 것 유지",
       "ru": "Оставить моё"
     },
@@ -4248,10 +4287,10 @@
     "translations": {
       "en": "Let’s get you set up to keep track of all that hard work. How do you wanna work?",
       "ja": "がんばった成果をしっかり記録できるように準備しましょう。どのやり方にしますか？",
-      "zh-Hans": "我们来帮你准备好，记录下所有的辛勤劳动。你想怎么做？",
+      "zh-Hans": "来，我们帮你设置好，把你的辛苦成果都记下来。你想怎么来？",
       "zh-Hant": "我們來幫你準備好，記錄下所有的辛勤努力。你想怎麼做？",
-      "es": "Vamos a prepararte para seguir todo ese trabajo duro. ¿Cómo quieres hacerlo?",
-      "fr": "On vous prépare pour suivre tout ce travail acharné. Comment voulez-vous faire ?",
+      "es": "Vamos a dejarlo todo preparado para que no pierdas la pista de todo tu esfuerzo. ¿Cómo prefieres hacerlo?",
+      "fr": "On va tout préparer pour suivre tout ce travail acharné. Comment voulez-vous vous y prendre ?",
       "ko": "열심히 한 만큼 잘 기록할 수 있게 준비해 볼게요. 어떻게 하고 싶으세요?",
       "ru": "Давайте подготовим всё, чтобы отслеживать ваш нелёгкий труд. Как вам удобнее?"
     },
@@ -4269,13 +4308,13 @@
   {
     "translations": {
       "en": "Let’s keep your progress safe",
-      "ja": "進み具合を安全に残そう",
+      "ja": "進捗をしっかり守りましょう",
       "zh-Hans": "一起保管好你的进度",
       "zh-Hant": "一起保管好你的進度",
       "es": "Vamos a proteger tu progreso",
-      "fr": "Gardons ta progression à l’abri",
+      "fr": "Gardons votre progression à l’abri",
       "ko": "진행 상황을 안전하게 보관해요",
-      "ru": "Сохраним твой прогресс"
+      "ru": "Давайте сбережём ваш прогресс"
     },
     "references": [
       {
@@ -4412,7 +4451,7 @@
       "zh-Hans": "Lv{0}",
       "zh-Hant": "Lv{0}",
       "es": "Nv {0}",
-      "fr": "Niv {0}",
+      "fr": "Niv. {0}",
       "ko": "Lv{0}",
       "ru": "Ур. {0}"
     },
@@ -4441,7 +4480,7 @@
       "zh-Hans": "Lv{0}–{1}",
       "zh-Hant": "Lv{0}–{1}",
       "es": "Nv {0}–{1}",
-      "fr": "Niv {0}–{1}",
+      "fr": "Niv. {0}–{1}",
       "ko": "Lv{0}~{1}",
       "ru": "Ур. {0}–{1}"
     },
@@ -4474,7 +4513,7 @@
       "zh-Hans": "备份一下",
       "zh-Hant": "備份一下",
       "es": "Hacer una copia",
-      "fr": "Faire une sauvegarde",
+      "fr": "Faire une copie",
       "ko": "백업하기",
       "ru": "Сделать копию"
     },
@@ -4493,12 +4532,12 @@
     "translations": {
       "en": "Married · child-free",
       "ja": "結婚・子供なし",
-      "zh-Hans": "已结婚·无孩子",
+      "zh-Hans": "已婚 · 无孩子",
       "zh-Hant": "已結婚·無孩子",
       "es": "Casados · sin hijos",
       "fr": "Mariés · sans enfants",
       "ko": "결혼 · 자녀 없음",
-      "ru": "Женаты · без детей"
+      "ru": "В браке · без детей"
     },
     "references": [
       {
@@ -4515,12 +4554,12 @@
     "translations": {
       "en": "Married · kids",
       "ja": "結婚・子供あり",
-      "zh-Hans": "已结婚·有孩子",
+      "zh-Hans": "已婚 · 有孩子",
       "zh-Hant": "已結婚·有孩子",
       "es": "Casados · con hijos",
       "fr": "Mariés · avec enfants",
       "ko": "결혼 · 자녀 있음",
-      "ru": "Женаты · с детьми"
+      "ru": "В браке · с детьми"
     },
     "references": [
       {
@@ -4536,13 +4575,13 @@
   {
     "translations": {
       "en": "Match this to your game’s setting before you get engaged.",
-      "ja": "婚約する前に、ゲーム内の設定に合わせてね。",
+      "ja": "婚約する前に、ゲーム内の設定と同じにしておいてください。",
       "zh-Hans": "订婚前，记得将这里的选项与游戏中的设置保持一致。",
       "zh-Hant": "訂婚前，記得將這裡的選項與遊戲中的設定保持一致。",
-      "es": "Haz que coincida con el ajuste de tu partida antes de comprometerte.",
-      "fr": "Fais correspondre ce choix au réglage de ta partie avant tes fiançailles.",
+      "es": "Haz que coincida con el ajuste de tu partida antes de prometerte.",
+      "fr": "Alignez ce choix sur le réglage de votre partie avant de vous fiancer.",
       "ko": "약혼하기 전에 게임 속 설정과 맞춰 주세요.",
-      "ru": "До помолвки выбери тот же вариант, что и в настройках игры."
+      "ru": "Перед помолвкой выберите тот же вариант, что и в настройках игры."
     },
     "references": [
       {
@@ -4607,7 +4646,7 @@
       "zh-Hant": "留言已複製到剪貼簿",
       "es": "Mensaje copiado al portapapeles",
       "fr": "Message copié dans le presse-papiers",
-      "ko": "메시지를 클립보드에 복사했습니다",
+      "ko": "메시지를 클립보드에 복사했어요",
       "ru": "Сообщение скопировано в буфер обмена"
     },
     "references": [
@@ -4628,9 +4667,9 @@
       "zh-Hans": "能让我们再读取一次你的存档吗？",
       "zh-Hant": "能讓我們再讀取一次你的存檔嗎？",
       "es": "¿Nos dejas volver a leer tu partida guardada?",
-      "fr": "Vous nous laissez relire votre sauvegarde ?",
+      "fr": "Vous nous laissez relire votre sauvegarde ?",
       "ko": "세이브 파일을 다시 읽어도 될까요?",
-      "ru": "Разрешите нам снова прочитать сохранение?"
+      "ru": "Можно нам снова прочитать ваше сохранение?"
     },
     "references": [
       {
@@ -4674,7 +4713,7 @@
       "es": "Piso de la mina",
       "fr": "Étage de la mine",
       "ko": "광산 층",
-      "ru": "Этаж шахты"
+      "ru": "Этаж шахт"
     },
     "references": [
       {
@@ -4691,12 +4730,12 @@
     "translations": {
       "en": "Mine floor, {0} of {1}",
       "ja": "鉱坑の階層、{1}中{0}",
-      "zh-Hans": "矿洞楼层，{1}层中的第{0}层",
-      "zh-Hant": "礦洞樓層，{1}層中的第{0}層",
+      "zh-Hans": "矿洞楼层，第{0}层，共{1}层",
+      "zh-Hant": "礦洞樓層，第{0}層（共{1}層）",
       "es": "Piso de la mina, {0} de {1}",
       "fr": "Étage de la mine, {0} sur {1}",
-      "ko": "광산 층, {1}중 {0}",
-      "ru": "Этаж шахты, {0} из {1}"
+      "ko": "광산 층, {1} 중 {0}",
+      "ru": "Этаж шахт, {0} из {1}"
     },
     "references": [
       {
@@ -4741,18 +4780,18 @@
         "Piso de mina: +{0} pisos"
       ],
       "fr": [
-        "Étage de mine : +{0} étage",
-        "Étage de mine : +{0} étages",
-        "Étage de mine : +{0} étages"
+        "Étage de mine : +{0} étage",
+        "Étage de mine : +{0} étages",
+        "Étage de mine : +{0} étages"
       ],
       "ko": [
         "광산 층: +{0}층"
       ],
       "ru": [
-        "Шахтный этаж: +{0} этаж",
-        "Шахтный этаж: +{0} этажа",
-        "Шахтный этаж: +{0} этажей",
-        "Шахтный этаж: +{0} этажа"
+        "Этажи шахт: +{0} этаж",
+        "Этажи шахт: +{0} этажа",
+        "Этажи шахт: +{0} этажей",
+        "Этажи шахт: +{0} этажа"
       ]
     },
     "references": [
@@ -4907,7 +4946,7 @@
       "zh-Hans": "坐骑外观：+{0}",
       "zh-Hant": "坐騎外觀：+{0}",
       "es": "Apariencias de montura: +{0}",
-      "fr": "Apparences de monture : +{0}",
+      "fr": "Apparences de monture : +{0}",
       "ko": "탈 것 외형: +{0}",
       "ru": "Облики ездовых животных: +{0}"
     },
@@ -4936,7 +4975,7 @@
       "zh-Hans": "博物馆捐赠：+{0}",
       "zh-Hant": "博物館捐贈：+{0}",
       "es": "Donaciones al museo: +{0}",
-      "fr": "Dons au musée : +{0}",
+      "fr": "Dons au musée : +{0}",
       "ko": "박물관 기증: +{0}",
       "ru": "Пожертвования музею: +{0}"
     },
@@ -4964,9 +5003,9 @@
       "ja": "やめておく",
       "zh-Hans": "算了",
       "zh-Hant": "算了",
-      "es": "Cancelar",
-      "fr": "Annuler",
-      "ko": "취소",
+      "es": "Mejor no",
+      "fr": "Finalement non",
+      "ko": "그만둘래요",
       "ru": "Не надо"
     },
     "context": "settings spoilers cancel",
@@ -5009,9 +5048,9 @@
       "en": "New farm! We saved a backup of your last one. Restore it any time from Data.",
       "ja": "新しい農場です！前の農場のバックアップを保存しました。データ管理からいつでも復元できます。",
       "zh-Hans": "新农场！我们保存了上一个农场的备份，随时可以在数据管理中恢复。",
-      "zh-Hant": "新農場！我們儲存了上一個農場的備份，隨時可以在資料管理中還原。",
-      "es": "¡Granja nueva! Guardamos una copia de la anterior. Restáurala cuando quieras desde Datos.",
-      "fr": "Nouvelle ferme ! On a gardé une copie de la précédente. Restaurez-la quand vous voulez depuis Données.",
+      "zh-Hant": "新農場！我們儲存了上一個農場的備份，隨時可以在「資料」頁面還原。",
+      "es": "¡Granja nueva! Hemos guardado una copia de la anterior. Restáurala cuando quieras desde Datos.",
+      "fr": "Nouvelle ferme ! On a gardé une copie de la précédente. Restaurez-la quand vous voulez depuis Données.",
       "ko": "새 농장이네요! 이전 농장의 백업을 저장했어요. 데이터 관리에서 언제든 복원할 수 있어요.",
       "ru": "Новая ферма! Мы сохранили копию прошлой. Восстановить её можно в любой момент в разделе «Данные»."
     },
@@ -5031,9 +5070,9 @@
       "en": "New farm! We saved a backup of {0}. Restore it any time from Data.",
       "ja": "新しい農場です！{0} のバックアップを保存しました。データ管理からいつでも復元できます。",
       "zh-Hans": "新农场！我们保存了 {0} 的备份，随时可以在数据管理中恢复。",
-      "zh-Hant": "新農場！我們儲存了 {0} 的備份，隨時可以在資料管理中還原。",
-      "es": "¡Granja nueva! Guardamos una copia de {0}. Restáurala cuando quieras desde Datos.",
-      "fr": "Nouvelle ferme ! On a gardé une copie de {0}. Restaurez-la quand vous voulez depuis Données.",
+      "zh-Hant": "新農場！我們儲存了 {0} 的備份，隨時可以在「資料」頁面還原。",
+      "es": "¡Granja nueva! Hemos guardado una copia de {0}. Restáurala cuando quieras desde Datos.",
+      "fr": "Nouvelle ferme ! On a gardé une copie de {0}. Restaurez-la quand vous voulez depuis Données.",
       "ko": "새 농장이네요! {0}의 백업을 저장했어요. 데이터 관리에서 언제든 복원할 수 있어요.",
       "ru": "Новая ферма! Мы сохранили копию фермы {0}. Восстановить её можно в любой момент в разделе «Данные»."
     },
@@ -5059,7 +5098,7 @@
     "translations": {
       "en": "New field guide",
       "ja": "新しいフィールドガイド",
-      "zh-Hans": "新田野指南",
+      "zh-Hans": "全新的田野指南",
       "zh-Hant": "新田野指南",
       "es": "Nueva guía de campo",
       "fr": "Nouveau guide de terrain",
@@ -5107,7 +5146,7 @@
       "zh-Hant": "找不到任何物品",
       "es": "No se encontraron elementos",
       "fr": "Aucun élément trouvé",
-      "ko": "항목을 찾을 수 없습니다",
+      "ko": "검색된 항목이 없어요",
       "ru": "Ничего не найдено"
     },
     "references": [
@@ -5133,7 +5172,7 @@
     "translations": {
       "en": "No types",
       "ja": "種類なし",
-      "zh-Hans": "无类型",
+      "zh-Hans": "未选类型",
       "zh-Hant": "無類型",
       "es": "Ningún tipo",
       "fr": "Aucun type",
@@ -5222,11 +5261,11 @@
   {
     "translations": {
       "en": "Nothing here can happen today. It’s waiting on a season, the weather, or your progress.",
-      "ja": "今日できるものはありません。季節、天気、または進行状況を待っています。",
+      "ja": "今日できるものはありません。季節、天気、または進捗を待っています。",
       "zh-Hans": "今天这里的都做不了，需要等待季节、天气或你的进度。",
       "zh-Hant": "今天這裡的都做不了，需要等待季節、天氣或你的進度。",
       "es": "Hoy no se puede hacer nada de esto. Depende de la estación, del clima o de tu progreso.",
-      "fr": "Rien de tout cela n’est possible aujourd’hui. Il faut attendre une saison, une météo ou ta progression.",
+      "fr": "Rien de tout cela n’est possible aujourd’hui. Il faut attendre une saison, une météo ou votre progression.",
       "ko": "오늘은 할 수 있는 항목이 없어요. 계절, 날씨 또는 진행 상황을 기다리는 중이에요.",
       "ru": "Сегодня здесь ничего не сделать. Нужно дождаться сезона, погоды или прогресса."
     },
@@ -5285,7 +5324,7 @@
       "zh-Hans": "第一：什么都没丢。你的进度完全安全。",
       "zh-Hant": "第一：什麼都沒丟。你的進度完全安全。",
       "es": "Lo primero: no se ha perdido nada. Tu progreso está totalmente a salvo.",
-      "fr": "Premièrement : rien n’est perdu. Votre progression est totalement en sécurité.",
+      "fr": "Premièrement : rien n’est perdu. Votre progression est totalement en sécurité.",
       "ko": "첫째: 잃어버린 건 없어요. 진행 상황은 완전히 안전해요.",
       "ru": "Во-первых: ничего не потеряно. Ваш прогресс в полной безопасности."
     },
@@ -5304,12 +5343,12 @@
     "translations": {
       "en": "Number two: This isn’t anything you did. It can happen when {0} releases an update. Rest assured that we’re on the case, and this field guide should be updated shortly. When it is, it’ll read your save file again and catch up on everything you’ve done in the meantime.",
       "ja": "その2：あなたのせいではありません。{0} のアップデートで起きることがあります。こちらで対応中なので、このフィールドガイドも近いうちに更新されるはずです。更新されたらセーブデータを読み直し、その間のプレイ分にも追いつきます。",
-      "zh-Hans": "第二：这不是你的问题。{0} 发布更新时可能会出现这种情况。放心，我们正在处理，这本指南很快就会更新。更新后它会重新读取你的存档，并补上你这段时间的所有进度。",
+      "zh-Hans": "第二：这不是你的问题。《{0}》发布更新时可能会出现这种情况。放心，我们正在处理，田野指南很快就会更新。更新后它会重新读取你的存档，并补上你这段时间的所有进度。",
       "zh-Hant": "第二：這不是你的問題。{0} 發布更新時可能會發生這種情況。放心，我們正在處理，這本指南很快就會更新。更新後它會重新讀取你的存檔，並補上你這段時間的所有進度。",
       "es": "Lo segundo: no es nada que hayas hecho. Puede pasar cuando {0} saca una actualización. Tranquilidad, ya estamos en ello, y esta guía debería actualizarse en breve. Cuando lo haga, volverá a leer tu partida guardada y se pondrá al día con todo lo que hayas hecho.",
-      "fr": "Deuxièmement : vous n’y êtes pour rien. Ça peut arriver quand {0} reçoit une mise à jour. Rassurez-vous, on s’en occupe, et ce guide devrait être mis à jour sous peu. Il relira alors votre sauvegarde et rattrapera tout ce que vous avez fait entre-temps.",
-      "ko": "둘째: 플레이어님 잘못이 아니에요. {0} 업데이트가 나오면 생길 수 있는 일이에요. 저희가 살펴보고 있으니 이 필드 가이드도 곧 업데이트될 거예요. 그러면 세이브 파일을 다시 읽고 그동안 하신 것도 모두 따라잡아요.",
-      "ru": "Во-вторых: вы тут ни при чём. Так бывает, когда у {0} выходит обновление. Не волнуйтесь, мы уже занимаемся этим, и путеводитель скоро обновится. Тогда он снова прочитает сохранение и наверстает всё, что вы успели сделать."
+      "fr": "Deuxièmement : vous n’y êtes pour rien. Ça peut arriver quand {0} reçoit une mise à jour. Rassurez-vous, on s’en occupe, et ce guide devrait être mis à jour sous peu. Il relira alors votre sauvegarde et rattrapera tout ce que vous avez fait entre-temps.",
+      "ko": "둘째: 뭔가 잘못하신 게 아니에요. {0} 업데이트가 나오면 생길 수 있는 일이에요. 저희가 살펴보고 있으니 이 필드 가이드도 곧 업데이트될 거예요. 그러면 세이브 파일을 다시 읽고 그동안 하신 것도 모두 따라잡아요.",
+      "ru": "Во-вторых: вы тут ни при чём. Так бывает, когда у {0} выходит обновление. Не волнуйтесь, мы уже занимаемся этим, и справочник скоро обновится. Тогда он снова прочитает сохранение и наверстает всё, что вы успели сделать."
     },
     "references": [
       {
@@ -5378,7 +5417,7 @@
       "en": "Only Michael sees this. It never goes on the issue.",
       "ja": "見るのはMichaelだけです。Issueには載りません。",
       "zh-Hans": "只有 Michael 能看到。它绝不会出现在议题里。",
-      "zh-Hant": "只有 Michael 看得到。它絕不會出現在議題裡。",
+      "zh-Hant": "只有 Michael 看得到，也絕不會出現在 issue 裡。",
       "es": "Solo Michael lo ve. Nunca aparece en la incidencia.",
       "fr": "Seul Michael le voit. Il n’apparaît jamais dans le ticket.",
       "ko": "Michael만 볼 수 있어요. 이슈에는 절대 올라가지 않아요.",
@@ -5420,12 +5459,12 @@
   {
     "translations": {
       "en": "Only what you switch on goes with your message. Peeking doesn’t count!",
-      "ja": "オンにしたものだけがメッセージと一緒に送られます。のぞくだけなら送られません!",
+      "ja": "オンにしたものだけがメッセージと一緒に送られます。のぞくだけなら送られません！",
       "zh-Hans": "只有你打开的内容才会随留言发送。看一眼不算！",
       "zh-Hant": "只有你開啟的內容才會隨留言傳送。看一眼不算！",
       "es": "Solo lo que actives va con tu mensaje. ¡Echar un vistazo no cuenta!",
-      "fr": "Seul ce que vous activez part avec votre message. Jeter un œil ne compte pas !",
-      "ko": "켠 항목만 메시지와 함께 보내져요. 살짝 보는 건 괜찮아요!",
+      "fr": "Seul ce que vous activez part avec votre message. Jeter un œil ne compte pas !",
+      "ko": "켠 항목만 메시지와 함께 보내져요. 살짝 보는 건 안 쳐요!",
       "ru": "С сообщением уходит только то, что вы включили. Просто посмотреть — не считается!"
     },
     "references": [
@@ -5471,11 +5510,11 @@
   {
     "translations": {
       "en": "Oops, forgot to put in your email!",
-      "ja": "あっ、メールアドレスの入力を忘れています!",
+      "ja": "あっ、メールアドレスの入力を忘れています！",
       "zh-Hans": "哎呀，忘记填写邮箱了！",
       "zh-Hant": "哎呀，忘記填寫信箱了！",
-      "es": "¡Vaya, olvidaste escribir tu correo electrónico!",
-      "fr": "Oups, vous avez oublié de saisir votre e-mail !",
+      "es": "¡Uy, se te ha olvidado poner tu correo!",
+      "fr": "Oups, vous avez oublié de saisir votre e-mail !",
       "ko": "이런, 이메일 입력을 잊으셨네요!",
       "ru": "Ой, вы забыли указать email!"
     },
@@ -5520,7 +5559,7 @@
       "zh-Hant": "也可以手動開始，勾選遊戲開始時已擁有的物品。",
       "es": "O empieza manualmente para marcar los objetos con los que comienzas la partida.",
       "fr": "Ou commencez manuellement pour cocher les objets disponibles au début du jeu.",
-      "ko": "또는 수동으로 시작해 게임 시작 시 보유한 아이템을 체크하세요.",
+      "ko": "또는 직접 시작해서 처음부터 갖고 있는 아이템을 체크하세요.",
       "ru": "Или начните вручную, чтобы отметить предметы, доступные в начале игры."
     },
     "references": [
@@ -5537,13 +5576,13 @@
   {
     "translations": {
       "en": "Our bot check isn’t loading right now. You can still <0>submit feedback on GitHub</0> directly.",
-      "ja": "いまボット確認が読み込めません。それでも、 <0>GitHubでフィードバックを送信する</0> ことができます。",
-      "zh-Hans": "我们的人机验证现在加载不出来。你仍然可以 <0>在 GitHub 上提交反馈</0> 。",
-      "zh-Hant": "我們的人機驗證現在載入不了。你仍然可以 <0>在 GitHub 上提交回饋</0> 。",
+      "ja": "いまボット確認が読み込めません。それでも、<0>GitHubから直接フィードバックを送信する</0>ことができます。",
+      "zh-Hans": "我们的人机验证现在加载不出来。不过你仍然可以直接<0>在 GitHub 上提交反馈</0>。",
+      "zh-Hant": "我們的人機驗證現在載入不了。你仍然可以<0>直接在 GitHub 上提交回饋</0>。",
       "es": "Nuestra comprobación antibots no carga ahora mismo. Aun así, puedes <0>enviar comentarios en GitHub</0> directamente.",
       "fr": "Notre vérification anti-robot ne se charge pas pour l’instant. Vous pouvez quand même <0>envoyer un retour sur GitHub</0> directement.",
-      "ko": "지금은 봇 확인이 로드되지 않아요. 그래도 <0>GitHub에서 피드백을 보낼</0> 수 있습니다.",
-      "ru": "Наша проверка на ботов сейчас не загружается. Но вы всё равно можете <0>отправить отзыв через GitHub</0> напрямую."
+      "ko": "지금은 봇 확인을 불러오지 못하고 있어요. 그래도 <0>GitHub에서 직접 피드백을 보낼</0> 수 있어요.",
+      "ru": "Наша проверка на бота сейчас не загружается. Но вы всё равно можете <0>отправить отзыв через GitHub</0> напрямую."
     },
     "references": [
       {
@@ -5675,7 +5714,7 @@
       "zh-Hans": "技能特长：+{0}",
       "zh-Hant": "技能特長：+{0}",
       "es": "Dones de habilidad: +{0}",
-      "fr": "Bonus de compétences : +{0}",
+      "fr": "Bonus de compétences : +{0}",
       "ko": "스킬 특성: +{0}",
       "ru": "Навыки: +{0}"
     },
@@ -5700,13 +5739,13 @@
   {
     "translations": {
       "en": "Pet cosmetics",
-      "ja": "ペットのコスメ",
-      "zh-Hans": "宠物装饰",
-      "zh-Hant": "寵物裝飾",
-      "es": "Cosméticos de mascota",
-      "fr": "Cosmétiques d'animal",
-      "ko": "펫 코스메틱",
-      "ru": "Косметика питомца"
+      "ja": "ペットの外見アイテム",
+      "zh-Hans": "宠物装扮",
+      "zh-Hant": "寵物飾物",
+      "es": "Accesorios de mascota",
+      "fr": "Accessoires d’animal de compagnie",
+      "ko": "반려동물 꾸미기 아이템",
+      "ru": "Украшения питомца"
     },
     "references": [
       {
@@ -5722,13 +5761,13 @@
   {
     "translations": {
       "en": "Pet cosmetics: +{0}",
-      "ja": "ペットのコスメ：+{0}",
-      "zh-Hans": "宠物装饰：+{0}",
-      "zh-Hant": "寵物裝飾：+{0}",
-      "es": "Cosméticos de mascotas: +{0}",
-      "fr": "Cosmétiques d’animaux de compagnie : +{0}",
-      "ko": "펫 코스메틱: +{0}",
-      "ru": "Косметика питомцев: +{0}"
+      "ja": "ペットの外見アイテム：+{0}",
+      "zh-Hans": "宠物装扮：+{0}",
+      "zh-Hant": "寵物飾物：+{0}",
+      "es": "Accesorios de mascota: +{0}",
+      "fr": "Accessoires d’animaux de compagnie : +{0}",
+      "ko": "반려동물 꾸미기 아이템: +{0}",
+      "ru": "Украшения питомцев: +{0}"
     },
     "references": [
       {
@@ -5751,12 +5790,12 @@
   {
     "translations": {
       "en": "Pet skins",
-      "ja": "ペットのスキン",
+      "ja": "ペットスキン",
       "zh-Hans": "宠物皮肤",
       "zh-Hant": "寵物外觀",
       "es": "Aspectos de mascota",
-      "fr": "Apparences d'animal",
-      "ko": "펫 스킨",
+      "fr": "Apparences d’animal de compagnie",
+      "ko": "반려동물 스킨",
       "ru": "Скины питомца"
     },
     "references": [
@@ -5773,12 +5812,12 @@
   {
     "translations": {
       "en": "Pet skins: +{0}",
-      "ja": "ペットのスキン：+{0}",
+      "ja": "ペットスキン：+{0}",
       "zh-Hans": "宠物皮肤：+{0}",
       "zh-Hant": "寵物外觀：+{0}",
-      "es": "Pieles de mascotas: +{0}",
-      "fr": "Apparences d’animaux de compagnie : +{0}",
-      "ko": "펫 스킨: +{0}",
+      "es": "Aspectos de mascota: +{0}",
+      "fr": "Apparences d’animaux de compagnie : +{0}",
+      "ko": "반려동물 스킨: +{0}",
       "ru": "Скины питомцев: +{0}"
     },
     "references": [
@@ -5805,9 +5844,9 @@
       "ja": "報告する項目を選択",
       "zh-Hans": "选择要报告的项目",
       "zh-Hant": "選擇要回報的項目",
-      "es": "Elige un elemento para reportar",
+      "es": "Elige un elemento sobre el que informar",
       "fr": "Choisissez un élément à signaler",
-      "ko": "신고할 항목 선택",
+      "ko": "피드백할 항목 고르기",
       "ru": "Выберите элемент, чтобы сообщить о нём"
     },
     "references": [
@@ -5828,9 +5867,9 @@
       "ja": "プレビュー版のため、フィードバックは確認済みですが送信されていません。",
       "zh-Hans": "预览版本：反馈已通过所有检查，但未提交任何内容。",
       "zh-Hant": "預覽版本：回饋已通過所有檢查，但未提交任何內容。",
-      "es": "Versión de prueba: tus comentarios superaron todas las comprobaciones, pero no se envió nada.",
-      "fr": "Version de prévisualisation : votre retour a passé toutes les vérifications, mais rien n'a été envoyé.",
-      "ko": "미리보기 빌드: 피드백이 모든 확인을 통과했지만 아무것도 제출되지 않았습니다.",
+      "es": "Versión de prueba: tus comentarios han superado todas las comprobaciones, pero no se ha enviado nada.",
+      "fr": "Version de prévisualisation : votre retour a passé toutes les vérifications, mais rien n’a été envoyé.",
+      "ko": "미리보기 빌드: 피드백이 모든 확인을 통과했지만, 실제로 등록된 건 없어요.",
       "ru": "Предварительная сборка: отзыв прошёл все проверки, но ничего не отправлено."
     },
     "references": [
@@ -5899,7 +5938,7 @@
       "es": "Pedidas de mano",
       "fr": "Demandes en mariage",
       "ko": "청혼",
-      "ru": "Предложения руки"
+      "ru": "Предложения руки и сердца"
     },
     "references": [
       {
@@ -5947,7 +5986,7 @@
       "zh-Hans": "任务：+{0}",
       "zh-Hant": "任務：+{0}",
       "es": "Misiones: +{0}",
-      "fr": "Quêtes : +{0}",
+      "fr": "Quêtes : +{0}",
       "ko": "퀘스트: +{0}",
       "ru": "Задания: +{0}"
     },
@@ -6042,8 +6081,8 @@
       "ja": "さっそく始めますか？",
       "zh-Hans": "准备好开始了吗？",
       "zh-Hant": "準備好開始了嗎？",
-      "es": "¿Listo para empezar?",
-      "fr": "Prêt à commencer ?",
+      "es": "¿Empezamos?",
+      "fr": "Envie de vous lancer ?",
       "ko": "시작할 준비 되셨나요?",
       "ru": "Готовы начать?"
     },
@@ -6093,7 +6132,7 @@
       "zh-Hans": "食谱：+{0}",
       "zh-Hant": "食譜：+{0}",
       "es": "Recetas: +{0}",
-      "fr": "Recettes : +{0}",
+      "fr": "Recettes : +{0}",
       "ko": "레시피: +{0}",
       "ru": "Рецепты: +{0}"
     },
@@ -6143,7 +6182,7 @@
       "ja": "プロポーズを記録",
       "zh-Hans": "记录求婚",
       "zh-Hant": "記錄求婚",
-      "es": "Registrar propuesta",
+      "es": "Registrar pedida de mano",
       "fr": "Enregistrer la demande en mariage",
       "ko": "청혼 기록하기",
       "ru": "Отметить предложение"
@@ -6167,7 +6206,7 @@
       "zh-Hant": "重新整理",
       "es": "Actualizar",
       "fr": "Actualiser",
-      "ko": "새로 고침",
+      "ko": "새로고침",
       "ru": "Обновить"
     },
     "references": [
@@ -6253,9 +6292,9 @@
         "Reputación: +{0} niveles"
       ],
       "fr": [
-        "Renommée : +{0} niveau",
-        "Renommée : +{0} niveaux",
-        "Renommée : +{0} niveaux"
+        "Renommée : +{0} niveau",
+        "Renommée : +{0} niveaux",
+        "Renommée : +{0} niveaux"
       ],
       "ko": [
         "명성: +{0}레벨"
@@ -6361,10 +6400,10 @@
       "ja": "{0}についてフィードバックを報告",
       "zh-Hans": "报告关于{0}的反馈",
       "zh-Hant": "回報關於{0}的意見",
-      "es": "Reportar sobre {0}",
-      "fr": "Signaler un problème concernant {0}",
-      "ko": "{0}에 대해 신고하기",
-      "ru": "Сообщить о {0}"
+      "es": "Enviar comentarios sobre {0}",
+      "fr": "Envoyer un retour sur {0}",
+      "ko": "{0}에 대한 피드백 보내기",
+      "ru": "Сообщить о «{0}»"
     },
     "references": [
       {
@@ -6413,10 +6452,10 @@
       "ja": "「{0}」をリセットしました",
       "zh-Hans": "已重置“{0}”",
       "zh-Hant": "已重設「{0}」",
-      "es": "«{0}» restablecido",
-      "fr": "« {0} » réinitialisé",
-      "ko": "“{0}”을(를) 초기화했습니다",
-      "ru": "«{0}» сброшено"
+      "es": "Has restablecido «{0}»",
+      "fr": "« {0} » réinitialisé",
+      "ko": "“{0}”을(를) 초기화했어요",
+      "ru": "Сброшено: «{0}»"
     },
     "references": [
       {
@@ -6527,13 +6566,13 @@
   {
     "translations": {
       "en": "Safari can clear your progress after seven days of Safari use without a visit here. Adding the field guide to your Home Screen gives it its own storage, so we’ll move your progress over with a backup.",
-      "ja": "Safariを使った日が7日間続いて、その間ここを開かないと、Safariが進み具合を消すことがあるよ。ホーム画面に追加した図鑑は別の保存場所を使うから、バックアップで記録を移そう。",
-      "zh-Hans": "如果使用 Safari 的七天里都没来这里，Safari 可能会清除你的进度。添加到主屏幕的图鉴使用独立的存储空间，所以我们用备份把进度搬过去。",
-      "zh-Hant": "如果使用 Safari 的七天裡都沒來這裡，Safari 可能會清除你的進度。加入主畫面的圖鑑使用獨立的儲存空間，所以我們用備份把進度搬過去。",
+      "ja": "ここを開かないままSafariを7日間使うと、Safariが進捗を消してしまうことがあります。フィールドガイドをホーム画面に追加すると専用の保存場所ができるので、バックアップを使って進捗をそちらに移しましょう。",
+      "zh-Hans": "如果你连续七天用 Safari 却没来过这里，Safari 可能会清除你的进度。添加到主屏幕后，田野指南会有自己独立的存储空间，所以我们会用一份备份把你的进度搬过去。",
+      "zh-Hant": "如果使用 Safari 的七天裡都沒來這裡，Safari 可能會清除你的進度。把田野指南加入主畫面後，它會有自己的儲存空間，所以我們要用備份把進度搬過去。",
       "es": "Safari puede borrar tu progreso tras siete días de uso de Safari sin pasar por aquí. Al añadir la guía a la pantalla de inicio, tendrá su propio almacenamiento. Trasladaremos tu progreso con una copia de seguridad.",
-      "fr": "Safari peut effacer ta progression après sept jours d’utilisation de Safari sans passer ici. Ajouter le guide à l’écran d’accueil lui donne son propre stockage. On va donc transférer ta progression avec une copie de sauvegarde.",
-      "ko": "Safari를 사용한 날이 7일 동안 이어지고 그동안 여기에 방문하지 않으면 진행 상황이 지워질 수 있어요. 홈 화면에 추가한 도감은 별도 저장 공간을 쓰니, 백업으로 기록을 옮겨요.",
-      "ru": "Safari может удалить прогресс после семи дней использования Safari без посещения этой страницы. У справочника на домашнем экране отдельное хранилище, поэтому перенесём прогресс с помощью резервной копии."
+      "fr": "Safari peut effacer votre progression après sept jours d’utilisation de Safari sans passer ici. Ajouter le guide à votre écran d’accueil lui donne son propre stockage : on va donc transférer votre progression avec une copie de sauvegarde.",
+      "ko": "Safari를 7일 동안 쓰면서 여기에 한 번도 들르지 않으면 진행 상황이 지워질 수 있어요. 필드 가이드를 홈 화면에 추가하면 전용 저장 공간이 생기니, 백업으로 진행 상황을 옮겨요.",
+      "ru": "Safari может стереть ваш прогресс, если семь дней пользоваться Safari и не заходить сюда. Если добавить справочник на экран «Домой», у него будет своё хранилище, поэтому мы перенесём прогресс через резервную копию."
     },
     "references": [
       {
@@ -6597,7 +6636,7 @@
       "zh-Hans": "存档同步：{0}",
       "zh-Hant": "存檔同步：{0}",
       "es": "Sincronización de partida: {0}",
-      "fr": "Synchro de la sauvegarde : {0}",
+      "fr": "Synchro de la sauvegarde : {0}",
       "ko": "세이브 파일 동기화: {0}",
       "ru": "Синхронизация сохранения: {0}"
     },
@@ -6667,7 +6706,7 @@
     "translations": {
       "en": "Scroll bundles",
       "ja": "巻物セット",
-      "zh-Hans": "卷轴组合",
+      "zh-Hans": "卷轴套装",
       "zh-Hant": "卷軸組合",
       "es": "Lotes de pergaminos",
       "fr": "Lots de parchemins",
@@ -6757,8 +6796,8 @@
       "ja": "フィールドガイド全体から「{0}」を検索",
       "zh-Hans": "在整本田野指南中搜索“{0}”",
       "zh-Hant": "在整本田野指南中搜尋「{0}」",
-      "es": "Buscar “{0}” en toda la guía de campo",
-      "fr": "Chercher « {0} » dans tout le guide de terrain",
+      "es": "Buscar «{0}» en toda la guía de campo",
+      "fr": "Chercher « {0} » dans tout le guide de terrain",
       "ko": "필드 가이드 전체에서 “{0}” 검색",
       "ru": "Искать «{0}» во всём полевом справочнике"
     },
@@ -6832,7 +6871,7 @@
       "zh-Hans": "季节和天气：{0}，{1}",
       "zh-Hant": "季節和天氣：{0}，{1}",
       "es": "Estación y clima: {0}, {1}",
-      "fr": "Saison et météo : {0}, {1}",
+      "fr": "Saison et météo : {0}, {1}",
       "ko": "계절과 날씨: {0}, {1}",
       "ru": "Сезон и погода: {0}, {1}"
     },
@@ -6862,11 +6901,11 @@
     "translations": {
       "en": "Season & weather: {0}, {1}. This sorts your lists; set today’s day.",
       "ja": "季節と天気：{0}、{1}。リストの並び順に使われます。今日の日付を設定してください。",
-      "zh-Hans": "季节和天气：{0}，{1}。这会决定列表的排序；请设置今天的日期。",
-      "zh-Hant": "季節和天氣：{0}，{1}。這會決定清單的排序；請設定今天的日期。",
+      "zh-Hans": "季节和天气：{0}，{1}。这会决定列表的排序，请设成游戏里今天的季节和天气。",
+      "zh-Hant": "季節和天氣：{0}，{1}。這會決定清單的排序，記得設定成遊戲裡今天的季節和天氣。",
       "es": "Estación y clima: {0}, {1}. Esto ordena tus listas; indica el día de hoy.",
-      "fr": "Saison et météo : {0}, {1}. Cela trie vos listes ; indiquez le jour d’aujourd’hui.",
-      "ko": "계절과 날씨: {0}, {1}. 목록 정렬에 쓰입니다. 오늘 날짜를 설정하세요.",
+      "fr": "Saison et météo : {0}, {1}. Cela trie vos listes ; indiquez le jour actuel.",
+      "ko": "계절과 날씨: {0}, {1}. 목록 정렬에 쓰여요. 오늘 날짜로 맞춰 주세요.",
       "ru": "Сезон и погода: {0}, {1}. Это определяет порядок списков; укажите сегодняшний день."
     },
     "references": [
@@ -6897,7 +6936,7 @@
       "ja": "季節の進行を更新しました",
       "zh-Hans": "已更新季节进度",
       "zh-Hant": "已更新季節進度",
-      "es": "Progreso de temporada actualizado",
+      "es": "Progreso de estaciones actualizado",
       "fr": "Progression de saison mise à jour",
       "ko": "계절 진행 업데이트됨",
       "ru": "Прогресс сезона обновлён"
@@ -6942,7 +6981,7 @@
       "zh-Hans": "发送反馈",
       "zh-Hant": "傳送意見回饋",
       "es": "Enviar comentarios",
-      "fr": "Envoyer un commentaire",
+      "fr": "Envoyer un retour",
       "ko": "피드백 보내기",
       "ru": "Отправить отзыв"
     },
@@ -7147,7 +7186,7 @@
       "zh-Hans": "显示剧透吗？",
       "zh-Hant": "顯示爆雷內容嗎？",
       "es": "¿Mostrar spoilers?",
-      "fr": "Afficher les spoilers ?",
+      "fr": "Afficher les spoilers ?",
       "ko": "스포일러를 표시할까요?",
       "ru": "Показывать спойлеры?"
     },
@@ -7169,7 +7208,7 @@
       "ja": "{0}をカラーで表示",
       "zh-Hans": "以彩色显示{0}",
       "zh-Hant": "以彩色顯示{0}",
-      "es": "Mostrar {0} a color",
+      "es": "Mostrar {0} en color",
       "fr": "Afficher {0} en couleur",
       "ko": "{0} 컬러로 보기",
       "ru": "Показать «{0}» в цвете"
@@ -7200,8 +7239,8 @@
       "zh-Hant": "技能記錄",
       "es": "Registro de habilidades",
       "fr": "Registre des compétences",
-      "ko": "기술 목록",
-      "ru": "Реестр навыков"
+      "ko": "스킬 목록",
+      "ru": "Реестр умений"
     },
     "references": [
       {
@@ -7221,7 +7260,7 @@
         "Skills: +{0} skills updated"
       ],
       "ja": [
-        "スキル：{0}件を更新"
+        "スキル：+{0}件を更新"
       ],
       "zh-Hans": [
         "技能：已更新{0}项技能"
@@ -7235,18 +7274,18 @@
         "Habilidades: +{0} habilidades actualizadas"
       ],
       "fr": [
-        "Compétences : +{0} compétence mise à jour",
-        "Compétences : +{0} compétences mises à jour",
-        "Compétences : +{0} compétences mises à jour"
+        "Compétences : +{0} compétence mise à jour",
+        "Compétences : +{0} compétences mises à jour",
+        "Compétences : +{0} compétences mises à jour"
       ],
       "ko": [
-        "스킬: {0}개 업데이트됨"
+        "스킬: +{0}개 업데이트됨"
       ],
       "ru": [
-        "Навыки: +{0} навык обновлён",
-        "Навыки: +{0} навыка обновлено",
-        "Навыки: +{0} навыков обновлено",
-        "Навыки: +{0} навыка обновлено"
+        "Умения: +{0} умение обновлено",
+        "Умения: +{0} умения обновлено",
+        "Умения: +{0} умений обновлено",
+        "Умения: +{0} умения обновлено"
       ]
     },
     "references": [
@@ -7356,7 +7395,7 @@
       "zh-Hant": "來源類型",
       "es": "Tipos de fuente",
       "fr": "Types de source",
-      "ko": "획득 경로 유형",
+      "ko": "획득처 유형",
       "ru": "Типы источников"
     },
     "references": [
@@ -7379,12 +7418,12 @@
   {
     "translations": {
       "en": "Spells: +{0}",
-      "ja": "呪文：+{0}",
+      "ja": "魔法：+{0}",
       "zh-Hans": "法术：+{0}",
       "zh-Hant": "法術：+{0}",
       "es": "Hechizos: +{0}",
-      "fr": "Sorts : +{0}",
-      "ko": "주문: +{0}",
+      "fr": "Sorts : +{0}",
+      "ko": "마법 주문: +{0}",
       "ru": "Заклинания: +{0}"
     },
     "references": [
@@ -7410,11 +7449,11 @@
       "en": "Spoilered item",
       "ja": "ネタバレ項目",
       "zh-Hans": "剧透物品",
-      "zh-Hant": "爆雷項目",
+      "zh-Hant": "隱藏的項目",
       "es": "Elemento con spoiler",
-      "fr": "Élément spoilé",
+      "fr": "Élément masqué",
       "ko": "스포일러 항목",
-      "ru": "Заспойлеренный предмет"
+      "ru": "Скрытый предмет"
     },
     "references": [
       {
@@ -7460,10 +7499,10 @@
     "translations": {
       "en": "Start dating",
       "ja": "交際を始める",
-      "zh-Hans": "开始恋爱",
+      "zh-Hans": "开始约会",
       "zh-Hant": "開始戀愛",
       "es": "Empezar a salir",
-      "fr": "Commencer à sortir ensemble",
+      "fr": "Se mettre en couple",
       "ko": "연애 시작하기",
       "ru": "Начать встречаться"
     },
@@ -7485,9 +7524,9 @@
       "zh-Hans": "已开始任务“{0}”",
       "zh-Hant": "已開始任務「{0}」",
       "es": "Misión «{0}» comenzada",
-      "fr": "Quête « {0} » en cours",
-      "ko": "퀘스트 “{0}”을(를) 시작했습니다",
-      "ru": "Задание «{0}» принято"
+      "fr": "Quête « {0} » commencée",
+      "ko": "“{0}” 퀘스트를 시작했어요",
+      "ru": "Задание начато: «{0}»"
     },
     "references": [
       {
@@ -7582,7 +7621,7 @@
       "zh-Hans": "停止同步？",
       "zh-Hant": "停止同步？",
       "es": "¿Dejar de sincronizar?",
-      "fr": "Arrêter la synchro ?",
+      "fr": "Arrêter la synchro ?",
       "ko": "동기화를 멈출까요?",
       "ru": "Остановить синхронизацию?"
     },
@@ -7692,8 +7731,8 @@
       "zh-Hans": "同步与数据设置",
       "zh-Hant": "同步與資料設定",
       "es": "Ajustes de sincronización y datos",
-      "fr": "Réglages de synchro et données",
-      "ko": "동기화 및 데이터 설정",
+      "fr": "Réglages de synchro et de données",
+      "ko": "동기화와 데이터 설정",
       "ru": "Настройки синхронизации и данных"
     },
     "references": [
@@ -7711,11 +7750,11 @@
     "translations": {
       "en": "Sync from my farm automagically",
       "ja": "農場から自動で同期する",
-      "zh-Hans": "从我的农场自动同步",
+      "zh-Hans": "从我的农场魔法般自动同步",
       "zh-Hant": "從我的農場自動同步",
       "es": "Sincronizar desde mi granja automágicamente",
       "fr": "Synchroniser depuis ma ferme, comme par magie",
-      "ko": "농장에서 자동으로 동기화",
+      "ko": "농장에서 알아서 척척 동기화",
       "ru": "Синхронизировать с фермы автомагически"
     },
     "references": [
@@ -7733,7 +7772,7 @@
     "translations": {
       "en": "Sync is paused for now",
       "ja": "同期は一時停止中です",
-      "zh-Hans": "同步暂时暂停了",
+      "zh-Hans": "同步先暂停一会儿",
       "zh-Hant": "同步暫時暫停了",
       "es": "La sincronización está en pausa por ahora",
       "fr": "La synchro est en pause pour l’instant",
@@ -7758,7 +7797,7 @@
       "zh-Hans": "同步日志",
       "zh-Hant": "同步紀錄",
       "es": "Registro de sincronización",
-      "fr": "Journal de synchronisation",
+      "fr": "Journal de synchro",
       "ko": "동기화 로그",
       "ru": "Журнал синхронизации"
     },
@@ -7779,10 +7818,10 @@
       "ja": "同期を受け付けてもらえませんでした",
       "zh-Hans": "同步这次没有通过",
       "zh-Hant": "同步這次沒有通過",
-      "es": "La sincronización dijo que no esta vez",
+      "es": "La sincronización ha dicho que no esta vez",
       "fr": "La synchro a dit non cette fois",
       "ko": "동기화가 이번 요청을 거절했어요",
-      "ru": "Синхронизация отклонила запрос"
+      "ru": "Синхронизация в этот раз сказала «нет»"
     },
     "references": [
       {
@@ -7798,17 +7837,67 @@
   {
     "translations": {
       "en": "Thanks for your feedback!",
-      "ja": "フィードバックをありがとうございます!",
+      "ja": "フィードバックをありがとうございます！",
       "zh-Hans": "感谢你的反馈！",
       "zh-Hant": "感謝你的回饋！",
-      "es": "¡Gracias por tu comentario!",
-      "fr": "Merci pour votre retour !",
-      "ko": "피드백 감사합니다!",
+      "es": "¡Gracias por tus comentarios!",
+      "fr": "Merci pour votre retour !",
+      "ko": "피드백 고마워요!",
       "ru": "Спасибо за ваш отзыв!"
     },
     "references": [
       {
         "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The field guide on this device needs a refresh to keep your save file syncing.",
+      "ja": "セーブデータの同期を続けるには、この端末のフィールドガイドを更新する必要があります。",
+      "zh-Hans": "这台设备上的田野指南需要刷新，才能继续同步你的存档。",
+      "zh-Hant": "這台裝置上的田野指南需要重新整理，才能繼續同步你的存檔。",
+      "es": "La guía de este dispositivo necesita actualizarse para seguir sincronizando tu partida guardada.",
+      "fr": "Le guide sur cet appareil doit être actualisé pour continuer à synchroniser votre sauvegarde.",
+      "ko": "세이브 파일 동기화를 계속하려면 이 기기의 필드 가이드를 새로고침해야 해요.",
+      "ru": "Чтобы сохранение продолжало синхронизироваться, обновите справочник на этом устройстве."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/sync/courier-note.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The field guide on your computer needs a refresh to keep your save file syncing.",
+      "ja": "セーブデータの同期を続けるには、パソコンのフィールドガイドを更新する必要があります。",
+      "zh-Hans": "电脑上的田野指南需要刷新，才能继续同步你的存档。",
+      "zh-Hant": "電腦上的田野指南需要重新整理，才能繼續同步你的存檔。",
+      "es": "La guía de tu ordenador necesita actualizarse para seguir sincronizando tu partida guardada.",
+      "fr": "Le guide sur votre ordinateur doit être actualisé pour continuer à synchroniser votre sauvegarde.",
+      "ko": "세이브 파일 동기화를 계속하려면 컴퓨터의 필드 가이드를 새로고침해야 해요.",
+      "ru": "Чтобы сохранение продолжало синхронизироваться, обновите справочник на компьютере."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/sync/sync-trouble-note.svelte",
         "refs": [
           null
         ]
@@ -7825,34 +7914,12 @@
       "zh-Hant": "篩選面板中顯示的來源類型。",
       "es": "Los tipos de fuente que se muestran en el panel de filtros.",
       "fr": "Les types de source affichés dans le panneau de filtres.",
-      "ko": "필터 패널에 표시되는 획득 경로 유형입니다.",
+      "ko": "필터 패널에 나오는 획득처 유형이에요.",
       "ru": "Типы источников, отображаемые на панели фильтров."
     },
     "references": [
       {
         "file": "src/lib/components/source-explainer-dialog.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "The tracker on your computer needs a refresh to keep your save file syncing.",
-      "ja": "セーブデータの同期を続けるには、パソコンのトラッカーを更新する必要があります。",
-      "zh-Hans": "电脑上的记录工具需要刷新，才能继续同步你的存档。",
-      "zh-Hant": "電腦上的記錄工具需要重新整理，才能繼續同步你的存檔。",
-      "es": "El rastreador de tu ordenador necesita actualizarse para seguir sincronizando tu partida guardada.",
-      "fr": "Le suivi sur votre ordinateur doit être actualisé pour continuer à synchroniser votre sauvegarde.",
-      "ko": "세이브 파일 동기화를 계속하려면 컴퓨터의 트래커를 새로 고쳐야 해요.",
-      "ru": "Чтобы сохранение продолжало синхронизироваться, обновите трекер на компьютере."
-    },
-    "references": [
-      {
-        "file": "src/lib/components/sync/sync-trouble-note.svelte",
         "refs": [
           null
         ]
@@ -7890,7 +7957,7 @@
       "zh-Hans": "记录你的反馈时，我们这边出了技术错误。请再试一次。",
       "zh-Hant": "記錄你的意見回饋時，我們這邊發生了技術錯誤。請再試一次。",
       "es": "Ha habido un error técnico por nuestra parte al registrar tus comentarios. Vuelve a intentarlo, por favor.",
-      "fr": "Une erreur technique de notre côté a empêché l’enregistrement de votre commentaire. Réessayez, s’il vous plaît.",
+      "fr": "Une erreur technique de notre côté a empêché l’enregistrement de votre retour. Réessayez, s’il vous plaît.",
       "ko": "피드백을 기록하는 중에 저희 쪽에서 기술적인 오류가 생겼어요. 다시 시도해 주세요.",
       "ru": "При сохранении вашего отзыва у нас произошла техническая ошибка. Попробуйте ещё раз, пожалуйста."
     },
@@ -7934,10 +8001,10 @@
       "ja": "このセーブデータは前回読み込んだものよりプレイ時間が短いので、古いセーブを読み込んだようです。手動でチェックしたものはどちらの場合も残ります。",
       "zh-Hans": "这个存档的游戏时长比上次读取的短，看起来你载入了旧存档。无论怎么选，你手动勾选的内容都会保留。",
       "zh-Hant": "這個存檔的遊戲時數比上次讀取的短，看起來你載入了舊存檔。無論怎麼選，你手動勾選的內容都會保留。",
-      "es": "Esta partida guardada tiene menos tiempo de juego que la última que leímos, así que parece que cargaste una partida anterior. Lo que marcaste a mano se queda en cualquier caso.",
+      "es": "Esta partida guardada tiene menos tiempo de juego que la última que hemos leído, así que parece que has cargado una partida anterior. Lo que hayas marcado a mano se queda en cualquier caso.",
       "fr": "Cette sauvegarde a moins de temps de jeu que la dernière lue, on dirait donc que vous avez chargé une ancienne partie. Ce que vous avez coché à la main reste dans tous les cas.",
       "ko": "이 세이브 파일은 마지막으로 읽은 것보다 플레이 시간이 짧아서, 예전 세이브를 불러온 것 같아요. 직접 체크한 항목은 어느 쪽이든 그대로 남아요.",
-      "ru": "В этом сохранении меньше игрового времени, чем в прошлом, так что, похоже, вы загрузили старую игру. Отмеченное вручную останется в любом случае."
+      "ru": "В этом сохранении меньше игрового времени, чем в прошлом, так что, похоже, вы загрузили более старое сохранение. Отмеченное вручную останется в любом случае."
     },
     "references": [
       {
@@ -8043,42 +8110,14 @@
   },
   {
     "translations": {
-      "en": "This tracker needs a refresh to keep your save file syncing.",
-      "ja": "セーブデータの同期を続けるには、このトラッカーを更新する必要があります。",
-      "zh-Hans": "这个记录工具需要刷新，才能继续同步你的存档。",
-      "zh-Hant": "這個記錄工具需要重新整理，才能繼續同步你的存檔。",
-      "es": "Este rastreador necesita actualizarse para seguir sincronizando tu partida guardada.",
-      "fr": "Ce suivi doit être actualisé pour continuer à synchroniser votre sauvegarde.",
-      "ko": "세이브 파일 동기화를 계속하려면 이 트래커를 새로 고쳐야 해요.",
-      "ru": "Чтобы сохранение продолжало синхронизироваться, обновите этот трекер."
-    },
-    "references": [
-      {
-        "file": "src/lib/components/sync/courier-note.svelte",
-        "refs": [
-          null
-        ]
-      },
-      {
-        "file": "src/lib/components/sync/sync-trouble-note.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "This will reveal hidden content throughout the guide.",
       "ja": "ガイド全体の非表示コンテンツが表示されるようになります。",
       "zh-Hans": "这将显示指南中所有隐藏的内容。",
-      "zh-Hant": "這將顯示指南中所有隱藏的內容。",
+      "zh-Hant": "這會顯示田野指南裡所有隱藏的內容。",
       "es": "Esto revelará el contenido oculto en toda la guía.",
       "fr": "Cela révélera le contenu masqué dans tout le guide.",
-      "ko": "가이드 전체에서 숨겨진 콘텐츠가 표시됩니다.",
-      "ru": "Это откроет скрытый контент во всём гайде."
+      "ko": "필드 가이드 곳곳에 숨겨 둔 내용이 모두 보이게 돼요.",
+      "ru": "Это покажет скрытое содержимое во всём справочнике."
     },
     "references": [
       {
@@ -8160,39 +8199,17 @@
   {
     "translations": {
       "en": "Track every collection, quest, skill & more",
-      "ja": "コレクション、クエスト、スキルなどの進捗を記録",
+      "ja": "コレクション、クエスト、スキルなど、すべてを記録",
       "zh-Hans": "追踪所有收藏、任务、技能及更多内容",
       "zh-Hant": "追蹤所有收藏、任務、技能及更多內容",
       "es": "Sigue todas tus colecciones, misiones, habilidades y más",
       "fr": "Suivez toutes vos collections, quêtes, compétences et plus encore",
       "ko": "수집품, 퀘스트, 스킬 등 모든 진행 상황을 기록하세요",
-      "ru": "Отслеживайте коллекции, задания, навыки и многое другое"
+      "ru": "Отслеживайте все коллекции, задания, умения и многое другое"
     },
     "references": [
       {
         "file": "src/lib/components/og-share-card.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Tracker tools",
-      "ja": "トラッカーツール",
-      "zh-Hans": "追踪工具",
-      "zh-Hant": "追蹤工具",
-      "es": "Herramientas de seguimiento",
-      "fr": "Outils de suivi",
-      "ko": "추적 도구",
-      "ru": "Инструменты трекера"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
         ]
@@ -8248,7 +8265,7 @@
   {
     "translations": {
       "en": "Try again",
-      "ja": "再試行",
+      "ja": "もう一度試す",
       "zh-Hans": "重试",
       "zh-Hant": "重試",
       "es": "Reintentar",
@@ -8312,7 +8329,7 @@
       "zh-Hant": "取消勾選{0}",
       "es": "Desmarcar {0}",
       "fr": "Décocher {0}",
-      "ko": "{0} 선택 해제",
+      "ko": "{0} 체크 해제",
       "ru": "Снять отметку с «{0}»"
     },
     "references": [
@@ -8352,10 +8369,10 @@
       "ja": "「{0}」のチェックを外しました",
       "zh-Hans": "已取消勾选“{0}”",
       "zh-Hant": "已取消勾選「{0}」",
-      "es": "«{0}» desmarcado",
-      "fr": "« {0} » décoché",
-      "ko": "“{0}” 체크를 해제했습니다",
-      "ru": "Отметка с «{0}» снята"
+      "es": "Has desmarcado «{0}»",
+      "fr": "« {0} » décoché",
+      "ko": "“{0}” 체크를 해제했어요",
+      "ru": "Отметка снята: «{0}»"
     },
     "references": [
       {
@@ -8400,7 +8417,7 @@
   {
     "translations": {
       "en": "Undo starter checks",
-      "ja": "最初のチェックを取り消す",
+      "ja": "初期アイテムのチェックを取り消す",
       "zh-Hans": "撤销这些勾选",
       "zh-Hant": "復原這些勾選",
       "es": "Deshacer esas marcas",
@@ -8532,13 +8549,13 @@
   {
     "translations": {
       "en": "View issue",
-      "ja": "issueを見る",
-      "zh-Hans": "查看 issue",
+      "ja": "Issueを見る",
+      "zh-Hans": "查看议题",
       "zh-Hant": "查看 issue",
-      "es": "Ver issue",
-      "fr": "Voir l'issue",
-      "ko": "issue 보기",
-      "ru": "Посмотреть issue"
+      "es": "Ver incidencia",
+      "fr": "Voir le ticket",
+      "ko": "이슈 보기",
+      "ru": "Открыть задачу"
     },
     "references": [
       {
@@ -8581,7 +8598,7 @@
         "Villager hearts: +{0} relationships updated"
       ],
       "ja": [
-        "町の住民との好感度：{0}件の関係を更新"
+        "町の住民のハート：+{0}件の関係を更新"
       ],
       "zh-Hans": [
         "村民好感度：已更新{0}段关系"
@@ -8595,18 +8612,18 @@
         "Corazones de aldeanos: +{0} relaciones actualizadas"
       ],
       "fr": [
-        "Cœurs des habitants : +{0} relation mise à jour",
-        "Cœurs des habitants : +{0} relations mises à jour",
-        "Cœurs des habitants : +{0} relations mises à jour"
+        "Cœurs des habitants : +{0} relation mise à jour",
+        "Cœurs des habitants : +{0} relations mises à jour",
+        "Cœurs des habitants : +{0} relations mises à jour"
       ],
       "ko": [
-        "마을 주민 호감도: 관계 {0}개 업데이트됨"
+        "마을 주민 하트: 관계 +{0}개 업데이트됨"
       ],
       "ru": [
-        "Симпатия жителей: +{0} отношение обновлено",
-        "Симпатия жителей: +{0} отношения обновлено",
-        "Симпатия жителей: +{0} отношений обновлено",
-        "Симпатия жителей: +{0} отношения обновлено"
+        "Сердца жителей: +{0} отношение обновлено",
+        "Сердца жителей: +{0} отношения обновлены",
+        "Сердца жителей: +{0} отношений обновлено",
+        "Сердца жителей: +{0} отношения обновлены"
       ]
     },
     "references": [
@@ -8638,7 +8655,7 @@
       "zh-Hans": "村民关系：+{0}",
       "zh-Hant": "村民關係：+{0}",
       "es": "Relaciones con aldeanos: +{0}",
-      "fr": "Relations avec les habitants : +{0}",
+      "fr": "Relations avec les habitants : +{0}",
       "ko": "마을 주민 관계: +{0}",
       "ru": "Отношения с жителями: +{0}"
     },
@@ -8755,7 +8772,7 @@
       "zh-Hans": "现在连接不上",
       "zh-Hant": "現在連線不上",
       "es": "Ahora mismo no podemos conectar",
-      "fr": "Connexion impossible pour le moment",
+      "fr": "On n’arrive pas à se connecter pour le moment",
       "ko": "지금은 연결할 수 없어요",
       "ru": "Сейчас не удаётся подключиться"
     },
@@ -8779,7 +8796,7 @@
   {
     "translations": {
       "en": "We can’t reach your saved progress",
-      "ja": "保存された進行状況にアクセスできません",
+      "ja": "保存された進捗にアクセスできません",
       "zh-Hans": "无法访问你保存的进度",
       "zh-Hant": "無法存取你儲存的進度",
       "es": "No podemos acceder a tu progreso guardado",
@@ -8801,12 +8818,12 @@
   {
     "translations": {
       "en": "We can’t read your saved progress, so we’re not saving changes for now. This isn’t anything you did. Download a copy of the unreadable data from Data so nothing gets lost.",
-      "ja": "保存された進行状況を読み込めないため、今は変更を保存していません。あなたのせいではありません。何も失わないように、「データ」から読み込めないデータのコピーをダウンロードしてください。",
-      "zh-Hans": "我们读不了你保存的进度，所以暂时不会保存更改。这不是你的问题。请在“数据”中下载一份无法读取的数据副本，以免丢失任何内容。",
-      "zh-Hant": "我們讀不了你儲存的進度，所以暫時不會儲存變更。這不是你的問題。請在「資料」中下載一份無法讀取的資料副本，以免遺失任何內容。",
+      "ja": "保存された進捗を読み込めないため、今は変更を保存していません。あなたのせいではありません。何も失わないように、「データ管理」から読み込めないデータのコピーをダウンロードしてください。",
+      "zh-Hans": "我们读不了你保存的进度，所以暂时不会保存更改。这不是你的问题。请在数据管理中下载一份无法读取的数据副本，以免丢失任何内容。",
+      "zh-Hant": "我們讀不了你儲存的進度，所以暫時不會儲存變更。這不是你的問題。請到「資料」頁面下載一份無法讀取的資料副本，以免遺失任何內容。",
       "es": "No podemos leer tu progreso guardado, así que de momento no guardamos cambios. No es nada que hayas hecho. Descarga una copia de los datos ilegibles desde Datos para que no se pierda nada.",
-      "fr": "Impossible de lire votre progression enregistrée, donc on n’enregistre plus les modifications pour l’instant. Vous n’y êtes pour rien. Téléchargez une copie des données illisibles depuis Données pour ne rien perdre.",
-      "ko": "저장된 진행 상황을 읽을 수 없어서 지금은 변경 사항을 저장하지 않고 있어요. 플레이어님 잘못이 아니에요. 아무것도 잃지 않도록 데이터에서 읽을 수 없는 데이터의 사본을 내려받아 주세요.",
+      "fr": "On n’arrive pas à lire votre progression enregistrée, donc on n’enregistre plus vos modifications pour l’instant. Vous n’y êtes pour rien. Téléchargez une copie des données illisibles depuis Données pour ne rien perdre.",
+      "ko": "저장된 진행 상황을 읽을 수 없어서 지금은 변경 사항을 저장하지 않고 있어요. 뭔가 잘못하신 게 아니에요. 아무것도 잃지 않도록 데이터 관리에서 읽을 수 없는 데이터의 사본을 내려받아 주세요.",
       "ru": "Мы не можем прочитать сохранённый прогресс, поэтому пока не сохраняем изменения. Вы тут ни при чём. Скачайте копию нечитаемых данных в разделе «Данные», чтобы ничего не потерять."
     },
     "references": [
@@ -8823,13 +8840,13 @@
   {
     "translations": {
       "en": "We checked off your starter items ({0})",
-      "ja": "最初から持っているものにチェックを入れたよ（{0}件）",
+      "ja": "初期アイテムにチェックをつけました（{0}件）",
       "zh-Hans": "我们勾选了你一开始就有的项目（{0} 项）",
       "zh-Hant": "我們勾選了你一開始就有的項目（{0} 項）",
-      "es": "Marcamos lo que tienes al empezar ({0})",
-      "fr": "On a coché ce que tu as dès le départ ({0})",
+      "es": "Hemos marcado tus objetos iniciales ({0})",
+      "fr": "On a coché vos objets de départ ({0})",
       "ko": "처음부터 갖고 있는 항목을 체크했어요({0}개)",
-      "ru": "Мы отметили то, что у тебя есть с самого начала ({0})"
+      "ru": "Мы отметили ваши стартовые предметы ({0})"
     },
     "references": [
       {
@@ -8856,7 +8873,7 @@
       "zh-Hans": "没能帮你复制。只能请你自己选中文字再复制了，抱歉！",
       "zh-Hant": "沒能幫你複製。只能請你自己選取文字再複製了，抱歉！",
       "es": "No hemos podido copiarlo. Tendrás que seleccionar el texto y copiarlo tú, ¡lo siento!",
-      "fr": "On n’a pas pu le copier. Il faudra sélectionner le texte et le copier vous-même, désolé !",
+      "fr": "On n’a pas pu le copier. Il faudra sélectionner le texte et le copier vous-même, désolé !",
       "ko": "복사하지 못했어요. 죄송하지만 텍스트를 선택해서 직접 복사해 주세요!",
       "ru": "Не получилось скопировать. Придётся выделить текст и скопировать его самостоятельно, извините!"
     },
@@ -8878,7 +8895,7 @@
       "zh-Hans": "没能加载搜索。请确认你已联网，然后再试一次。",
       "zh-Hant": "沒能載入搜尋。請確認你已連上網路，然後再試一次。",
       "es": "No hemos podido cargar la búsqueda. Comprueba que tienes conexión e inténtalo de nuevo.",
-      "fr": "Impossible de charger la recherche. Vérifiez que vous êtes en ligne, puis réessayez.",
+      "fr": "On n’a pas pu charger la recherche. Vérifiez que vous êtes en ligne, puis réessayez.",
       "ko": "검색을 불러오지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
       "ru": "Не удалось загрузить поиск. Проверьте подключение к интернету и попробуйте ещё раз."
     },
@@ -8900,7 +8917,7 @@
       "zh-Hans": "没能保存你的最近一次更改",
       "zh-Hant": "沒能儲存你最近一次的變更",
       "es": "No hemos podido guardar tu último cambio",
-      "fr": "Impossible d’enregistrer votre dernière modification",
+      "fr": "On n’a pas pu enregistrer votre modification",
       "ko": "마지막 변경 사항을 저장하지 못했어요",
       "ru": "Не удалось сохранить последнее изменение"
     },
@@ -8922,7 +8939,7 @@
       "zh-Hans": "没能发送你的反馈。请确认你已联网，然后再试一次。",
       "zh-Hant": "沒能送出你的意見回饋。請確認你已連上網路，然後再試一次。",
       "es": "No hemos podido enviar tus comentarios. Comprueba que tienes conexión y vuelve a intentarlo, por favor.",
-      "fr": "Impossible d’envoyer votre commentaire. Vérifiez que vous êtes en ligne, puis réessayez, s’il vous plaît.",
+      "fr": "On n’a pas pu envoyer votre retour. Vérifiez que vous êtes en ligne, puis réessayez, s’il vous plaît.",
       "ko": "피드백을 보내지 못했어요. 온라인인지 확인하고 다시 시도해 주세요.",
       "ru": "Не удалось отправить отзыв. Проверьте подключение к интернету и попробуйте ещё раз, пожалуйста."
     },
@@ -8943,8 +8960,8 @@
       "ja": "最新のセーブデータを保存できませんでした",
       "zh-Hans": "没能保存最新的存档",
       "zh-Hant": "沒能儲存最新的存檔",
-      "es": "No pudimos guardar tu última partida",
-      "fr": "Impossible d’enregistrer votre dernière sauvegarde",
+      "es": "No hemos podido guardar tu última partida",
+      "fr": "On n’a pas pu enregistrer votre dernière sauvegarde",
       "ko": "최신 세이브 파일을 저장하지 못했어요",
       "ru": "Не удалось записать последнее сохранение"
     },
@@ -9006,12 +9023,12 @@
   {
     "translations": {
       "en": "We got through, but it wouldn’t take your latest save file under this code. Your progress here is safe, and this isn’t anything you did. If trying again doesn’t help, make a new code from Data.",
-      "ja": "接続はできましたが、このコードでは最新のセーブファイルを受け付けてもらえませんでした。ここでの進行状況は無事で、あなたのせいではありません。もう一度試してもだめなら、データ管理から新しいコードを作成してください。",
+      "ja": "接続はできましたが、このコードでは最新のセーブデータを受け付けてもらえませんでした。ここでの進捗は無事で、あなたのせいではありません。もう一度試してもだめなら、データ管理から新しいコードを作成してください。",
       "zh-Hans": "我们连上了，但这个代码没能接收你最新的存档文件。你在这里的进度很安全，这也不是你的问题。如果重试没有用，请在数据管理里生成新代码。",
-      "zh-Hant": "我們連上了，但這個代碼沒能接收你最新的存檔檔案。你在這裡的進度很安全，這也不是你的問題。如果重試沒有用，請在資料管理裡產生新代碼。",
-      "es": "Conseguimos conectar, pero no quiso aceptar tu último archivo de guardado con este código. Tu progreso aquí está a salvo, y no es culpa tuya. Si volver a intentarlo no ayuda, crea un código nuevo desde Datos.",
+      "zh-Hant": "我們連上了，但這個代碼這次沒能收下你最新的存檔。你在這裡的進度很安全，這也不是你的問題。如果再試一次還是不行，請到「資料」頁面產生新代碼。",
+      "es": "Hemos conseguido conectar, pero no ha querido aceptar tu última partida guardada con este código. Tu progreso aquí está a salvo, y no es culpa tuya. Si volver a intentarlo no ayuda, crea un código nuevo desde Datos.",
       "fr": "La connexion a marché, mais votre dernière sauvegarde n’a pas été acceptée avec ce code. Votre progression ici ne risque rien, et ce n’est pas de votre faute. Si réessayer ne change rien, créez un nouveau code depuis Données.",
-      "ko": "연결은 됐지만 이 코드로는 최신 저장 파일을 받지 않았어요. 이곳의 진행 상황은 안전하고, 여러분 잘못도 아니에요. 다시 시도해도 안 되면 데이터 관리에서 새 코드를 만들어 주세요.",
+      "ko": "연결은 됐지만 이 코드로는 최신 세이브 파일을 받지 않았어요. 이곳의 진행 상황은 안전하고, 뭔가 잘못하신 것도 아니에요. 다시 시도해도 안 되면 데이터 관리에서 새 코드를 만들어 주세요.",
       "ru": "Связь есть, но последнее сохранение с этим кодом не приняли. Ваш прогресс здесь в безопасности, и вашей вины здесь нет. Если повторная попытка не поможет, создайте новый код в разделе «Данные»."
     },
     "references": [
@@ -9031,7 +9048,7 @@
       "ja": "手動でチェックした項目のうち、セーブデータと違うものはそのまま残しました。",
       "zh-Hans": "你手动勾选的一些内容和存档不同，我们保留了它们。",
       "zh-Hant": "你手動勾選的一些內容和存檔不同，我們保留了它們。",
-      "es": "Conservamos algunas cosas que marcaste a mano y que tu partida guardada ve de otra forma.",
+      "es": "Hemos conservado algunas cosas que marcaste a mano y que tu partida guardada ve de otra forma.",
       "fr": "On a gardé quelques éléments cochés à la main que votre sauvegarde voit autrement.",
       "ko": "직접 체크한 항목 중 세이브 파일과 다른 몇 가지는 그대로 두었어요.",
       "ru": "Мы оставили кое-что из отмеченного вручную, что в сохранении выглядит иначе."
@@ -9075,7 +9092,7 @@
       "ja": "主人公名・農場名と同期リンクは取り除き、農場番号はわからない形に変えています。",
       "zh-Hans": "我们移除了角色名、农场名和同步链接，并打乱了你的农场编号。",
       "zh-Hant": "我們移除了角色名稱、農場名稱和同步連結，並打亂了你的農場編號。",
-      "es": "Quitamos los nombres de tu granjero y tu granja y tus enlaces de sincronización, y codificamos el número de tu granja.",
+      "es": "Hemos quitado los nombres de tu granjero y tu granja y tus enlaces de sincronización, y hemos codificado el número de tu granja.",
       "fr": "Nous avons retiré les noms de votre fermier et de votre ferme et vos liens de synchronisation, et brouillé le numéro de votre ferme.",
       "ko": "캐릭터·농장 이름과 동기화 링크는 빼고, 농장 번호는 알아볼 수 없게 바꿨어요.",
       "ru": "Мы убрали имена фермера и фермы и ссылки синхронизации, а номер фермы зашифровали."
@@ -9097,7 +9114,7 @@
       "ja": "プレイ時間と、主人公名・農場名は取り除いています。",
       "zh-Hans": "我们移除了你的游戏时长，以及角色名和农场名。",
       "zh-Hant": "我們移除了你的遊戲時數，以及角色名稱和農場名稱。",
-      "es": "Quitamos tu tiempo de juego y los nombres de tu granjero y tu granja.",
+      "es": "Hemos quitado tu tiempo de juego y los nombres de tu granjero y tu granja.",
       "fr": "Nous avons retiré votre temps de jeu et les noms de votre fermier et de votre ferme.",
       "ko": "플레이 시간과 캐릭터·농장 이름은 뺐어요.",
       "ru": "Мы убрали время игры и имена фермера и фермы."
@@ -9165,7 +9182,7 @@
       "zh-Hans": "欢迎你，农场主！",
       "zh-Hant": "歡迎你，農場主！",
       "es": "¡Te damos la bienvenida!",
-      "fr": "Bienvenue à la ferme !",
+      "fr": "Bienvenue à la ferme !",
       "ko": "농부님, 환영해요!",
       "ru": "Добро пожаловать, фермер!"
     },
@@ -9185,7 +9202,7 @@
       "en": "We’ll ask for your email so Michael can write back. Nobody else sees it, and it never goes on the issue.",
       "ja": "Michaelが返信できるようにメールアドレスをお聞きします。ほかの人には見えず、Issueにも載りません。",
       "zh-Hans": "我们会请你填写邮箱，好让 Michael 回复你。别人看不到，也绝不会出现在议题里。",
-      "zh-Hant": "我們會請你填寫信箱，好讓 Michael 回覆你。別人看不到，也絕不會出現在議題裡。",
+      "zh-Hant": "我們會請你填寫信箱，好讓 Michael 回覆你。別人看不到，也絕不會出現在 issue 裡。",
       "es": "Te pediremos tu correo para que Michael pueda responderte. Nadie más lo ve y nunca aparece en la incidencia.",
       "fr": "Nous vous demanderons votre e-mail pour que Michael puisse vous répondre. Personne d’autre ne le voit, et il n’apparaît jamais dans le ticket.",
       "ko": "Michael이 답장할 수 있도록 이메일을 여쭤봐요. 다른 사람은 볼 수 없고, 이슈에도 절대 올라가지 않아요.",
@@ -9217,7 +9234,7 @@
       "es": "Seguiremos intentándolo, o puedes volver a probar tú.",
       "fr": "On continue d’essayer, ou vous pouvez réessayer.",
       "ko": "계속 시도할게요. 직접 다시 시도해도 돼요.",
-      "ru": "Мы будем пробовать дальше, или можете попробовать снова сами."
+      "ru": "Мы будем пробовать дальше, а вы можете попробовать ещё раз прямо сейчас."
     },
     "references": [
       {
@@ -9261,11 +9278,11 @@
   {
     "translations": {
       "en": "What did you wanna say?",
-      "ja": "何を伝えたかったですか？",
+      "ja": "伝えたいことは何でしょう？",
       "zh-Hans": "你想说点什么？",
       "zh-Hant": "你想說些什麼？",
       "es": "¿Qué querías decir?",
-      "fr": "Vous vouliez dire quoi ?",
+      "fr": "Vous vouliez dire quoi ?",
       "ko": "무슨 말을 하고 싶으셨어요?",
       "ru": "Что вы хотели сказать?"
     },
@@ -9288,7 +9305,7 @@
       "zh-Hant": "每個架子的內容，以及排序所依據的日子。",
       "es": "Qué contiene cada estante y para qué día está ordenado.",
       "fr": "Ce que contient chaque étagère et le jour pour lequel elle est triée.",
-      "ko": "각 선반에 담긴 내용과 정렬 기준이 되는 날입니다.",
+      "ko": "각 선반에 담긴 항목과 정렬 기준이 되는 날이에요.",
       "ru": "Что лежит на каждой полке и для какого дня она разобрана."
     },
     "references": [
@@ -9361,7 +9378,7 @@
       "es": "Lo que has marcado y tus niveles de habilidad, para que veamos lo mismo que tú.",
       "fr": "Ce que vous avez coché et vos niveaux de compétence, pour qu’on voie la même chose que vous.",
       "ko": "체크한 항목과 스킬 레벨이에요. 보고 계신 화면을 저희도 똑같이 볼 수 있게요.",
-      "ru": "Что вы отметили и ваши уровни навыков — чтобы мы видели то же, что и вы."
+      "ru": "Что вы отметили и уровни ваших умений — чтобы мы видели то же, что и вы."
     },
     "references": [
       {
@@ -9383,13 +9400,13 @@
   {
     "translations": {
       "en": "What’s up? Bugs, ideas, questions, kind words…",
-      "ja": "どうしました?不具合、アイデア、質問、うれしい一言など",
-      "zh-Hans": "怎么了？问题、点子、疑问、夸夸都行…",
-      "zh-Hant": "怎麼了？問題、點子、疑問、誇誇都行…",
+      "ja": "なんでもどうぞ！不具合、アイデア、質問、うれしいひと言など…",
+      "zh-Hans": "想聊点什么？Bug、点子、疑问、夸夸都行…",
+      "zh-Hant": "有什麼想說的？bug、點子、疑問、暖心的話都歡迎…",
       "es": "¿Qué tal? Errores, ideas, preguntas, palabras bonitas…",
-      "fr": "Quoi de neuf ? Bugs, idées, questions, petits mots gentils…",
-      "ko": "무슨 일이에요? 버그, 아이디어, 질문, 따뜻한 한마디…",
-      "ru": "Что случилось? Ошибки, идеи, вопросы, добрые слова…"
+      "fr": "Quoi de neuf ? Bugs, idées, questions, petits mots gentils…",
+      "ko": "하고 싶은 말이 있나요? 버그, 아이디어, 질문, 따뜻한 한마디…",
+      "ru": "Что расскажете? Ошибки, идеи, вопросы, добрые слова…"
     },
     "references": [
       {
@@ -9427,13 +9444,13 @@
   {
     "translations": {
       "en": "YOLO",
-      "ja": "YOLO",
-      "zh-Hans": "YOLO",
-      "zh-Hant": "YOLO",
+      "ja": "なるようになれ！",
+      "zh-Hans": "管他呢",
+      "zh-Hant": "管他的",
       "es": "YOLO",
       "fr": "YOLO",
-      "ko": "YOLO",
-      "ru": "YOLO"
+      "ko": "에라 모르겠다",
+      "ru": "Была не была"
     },
     "references": [
       {
@@ -9449,13 +9466,13 @@
   {
     "translations": {
       "en": "YOLO (just this one thing)",
-      "ja": "YOLO（これだけ）",
-      "zh-Hans": "YOLO（只这一个）",
-      "zh-Hant": "YOLO（只這一個）",
+      "ja": "なるようになれ！（これだけ）",
+      "zh-Hans": "管他呢（就这一个）",
+      "zh-Hant": "管他的（只勾這一個）",
       "es": "YOLO (solo esto)",
       "fr": "YOLO (juste ça)",
-      "ko": "YOLO (이것만)",
-      "ru": "YOLO (только это)"
+      "ko": "에라 모르겠다 (이것만)",
+      "ru": "Была не была (только это)"
     },
     "references": [
       {
@@ -9471,13 +9488,13 @@
   {
     "translations": {
       "en": "YOLO, and prerequisites",
-      "ja": "YOLO、前提も",
-      "zh-Hans": "YOLO，连同前置项目",
-      "zh-Hant": "YOLO，連同前置項目",
+      "ja": "なるようになれ！前提の項目も",
+      "zh-Hans": "管他呢，前置项目也一起",
+      "zh-Hant": "管他的，前置項目也一起",
       "es": "YOLO, y los requisitos previos",
       "fr": "YOLO, et les prérequis",
-      "ko": "YOLO, 선행 항목도",
-      "ru": "YOLO, и всё нужное до этого"
+      "ko": "에라 모르겠다, 선행 항목도",
+      "ru": "Была не была, и всё нужное тоже"
     },
     "references": [
       {
@@ -9520,7 +9537,7 @@
       "zh-Hant": "是",
       "es": "Sí",
       "fr": "Oui",
-      "ko": "예",
+      "ko": "네",
       "ru": "Да"
     },
     "references": [
@@ -9542,7 +9559,7 @@
       "zh-Hant": "是，前置項目也一起",
       "es": "Sí, y los requisitos previos también",
       "fr": "Oui, et les prérequis aussi",
-      "ko": "예, 선행 항목도 같이",
+      "ko": "네, 선행 항목도 같이",
       "ru": "Да, и всё нужное до этого тоже"
     },
     "references": [
@@ -9561,10 +9578,10 @@
       "en": "Yes, just this one",
       "ja": "はい、これだけ",
       "zh-Hans": "是，只这一个",
-      "zh-Hant": "是，只這一個",
+      "zh-Hant": "是，只勾這一個",
       "es": "Sí, solo este",
       "fr": "Oui, juste celui-ci",
-      "ko": "예, 이것만",
+      "ko": "네, 이것만",
       "ru": "Да, только это"
     },
     "references": [
@@ -9586,7 +9603,7 @@
       "zh-Hant": "是的，顯示爆雷內容",
       "es": "Sí, mostrar spoilers",
       "fr": "Oui, afficher les spoilers",
-      "ko": "네, 표시할게요",
+      "ko": "네, 보여 주세요",
       "ru": "Да, показать спойлеры"
     },
     "references": [
@@ -9607,7 +9624,7 @@
       "zh-Hans": "今天至少能完成其中一项。",
       "zh-Hant": "今天至少能完成其中一項。",
       "es": "Hoy puedes hacer al menos una de estas cosas.",
-      "fr": "Tu peux faire au moins l’une de ces choses aujourd’hui.",
+      "fr": "Vous pouvez faire au moins l’une de ces choses aujourd’hui.",
       "ko": "오늘 할 수 있는 항목이 하나 이상 있어요.",
       "ru": "Сегодня можно сделать хотя бы что-то одно отсюда."
     },
@@ -9625,12 +9642,12 @@
   {
     "translations": {
       "en": "You finished everything here. Nice!",
-      "ja": "ここはすべて完了しました！",
+      "ja": "ここはすべて完了です。お見事！",
       "zh-Hans": "这里的都完成了，真棒！",
       "zh-Hant": "這裡的都完成了，真棒！",
-      "es": "¡Lo terminaste todo aquí! ¡Bien hecho!",
-      "fr": "Tu as tout terminé ici. Bravo !",
-      "ko": "여기 있는 건 모두 끝냈어요!",
+      "es": "Aquí lo has terminado todo. ¡Bien hecho!",
+      "fr": "Vous avez tout terminé ici. Bravo !",
+      "ko": "여기 있는 건 전부 끝냈어요. 멋져요!",
       "ru": "Здесь всё готово. Отлично!"
     },
     "references": [
@@ -9647,11 +9664,11 @@
   {
     "translations": {
       "en": "You haven’t even revealed its name!",
-      "ja": "まだ名前も見ていないのに！",
+      "ja": "まだ名前も明かしていませんよ！",
       "zh-Hans": "你连它的名字都还没揭晓呢！",
       "zh-Hant": "你連它的名字都還沒揭曉呢！",
       "es": "¡Si ni siquiera has desvelado su nombre!",
-      "fr": "Vous n’avez même pas révélé son nom !",
+      "fr": "Vous n’avez même pas révélé son nom !",
       "ko": "이름도 아직 안 봤잖아요!",
       "ru": "Вы ведь даже не открыли его название!"
     },
@@ -9669,7 +9686,7 @@
   {
     "translations": {
       "en": "Your browser asks after a restart.",
-      "ja": "ブラウザーを再起動すると確認が入ります。",
+      "ja": "ブラウザを再起動すると確認が入ります。",
       "zh-Hans": "浏览器重启后会再问一次。",
       "zh-Hant": "瀏覽器重新啟動後會再問一次。",
       "es": "Tu navegador lo pregunta tras reiniciarse.",
@@ -9691,7 +9708,7 @@
   {
     "translations": {
       "en": "Your browser won’t let the field guide read its storage, so your progress isn’t showing. Nothing has been erased. Check your settings to make sure storage isn’t turned off, then reload the page.",
-      "ja": "ブラウザがフィールドガイドにストレージの読み込みを許可していないため、進行状況が表示されていません。何も消えてはいません。設定でストレージがオフになっていないか確認してから、ページを再読み込みしてください。",
+      "ja": "ブラウザがフィールドガイドにストレージの読み込みを許可していないため、進捗が表示されていません。何も消えてはいません。設定でストレージがオフになっていないか確認してから、ページを再読み込みしてください。",
       "zh-Hans": "你的浏览器不允许田野指南读取存储，所以你的进度没有显示出来。什么都没有被删除。请在设置中确认存储没有被关闭，然后重新加载页面。",
       "zh-Hant": "你的瀏覽器不允許田野指南讀取儲存空間，所以你的進度沒有顯示出來。什麼都沒有被刪除。請在設定中確認儲存空間沒有被關閉，然後重新載入頁面。",
       "es": "Tu navegador no deja que la guía de campo lea su almacenamiento, así que tu progreso no aparece. No se ha borrado nada. Revisa los ajustes para asegurarte de que el almacenamiento no esté desactivado y recarga la página.",
@@ -9717,7 +9734,7 @@
       "zh-Hans": "你的浏览器不允许田野指南存储任何内容。请在设置中确认存储空间没有满，也没有被关闭。在此之前，先做个备份，以免丢失更改。",
       "zh-Hant": "你的瀏覽器不允許田野指南儲存任何內容。請在設定中確認儲存空間沒有滿，也沒有被關閉。在那之前，先做個備份，以免遺失變更。",
       "es": "Tu navegador no deja que la guía de campo guarde nada. Revisa los ajustes para asegurarte de que el almacenamiento no esté lleno ni desactivado. Mientras tanto, haz una copia de seguridad para no perder tus cambios.",
-      "fr": "Votre navigateur ne laisse le guide de terrain rien stocker. Vérifiez dans vos réglages que le stockage n’est ni plein ni désactivé. En attendant, faites une sauvegarde pour ne pas perdre vos modifications.",
+      "fr": "Votre navigateur empêche le guide de terrain de stocker quoi que ce soit. Vérifiez dans vos réglages que le stockage n’est ni plein ni désactivé. En attendant, faites une copie de sauvegarde pour ne pas perdre vos modifications.",
       "ko": "브라우저가 필드 가이드의 저장을 허용하지 않아요. 설정에서 저장 공간이 가득 찼거나 꺼져 있지 않은지 확인해 주세요. 그동안 변경 사항을 잃지 않도록 백업해 두세요.",
       "ru": "Браузер не даёт справочнику ничего сохранять. Проверьте в настройках, не заполнено ли хранилище и не отключено ли оно. А пока сделайте резервную копию, чтобы не потерять изменения."
     },
@@ -9760,7 +9777,7 @@
       "ja": "パソコンがこのセーブデータの共有をやめました",
       "zh-Hans": "你的电脑停止分享这个存档了",
       "zh-Hant": "你的電腦停止分享這個存檔了",
-      "es": "Tu ordenador dejó de compartir esta partida guardada",
+      "es": "Tu ordenador ha dejado de compartir esta partida guardada",
       "fr": "Votre ordinateur ne partage plus cette sauvegarde",
       "ko": "컴퓨터가 이 세이브 파일 공유를 멈췄어요",
       "ru": "Компьютер перестал делиться этим сохранением"
@@ -9826,9 +9843,9 @@
       "ja": "{0} 時点のあなたの農場です。ここからは自動で追いかけます。",
       "zh-Hans": "这是你的农场截至 {0} 的样子。之后我们会自动跟上。",
       "zh-Hant": "這是你的農場在 {0} 的樣子。之後我們會自動跟上。",
-      "es": "Tu granja a fecha de {0}. A partir de aquí nos ponemos al día solos.",
+      "es": "Tu granja a fecha de {0}. A partir de ahora, nosotros la mantenemos al día.",
       "fr": "Votre ferme au {0}. On suit le rythme à partir d’ici.",
-      "ko": "{0} 기준 당신의 농장이에요. 이제부터는 저희가 따라갈게요.",
+      "ko": "{0} 기준 농장 모습이에요. 이제부터는 저희가 계속 챙길게요.",
       "ru": "Ваша ферма по состоянию на {0}. Дальше мы будем следить сами."
     },
     "references": [
@@ -9854,9 +9871,9 @@
       "en": "Your feedback went through, but we couldn’t save your email, so I won’t be able to reply. If you still want a private reply, submit feedback again, and I’ll get it sorted out.",
       "ja": "フィードバックは届きましたが、メールアドレスを保存できなかったため返信できません。非公開の返信が必要な場合は、もう一度フィードバックを送ってください。こちらで対応します。",
       "zh-Hans": "你的反馈已送达，但我们没能保存你的邮箱，所以我没法回复你。如果你仍需要私下回复，请再提交一次反馈，我会处理好的。",
-      "zh-Hant": "你的意見回饋已送達，但我們沒能儲存你的電子郵件，所以我沒辦法回覆你。如果你仍需要私下回覆，請再送出一次回饋，我會處理好的。",
+      "zh-Hant": "你的意見回饋已送達，但我們沒能儲存你的信箱，所以我沒辦法回覆你。如果你還是想要私下回覆，請再送出一次回饋，我會處理好的。",
       "es": "Tus comentarios se han enviado, pero no hemos podido guardar tu correo, así que no podré responderte. Si aún quieres una respuesta privada, vuelve a enviar tus comentarios y lo solucionaré.",
-      "fr": "Votre commentaire est bien parti, mais on n’a pas pu enregistrer votre e-mail, donc je ne pourrai pas vous répondre. Si vous voulez toujours une réponse privée, renvoyez votre commentaire, et je m’en occuperai.",
+      "fr": "Votre retour est bien parti, mais on n’a pas pu enregistrer votre e-mail, donc je ne pourrai pas vous répondre. Si vous voulez toujours une réponse privée, renvoyez votre retour, et je m’en occuperai.",
       "ko": "피드백은 전달됐지만 이메일을 저장하지 못해서 답장을 드릴 수 없어요. 그래도 비공개 답장이 필요하면 피드백을 다시 보내 주세요. 제가 해결해 둘게요.",
       "ru": "Ваш отзыв отправлен, но мы не смогли сохранить ваш email, поэтому я не смогу ответить. Если ответ лично вам всё ещё нужен, отправьте отзыв ещё раз, и я со всем разберусь."
     },
@@ -9874,12 +9891,12 @@
   {
     "translations": {
       "en": "Your filters are off for this search. <0>Turn them back on</0>",
-      "ja": "この検索ではフィルターがオフです。 <0>フィルターを戻す</0>",
+      "ja": "この検索ではフィルターがオフです。 <0>フィルターをオンに戻す</0>",
       "zh-Hans": "本次搜索已关闭筛选条件。 <0>恢复筛选条件</0>",
       "zh-Hant": "本次搜尋已關閉篩選條件。 <0>恢復篩選條件</0>",
       "es": "Tus filtros están desactivados para esta búsqueda. <0>Volver a activarlos</0>",
       "fr": "Vos filtres sont désactivés pour cette recherche. <0>Les réactiver</0>",
-      "ko": "이 검색에서는 필터가 꺼져 있습니다. <0>필터 다시 적용</0>",
+      "ko": "이 검색에서는 필터가 꺼져 있어요. <0>필터 다시 켜기</0>",
       "ru": "Фильтры отключены для этого поиска. <0>Вернуть фильтры</0>"
     },
     "references": [
@@ -9900,7 +9917,7 @@
       "zh-Hans": "筛选后，此页面没有内容了。",
       "zh-Hant": "篩選後，此頁面沒有內容了。",
       "es": "Tus filtros no dejan nada en esta página.",
-      "fr": "Tes filtres ne laissent rien sur cette page.",
+      "fr": "Vos filtres ne laissent rien sur cette page.",
       "ko": "필터 때문에 이 페이지에 남은 항목이 없어요.",
       "ru": "С такими фильтрами на этой странице ничего не осталось."
     },
@@ -9944,7 +9961,7 @@
       "ja": "最新のセーブデータでいくつかの項目が変わりました。",
       "zh-Hans": "最新的存档改动了这里的一些内容。",
       "zh-Hant": "最新的存檔改動了這裡的一些內容。",
-      "es": "Tu última partida guardada cambió algunas cosas aquí.",
+      "es": "Tu última partida guardada ha cambiado algunas cosas aquí.",
       "fr": "Votre dernière sauvegarde a changé quelques éléments ici.",
       "ko": "최신 세이브 파일로 몇 가지가 바뀌었어요.",
       "ru": "Последнее сохранение кое-что здесь изменило."
@@ -9985,11 +10002,11 @@
   {
     "translations": {
       "en": "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
-      "ja": "進行状況は無事です！新しいバージョンのフィールドガイドで保存されたものなので、このページを再読み込みして最新版にしてください。",
+      "ja": "進捗は無事です！新しいバージョンのフィールドガイドで保存されたものなので、このページを再読み込みして最新版にしてください。",
       "zh-Hans": "你的进度很安全！它是由更新版本的田野指南保存的，请重新加载此页面以获取最新版本。",
       "zh-Hant": "你的進度很安全！它是由較新版本的田野指南儲存的，請重新載入此頁面以取得最新版本。",
-      "es": "¡Tu progreso está a salvo! Lo guardó una versión más reciente de la guía de campo, así que recarga esta página para tener la última actualización.",
-      "fr": "Votre progression est en sécurité ! Une version plus récente du guide de terrain l’a enregistrée, alors rechargez cette page pour obtenir la dernière mise à jour.",
+      "es": "¡Tu progreso está a salvo! Lo ha guardado una versión más reciente de la guía de campo, así que recarga esta página para tener la última actualización.",
+      "fr": "Votre progression est en sécurité ! Une version plus récente du guide de terrain l’a enregistrée, alors rechargez cette page pour obtenir la dernière mise à jour.",
       "ko": "진행 상황은 안전해요! 더 새로운 버전의 필드 가이드가 저장한 것이니, 이 페이지를 새로고침해서 최신 업데이트를 받아 주세요.",
       "ru": "Ваш прогресс в безопасности! Его сохранила более новая версия справочника, так что перезагрузите эту страницу, чтобы получить последнее обновление."
     },
@@ -10011,7 +10028,7 @@
       "zh-Hans": "你的进度很安全！想了解更多，请查看电脑上的 Mistria Field Guide。",
       "zh-Hant": "你的進度很安全！想了解更多，請查看電腦上的 Mistria Field Guide。",
       "es": "¡Tu progreso está a salvo! Para más información, mira Mistria Field Guide en tu ordenador.",
-      "fr": "Votre progression est en sécurité ! Pour en savoir plus, consultez Mistria Field Guide sur votre ordinateur.",
+      "fr": "Votre progression est en sécurité ! Pour en savoir plus, consultez Mistria Field Guide sur votre ordinateur.",
       "ko": "진행 상황은 안전해요! 자세한 내용은 컴퓨터의 Mistria Field Guide를 확인하세요.",
       "ru": "Ваш прогресс в безопасности! Подробности смотрите в Mistria Field Guide на компьютере."
     },
@@ -10032,8 +10049,8 @@
       "ja": "進捗は無事です！この端末に保存できませんでした。空き容量が足りないのかもしれません。次のセーブデータでもう一度試します。今すぐ試すこともできます。",
       "zh-Hans": "你的进度很安全！这台设备没有让我们保存，可能是空间不足。我们会在下一个存档时再试一次，你也可以现在重试。",
       "zh-Hant": "你的進度很安全！這台裝置沒有讓我們儲存，可能是空間不足。我們會在下一個存檔時再試一次，你也可以現在重試。",
-      "es": "¡Tu progreso está a salvo! Este dispositivo no nos dejó guardarla. Puede que no tenga espacio. Lo intentaremos con tu próxima partida guardada, o puedes intentarlo ahora.",
-      "fr": "Votre progression est en sécurité ! Cet appareil a refusé de l’enregistrer. Il manque peut-être d’espace. On réessaiera avec votre prochaine sauvegarde, ou vous pouvez réessayer maintenant.",
+      "es": "¡Tu progreso está a salvo! Este dispositivo no nos ha dejado guardarla. Puede que no tenga espacio. Lo intentaremos con tu próxima partida guardada, o puedes intentarlo ahora.",
+      "fr": "Votre progression est en sécurité ! Cet appareil a refusé de l’enregistrer. Il manque peut-être d’espace. On réessaiera avec votre prochaine sauvegarde, ou vous pouvez réessayer maintenant.",
       "ko": "진행 상황은 안전해요! 이 기기에 저장할 수 없었어요. 공간이 부족할 수도 있어요. 다음 세이브 파일로 다시 시도할게요. 지금 시도해도 돼요.",
       "ru": "Ваш прогресс в безопасности! Это устройство не дало его записать. Возможно, закончилось место. Попробуем снова со следующим сохранением, или повторите сейчас."
     },
@@ -10054,8 +10071,8 @@
       "ja": "進捗は無事です！このセーブデータは別の農場ですが、ここの農場をバックアップできなかったので何も変更していません。次のセーブデータでもう一度試します。",
       "zh-Hans": "你的进度很安全！这个存档是另一个农场，但我们没能备份这里的农场，所以什么都没变。我们会在下一个存档时再试一次。",
       "zh-Hant": "你的進度很安全！這個存檔是另一個農場，但我們沒能備份這裡的農場，所以什麼都沒變。我們會在下一個存檔時再試一次。",
-      "es": "¡Tu progreso está a salvo! Esta partida guardada es de otra granja, pero no pudimos hacer una copia de la de aquí, así que nada ha cambiado. Lo intentaremos de nuevo con tu próxima partida guardada.",
-      "fr": "Votre progression est en sécurité ! Cette sauvegarde est celle d’une autre ferme, mais on n’a pas pu copier celle d’ici, donc rien n’a changé. On réessaiera avec votre prochaine sauvegarde.",
+      "es": "¡Tu progreso está a salvo! Esta partida guardada es de otra granja, pero no hemos podido hacer una copia de la de aquí, así que no ha cambiado nada. Lo intentaremos de nuevo con tu próxima partida guardada.",
+      "fr": "Votre progression est en sécurité ! Cette sauvegarde est celle d’une autre ferme, mais on n’a pas pu copier celle d’ici, donc rien n’a changé. On réessaiera avec votre prochaine sauvegarde.",
       "ko": "진행 상황은 안전해요! 이 세이브 파일은 다른 농장인데 여기 농장을 백업할 수 없어서 아무것도 바꾸지 않았어요. 다음 세이브 파일로 다시 시도할게요.",
       "ru": "Ваш прогресс в безопасности! Это сохранение другой фермы, но мы не смогли сделать копию текущей, поэтому ничего не изменилось. Попробуем снова со следующим сохранением."
     },
@@ -10095,12 +10112,12 @@
   {
     "translations": {
       "en": "Your recent save file syncs from this tab, for when syncing acts up. Names & sync links come out first.",
-      "ja": "このタブでの最近のセーブファイル同期の記録です。同期の調子が悪いときに役立ちます。名前と同期リンクは先に取り除かれます。",
+      "ja": "このタブでの最近のセーブデータ同期の記録です。同期の調子が悪いときに役立ちます。名前と同期リンクは先に取り除かれます。",
       "zh-Hans": "此标签页最近的存档同步记录，同步出问题时很有用。名字和同步链接会先移除。",
       "zh-Hant": "此分頁最近的存檔同步紀錄，同步出問題時很有用。名稱和同步連結會先移除。",
       "es": "Las sincronizaciones recientes de tu archivo de guardado en esta pestaña, por si la sincronización falla. Antes quitamos los nombres y los enlaces de sincronización.",
-      "fr": "Les synchronisations récentes de votre fichier de sauvegarde dans cet onglet, pour quand la synchronisation fait des siennes. Les noms et les liens de synchronisation sont retirés d’abord.",
-      "ko": "이 탭에서 최근에 한 저장 파일 동기화 기록이에요. 동기화가 말썽일 때 도움이 돼요. 이름과 동기화 링크는 먼저 빼요.",
+      "fr": "Les synchronisations récentes de votre fichier de sauvegarde dans cet onglet, pour quand la synchronisation fait des siennes. On retire d’abord les noms et les liens de synchronisation.",
+      "ko": "이 탭에서 최근에 한 세이브 파일 동기화 기록이에요. 동기화가 말썽일 때 도움이 돼요. 이름과 동기화 링크는 먼저 빼요.",
       "ru": "Недавние синхронизации файла сохранения в этой вкладке — пригодится, если синхронизация барахлит. Имена и ссылки синхронизации мы сначала убираем."
     },
     "references": [
@@ -10123,13 +10140,13 @@
   {
     "translations": {
       "en": "Your save file has a question for you. Nothing changes until you answer.",
-      "ja": "セーブデータについて確認したいことがあります。答えるまで何も変わりません。",
+      "ja": "セーブデータから質問があります。答えるまで何も変わりません。",
       "zh-Hans": "关于你的存档，有个问题想问你。在你回答之前什么都不会变。",
       "zh-Hant": "關於你的存檔，有個問題想問你。在你回答之前什麼都不會變。",
       "es": "Tu partida guardada tiene una pregunta para ti. Nada cambia hasta que respondas.",
       "fr": "Votre sauvegarde a une question pour vous. Rien ne change tant que vous n’avez pas répondu.",
-      "ko": "세이브 파일에 대해 여쭤볼 게 있어요. 답하기 전까지는 아무것도 바뀌지 않아요.",
-      "ru": "У нас вопрос по вашему сохранению. Пока вы не ответите, ничего не изменится."
+      "ko": "세이브 파일이 물어볼 게 있대요. 답하기 전까지는 아무것도 바뀌지 않아요.",
+      "ru": "У вашего сохранения к вам вопрос. Пока вы не ответите, ничего не изменится."
     },
     "references": [
       {
@@ -10169,7 +10186,7 @@
       "en": "Your save file sees this differently",
       "ja": "セーブデータと内容が違います",
       "zh-Hans": "你的存档有不同的记录",
-      "zh-Hant": "你的存檔有不同的記錄",
+      "zh-Hant": "你的存檔有不同的看法",
       "es": "Tu partida guardada lo ve de otra forma",
       "fr": "Votre sauvegarde voit les choses autrement",
       "ko": "세이브 파일과 내용이 달라요",
@@ -10215,7 +10232,7 @@
       "zh-Hans": "全部完成啦！可以去“已完成”里好好欣赏一番。",
       "zh-Hant": "全部完成啦！可以去「已完成」裡好好欣賞一番。",
       "es": "¡Lo has terminado todo! Puedes admirarlo todo en Completado.",
-      "fr": "Tout est fait ! Vous pouvez tout admirer dans Terminé.",
+      "fr": "Tout est fait ! Vous pouvez tout admirer dans Terminé.",
       "ko": "다 끝냈어요! 완료에서 전부 감상할 수 있어요.",
       "ru": "Всё готово! Любуйтесь всем этим в разделе «Выполнено»."
     },
@@ -10233,13 +10250,13 @@
   {
     "translations": {
       "en": "You’ve been busy! Download a backup so your hard work has a safe copy.",
-      "ja": "たくさん進んだね！ バックアップをダウンロードして、頑張った記録を残しておこう。",
+      "ja": "たくさん進みましたね！バックアップをダウンロードして、がんばった記録のコピーを安全に残しておきましょう。",
       "zh-Hans": "你已经记录了不少！下载一份备份，把努力的成果保存好吧。",
-      "zh-Hant": "你已經記錄了不少！下載一份備份，把努力的成果保存好吧。",
+      "zh-Hant": "你已經記錄了不少！下載一份備份，幫辛苦的成果留個安全的副本吧。",
       "es": "¡Cuánto has avanzado! Descarga una copia de seguridad para guardar todo ese esfuerzo.",
-      "fr": "Tu as bien avancé ! Télécharge une copie de sauvegarde pour garder tout ce travail à l’abri.",
+      "fr": "Vous avez bien avancé ! Téléchargez une copie de sauvegarde pour mettre tout ce travail à l’abri.",
       "ko": "많이 진행했네요! 백업을 다운로드해서 소중한 기록을 보관하세요.",
-      "ru": "Немало сделано! Скачай резервную копию, чтобы сберечь результаты своих трудов."
+      "ru": "Вы потрудились на славу! Скачайте резервную копию, чтобы ваши труды были в сохранности."
     },
     "references": [
       {
@@ -10348,7 +10365,7 @@
       "zh-Hans": "隐藏的村民",
       "zh-Hant": "隱藏的村民",
       "es": "aldeano oculto",
-      "fr": "Habitant masqué",
+      "fr": "habitant masqué",
       "ko": "숨겨진 마을 주민",
       "ru": "скрытый житель"
     },
@@ -10439,10 +10456,10 @@
         "図鑑アイテム{0}個を解放"
       ],
       "zh-Hans": [
-        "解锁{0}个图鉴物品"
+        "解锁{0}个博物图鉴物品"
       ],
       "zh-Hant": [
-        "解鎖{0}個圖鑑物品"
+        "解鎖{0}個博物圖鑑項目"
       ],
       "es": [
         "desbloquea {0} objeto del almanaque",
@@ -10450,9 +10467,9 @@
         "desbloquea {0} objetos del almanaque"
       ],
       "fr": [
-        "débloque {0} objet de l’almanach",
-        "débloque {0} objets de l’almanach",
-        "débloque {0} objets de l’almanach"
+        "débloque {0} objet du catalogue",
+        "débloque {0} objets du catalogue",
+        "débloque {0} objets du catalogue"
       ],
       "ko": [
         "도감 아이템 {0}개 해금"
@@ -10493,32 +10510,32 @@
         "unlocks {0} cosmetics"
       ],
       "ja": [
-        "コスメ{0}個を解放"
+        "外見アイテム{0}個を解放"
       ],
       "zh-Hans": [
-        "解锁{0}个装饰"
+        "解锁{0}个装扮"
       ],
       "zh-Hant": [
-        "解鎖{0}個裝飾"
+        "解鎖{0}個飾物"
       ],
       "es": [
-        "desbloquea {0} cosmético",
-        "desbloquea {0} cosméticos",
-        "desbloquea {0} cosméticos"
+        "desbloquea {0} accesorio",
+        "desbloquea {0} accesorios",
+        "desbloquea {0} accesorios"
       ],
       "fr": [
-        "débloque {0} cosmétique",
-        "débloque {0} cosmétiques",
-        "débloque {0} cosmétiques"
+        "débloque {0} accessoire",
+        "débloque {0} accessoires",
+        "débloque {0} accessoires"
       ],
       "ko": [
-        "코스메틱 {0}개 해금"
+        "꾸미기 아이템 {0}개 해금"
       ],
       "ru": [
-        "открывает {0} предмет косметики",
-        "открывает {0} предмета косметики",
-        "открывает {0} предметов косметики",
-        "открывает {0} предмета косметики"
+        "открывает {0} украшение",
+        "открывает {0} украшения",
+        "открывает {0} украшений",
+        "открывает {0} украшения"
       ]
     },
     "references": [
@@ -10670,11 +10687,11 @@
     "translations": {
       "en": "{0} / {1} in rank",
       "ja": "ランク内{1}中{0}",
-      "zh-Hans": "本等级内{1}中的{0}",
-      "zh-Hant": "本段位內{1}中的{0}",
+      "zh-Hans": "本等级内 {0}/{1}",
+      "zh-Hant": "段位內 {0}/{1}",
       "es": "{0} / {1} en la categoría",
       "fr": "{0} / {1} à ce niveau de classement",
-      "ko": "등급 내 {1}중 {0}",
+      "ko": "등급 내 {0} / {1}",
       "ru": "{0} / {1} в ранге"
     },
     "references": [
@@ -10768,7 +10785,7 @@
       "zh-Hans": "{0}分类",
       "zh-Hant": "{0}分類",
       "es": "Categorías: {0}",
-      "fr": "Catégories : {0}",
+      "fr": "Catégories : {0}",
       "ko": "{0} 카테고리",
       "ru": "Категории: {0}"
     },
@@ -10889,11 +10906,11 @@
     "translations": {
       "en": "{0} of {1}",
       "ja": "{1}中{0}",
-      "zh-Hans": "{1}级中的{0}级",
-      "zh-Hant": "{1}級中的{0}級",
+      "zh-Hans": "{0}/{1}级",
+      "zh-Hant": "{0}級（共{1}級）",
       "es": "{0} de {1}",
       "fr": "{0} sur {1}",
-      "ko": "{1}중 {0}",
+      "ko": "{1} 중 {0}",
       "ru": "{0} из {1}"
     },
     "references": [
@@ -10922,11 +10939,11 @@
     "translations": {
       "en": "{0} of {1}",
       "ja": "{1}中{0}",
-      "zh-Hans": "{1}级中的{0}级",
-      "zh-Hant": "{1}級中的{0}級",
+      "zh-Hans": "{0}/{1}级",
+      "zh-Hant": "{0}級（共{1}級）",
       "es": "{0} de {1}",
       "fr": "{0} sur {1}",
-      "ko": "{1}중 {0}",
+      "ko": "{1} 중 {0}",
       "ru": "{0} из {1}"
     },
     "context": "stepper level progress",
@@ -11028,7 +11045,7 @@
       "es": "{0} de {1} completados en total, {2}",
       "fr": "{0} sur {1} terminés au total, {2}",
       "ko": "전체 {1}개 중 {0}개 완료, {2}",
-      "ru": "Выполнено {0} из {1} всего, {2}"
+      "ru": "Всего выполнено {0} из {1}, {2}"
     },
     "references": [
       {
@@ -11063,7 +11080,7 @@
       "zh-Hans": "{0}技能特长，{1}个未解锁",
       "zh-Hant": "{0}技能特長，{1}個未解鎖",
       "es": "Dones de habilidad de {0}: {1} bloqueados",
-      "fr": "Bonus de compétences de {0} : {1} verrouillés",
+      "fr": "Bonus de compétences de {0} : {1} verrouillés",
       "ko": "{0} 스킬 특성, {1}개 잠김",
       "ru": "Навыки умения «{0}», закрыто: {1}"
     },
@@ -11096,7 +11113,7 @@
       "zh-Hans": "{0}技能特长，已解锁{1}/{2}",
       "zh-Hant": "{0}技能特長，已解鎖{1}/{2}",
       "es": "Dones de habilidad de {0}: {1} de {2} desbloqueados",
-      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués",
+      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués",
       "ko": "{0} 스킬 특성, {2}개 중 {1}개 해금",
       "ru": "Навыки умения «{0}»: открыто {1} из {2}"
     },
@@ -11133,7 +11150,7 @@
       "zh-Hans": "{0}技能特长，已解锁{1}/{2}，另有{3}个未解锁",
       "zh-Hant": "{0}技能特長，已解鎖{1}/{2}，另有{3}個未解鎖",
       "es": "Dones de habilidad de {0}: {1} de {2} desbloqueados, {3} más bloqueados",
-      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués, encore {3} verrouillés",
+      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués, encore {3} verrouillés",
       "ko": "{0} 스킬 특성, {2}개 중 {1}개 해금, {3}개 더 잠김",
       "ru": "Навыки умения «{0}»: открыто {1} из {2}, ещё закрыто: {3}"
     },
@@ -11208,12 +11225,12 @@
     "translations": {
       "en": "{0} relationship level, {1} of {2}",
       "ja": "{0}との関係レベル、{2}中{1}",
-      "zh-Hans": "与{0}的关系等级，{2}级中的{1}级",
-      "zh-Hant": "與{0}的關係等級，{2}級中的{1}級",
+      "zh-Hans": "与{0}的关系等级，{1}/{2}级",
+      "zh-Hant": "與{0}的關係等級，{1}級（共{2}級）",
       "es": "Nivel de relación con {0}, {1} de {2}",
       "fr": "Niveau de relation avec {0}, {1} sur {2}",
-      "ko": "{0}와의 관계 레벨, {2}중 {1}",
-      "ru": "Уровень отношений с «{0}», {1} из {2}"
+      "ko": "{0}와(과)의 관계 레벨, {2} 중 {1}",
+      "ru": "{0}: уровень отношений {1} из {2}"
     },
     "references": [
       {
@@ -11414,9 +11431,9 @@
         "Se están filtrando {0} elementos de {1}."
       ],
       "fr": [
-        "{0} élément {1} est masqué par les filtres.",
-        "{0} éléments {1} sont masqués par les filtres.",
-        "{0} éléments {1} sont masqués par les filtres."
+        "Vos filtres masquent {0} élément de l’étagère {1}.",
+        "Vos filtres masquent {0} éléments de l’étagère {1}.",
+        "Vos filtres masquent {0} éléments de l’étagère {1}."
       ],
       "ko": [
         "{1} 항목 {0}개가 필터로 숨겨져 있어요."
@@ -11701,7 +11718,7 @@
       "zh-Hans": "{0}：存档和这台设备上的内容不一致，我们无法判断哪个更新。",
       "zh-Hant": "{0}：存檔和這台裝置上的內容不一致，我們無法判斷哪個較新。",
       "es": "{0}: tu partida guardada no coincide con lo que hay en este dispositivo y no sabemos qué es más reciente.",
-      "fr": "{0} : votre sauvegarde ne correspond pas à cet appareil, et on ne sait pas laquelle est la plus récente.",
+      "fr": "{0} : votre sauvegarde ne correspond pas à cet appareil, et on ne sait pas lequel des deux est le plus récent.",
       "ko": "{0}: 세이브 파일이 이 기기의 내용과 달라서 어느 쪽이 최신인지 알 수 없어요.",
       "ru": "{0}: сохранение не совпадает с данными на этом устройстве, и мы не знаем, что новее."
     },
@@ -11730,7 +11747,7 @@
       "zh-Hans": "{0}：存档里的等级比这台设备上的低。",
       "zh-Hant": "{0}：存檔裡的等級比這台裝置上的低。",
       "es": "{0}: tu partida guardada tiene niveles más bajos que este dispositivo.",
-      "fr": "{0} : votre sauvegarde a des niveaux plus bas que cet appareil.",
+      "fr": "{0} : votre sauvegarde a des niveaux plus bas que cet appareil.",
       "ko": "{0}: 세이브 파일의 레벨이 이 기기보다 낮아요.",
       "ru": "{0}: в сохранении уровни ниже, чем на этом устройстве."
     },
@@ -11755,11 +11772,11 @@
   {
     "translations": {
       "en": "{0}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.",
-      "ja": "{0}：セーブデータが一度に多くの項目を取り消そうとしています。ゲームの更新後に起こることがあるので確認させてください。",
+      "ja": "{0}：セーブデータが一度に多くの項目を取り消そうとしています。ゲームのアップデート後に起こることがあるので、確認させてください。",
       "zh-Hans": "{0}：存档会一次撤销很多内容。游戏更新后可能出现这种情况，所以想先确认一下。",
       "zh-Hant": "{0}：存檔會一次撤銷很多內容。遊戲更新後可能出現這種情況，所以想先確認一下。",
       "es": "{0}: tu partida guardada quitaría muchas cosas de golpe. Puede pasar tras una actualización del juego, así que queríamos confirmarlo.",
-      "fr": "{0} : votre sauvegarde retirerait beaucoup de choses d’un coup. Ça peut arriver après une mise à jour du jeu, alors on préfère vérifier.",
+      "fr": "{0} : votre sauvegarde retirerait beaucoup de choses d’un coup. Ça peut arriver après une mise à jour du jeu, alors on préfère vérifier.",
       "ko": "{0}: 세이브 파일이 한 번에 많은 항목을 되돌리려고 해요. 게임 업데이트 후 그럴 수 있어서 확인하고 싶어요.",
       "ru": "{0}: сохранение отменит сразу многое. Такое бывает после обновления игры, поэтому мы решили уточнить."
     },

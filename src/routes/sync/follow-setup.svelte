@@ -70,7 +70,7 @@
     <div>
       <h2>Almost there</h2>
       <p>
-        Your code works, but there’s no save file waiting yet. Open the tracker on your gaming
+        Your code works, but there’s no save file waiting yet. Open the field guide on your gaming
         computer, and we’ll grab the latest one.
       </p>
       <p class="follow-note__progress" role="status">

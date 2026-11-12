@@ -14,7 +14,9 @@ describe("about and legal page", () => {
     const aboutCatalog = await loadAboutCatalog("zh-Hant");
     const metadata = pageMetadata(aboutMetadata(toRuntime(aboutCatalog, "zh-Hant")));
     expect(metadata.title).toBe("關於");
-    expect(metadata.description).toBe("了解非官方的 Fields of Mistria 田野指南。");
+    expect(metadata.description).toBe(
+      "了解為《Fields of Mistria》打造的非官方 Mistria Field Guide。",
+    );
     const { queries } = renderToFragment(AboutPage, {
       props: {
         data: {
@@ -26,7 +28,7 @@ describe("about and legal page", () => {
     });
     const studio = queries.getByRole("link", { name: "NPC Studio" });
     expect(studio.getAttribute("href")).toBe("https://www.npcstudio.com/");
-    expect(studio.closest("p")?.textContent).toContain("它與 NPC Studio 沒有隸屬");
+    expect(studio.closest("p")?.textContent).toContain("與 NPC Studio 沒有任何隸屬");
     const contact = queries.getByRole("link", { name: "私下聯絡我" });
     expect(contact.getAttribute("href")).toBe("mailto:michael@mistria.fyi");
     expect(contact.closest("p")?.querySelector(".feedback-icon")).not.toBeNull();

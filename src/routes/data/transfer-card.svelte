@@ -20,7 +20,7 @@
     <Button href={localizedHref("sync")}>Set up sync</Button>
     <p class="text-sm text-muted-foreground">
       To move anything you check off by hand, export a backup here, send the file to your other
-      device, and restore it there. Restoring replaces that device’s tracker progress.
+      device, and restore it there. Restoring replaces that device’s progress in the field guide.
     </p>
     <Button variant="outline" onclick={onOpenBackup}>Go to Backup & restore</Button>
   </div>

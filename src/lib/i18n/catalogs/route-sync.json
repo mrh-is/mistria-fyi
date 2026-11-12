@@ -2,11 +2,11 @@
   {
     "translations": {
       "en": "<0/> Can’t find it?",
-      "ja": "<0/> 見つからない？",
+      "ja": "<0/> 見つからない場合は？",
       "zh-Hans": "<0/> 找不到？",
       "zh-Hant": "<0/> 找不到？",
       "es": "<0/> ¿No la encuentras?",
-      "fr": "<0/> Vous ne la trouvez pas ?",
+      "fr": "<0/> Vous ne la trouvez pas ?",
       "ko": "<0/> 못 찾겠나요?",
       "ru": "<0/> Не можете найти?"
     },
@@ -25,12 +25,12 @@
     "translations": {
       "en": "<0/> Go to my field guide",
       "ja": "<0/> ガイドへ移動",
-      "zh-Hans": "<0/> 前往我的指南",
+      "zh-Hans": "<0/> 前往我的田野指南",
       "zh-Hant": "<0/> 前往我的指南",
       "es": "<0/> Ir a mi guía",
       "fr": "<0/> Aller à mon guide",
-      "ko": "<0/> 내 가이드로 가기",
-      "ru": "<0/> К моему путеводителю"
+      "ko": "<0/> 내 필드 가이드로 가기",
+      "ru": "<0/> К моему справочнику"
     },
     "references": [
       {
@@ -95,7 +95,7 @@
       "zh-Hans": "<0/> 在电脑上？",
       "zh-Hant": "<0/> 在電腦上？",
       "es": "<0/> ¿En un ordenador?",
-      "fr": "<0/> Sur un ordinateur ?",
+      "fr": "<0/> Sur un ordinateur ?",
       "ko": "<0/> 컴퓨터인가요?",
       "ru": "<0/> На компьютере?"
     },
@@ -117,7 +117,7 @@
       "zh-Hans": "<0/> 在手机上？",
       "zh-Hant": "<0/> 在手機上？",
       "es": "<0/> ¿En un móvil?",
-      "fr": "<0/> Sur un téléphone ?",
+      "fr": "<0/> Sur un téléphone ?",
       "ko": "<0/> 휴대폰인가요?",
       "ru": "<0/> На телефоне?"
     },
@@ -202,11 +202,11 @@
   {
     "translations": {
       "en": "<0/> Yep!",
-      "ja": "<0/> そう！",
-      "zh-Hans": "<0/> 是的！",
+      "ja": "<0/> そうです！",
+      "zh-Hans": "<0/> 没错！",
       "zh-Hant": "<0/> 對！",
       "es": "<0/> ¡Sí!",
-      "fr": "<0/> Oui !",
+      "fr": "<0/> Oui !",
       "ko": "<0/> 맞아요!",
       "ru": "<0/> Да!"
     },
@@ -248,7 +248,7 @@
       "en": "Before we can sync your save file, this device’s data needs a look. Head to Data to sort it out.",
       "ja": "セーブデータを同期する前に、この端末のデータを確認する必要があります。データ管理で解決してください。",
       "zh-Hans": "同步存档之前，需要先检查这台设备上的数据。请前往数据管理处理一下。",
-      "zh-Hant": "同步存檔之前，需要先檢查這台裝置上的資料。請前往資料管理處理一下。",
+      "zh-Hant": "同步存檔之前，需要先檢查一下這台裝置上的資料。請前往「資料」頁面處理。",
       "es": "Antes de sincronizar tu partida guardada, hay que revisar los datos de este dispositivo. Ve a Datos para solucionarlo.",
       "fr": "Avant de synchroniser votre sauvegarde, il faut jeter un œil aux données de cet appareil. Passez par Données pour régler ça.",
       "ko": "세이브 파일을 동기화하기 전에 이 기기의 데이터를 확인해야 해요. 데이터 관리에서 해결하세요.",
@@ -270,9 +270,9 @@
       "en": "Camera feed for QR code scanning",
       "ja": "QRコードスキャン用カメラ映像",
       "zh-Hans": "用于扫描二维码的摄像头画面",
-      "zh-Hant": "用於掃描 QR code 的攝影機畫面",
+      "zh-Hant": "用來掃描 QR code 的相機畫面",
       "es": "Transmisión de la cámara para escanear el código QR",
-      "fr": "Flux caméra pour le scan du QR code",
+      "fr": "Flux de la caméra pour scanner le code QR",
       "ko": "QR 코드 스캔용 카메라 화면",
       "ru": "Видео с камеры для сканирования QR-кода"
     },
@@ -290,10 +290,10 @@
   {
     "translations": {
       "en": "Check things off yourself. You can still import a save file now and then.",
-      "ja": "自分でチェックをつけます。ときどきセーブデータを取り込むこともできます。",
+      "ja": "自分でチェックをつけます。ときどきセーブデータをインポートすることもできます。",
       "zh-Hans": "自己勾选。你仍然可以偶尔导入存档。",
       "zh-Hant": "自己勾選。你還是可以偶爾匯入存檔。",
-      "es": "Marca las cosas tú mismo. Aún puedes importar una partida guardada de vez en cuando.",
+      "es": "Marca las cosas por tu cuenta. Aún puedes importar una partida guardada de vez en cuando.",
       "fr": "Cochez tout vous-même. Vous pouvez toujours importer une sauvegarde de temps en temps.",
       "ko": "직접 체크하세요. 가끔 세이브 파일을 가져올 수도 있어요.",
       "ru": "Отмечайте всё сами. Время от времени всё равно можно импортировать сохранение."
@@ -314,7 +314,7 @@
       "en": "Close camera",
       "ja": "カメラを閉じる",
       "zh-Hans": "关闭摄像头",
-      "zh-Hant": "關閉攝影機",
+      "zh-Hant": "關閉相機",
       "es": "Cerrar cámara",
       "fr": "Fermer la caméra",
       "ko": "카메라 닫기",
@@ -401,12 +401,12 @@
     "translations": {
       "en": "FYI, this is a fresh start",
       "ja": "ちなみに、ここから新しく始まります",
-      "zh-Hans": "提醒：这会重新开始",
+      "zh-Hans": "先说一声：这会是全新的开始",
       "zh-Hant": "提醒：這會重新開始",
       "es": "Para que lo sepas: empiezas de cero",
       "fr": "Pour info, on repart de zéro",
       "ko": "참고로, 새로 시작하게 돼요",
-      "ru": "К сведению: всё начнётся заново"
+      "ru": "Имейте в виду: всё начнётся заново"
     },
     "references": [
       {
@@ -448,7 +448,7 @@
       "zh-Hans": "首先，复制这个文件夹位置：",
       "zh-Hant": "首先，複製這個資料夾位置：",
       "es": "Primero, copia la ubicación de esta carpeta:",
-      "fr": "D’abord, copiez l’emplacement de ce dossier :",
+      "fr": "D’abord, copiez l’emplacement de ce dossier :",
       "ko": "먼저 이 폴더 위치를 복사하세요:",
       "ru": "Сначала скопируйте путь к этой папке:"
     },
@@ -469,9 +469,9 @@
       "ja": "正直に言うと、ここが設定でいちばんややこしいところです。でもここを越えれば、あとはスムーズです！",
       "zh-Hans": "老实说，这是设置里最奇怪的一步。不过过了这一步，之后就一帆风顺了！",
       "zh-Hant": "老實說，這是設定裡最奇怪的一步。不過過了這一步，之後就一帆風順了！",
-      "es": "Siendo sinceros, esta es la parte más rara de la configuración. ¡Pero cuando acabes aquí, todo irá sobre ruedas!",
-      "fr": "Soyons honnêtes, c’est l’étape la plus bizarre. Mais une fois finie, tout roule !",
-      "ko": "솔직히 말하면 설정에서 제일 이상한 부분이에요. 하지만 여기만 넘기면 그다음은 순조로워요!",
+      "es": "No te vamos a engañar: esta es la parte más rara de la configuración. ¡Pero cuando acabes aquí, todo irá sobre ruedas!",
+      "fr": "Soyons honnêtes, c’est l’étape la plus bizarre. Mais une fois finie, tout roule !",
+      "ko": "솔직히 말하면, 여기가 설정에서 제일 요상한 부분이에요. 하지만 여기만 넘기면 그다음은 일사천리예요!",
       "ru": "Честно говоря, это самая странная часть настройки. Зато дальше всё пойдёт как по маслу!"
     },
     "references": [
@@ -488,7 +488,7 @@
   {
     "translations": {
       "en": "Heads up",
-      "ja": "ご注意",
+      "ja": "ちょっとお知らせ",
       "zh-Hans": "提醒一下",
       "zh-Hant": "提醒一下",
       "es": "Ojo",
@@ -510,7 +510,7 @@
   {
     "translations": {
       "en": "Hmm, no, try that again",
-      "ja": "うーん、違う。やり直す",
+      "ja": "うーん、違います。やり直します",
       "zh-Hans": "嗯，不是，再试一次",
       "zh-Hant": "嗯，不是，再試一次",
       "es": "Mmm, no, vuelve a intentarlo",
@@ -536,7 +536,7 @@
       "zh-Hans": "嗯，这个链接看起来不太对。试试扫描代码？",
       "zh-Hant": "嗯，這個連結看起來不太對。試試掃描代碼？",
       "es": "Mmm, ese enlace no parece del todo correcto. ¿Pruebas a escanear el código?",
-      "fr": "Hum, ce lien n’a pas l’air tout à fait correct. Et si vous scanniez plutôt le code ?",
+      "fr": "Hum, ce lien n’a pas l’air tout à fait correct. Et si vous scanniez plutôt le code ?",
       "ko": "음, 그 링크는 좀 이상해 보여요. 코드를 스캔해 볼까요?",
       "ru": "Хм, эта ссылка выглядит не совсем правильно. Может, лучше отсканировать код?"
     },
@@ -558,7 +558,7 @@
       "zh-Hans": "嗯，没能启动你的摄像头。如果有别的应用正在使用它，请关闭那个应用再试一次，或者在下方粘贴链接。",
       "zh-Hant": "嗯，沒能啟動你的相機。如果有別的應用程式正在使用它，請關閉那個應用程式再試一次，或在下方貼上連結。",
       "es": "Mmm, no hemos podido encender tu cámara. Si otra aplicación la está usando, ciérrala y vuelve a intentarlo, o pega el enlace abajo.",
-      "fr": "Hum, impossible de démarrer votre caméra. Si une autre application l’utilise, fermez-la et réessayez, ou collez plutôt le lien ci-dessous.",
+      "fr": "Hum, on n’a pas pu démarrer votre caméra. Si une autre application l’utilise, fermez-la et réessayez, ou collez plutôt le lien ci-dessous.",
       "ko": "음, 카메라를 켜지 못했어요. 다른 앱이 카메라를 쓰고 있다면 그 앱을 닫고 다시 시도하거나, 아래에 링크를 붙여 넣어 주세요.",
       "ru": "Хм, не удалось включить камеру. Если её использует другое приложение, закройте его и попробуйте ещё раз или вставьте ссылку ниже."
     },
@@ -580,7 +580,7 @@
       "ja": "ここでプレイしている",
       "zh-Hans": "我就在这里玩",
       "zh-Hant": "我就在這裡玩",
-      "es": "Juego justo aquí",
+      "es": "Juego aquí mismo",
       "fr": "Je joue ici même",
       "ko": "바로 여기서 플레이해요",
       "ru": "Я играю прямо здесь"
@@ -602,7 +602,7 @@
       "ja": "新しいコードを作った場合は、ここで読み取ってください。または同期をやめて、手動で記録を続けましょう。",
       "zh-Hans": "如果它生成了新代码，就在这里扫描。或者停止同步，继续手动记录。",
       "zh-Hant": "如果它產生了新代碼，就在這裡掃描。或者停止同步，繼續手動記錄。",
-      "es": "Si creó un código nuevo, escanéalo aquí. O deja de sincronizar y sigue registrando a mano.",
+      "es": "Si ha creado un código nuevo, escanéalo aquí. O deja de sincronizar y sigue registrando a mano.",
       "fr": "S’il a créé un nouveau code, scannez-le ici. Ou arrêtez la synchro et continuez à noter à la main.",
       "ko": "새 코드를 만들었다면 여기서 스캔하세요. 아니면 동기화를 멈추고 직접 기록을 이어 가세요.",
       "ru": "Если он создал новый код, отсканируйте его здесь. Или остановите синхронизацию и продолжайте отмечать вручную."
@@ -624,7 +624,7 @@
       "ja": "ChromeやEdgeなら、ゲーム内で寝るたびにセーブデータを同期できます。毎回ここにドラッグする必要はありません。",
       "zh-Hans": "在 Chrome 或 Edge 中，我们可以在你每次在游戏里睡觉时同步存档，不用再把文件拖进来。",
       "zh-Hant": "在 Chrome 或 Edge 中，我們可以在你每次在遊戲裡睡覺時同步存檔，不用再把檔案拖進來。",
-      "es": "En Chrome o Edge, podemos sincronizar tu partida guardada cada vez que te vayas a dormir, sin que tengas que volver a arrastrarla aquí.",
+      "es": "En Chrome o Edge, podemos sincronizar tu partida guardada cada vez que duermas, sin que tengas que volver a soltarla aquí.",
       "fr": "Dans Chrome ou Edge, nous pouvons synchroniser votre sauvegarde chaque fois que vous allez dormir, sans que vous ayez à la déposer ici à nouveau.",
       "ko": "Chrome이나 Edge에서는 게임에서 잠들 때마다 세이브 파일을 동기화할 수 있어요. 매번 여기에 끌어다 놓을 필요가 없어요.",
       "ru": "В Chrome или Edge мы можем синхронизировать сохранение каждый раз, когда вы ложитесь спать в игре. Вам не придётся снова перетаскивать файл сюда."
@@ -643,12 +643,12 @@
   {
     "translations": {
       "en": "Is this your farm?",
-      "ja": "これはあなたの農場？",
+      "ja": "これはあなたの農場ですか？",
       "zh-Hans": "这是你的农场吗？",
       "zh-Hant": "這是你的農場嗎？",
       "es": "¿Es esta tu granja?",
-      "fr": "C’est votre ferme ?",
-      "ko": "당신의 농장인가요?",
+      "fr": "C’est votre ferme ?",
+      "ko": "이 농장이 맞나요?",
       "ru": "Это ваша ферма?"
     },
     "references": [
@@ -666,7 +666,7 @@
   {
     "translations": {
       "en": "I’ll stick with this browser",
-      "ja": "このブラウザーを使い続ける",
+      "ja": "このブラウザを使い続ける",
       "zh-Hans": "我继续用这个浏览器",
       "zh-Hant": "我繼續用這個瀏覽器",
       "es": "Seguiré con este navegador",
@@ -732,13 +732,13 @@
   {
     "translations": {
       "en": "I’m ready to start anew",
-      "ja": "新しく始める準備OK",
+      "ja": "心機一転、始めます",
       "zh-Hans": "我准备好重新开始了",
       "zh-Hant": "我準備好重新開始了",
-      "es": "Estoy listo para empezar de nuevo",
-      "fr": "Je suis prêt à repartir à neuf",
+      "es": "Quiero empezar de cero",
+      "fr": "Allez, on repart à neuf",
       "ko": "새로 시작할 준비 됐어요",
-      "ru": "Я готов начать заново"
+      "ru": "Начнём с чистого листа"
     },
     "references": [
       {
@@ -803,7 +803,7 @@
       "zh-Hant": "Linux 和 Steam Deck",
       "es": "Linux y Steam Deck",
       "fr": "Linux et Steam Deck",
-      "ko": "Linux 및 Steam Deck",
+      "ko": "Linux와 Steam Deck",
       "ru": "Linux и Steam Deck"
     },
     "references": [
@@ -846,7 +846,7 @@
       "zh-Hans": "备份一下",
       "zh-Hant": "備份一下",
       "es": "Hacer una copia",
-      "fr": "Faire une sauvegarde",
+      "fr": "Faire une copie",
       "ko": "백업하기",
       "ru": "Сделать копию"
     },
@@ -931,11 +931,11 @@
   {
     "translations": {
       "en": "Nice, you’re all set!",
-      "ja": "よし、準備完了！",
+      "ja": "いいですね、準備完了です！",
       "zh-Hans": "好了，一切就绪！",
       "zh-Hant": "好了，一切就緒！",
       "es": "¡Genial, ya está todo listo!",
-      "fr": "Super, tout est prêt !",
+      "fr": "Super, tout est prêt !",
       "ko": "좋아요, 준비 끝!",
       "ru": "Отлично, всё готово!"
     },
@@ -975,7 +975,7 @@
   {
     "translations": {
       "en": "No thanks, I’ll track here",
-      "ja": "結構です、ここで記録します",
+      "ja": "いいえ、ここで記録します",
       "zh-Hans": "不用了，我就在这里记录",
       "zh-Hant": "不用了，我就在這裡記錄",
       "es": "No, gracias, lo registraré aquí",
@@ -997,11 +997,11 @@
   {
     "translations": {
       "en": "No worries! Pick the newest file that ends in “autosave”.",
-      "ja": "大丈夫！「autosave」で終わるいちばん新しいファイルを選んでください。",
+      "ja": "大丈夫です！「autosave」で終わるいちばん新しいファイルを選んでください。",
       "zh-Hans": "没关系！请选择以“autosave”结尾的最新文件。",
       "zh-Hant": "沒關係！請選擇以「autosave」結尾的最新檔案。",
-      "es": "¡Tranquilo! Elige el archivo más reciente que termine en «autosave».",
-      "fr": "Pas de souci ! Choisissez le fichier le plus récent qui se termine par « autosave ».",
+      "es": "¡Sin problema! Elige el archivo más reciente que termine en «autosave».",
+      "fr": "Pas de souci ! Choisissez le fichier le plus récent qui se termine par « autosave ».",
       "ko": "괜찮아요! “autosave”로 끝나는 가장 최신 파일을 고르세요.",
       "ru": "Ничего страшного! Выберите самый новый файл, который заканчивается на «autosave»."
     },
@@ -1023,7 +1023,7 @@
       "zh-Hans": "不在那里？在你的 Steam 库的 steamapps/compatdata/2142790 文件夹里找找。",
       "zh-Hant": "不在那裡？到你的 Steam 收藏庫的 steamapps/compatdata/2142790 資料夾找找看。",
       "es": "¿No está ahí? Busca en la carpeta steamapps/compatdata/2142790 de tu biblioteca de Steam.",
-      "fr": "Pas là ? Cherchez dans le dossier steamapps/compatdata/2142790 de votre bibliothèque Steam.",
+      "fr": "Pas là ? Cherchez dans le dossier steamapps/compatdata/2142790 de votre bibliothèque Steam.",
       "ko": "거기 없나요? Steam 라이브러리의 steamapps/compatdata/2142790 폴더를 찾아보세요.",
       "ru": "Не там? Поищите в папке steamapps/compatdata/2142790 вашей библиотеки Steam."
     },
@@ -1068,7 +1068,7 @@
       "zh-Hans": "现在打开文件资源管理器，把它粘贴到顶部的地址栏。它应该会带你到一个有类似 {0} 文件的文件夹。把那个 autosave 文件拖到这个框里：",
       "zh-Hant": "現在打開檔案總管，把它貼到上方的網址列。它應該會帶你到一個有類似 {0} 檔案的資料夾。把那個 autosave 檔案拖到這個框裡：",
       "es": "Ahora abre el Explorador de archivos y pega eso en la barra de direcciones de arriba. Debería llevarte a una carpeta con archivos como {0}. Arrastra ese archivo autosave a este recuadro:",
-      "fr": "Ouvrez maintenant l’Explorateur de fichiers et collez cela dans la barre d’adresse en haut. Vous devriez arriver dans un dossier avec des fichiers comme {0}. Faites glisser ce fichier autosave dans ce cadre :",
+      "fr": "Ouvrez maintenant l’Explorateur de fichiers et collez cela dans la barre d’adresse en haut. Vous devriez arriver dans un dossier avec des fichiers comme {0}. Faites glisser ce fichier autosave dans ce cadre :",
       "ko": "이제 파일 탐색기를 열고 맨 위 주소 표시줄에 붙여넣으세요. {0} 같은 파일이 있는 폴더가 열릴 거예요. 그 autosave 파일을 이 상자로 끌어다 놓으세요:",
       "ru": "Теперь откройте Проводник и вставьте путь в адресную строку сверху. Откроется папка с файлами вроде {0}. Перетащите этот файл autosave в эту рамку:"
     },
@@ -1097,7 +1097,7 @@
       "zh-Hans": "现在打开访达，按 Shift-Command-G，粘贴后按 Return。它应该会带你到一个有类似 {0} 文件的文件夹。把那个 autosave 文件拖到这个框里：",
       "zh-Hant": "現在打開 Finder，按 Shift-Command-G，貼上後按 Return。它應該會帶你到一個有類似 {0} 檔案的資料夾。把那個 autosave 檔案拖到這個框裡：",
       "es": "Ahora abre el Finder, pulsa Mayús-Comando-G, pega eso y pulsa Retorno. Debería llevarte a una carpeta con archivos como {0}. Arrastra ese archivo autosave a este recuadro:",
-      "fr": "Ouvrez maintenant le Finder, appuyez sur Maj-Commande-G, collez cela et appuyez sur Retour. Vous devriez arriver dans un dossier avec des fichiers comme {0}. Faites glisser ce fichier autosave dans ce cadre :",
+      "fr": "Ouvrez maintenant le Finder, appuyez sur Maj-Commande-G, collez cela et appuyez sur Retour. Vous devriez arriver dans un dossier avec des fichiers comme {0}. Faites glisser ce fichier autosave dans ce cadre :",
       "ko": "이제 Finder를 열고 Shift-Command-G를 누른 뒤 붙여넣고 Return을 누르세요. {0} 같은 파일이 있는 폴더가 열릴 거예요. 그 autosave 파일을 이 상자로 끌어다 놓으세요:",
       "ru": "Теперь откройте Finder, нажмите Shift-Command-G, вставьте путь и нажмите Return. Откроется папка с файлами вроде {0}. Перетащите этот файл autosave в эту рамку:"
     },
@@ -1126,7 +1126,7 @@
       "zh-Hans": "现在打开你的文件管理器，按 Ctrl+L，粘贴后按 Enter。它应该会带你到一个有类似 {0} 文件的文件夹。把那个 autosave 文件拖到这个框里：",
       "zh-Hant": "現在打開你的檔案管理員，按 Ctrl+L，貼上後按 Enter。它應該會帶你到一個有類似 {0} 檔案的資料夾。把那個 autosave 檔案拖到這個框裡：",
       "es": "Ahora abre tu gestor de archivos, pulsa Ctrl+L, pega eso y pulsa Intro. Debería llevarte a una carpeta con archivos como {0}. Arrastra ese archivo autosave a este recuadro:",
-      "fr": "Ouvrez maintenant votre gestionnaire de fichiers, appuyez sur Ctrl+L, collez cela et appuyez sur Entrée. Vous devriez arriver dans un dossier avec des fichiers comme {0}. Faites glisser ce fichier autosave dans ce cadre :",
+      "fr": "Ouvrez maintenant votre gestionnaire de fichiers, appuyez sur Ctrl+L, collez cela et appuyez sur Entrée. Vous devriez arriver dans un dossier avec des fichiers comme {0}. Faites glisser ce fichier autosave dans ce cadre :",
       "ko": "이제 파일 관리자를 열고 Ctrl+L을 누른 뒤 붙여넣고 Enter를 누르세요. {0} 같은 파일이 있는 폴더가 열릴 거예요. 그 autosave 파일을 이 상자로 끌어다 놓으세요:",
       "ru": "Теперь откройте файловый менеджер, нажмите Ctrl+L, вставьте путь и нажмите Enter. Откроется папка с файлами вроде {0}. Перетащите этот файл autosave в эту рамку:"
     },
@@ -1177,7 +1177,7 @@
       "zh-Hans": "在 Linux、Steam Deck 或 Mac 上？",
       "zh-Hant": "在 Linux、Steam Deck 或 Mac 上？",
       "es": "¿En Linux, Steam Deck o Mac?",
-      "fr": "Sur Linux, Steam Deck ou Mac ?",
+      "fr": "Sur Linux, Steam Deck ou Mac ?",
       "ko": "Linux, Steam Deck, Mac인가요?",
       "ru": "Linux, Steam Deck или Mac?"
     },
@@ -1199,7 +1199,7 @@
       "zh-Hans": "在 Linux、Steam Deck 或 Mac 上？ <0/>",
       "zh-Hant": "在 Linux、Steam Deck 或 Mac 上？ <0/>",
       "es": "¿En Linux, Steam Deck o Mac? <0/>",
-      "fr": "Sur Linux, Steam Deck ou Mac ? <0/>",
+      "fr": "Sur Linux, Steam Deck ou Mac ? <0/>",
       "ko": "Linux, Steam Deck, Mac인가요? <0/>",
       "ru": "Linux, Steam Deck или Mac? <0/>"
     },
@@ -1222,7 +1222,7 @@
       "zh-Hant": "在你的遊戲電腦上，用 Chrome 或 Edge 打開 {0} 並完成那裡的步驟。顯示代碼後，在這裡掃描。",
       "es": "En tu ordenador de juego, abre {0} en Chrome o Edge y sigue los pasos. Cuando muestre un código, escanéalo aquí.",
       "fr": "Sur votre ordinateur de jeu, ouvrez {0} dans Chrome ou Edge et suivez les étapes. Quand un code s’affiche, scannez-le ici.",
-      "ko": "게임용 컴퓨터에서 Chrome이나 Edge로 {0}을 열고 안내를 따라 주세요. 코드가 나오면 여기서 스캔하세요.",
+      "ko": "게임용 컴퓨터의 Chrome이나 Edge에서 {0}에 접속해 안내를 따라 주세요. 코드가 나오면 여기서 스캔하세요.",
       "ru": "На игровом компьютере откройте {0} в Chrome или Edge и пройдите шаги. Когда появится код, отсканируйте его здесь."
     },
     "references": [
@@ -1250,7 +1250,7 @@
       "zh-Hans": "只有游戏存档会被同步；你在这台电脑上手动勾选的内容会留在这里。最简单的做法是在一台设备上记录，比如你的手机，让游戏电脑只负责读取存档。",
       "zh-Hant": "只有遊戲存檔會同步；你在這台電腦上手動勾選的內容會留在這裡。最簡單的做法是在一台裝置上記錄，例如你的手機，讓遊戲電腦只負責讀取存檔。",
       "es": "Solo se sincroniza la partida guardada del juego; lo que marques a mano en este ordenador se queda aquí. Lo más fácil es registrar en un solo dispositivo, como tu móvil, y dejar que tu ordenador de juego solo lea la partida guardada.",
-      "fr": "Seule la sauvegarde du jeu est synchronisée ; tout ce que vous cochez à la main sur cet ordinateur reste ici. Le plus simple : suivez tout sur un seul appareil, comme votre téléphone, et laissez votre ordinateur de jeu se contenter de lire la sauvegarde.",
+      "fr": "Seule la sauvegarde du jeu est synchronisée ; tout ce que vous cochez à la main sur cet ordinateur reste ici. Le plus simple : suivez tout sur un seul appareil, comme votre téléphone, et laissez votre ordinateur de jeu se contenter de lire la sauvegarde.",
       "ko": "동기화되는 건 게임 세이브 파일뿐이에요. 이 컴퓨터에서 직접 체크한 건 여기에 남아요. 휴대폰 같은 기기 하나에서 기록하고, 게임용 컴퓨터는 세이브 파일만 읽게 하는 게 가장 쉬워요.",
       "ru": "Синхронизируется только сохранение игры; всё, что вы отмечаете вручную на этом компьютере, остаётся здесь. Проще всего вести учёт на одном устройстве, например на телефоне, а игровой компьютер пусть просто читает сохранение."
     },
@@ -1272,7 +1272,7 @@
       "zh-Hans": "只有游戏存档会被同步；你在这部手机上手动勾选的内容会留在这里。最简单的做法是所有记录都在这里完成，让游戏电脑只负责读取存档。",
       "zh-Hant": "只有遊戲存檔會同步；你在這支手機上手動勾選的內容會留在這裡。最簡單的做法是所有記錄都在這裡完成，讓遊戲電腦只負責讀取存檔。",
       "es": "Solo se sincroniza la partida guardada del juego; lo que marques a mano en este móvil se queda aquí. Lo más fácil es registrarlo todo aquí y dejar que tu ordenador de juego solo lea la partida guardada.",
-      "fr": "Seule la sauvegarde du jeu est synchronisée ; tout ce que vous cochez à la main sur ce téléphone reste ici. Le plus simple : suivez tout ici même, et laissez votre ordinateur de jeu se contenter de lire la sauvegarde.",
+      "fr": "Seule la sauvegarde du jeu est synchronisée ; tout ce que vous cochez à la main sur ce téléphone reste ici. Le plus simple : suivez tout ici même, et laissez votre ordinateur de jeu se contenter de lire la sauvegarde.",
       "ko": "동기화되는 건 게임 세이브 파일뿐이에요. 이 휴대폰에서 직접 체크한 건 여기에 남아요. 기록은 전부 여기서 하고, 게임용 컴퓨터는 세이브 파일만 읽게 하는 게 가장 쉬워요.",
       "ru": "Синхронизируется только сохранение игры; всё, что вы отмечаете вручную на этом телефоне, остаётся здесь. Проще всего вести весь учёт прямо здесь, а игровой компьютер пусть просто читает сохранение."
     },
@@ -1290,7 +1290,7 @@
   {
     "translations": {
       "en": "Or another device. Scan this code with it, and it’ll sync your save file from here on out.",
-      "ja": "ほかの端末でもOK。このコードを読み取れば、これからはセーブデータが同期されます。",
+      "ja": "ほかの端末でもOKです。その端末でこのコードを読み取れば、これからはセーブデータが同期されます。",
       "zh-Hans": "或者其他设备。用它扫描这个代码，从此它就会同步你的存档。",
       "zh-Hant": "或其他裝置。用它掃描這個代碼，從此它就會同步你的存檔。",
       "es": "O en otro dispositivo. Escanea este código con él y sincronizará tu partida guardada a partir de ahora.",
@@ -1360,7 +1360,7 @@
       "zh-Hans": "完美！看起来这个存档属于 {1} 的 {0}，对吗？",
       "zh-Hant": "完美！看起來這個存檔屬於 {1} 的 {0}，對嗎？",
       "es": "¡Perfecto! Parece que esa partida guardada es de {0} en {1}, ¿verdad?",
-      "fr": "Parfait ! Cette sauvegarde semble être celle de {0} à {1}, c’est bien ça ?",
+      "fr": "Parfait ! Cette sauvegarde semble être celle de {0} à {1}, c’est bien ça ?",
       "ko": "완벽해요! 이 세이브 파일은 {1}의 {0} 것 같은데, 맞나요?",
       "ru": "Отлично! Похоже, это сохранение {0} с фермы {1}, верно?"
     },
@@ -1393,8 +1393,8 @@
       "zh-Hans": "完美！我们在这个存档里找到了一座农场。是你的吗？",
       "zh-Hant": "完美！我們在這個存檔裡找到了一座農場。是你的嗎？",
       "es": "¡Perfecto! Hemos encontrado una granja en esa partida guardada. ¿Es la tuya?",
-      "fr": "Parfait ! On a trouvé une ferme dans cette sauvegarde. C’est la vôtre ?",
-      "ko": "완벽해요! 이 세이브 파일에서 농장을 찾았어요. 당신 농장인가요?",
+      "fr": "Parfait ! On a trouvé une ferme dans cette sauvegarde. C’est la vôtre ?",
+      "ko": "완벽해요! 이 세이브 파일에서 농장을 찾았어요. 플레이하시는 농장이 맞나요?",
       "ru": "Отлично! В этом сохранении нашлась ферма. Это ваша?"
     },
     "references": [
@@ -1411,11 +1411,11 @@
   {
     "translations": {
       "en": "Quick question: here, or the home screen app?",
-      "ja": "ひとつ質問：ここで使う？ホーム画面のアプリで使う？",
+      "ja": "ひとつ質問です。ここで使いますか？それともホーム画面のアプリですか？",
       "zh-Hans": "问个问题：在这里，还是用主屏幕应用？",
       "zh-Hant": "問個問題：在這裡，還是用主畫面 App？",
       "es": "Una pregunta rápida: ¿aquí o en la app de la pantalla de inicio?",
-      "fr": "Petite question : ici, ou dans l’app de l’écran d’accueil ?",
+      "fr": "Petite question : ici, ou dans l’app de l’écran d’accueil ?",
       "ko": "잠깐 질문: 여기서 쓸래요, 홈 화면 앱에서 쓸래요?",
       "ru": "Короткий вопрос: здесь или в приложении на экране «Домой»?"
     },
@@ -1545,9 +1545,9 @@
       "en": "Skipped. Show a code any time from Data.",
       "ja": "スキップしました。コードはデータ管理からいつでも表示できます。",
       "zh-Hans": "已跳过。随时可以在数据管理里显示代码。",
-      "zh-Hant": "已略過。隨時可以在資料管理裡顯示代碼。",
+      "zh-Hant": "已略過。隨時可以在「資料」頁面顯示代碼。",
       "es": "Omitido. Muestra un código cuando quieras desde Datos.",
-      "fr": "Passé. Affichez un code quand vous voulez depuis Données.",
+      "fr": "Étape passée. Vous pouvez afficher un code quand vous voulez depuis Données.",
       "ko": "건너뛰었어요. 데이터 관리에서 언제든 코드를 볼 수 있어요.",
       "ru": "Пропущено. Показать код можно в любой момент в разделе «Данные»."
     },
@@ -1569,7 +1569,7 @@
       "zh-Hans": "还是不行？按 Windows 键 + R，粘贴同样的文件夹位置，然后按 Enter。（这只会打开一个文件夹。无论是我们还是任何人给的，都不要往那个框里粘贴其他东西。）",
       "zh-Hant": "還是不行？按 Windows 鍵 + R，貼上同樣的資料夾位置，然後按 Enter。（這只會打開一個資料夾。無論是我們還是任何人給的，都不要在那個框裡貼上其他東西。）",
       "es": "¿Sigue sin aparecer? Pulsa la tecla Windows + R, pega la misma ubicación de la carpeta y pulsa Intro. (Eso solo abre una carpeta. Nunca pegues nada más en ese cuadro, ni de nuestra parte ni de nadie.)",
-      "fr": "Toujours rien ? Appuyez sur la touche Windows + R, collez le même emplacement et appuyez sur Entrée. (Cela ouvre seulement un dossier. Ne collez jamais rien d’autre dans ce champ, ni de notre part ni de qui que ce soit.)",
+      "fr": "Toujours rien ? Appuyez sur la touche Windows + R, collez le même emplacement et appuyez sur Entrée. (Cela ouvre seulement un dossier. Ne collez jamais rien d’autre dans ce champ, ni de notre part ni de qui que ce soit.)",
       "ko": "그래도 안 되나요? Windows 키 + R을 누르고 같은 폴더 위치를 붙여넣은 뒤 Enter를 누르세요. (폴더만 여는 거예요. 저희든 누구든, 그 상자에는 절대 다른 걸 붙여넣지 마세요.)",
       "ru": "Всё ещё ничего? Нажмите клавишу Windows + R, вставьте тот же путь и нажмите Enter. (Это только открывает папку. Никогда не вставляйте туда ничего другого: ни от нас, ни от кого-либо ещё.)"
     },
@@ -1638,7 +1638,7 @@
       "es": "Sincronizar",
       "fr": "Synchroniser",
       "ko": "동기화",
-      "ru": "Синхр."
+      "ru": "Подключить"
     },
     "references": [
       {
@@ -1684,7 +1684,7 @@
     "translations": {
       "en": "Sync is paused for now",
       "ja": "同期は一時停止中です",
-      "zh-Hans": "同步暂时暂停了",
+      "zh-Hans": "同步先暂停一会儿",
       "zh-Hant": "同步暫時暫停了",
       "es": "La sincronización está en pausa por ahora",
       "fr": "La synchro est en pause pour l’instant",
@@ -1715,7 +1715,7 @@
       "zh-Hans": "改为同步这个存档？",
       "zh-Hant": "改成同步這個存檔？",
       "es": "¿Sincronizar esta partida guardada en su lugar?",
-      "fr": "Synchroniser plutôt cette sauvegarde ?",
+      "fr": "Synchroniser plutôt cette sauvegarde ?",
       "ko": "대신 이 세이브 파일을 동기화할까요?",
       "ru": "Синхронизировать это сохранение вместо прежнего?"
     },
@@ -1754,14 +1754,14 @@
   },
   {
     "translations": {
-      "en": "Tap Share, then “Add to Home Screen”. Open the tracker from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
-      "ja": "共有をタップしてから「ホーム画面に追加」をタップします。ホーム画面からガイドを開き、「農場から自動で同期する」をタップして、そこでコードを読み取ってください。",
-      "zh-Hans": "轻点“共享”，然后轻点“添加到主屏幕”。从主屏幕打开指南，轻点“从我的农场自动同步”，然后在那里扫描代码。",
-      "zh-Hant": "點一下「分享」，再點「加入主畫面」。從主畫面打開指南，點一下「從我的農場自動同步」，然後在那裡掃描代碼。",
+      "en": "Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync from my farm automagically”, and scan the code there.",
+      "ja": "「共有」をタップしてから「ホーム画面に追加」をタップします。ホーム画面からフィールドガイドを開き、「農場から自動で同期する」をタップして、そこでコードを読み取ってください。",
+      "zh-Hans": "轻点“共享”，然后轻点“添加到主屏幕”。从主屏幕打开田野指南，轻点“从我的农场魔法般自动同步”，然后在那里扫描代码。",
+      "zh-Hant": "點一下「分享」，再點「加入主畫面」。從主畫面打開田野指南，點一下「從我的農場自動同步」，然後在那裡掃描代碼。",
       "es": "Toca Compartir y luego «Añadir a pantalla de inicio». Abre la guía desde tu pantalla de inicio, toca «Sincronizar desde mi granja automágicamente» y escanea el código ahí.",
-      "fr": "Touchez Partager, puis « Sur l’écran d’accueil ». Ouvrez le guide depuis votre écran d’accueil, touchez « Synchroniser depuis ma ferme, comme par magie » et scannez le code là-bas.",
-      "ko": "공유를 탭한 다음 “홈 화면에 추가”를 탭하세요. 홈 화면에서 가이드를 열고 “농장에서 자동으로 동기화”를 탭한 뒤 거기서 코드를 스캔하세요.",
-      "ru": "Нажмите «Поделиться», затем «На экран «Домой»». Откройте путеводитель с экрана «Домой», нажмите «Синхронизировать с фермы автомагически» и отсканируйте код там."
+      "fr": "Touchez Partager, puis « Sur l’écran d’accueil ». Ouvrez le guide depuis votre écran d’accueil, touchez « Synchroniser depuis ma ferme, comme par magie » et scannez le code là-bas.",
+      "ko": "공유를 탭한 다음 “홈 화면에 추가”를 탭하세요. 홈 화면에서 필드 가이드를 열고 “농장에서 알아서 척척 동기화”를 탭한 뒤 거기서 코드를 스캔하세요.",
+      "ru": "Нажмите «Поделиться», затем «На экран „Домой“». Откройте справочник с экрана «Домой», нажмите «Синхронизировать с фермы автомагически» и отсканируйте код там."
     },
     "references": [
       {
@@ -1803,7 +1803,7 @@
       "zh-Hans": "这台设备会开始接收另一个存档。如果是另一座农场，我们会备份当前的农场，但只能保存一份备份，所以你可能想先自己备份一下。",
       "zh-Hant": "這台裝置會開始接收另一個存檔。如果是另一座農場，我們會備份目前的農場，但只能存一份備份，所以你可能想先自己備份一下。",
       "es": "Este dispositivo empezará a recibir otra partida guardada. Si es otra granja, haremos una copia de la actual, pero solo cabe una copia, así que quizá quieras hacer la tuya antes.",
-      "fr": "Cet appareil va recevoir une autre sauvegarde. Si c’est une autre ferme, on sauvegardera l’actuelle, mais une seule sauvegarde tient, alors vous voudrez peut-être faire la vôtre d’abord.",
+      "fr": "Cet appareil va recevoir une autre sauvegarde. Si c’est une autre ferme, on fera une copie de l’actuelle, mais il n’y a de place que pour une seule copie : vous voudrez peut-être faire la vôtre d’abord.",
       "ko": "이 기기는 다른 세이브 파일을 받게 돼요. 다른 농장이면 지금 농장을 백업하지만, 백업은 하나만 저장되니 먼저 직접 백업해 두는 게 좋아요.",
       "ru": "Это устройство начнёт получать другое сохранение. Если это другая ферма, мы сделаем копию текущей, но помещается только одна копия, так что, возможно, стоит сначала сделать свою."
     },
@@ -1825,7 +1825,7 @@
       "zh-Hans": "想在手机上记录吗？",
       "zh-Hant": "想在手機上記錄嗎？",
       "es": "¿Quieres seguirlo en tu móvil?",
-      "fr": "Envie de suivre ça sur votre téléphone ?",
+      "fr": "Envie de suivre ça sur votre téléphone ?",
       "ko": "휴대폰에서도 기록할래요?",
       "ru": "Хотите отслеживать это на телефоне?"
     },
@@ -1847,7 +1847,7 @@
       "zh-Hans": "现在连接不上",
       "zh-Hant": "現在連線不上",
       "es": "Ahora mismo no podemos conectar",
-      "fr": "Connexion impossible pour le moment",
+      "fr": "On n’arrive pas à se connecter pour le moment",
       "ko": "지금은 연결할 수 없어요",
       "ru": "Сейчас не удаётся подключиться"
     },
@@ -1877,7 +1877,7 @@
       "es": "Seguiremos intentándolo, o puedes volver a probar tú.",
       "fr": "On continue d’essayer, ou vous pouvez réessayer.",
       "ko": "계속 시도할게요. 직접 다시 시도해도 돼요.",
-      "ru": "Мы будем пробовать дальше, или можете попробовать снова сами."
+      "ru": "Мы будем пробовать дальше, а вы можете попробовать ещё раз прямо сейчас."
     },
     "references": [
       {
@@ -1925,7 +1925,7 @@
       "zh-Hans": "你的存档在哪里？",
       "zh-Hant": "你的存檔在哪裡？",
       "es": "¿Dónde está tu partida guardada?",
-      "fr": "Où est votre sauvegarde ?",
+      "fr": "Où est votre sauvegarde ?",
       "ko": "세이브 파일은 어디에 있나요?",
       "ru": "Где ваше сохранение?"
     },
@@ -1945,9 +1945,9 @@
       "en": "While this tab’s open, we’ll sync your save file every time you sleep. So leave it open while you play!",
       "ja": "このタブを開いている間は、眠るたびにセーブデータを同期します。プレイ中は開いたままにしておいてください！",
       "zh-Hans": "只要这个标签页开着，你每次睡觉时我们都会同步存档。所以玩的时候请保持它打开！",
-      "zh-Hant": "只要這個分頁開著，你每次睡覺時我們都會同步存檔。所以玩的時候請保持它開著！",
+      "zh-Hant": "只要這個分頁開著，你每次在遊戲裡睡覺時，我們都會同步存檔。所以玩的時候記得讓它開著！",
       "es": "Mientras esta pestaña esté abierta, sincronizaremos tu partida guardada cada vez que duermas. ¡Así que déjala abierta mientras juegas!",
-      "fr": "Tant que cet onglet est ouvert, on synchronise votre sauvegarde chaque fois que vous dormez. Laissez-le donc ouvert pendant que vous jouez !",
+      "fr": "Tant que cet onglet est ouvert, on synchronise votre sauvegarde chaque fois que vous dormez. Laissez-le donc ouvert pendant que vous jouez !",
       "ko": "이 탭이 열려 있는 동안 잠들 때마다 세이브 파일을 동기화해요. 플레이하는 동안 열어 두세요!",
       "ru": "Пока эта вкладка открыта, мы будем синхронизировать сохранение каждый раз, когда вы ложитесь спать. Так что не закрывайте её во время игры!"
     },
@@ -1986,14 +1986,14 @@
   },
   {
     "translations": {
-      "en": "Your code works, but there’s no save file waiting yet. Open the tracker on your gaming computer, and we’ll grab the latest one.",
+      "en": "Your code works, but there’s no save file waiting yet. Open the field guide on your gaming computer, and we’ll grab the latest one.",
       "ja": "コードは使えますが、まだ届いているセーブデータがありません。ゲーム用パソコンでガイドを開けば、最新のものを取得します。",
-      "zh-Hans": "你的代码可以用，但还没有等待中的存档。在游戏电脑上打开指南，我们就会拿到最新的存档。",
-      "zh-Hant": "你的代碼可以用，但還沒有等待中的存檔。在遊戲電腦上打開指南，我們就會拿到最新的存檔。",
+      "zh-Hans": "你的代码可以用，但还没有等待中的存档。在游戏电脑上打开田野指南，我们就会拿到最新的存档。",
+      "zh-Hant": "你的代碼可以用，但還沒有等待中的存檔。在遊戲電腦上打開田野指南，我們就會拿到最新的存檔。",
       "es": "Tu código funciona, pero aún no hay ninguna partida guardada esperando. Abre la guía en tu ordenador de juego y recogeremos la más reciente.",
       "fr": "Votre code fonctionne, mais aucune sauvegarde n’attend encore. Ouvrez le guide sur votre ordinateur de jeu, et on récupérera la plus récente.",
-      "ko": "코드는 작동하지만 아직 기다리는 세이브 파일이 없어요. 게임용 컴퓨터에서 가이드를 열면 최신 파일을 가져올게요.",
-      "ru": "Код работает, но сохранения пока нет. Откройте путеводитель на игровом компьютере, и мы получим самое свежее."
+      "ko": "코드는 작동하지만 아직 기다리는 세이브 파일이 없어요. 게임용 컴퓨터에서 필드 가이드를 열면 최신 파일을 가져올게요.",
+      "ru": "Код работает, но сохранения пока нет. Откройте справочник на игровом компьютере, и мы получим самое свежее."
     },
     "references": [
       {
@@ -2034,7 +2034,7 @@
       "ja": "パソコンがこのセーブデータの共有をやめました",
       "zh-Hans": "你的电脑停止分享这个存档了",
       "zh-Hant": "你的電腦停止分享這個存檔了",
-      "es": "Tu ordenador dejó de compartir esta partida guardada",
+      "es": "Tu ordenador ha dejado de compartir esta partida guardada",
       "fr": "Votre ordinateur ne partage plus cette sauvegarde",
       "ko": "컴퓨터가 이 세이브 파일 공유를 멈췄어요",
       "ru": "Компьютер перестал делиться этим сохранением"
@@ -2057,7 +2057,7 @@
       "zh-Hans": "你的进度很安全！想了解更多，请查看电脑上的 Mistria Field Guide。",
       "zh-Hant": "你的進度很安全！想了解更多，請查看電腦上的 Mistria Field Guide。",
       "es": "¡Tu progreso está a salvo! Para más información, mira Mistria Field Guide en tu ordenador.",
-      "fr": "Votre progression est en sécurité ! Pour en savoir plus, consultez Mistria Field Guide sur votre ordinateur.",
+      "fr": "Votre progression est en sécurité ! Pour en savoir plus, consultez Mistria Field Guide sur votre ordinateur.",
       "ko": "진행 상황은 안전해요! 자세한 내용은 컴퓨터의 Mistria Field Guide를 확인하세요.",
       "ru": "Ваш прогресс в безопасности! Подробности смотрите в Mistria Field Guide на компьютере."
     },
@@ -2101,7 +2101,7 @@
       "zh-Hans": "同步存档会让你从头开始，这台设备上记录过的内容都会被清除。存档会自动帮你勾选几乎所有内容，不过你也可以先快速备份一下。",
       "zh-Hant": "同步存檔會讓你從頭開始，這台裝置上記錄過的內容都會被清除。存檔會自動幫你勾選幾乎所有內容，不過你也可以先快速備份一下。",
       "es": "Al sincronizar tu partida guardada empezarás de cero, así que se borrará todo lo que hayas registrado en este dispositivo. Tu partida guardada marcará casi todo por sí sola, pero puedes hacer una copia de seguridad rápida antes si quieres.",
-      "fr": "Synchroniser votre sauvegarde vous fait repartir de zéro : tout ce que vous avez suivi sur cet appareil sera effacé. Votre sauvegarde cochera presque tout toute seule, mais vous pouvez d’abord faire une petite sauvegarde si vous voulez.",
+      "fr": "Synchroniser votre sauvegarde vous fait repartir de zéro : tout ce que vous avez suivi sur cet appareil sera effacé. Votre sauvegarde cochera presque tout toute seule, mais vous pouvez d’abord faire une petite copie de sauvegarde si vous voulez.",
       "ko": "세이브 파일을 동기화하면 처음부터 새로 시작하게 되어, 이 기기에서 기록한 내용은 지워져요. 세이브 파일이 거의 모든 걸 알아서 체크해 주지만, 원하면 먼저 간단히 백업해 둘 수 있어요.",
       "ru": "Синхронизация сохранения начинает всё с чистого листа, поэтому всё, что вы отметили на этом устройстве, будет удалено. Сохранение само отметит почти всё, но при желании можно сначала быстро сделать резервную копию."
     },

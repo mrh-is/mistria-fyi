@@ -55,7 +55,7 @@
     </p>
   </SyncNote>
 {:else if status.upload === "update"}
-  <SyncNote title="This tracker needs a refresh to keep your save file syncing.">
+  <SyncNote title="The field guide on this device needs a refresh to keep your save file syncing.">
     <div>
       <Button
         size="sm"

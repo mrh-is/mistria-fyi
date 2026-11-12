@@ -80,10 +80,9 @@
     </ul>
     <p>
       Your feedback (minus your email) is used to create a <strong>public issue</strong>
-      <!-- @wc-include -->on the GitHub issue tracker so I can find and fix problems. This includes
-      your message, the item you picked (if any), your progress data (if you opted in), and your
-      save file sync log (if you opted in). Avoid including personal information in your message, as
-      these fields will be
+      on the GitHub issue tracker so I can find and fix problems. This includes your message, the item
+      you picked (if any), your progress data (if you opted in), and your save file sync log (if you opted
+      in). Avoid including personal information in your message, as these fields will be
       <strong>publicly visible</strong>.
     </p>
     <p>

@@ -6,7 +6,7 @@
       "zh-Hans": "全部清单",
       "zh-Hant": "全部清單",
       "es": "Lista de todo",
-      "fr": "Liste de tout",
+      "fr": "Liste complète",
       "ko": "전체 체크리스트",
       "ru": "Список всего"
     },
@@ -24,13 +24,13 @@
   {
     "translations": {
       "en": "Cosmetics",
-      "ja": "コスメ",
-      "zh-Hans": "装饰",
-      "zh-Hant": "裝飾",
-      "es": "Cosméticos",
-      "fr": "Cosmétiques",
-      "ko": "코스메틱",
-      "ru": "Косметика"
+      "ja": "外見アイテム",
+      "zh-Hans": "装扮",
+      "zh-Hant": "飾物",
+      "es": "Accesorios",
+      "fr": "Accessoires",
+      "ko": "꾸미기 아이템",
+      "ru": "Украшения"
     },
     "references": [
       {
@@ -70,10 +70,10 @@
       "en": "Import, sync, back up, restore, or reset your Mistria Field Guide tracking progress.",
       "ja": "Mistria Field Guideの進捗をインポート、同期、バックアップ、復元、リセットできます。",
       "zh-Hans": "导入、同步、备份、恢复或重置你的 Mistria Field Guide 记录进度。",
-      "zh-Hant": "匯入、同步、備份、還原或重設你的 Mistria Field Guide 紀錄進度。",
-      "es": "Importa, sincroniza, guarda, restaura o reinicia tu progreso en Mistria Field Guide.",
+      "zh-Hant": "匯入、同步、備份、還原或重設你在 Mistria Field Guide 記錄的進度。",
+      "es": "Importa, sincroniza, haz copias de seguridad, restaura o reinicia tu progreso en Mistria Field Guide.",
       "fr": "Importez, synchronisez, sauvegardez, restaurez ou réinitialisez votre progression dans Mistria Field Guide.",
-      "ko": "Mistria Field Guide 진행도를 가져오고, 동기화하고, 백업하고, 복원하거나 초기화하세요.",
+      "ko": "Mistria Field Guide에 기록한 진행 상황을 가져오고, 동기화하고, 백업하고, 복원하거나 초기화하세요.",
       "ru": "Импортируйте, синхронизируйте, сохраняйте, восстанавливайте или сбрасывайте прогресс в Mistria Field Guide."
     },
     "references": [
@@ -114,7 +114,7 @@
       "en": "Privacy policy",
       "ja": "プライバシーポリシー",
       "zh-Hans": "隐私政策",
-      "zh-Hant": "隱私政策",
+      "zh-Hant": "隱私權政策",
       "es": "Política de privacidad",
       "fr": "Politique de confidentialité",
       "ko": "개인정보 처리방침",
@@ -157,11 +157,11 @@
     "translations": {
       "en": "Read how the Mistria Field Guide stores your Fields of Mistria progress, handles feedback, and protects your privacy.",
       "ja": "Mistria Field GuideがFields of Mistriaの進捗をどう保存し、フィードバックをどう扱い、プライバシーをどう保護するかについて。",
-      "zh-Hans": "了解 Mistria 田野指南如何存储你在 Fields of Mistria 中的进度、处理反馈以及保护你的隐私。",
-      "zh-Hant": "了解 Mistria 田野指南如何儲存你在 Fields of Mistria 中的進度、處理回饋以及保護你的隱私。",
+      "zh-Hans": "了解 Mistria Field Guide 如何存储你在《Fields of Mistria》中的进度、处理反馈以及保护你的隐私。",
+      "zh-Hant": "了解 Mistria Field Guide 如何儲存你在《Fields of Mistria》中的進度、處理回饋，以及保護你的隱私。",
       "es": "Lee cómo Mistria Field Guide almacena tu progreso en Fields of Mistria, gestiona los comentarios y protege tu privacidad.",
       "fr": "Découvrez comment le Mistria Field Guide stocke votre progression dans Fields of Mistria, gère les retours et protège votre vie privée.",
-      "ko": "Mistria 필드 가이드가 Fields of Mistria 진행 상황을 어떻게 저장하고, 피드백을 어떻게 처리하며, 개인정보를 어떻게 보호하는지 알아보세요.",
+      "ko": "Mistria Field Guide가 Fields of Mistria 진행 상황을 어떻게 저장하고, 피드백을 어떻게 처리하며, 개인정보를 어떻게 보호하는지 알아보세요.",
       "ru": "Узнайте, как Mistria Field Guide хранит ваш прогресс в Fields of Mistria, обрабатывает отзывы и защищает вашу конфиденциальность."
     },
     "references": [
@@ -201,12 +201,12 @@
     "translations": {
       "en": "Sync your Fields of Mistria save file to the field guide on any device.",
       "ja": "Fields of Mistria のセーブデータを、どの端末のガイドにも同期します。",
-      "zh-Hans": "把 Fields of Mistria 的存档同步到任意设备上的指南。",
-      "zh-Hant": "把 Fields of Mistria 的存檔同步到任何裝置上的指南。",
+      "zh-Hans": "把《Fields of Mistria》存档同步到任意设备上的田野指南。",
+      "zh-Hant": "把《Fields of Mistria》的存檔同步到任何裝置上的田野指南。",
       "es": "Sincroniza tu partida guardada de Fields of Mistria con la guía en cualquier dispositivo.",
       "fr": "Synchronisez votre sauvegarde de Fields of Mistria avec le guide, sur n’importe quel appareil.",
-      "ko": "Fields of Mistria 세이브 파일을 어느 기기에서든 가이드와 동기화하세요.",
-      "ru": "Синхронизируйте сохранение Fields of Mistria с путеводителем на любом устройстве."
+      "ko": "Fields of Mistria 세이브 파일을 어느 기기에서든 필드 가이드와 동기화하세요.",
+      "ru": "Синхронизируйте файл сохранения Fields of Mistria со справочником на любом устройстве."
     },
     "references": [
       {
@@ -244,13 +244,13 @@
   {
     "translations": {
       "en": "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
-      "ja": "Fields of Mistriaの農場で動物の品種、カラー、コスメを記録します。",
-      "zh-Hans": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
-      "zh-Hant": "追蹤《Fields of Mistria》農場中動物的品種、顏色與裝飾。",
-      "es": "Sigue las razas, colores y cosméticos de animales en tu granja de Fields of Mistria.",
-      "fr": "Suivez les races, couleurs et cosmétiques des animaux de votre ferme dans Fields of Mistria.",
-      "ko": "Fields of Mistria 농장의 동물 품종, 색상, 코스메틱을 기록하세요.",
-      "ru": "Отслеживайте породы, окрасы и косметику животных на вашей ферме в Fields of Mistria."
+      "ja": "Fields of Mistriaの農場で動物の品種、カラー、外見アイテムを記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》农场中动物的品种、颜色与装扮。",
+      "zh-Hant": "追蹤《Fields of Mistria》農場中動物的品種、顏色與飾物。",
+      "es": "Sigue las razas, colores y accesorios de animales en tu granja de Fields of Mistria.",
+      "fr": "Suivez les races, couleurs et accessoires des animaux de votre ferme dans Fields of Mistria.",
+      "ko": "Fields of Mistria 농장의 동물 품종, 색상, 꾸미기 아이템을 기록하세요.",
+      "ru": "Отслеживайте породы, окрасы и украшения животных на вашей ферме в Fields of Mistria."
     },
     "references": [
       {
@@ -270,8 +270,8 @@
       "zh-Hans": "追踪《Fields of Mistria》中的烹饪与制作食谱。",
       "zh-Hant": "追蹤《Fields of Mistria》中的烹飪與製作食譜。",
       "es": "Sigue las recetas de cocina y artesanía en Fields of Mistria.",
-      "fr": "Suivez les recettes de cuisine et d'artisanat dans Fields of Mistria.",
-      "ko": "Fields of Mistria의 요리 및 제작 레시피를 기록하세요.",
+      "fr": "Suivez les recettes de cuisine et d’artisanat dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 요리와 제작 레시피를 기록하세요.",
       "ru": "Отслеживайте рецепты кулинарии и крафта в Fields of Mistria."
     },
     "references": [
@@ -288,12 +288,12 @@
   {
     "translations": {
       "en": "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
-      "ja": "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
-      "zh-Hans": "追踪《Fields of Mistria》中的作物、采集、钓鱼、昆虫、文物等年鉴条目。",
-      "zh-Hant": "追蹤《Fields of Mistria》中的作物、採集、釣魚、昆蟲、文物等年鑑項目。",
-      "es": "Sigue cultivos, forrajeo, pesca, insectos, artefactos y demás entradas del almanaque en Fields of Mistria.",
-      "fr": "Suivez les cultures, la cueillette, la pêche, les insectes, les artefacts et les autres entrées de l'almanach dans Fields of Mistria.",
-      "ko": "Fields of Mistria의 작물, 채집, 낚시, 곤충, 유물 등 알마낙 항목을 기록하세요.",
+      "ja": "Fields of Mistriaの農作物、採集物、魚、昆虫、遺物など、図鑑の項目を記録します。",
+      "zh-Hans": "追踪《Fields of Mistria》中的作物、野生采集、渔获、昆虫、古代文物等博物图鉴条目。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的作物、採集物、魚類、昆蟲、古代文物等博物圖鑑項目。",
+      "es": "Sigue cultivos, recursos naturales, peces, insectos, curiosidades y demás entradas del almanaque en Fields of Mistria.",
+      "fr": "Suivez les cultures, la cueillette, la pêche, les insectes, les artéfacts et les autres entrées du catalogue dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 작물, 채집물, 물고기, 곤충, 유물 등 도감 항목을 기록하세요.",
       "ru": "Отслеживайте урожай, собирательство, рыбалку, насекомых, артефакты и другие записи альманаха в Fields of Mistria."
     },
     "references": [
@@ -336,7 +336,7 @@
       "zh-Hans": "追踪《Fields of Mistria》中与村民的友情与恋爱进度。",
       "zh-Hant": "追蹤《Fields of Mistria》中與村民的友情與戀愛進度。",
       "es": "Sigue la amistad y el romance con los aldeanos de Fields of Mistria.",
-      "fr": "Suivez l'amitié et les romances avec les habitants de Fields of Mistria.",
+      "fr": "Suivez l’amitié et les romances avec les habitants de Fields of Mistria.",
       "ko": "Fields of Mistria 마을 주민들과의 우정과 로맨스를 기록하세요.",
       "ru": "Отслеживайте дружбу и романтические отношения с жителями Fields of Mistria."
     },
@@ -354,12 +354,12 @@
   {
     "translations": {
       "en": "Track mine floors, spells, & exploration progress in Fields of Mistria.",
-      "ja": "Fields of Mistriaの鉱坑のフロア、魔法、探索の進行状況を記録します。",
+      "ja": "Fields of Mistriaの鉱坑の階層、魔法、探索の進捗を記録します。",
       "zh-Hans": "追踪《Fields of Mistria》中矿洞楼层、法术与探索进度。",
       "zh-Hant": "追蹤《Fields of Mistria》中礦洞樓層、法術與探索進度。",
       "es": "Sigue los pisos de las minas, los hechizos y el progreso de exploración en Fields of Mistria.",
-      "fr": "Suivez les étages des mines, les sorts et la progression de l'exploration dans Fields of Mistria.",
-      "ko": "Fields of Mistria의 광산 층, 마법, 탐험 진행 상황을 기록하세요.",
+      "fr": "Suivez les étages des mines, les sorts et la progression de l’exploration dans Fields of Mistria.",
+      "ko": "Fields of Mistria의 광산 층, 마법 주문, 탐험 진행 상황을 기록하세요.",
       "ru": "Отслеживайте этажи шахт, заклинания и прогресс исследования в Fields of Mistria."
     },
     "references": [
@@ -376,12 +376,12 @@
   {
     "translations": {
       "en": "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
-      "ja": "Fields of Mistriaの博物館への寄贈、アルマナックの発見、レシピ、交流、スキル、クエストなどを記録して、100%コンプリートを目指しましょう。",
-      "zh-Hans": "追踪《Fields of Mistria》中的博物馆捐赠、年鉴发现、食谱、关系、技能、任务等内容，向 100% 完成度迈进。",
-      "zh-Hant": "追蹤《Fields of Mistria》中的博物館捐贈、年鑑發現、食譜、關係、技能、任務等內容，向 100% 完成度邁進。",
-      "es": "Sigue las donaciones al museo, los hallazgos del almanaque, las recetas, las relaciones, las habilidades, las misiones y más en Fields of Mistria mientras avanzas hacia el 100 % de completado.",
-      "fr": "Suivez les dons au musée, les trouvailles de l’almanach, les recettes, les relations, les compétences, les quêtes et plus encore dans Fields of Mistria, en route vers les 100 % de complétion.",
-      "ko": "Fields of Mistria의 박물관 기증, 알마낙 발견, 레시피, 관계, 스킬, 퀘스트 등을 기록하며 100% 달성을 향해 나아가세요.",
+      "ja": "Fields of Mistriaの博物館への寄贈、図鑑の発見、レシピ、交流、スキル、クエストなどを記録して、100%コンプリートを目指しましょう。",
+      "zh-Hans": "追踪《Fields of Mistria》中的博物馆捐赠、博物图鉴、食谱、关系、技能、任务等内容，向 100% 完成度迈进。",
+      "zh-Hant": "追蹤《Fields of Mistria》中的博物館捐贈、博物圖鑑收集、食譜、關係、技能、任務等內容，向 100% 完成度邁進。",
+      "es": "Sigue las donaciones al museo, los hallazgos del almanaque, las recetas, las relaciones, las habilidades, las misiones y más en Fields of Mistria mientras avanzas hacia el 100 %.",
+      "fr": "Suivez les dons au musée, les trouvailles du catalogue, les recettes, les relations, les compétences, les quêtes et plus encore dans Fields of Mistria, en route vers les 100 % de complétion.",
+      "ko": "Fields of Mistria의 박물관 기증, 도감 항목, 레시피, 관계, 스킬, 퀘스트 등을 기록하며 100% 달성을 향해 나아가세요.",
       "ru": "Отслеживайте пожертвования музею, находки альманаха, рецепты, отношения, умения, задания и многое другое в Fields of Mistria на пути к 100% прохождения."
     },
     "references": [
@@ -424,7 +424,7 @@
       "zh-Hans": "追踪《Fields of Mistria》中的剧情任务、委托及其他目标。",
       "zh-Hant": "追蹤《Fields of Mistria》中的劇情任務、委託及其他目標。",
       "es": "Sigue las misiones de la historia, los encargos y otros objetivos en Fields of Mistria.",
-      "fr": "Suivez les quêtes de l'histoire, les requêtes et autres objectifs dans Fields of Mistria.",
+      "fr": "Suivez les quêtes scénaristiques, les requêtes et les autres objectifs dans Fields of Mistria.",
       "ko": "Fields of Mistria의 스토리 퀘스트, 의뢰, 기타 목표를 기록하세요.",
       "ru": "Отслеживайте сюжетные задания, поручения и другие цели в Fields of Mistria."
     },
@@ -446,7 +446,7 @@
       "zh-Hans": "追踪《Fields of Mistria》中服装与外观的解锁进度。",
       "zh-Hant": "追蹤《Fields of Mistria》中服裝與外觀的解鎖進度。",
       "es": "Sigue los desbloqueos de vestuario y apariencia en Fields of Mistria.",
-      "fr": "Suivez les déblocages de garde-robe et d'apparence dans Fields of Mistria.",
+      "fr": "Suivez les déblocages de garde-robe et d’apparence dans Fields of Mistria.",
       "ko": "Fields of Mistria의 의상과 외형 잠금 해제를 기록하세요.",
       "ru": "Отслеживайте разблокировки гардероба и внешности в Fields of Mistria."
     },
@@ -489,7 +489,7 @@
       "ja": "Fields of Mistriaのすべてのコンプリート項目を1つのチェックリストで確認・記録できます。",
       "zh-Hans": "在同一份清单中查看并追踪《Fields of Mistria》的所有完成度类别。",
       "zh-Hant": "在同一份清單中查看並追蹤《Fields of Mistria》的所有完成度類別。",
-      "es": "Consulta y sigue todas las categorías de completado de Fields of Mistria en una sola lista.",
+      "es": "Consulta y sigue en una sola lista todo lo que hay que completar en Fields of Mistria.",
       "fr": "Consultez et suivez chaque catégorie de complétion de Fields of Mistria dans une seule liste.",
       "ko": "Fields of Mistria의 모든 달성 카테고리를 하나의 체크리스트에서 확인하고 기록하세요.",
       "ru": "Просматривайте и отслеживайте все категории прохождения Fields of Mistria в одном списке."

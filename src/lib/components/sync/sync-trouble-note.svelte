@@ -41,10 +41,12 @@
         };
       case "update-computer":
         return {
-          title: "The tracker on your computer needs a refresh to keep your save file syncing.",
+          title: "The field guide on your computer needs a refresh to keep your save file syncing.",
         };
       case "update-here":
-        return { title: "This tracker needs a refresh to keep your save file syncing." };
+        return {
+          title: "The field guide on this device needs a refresh to keep your save file syncing.",
+        };
       case "write-failed":
         return {
           body: "Your progress is safe! This device wouldn’t let us store it. It might be out of space. We’ll try again with your next save file, or you can try now.",

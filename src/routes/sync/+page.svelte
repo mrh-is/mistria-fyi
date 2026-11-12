@@ -391,8 +391,8 @@
 >
   {#if iosSteps}
     <p>
-      Tap Share, then “Add to Home Screen”. Open the tracker from your home screen, tap “Sync from
-      my farm automagically”, and scan the code there.
+      Tap Share, then “Add to Home Screen”. Open the field guide from your home screen, tap “Sync
+      from my farm automagically”, and scan the code there.
     </p>
   {/if}
 </SyncTagDialog>

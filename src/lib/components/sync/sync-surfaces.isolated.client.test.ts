@@ -226,8 +226,8 @@ describe("the notes", () => {
 
   it.each([
     ["unreadable", "Your computer is having trouble reading your save file"],
-    ["update-computer", "The tracker on your computer needs a refresh"],
-    ["update-here", "This tracker needs a refresh"],
+    ["update-computer", "The field guide on your computer needs a refresh"],
+    ["update-here", "The field guide on this device needs a refresh"],
     ["retired", "Your computer stopped sharing this save file"],
     ["switch-failed", "We didn’t switch farms"],
     ["write-failed", "We couldn’t store your latest save file"],

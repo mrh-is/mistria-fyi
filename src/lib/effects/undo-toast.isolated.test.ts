@@ -139,6 +139,9 @@ describe("questToastMessage", () => {
     expect(questToastMessage("Fishing", "completed", [firstRecipe, secondRecipe], "en")).toBe(
       "Checked off “Fishing” and unlocked 2 recipes",
     );
+    expect(
+      questToastMessage("Fishing", "completed", [firstRecipe, secondRecipe, firstRecipe], "ru"),
+    ).toBe("Отмечено: «Fishing», открыто 3 рецепта");
   });
 });
 

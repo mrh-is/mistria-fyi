@@ -14,7 +14,7 @@ describe("almanac page load", () => {
     expect(result).toMatchObject({
       metadata: {
         description:
-          "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
+          "Fields of Mistriaの農作物、採集物、魚、昆虫、遺物など、図鑑の項目を記録します。",
         title: getName("ui", "almanac", "ja"),
       },
     });

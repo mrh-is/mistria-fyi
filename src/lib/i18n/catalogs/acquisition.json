@@ -185,7 +185,7 @@
   {
     "translations": {
       "en": "Buy at the Horse Statue ({0} essence) once you have the {1}",
-      "ja": "{1}の入手後、馬の像で購入（エッセンス{0}）",
+      "ja": "{1}の入手後、馬の像で購入（魔精{0}）",
       "zh-Hans": "获得{1}后，在马雕像处购买（{0}精华）",
       "zh-Hant": "獲得{1}後，在馬雕像處購買（{0}精華）",
       "es": "Comprar en la estatua del caballo ({0} de esencia) cuando tengas a {1}",
@@ -244,7 +244,7 @@
       "zh-Hans": "在{0}捕捉",
       "zh-Hant": "在{0}捕捉",
       "es": "Atrapar en {0}",
-      "fr": "Attraper à : {0}",
+      "fr": "Attraper à : {0}",
       "ko": "{0}에서 잡기",
       "ru": "Поймать: {0}"
     },
@@ -270,7 +270,7 @@
     "translations": {
       "en": "Catch in a fish trap (requires bait)",
       "ja": "お魚トラップで捕まえる（エサが必要）",
-      "zh-Hans": "用捕鱼笼捕获（需要鱼饵）",
+      "zh-Hans": "用捕鱼陷阱捕获（需要鱼饵）",
       "zh-Hant": "用捕魚籠捕獲（需要魚餌）",
       "es": "Atrapar con una nasa (requiere cebo)",
       "fr": "Attraper dans une nasse (appât requis)",
@@ -295,7 +295,7 @@
       "zh-Hans": "在{0}钓取",
       "zh-Hant": "在{0}釣取",
       "es": "Pescar en {0}",
-      "fr": "Pêcher : {0}",
+      "fr": "Pêcher : {0}",
       "ko": "{0}에서 낚기",
       "ru": "Поймать: {0}"
     },
@@ -368,8 +368,8 @@
       "zh-Hans": "解锁任意约会后、解锁{1}前，有几率在{0}的挖掘点挖到",
       "zh-Hant": "解鎖任意約會後、解鎖{1}前，有機率在{0}的挖掘點挖到",
       "es": "Posibilidad de desenterrar en los puntos de excavación de {0} tras desbloquear una cita, hasta desbloquear: {1}",
-      "fr": "Chance de déterrer sur les sites de fouille de : {0}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {1}",
-      "ko": "데이트를 해금한 뒤 {1} 해금 전까지 {0}의 발굴 지점에서 확률로 발굴",
+      "fr": "Peut se déterrer sur les sites de fouille de : {0}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {1}",
+      "ko": "데이트를 해금한 뒤 {1} 해금 전까지 {0}의 발굴지에서 확률로 발굴",
       "ru": "Шанс выкопать на местах раскопок ({0}) после открытия любого свидания, пока не открыто: {1}"
     },
     "references": [
@@ -400,8 +400,8 @@
       "ja": "デートを解放した後、{0}を解放するまで鉱坑の宝箱で見つかることがある",
       "zh-Hans": "解锁任意约会后、解锁{0}前，有几率在矿洞宝箱中找到",
       "zh-Hant": "解鎖任意約會後、解鎖{0}前，有機率在礦洞寶箱中找到",
-      "es": "Posibilidad de encontrar en cofres de las Minas tras desbloquear una cita, hasta desbloquear: {0}",
-      "fr": "Chance de trouver dans les coffres des Mines, après avoir débloqué un rendez-vous et jusqu’à débloquer : {0}",
+      "es": "Posibilidad de encontrar en cofres de las minas tras desbloquear una cita, hasta desbloquear: {0}",
+      "fr": "Peut se trouver dans les coffres des mines, après avoir débloqué un rendez-vous et jusqu’à débloquer : {0}",
       "ko": "데이트를 해금한 뒤 {0} 해금 전까지 광산 상자에서 확률로 발견",
       "ru": "Шанс найти в сундуках шахт после открытия любого свидания, пока не открыто: {0}"
     },
@@ -496,7 +496,7 @@
       "zh-Hans": "从{0}处收集",
       "zh-Hant": "從{0}處收集",
       "es": "Obtener de: {0}",
-      "fr": "Récolter sur : {0}",
+      "fr": "Récolter sur : {0}",
       "ko": "{0}에게서 채집",
       "ru": "Получить от: {0}"
     },
@@ -524,9 +524,9 @@
       "ja": "ロイヤルリクエスト「{0}」を完了する",
       "zh-Hans": "完成皇家委托“{0}”",
       "zh-Hant": "完成皇室請求「{0}」",
-      "es": "Completar el encargo de la corona: {0}",
-      "fr": "Terminer la requête royale : {0}",
-      "ko": "왕실 의뢰 '{0}' 완료",
+      "es": "Completar el encargo de la Corona: {0}",
+      "fr": "Terminer la requête royale : {0}",
+      "ko": "왕실 의뢰 “{0}” 완료",
       "ru": "Выполнить заказ Короны: {0}"
     },
     "references": [
@@ -553,9 +553,9 @@
       "ja": "料理チャレンジ「{0}」を完了する",
       "zh-Hans": "完成烹饪挑战“{0}”",
       "zh-Hant": "完成烹飪挑戰「{0}」",
-      "es": "Completar el desafío culinario: {0}",
-      "fr": "Terminer le défi culinaire : {0}",
-      "ko": "요리 도전 '{0}' 완료",
+      "es": "Completar el reto de cocina: {0}",
+      "fr": "Terminer le défi gastronomique : {0}",
+      "ko": "“{0}” 요리 챌린지 완료",
       "ru": "Выполнить кулинарное испытание: {0}"
     },
     "references": [
@@ -580,11 +580,11 @@
     "translations": {
       "en": "Complete the {0} mission",
       "ja": "ミッション「{0}」を完了する",
-      "zh-Hans": "完成使命“{0}”",
-      "zh-Hant": "完成使命「{0}」",
+      "zh-Hans": "完成委托任务“{0}”",
+      "zh-Hant": "完成專案任務「{0}」",
       "es": "Completar la misión: {0}",
-      "fr": "Terminer la mission : {0}",
-      "ko": "미션 '{0}' 완료",
+      "fr": "Terminer la mission : {0}",
+      "ko": "“{0}” 임무 완료",
       "ru": "Выполнить миссию: {0}"
     },
     "references": [
@@ -612,8 +612,8 @@
       "zh-Hans": "完成任务“{0}”",
       "zh-Hant": "完成任務「{0}」",
       "es": "Completar la misión: {0}",
-      "fr": "Terminer la quête : {0}",
-      "ko": "퀘스트 '{0}' 완료",
+      "fr": "Terminer la quête : {0}",
+      "ko": "“{0}” 퀘스트 완료",
       "ru": "Выполнить задание: {0}"
     },
     "references": [
@@ -706,8 +706,8 @@
       "zh-Hans": "完成{0}的委托“{1}”",
       "zh-Hant": "完成{0}的委託「{1}」",
       "es": "Completar el encargo de {0}: {1}",
-      "fr": "Terminer la demande de {0} : {1}",
-      "ko": "{0}의 의뢰 '{1}' 완료",
+      "fr": "Terminer la demande de {0} : {1}",
+      "ko": "{0}의 의뢰 “{1}” 완료",
       "ru": "Выполнить просьбу ({0}): {1}"
     },
     "references": [
@@ -739,8 +739,8 @@
       "zh-Hans": "完成{0}的任务“{1}”",
       "zh-Hant": "完成{0}的任務「{1}」",
       "es": "Completar la misión de {0}: {1}",
-      "fr": "Terminer la quête de {0} : {1}",
-      "ko": "{0}의 퀘스트 '{1}' 완료",
+      "fr": "Terminer la quête de {0} : {1}",
+      "ko": "{0}의 “{1}” 퀘스트 완료",
       "ru": "Выполнить задание ({0}): {1}"
     },
     "references": [
@@ -840,7 +840,7 @@
       "es": "Fabricar en la cámara ritual con {0}",
       "fr": "Fabriquer dans la chambre rituelle avec {0}",
       "ko": "{0} 보유 시 의식의 방에서 제작",
-      "ru": "Изготовить в ритуальном зале с {0}"
+      "ru": "Изготовить в ритуальном зале, если есть {0}"
     },
     "references": [
       {
@@ -864,12 +864,12 @@
     "translations": {
       "en": "Craft at {0} via {1}",
       "es": "Fabricar en {0} con {1}",
-      "fr": "Fabriquer à cet atelier : {0} (recette : {1})",
+      "fr": "Fabriquer à cet atelier : {0} (recette : {1})",
       "ja": "{0}で{1}を作る",
       "ko": "{0}에서 {1} 제작",
       "ru": "Изготовить на станции «{0}» по рецепту «{1}»",
       "zh-Hans": "在{0}按配方制作{1}",
-      "zh-Hant": "在{0}按配方製作{1}"
+      "zh-Hant": "在{0}以「{1}」配方製作"
     },
     "references": [
       {
@@ -1009,7 +1009,7 @@
       "ja": "遺物の発掘ポイントで掘り出す",
       "zh-Hans": "在文物挖掘点挖掘",
       "zh-Hant": "在文物挖掘點挖掘",
-      "es": "Desenterrar en una excavación de artefactos",
+      "es": "Desenterrar en una excavación de curiosidades",
       "fr": "Déterrer dans un site de fouilles",
       "ko": "유물 발굴지에서 발굴",
       "ru": "Выкопать на месте раскопок"
@@ -1032,7 +1032,7 @@
       "zh-Hans": "在{0}挖掘",
       "zh-Hant": "在{0}挖掘",
       "es": "Desenterrar en {0}",
-      "fr": "Déterrer à : {0}",
+      "fr": "Déterrer à : {0}",
       "ko": "{0}에서 발굴",
       "ru": "Выкопать: {0}"
     },
@@ -1061,7 +1061,7 @@
       "zh-Hans": "在{0}挖掘",
       "zh-Hant": "在{0}挖掘",
       "es": "Desenterrar en {0}",
-      "fr": "Déterrer : {0}",
+      "fr": "Déterrer : {0}",
       "ko": "{0}에서 발굴",
       "ru": "Выкопать: {0}"
     },
@@ -1090,9 +1090,9 @@
       "zh-Hans": "拥有{1}时，在{0}挖掘",
       "zh-Hant": "擁有{1}時，在{0}挖掘",
       "es": "Desenterrar en {0}, con {1}",
-      "fr": "Déterrer : {0}, avec {1}",
+      "fr": "Déterrer : {0}, avec {1}",
       "ko": "{1} 보유 시 {0}에서 발굴",
-      "ru": "Выкопать: {0}, с {1}"
+      "ru": "Выкопать: {0}, если есть {1}"
     },
     "references": [
       {
@@ -1145,7 +1145,7 @@
       "zh-Hans": "在{0}潜水",
       "zh-Hant": "在{0}潛水",
       "es": "Bucear en {0}",
-      "fr": "Plonger : {0}",
+      "fr": "Plonger : {0}",
       "ko": "{0}에서 잠수",
       "ru": "Нырять: {0}"
     },
@@ -1218,7 +1218,7 @@
       "zh-Hans": "由{0}掉落",
       "zh-Hant": "由{0}掉落",
       "es": "Soltado por: {0}",
-      "fr": "Lâché par : {0}",
+      "fr": "Lâché par : {0}",
       "ko": "{0}이(가) 드롭",
       "ru": "Выпадает из: {0}"
     },
@@ -1269,7 +1269,7 @@
       "zh-Hans": "喂食{0}",
       "zh-Hant": "餵食{0}",
       "es": "Alimentar a: {0}",
-      "fr": "Nourrir : {0}",
+      "fr": "Nourrir : {0}",
       "ko": "{0}에게 먹이 주기",
       "ru": "Покормить: {0}"
     },
@@ -1298,7 +1298,7 @@
       "zh-Hans": "在{0}的宝箱中找到",
       "zh-Hant": "在{0}的寶箱中找到",
       "es": "Encontrar en un cofre del tesoro en {0}",
-      "fr": "Trouver dans un coffre au trésor : {0}",
+      "fr": "Trouver dans un coffre au trésor : {0}",
       "ko": "{0}의 보물 상자에서 발견",
       "ru": "Найти в сундуке: {0}"
     },
@@ -1327,9 +1327,9 @@
       "zh-Hans": "拥有{1}时，在{0}的宝箱中找到",
       "zh-Hant": "擁有{1}時，在{0}的寶箱中找到",
       "es": "Encontrar en un cofre del tesoro en {0}, con {1}",
-      "fr": "Trouver dans un coffre au trésor : {0}, avec {1}",
+      "fr": "Trouver dans un coffre au trésor : {0}, avec {1}",
       "ko": "{1} 보유 시 {0}의 보물 상자에서 발견",
-      "ru": "Найти в сундуке: {0}, с {1}"
+      "ru": "Найти в сундуке: {0}, если есть {1}"
     },
     "references": [
       {
@@ -1357,11 +1357,11 @@
     "translations": {
       "en": "Find in the Gold Treasure Chest in the {0}",
       "ja": "{0}にある金の宝箱から入手",
-      "zh-Hans": "在{0}的金宝箱中找到",
+      "zh-Hans": "在{0}的黄金宝箱中找到",
       "zh-Hant": "在{0}的金寶箱中找到",
       "es": "Encontrar en el cofre del tesoro dorado de {0}",
-      "fr": "Trouver dans le coffre au trésor en or de : {0}",
-      "ko": "{0}의 황금 보물 상자에서 발견",
+      "fr": "Trouver dans le coffre au trésor en or de : {0}",
+      "ko": "{0}의 금 보물 상자에서 발견",
       "ru": "Найти в золотом сундуке ({0})"
     },
     "references": [
@@ -1389,7 +1389,7 @@
       "zh-Hans": "找到{0}",
       "zh-Hant": "找到{0}",
       "es": "Encontrar: {0}",
-      "fr": "Trouver : {0}",
+      "fr": "Trouver : {0}",
       "ko": "{0} 찾기",
       "ru": "Найти: {0}"
     },
@@ -1418,7 +1418,7 @@
       "zh-Hans": "解锁任意约会后、解锁{1}前，在{0}钓到鱼时找到",
       "zh-Hant": "解鎖任意約會後、解鎖{1}前，在{0}釣到魚時找到",
       "es": "Encontrar al pescar en {0} tras desbloquear una cita, hasta desbloquear: {1}",
-      "fr": "Trouver en pêchant à : {0}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {1}",
+      "fr": "Trouver en pêchant à : {0}, après avoir débloqué un rendez-vous et jusqu’à débloquer : {1}",
       "ko": "데이트를 해금한 뒤 {1} 해금 전까지 {0}에서 물고기를 낚으면 발견",
       "ru": "Найти при ловле рыбы ({0}) после открытия любого свидания, пока не открыто: {1}"
     },
@@ -1473,7 +1473,7 @@
       "zh-Hans": "在{0}钓鱼",
       "zh-Hant": "在{0}釣魚",
       "es": "Pescar en {0}",
-      "fr": "Pêcher : {0}",
+      "fr": "Pêcher : {0}",
       "ko": "{0}에서 낚시",
       "ru": "Рыбачить: {0}"
     },
@@ -1502,7 +1502,7 @@
       "zh-Hans": "钓起{0}",
       "zh-Hant": "釣起{0}",
       "es": "Pescar: {0}",
-      "fr": "Pêcher : {0}",
+      "fr": "Pêcher : {0}",
       "ko": "{0} 낚아 올리기",
       "ru": "Выловить: {0}"
     },
@@ -1531,7 +1531,7 @@
       "zh-Hans": "在{0}采集",
       "zh-Hant": "在{0}採集",
       "es": "Recolectar en {0}",
-      "fr": "Cueillir à : {0}",
+      "fr": "Cueillir à : {0}",
       "ko": "{0}에서 채집",
       "ru": "Собрать: {0}"
     },
@@ -1750,7 +1750,7 @@
       "zh-Hans": "由{0}种植",
       "zh-Hant": "由{0}種植",
       "es": "Cultivar a partir de {0}",
-      "fr": "Cultiver à partir de : {0}",
+      "fr": "Cultiver à partir de : {0}",
       "ko": "{0}에서 재배",
       "ru": "Вырастить из: {0}"
     },
@@ -1779,7 +1779,7 @@
       "zh-Hans": "在温室中由{0}种植",
       "zh-Hant": "在溫室中由{0}種植",
       "es": "Cultivar en el invernadero a partir de {0}",
-      "fr": "Cultiver dans la serre à partir de : {0}",
+      "fr": "Cultiver dans la serre à partir de : {0}",
       "ko": "온실에서 {0} 재배",
       "ru": "Вырастить в теплице из: {0}"
     },
@@ -1808,7 +1808,7 @@
       "zh-Hans": "从{0}收获",
       "zh-Hant": "從{0}收穫",
       "es": "Cosechar de: {0}",
-      "fr": "Récolter sur : {0}",
+      "fr": "Récolter sur : {0}",
       "ko": "{0}에서 수확",
       "ru": "Собрать с дерева: {0}"
     },
@@ -1947,7 +1947,7 @@
       "zh-Hans": "在{0}采矿",
       "zh-Hant": "在{0}採礦",
       "es": "Picar en {0}",
-      "fr": "Miner : {0}",
+      "fr": "Miner : {0}",
       "ko": "{0}에서 채굴",
       "ru": "Добыть: {0}"
     },
@@ -2521,7 +2521,7 @@
       "zh-Hans": "在{0}加工",
       "zh-Hant": "在{0}加工",
       "es": "Procesar en: {0}",
-      "fr": "Transformer : {0}",
+      "fr": "Transformer : {0}",
       "ko": "{0}에서 가공",
       "ru": "Переработать: {0}"
     },
@@ -2602,7 +2602,7 @@
       "zh-Hans": "在{0}购买",
       "zh-Hant": "在{0}購買",
       "es": "Comprar en {0}",
-      "fr": "Acheter à : {0}",
+      "fr": "Acheter à : {0}",
       "ko": "{0}에서 구매",
       "ru": "Купить: {0}"
     },
@@ -2631,7 +2631,7 @@
       "zh-Hans": "{1}，在{0}购买",
       "zh-Hant": "{1}，在{0}購買",
       "es": "Comprar en {0} ({1})",
-      "fr": "Acheter à : {0} ({1})",
+      "fr": "Acheter à : {0} ({1})",
       "ko": "{1} {0}에서 구매",
       "ru": "Купить: {0} ({1})"
     },
@@ -2664,7 +2664,7 @@
       "zh-Hans": "在{1}的{0}购买",
       "zh-Hant": "在{1}的{0}購買",
       "es": "Comprar en {0} durante la {1}",
-      "fr": "Acheter à : {0}, pendant la {1}",
+      "fr": "Acheter à : {0}, pendant la {1}",
       "ko": "{1}의 {0}에서 구매",
       "ru": "Купить: {0}, на празднике «{1}»"
     },
@@ -2697,7 +2697,7 @@
       "zh-Hans": "在{1}（{2}）的{0}购买",
       "zh-Hant": "在{1}（{2}）的{0}購買",
       "es": "Comprar en {0} durante la {1} ({2})",
-      "fr": "Acheter à : {0}, pendant la {1} ({2})",
+      "fr": "Acheter à : {0}, pendant la {1} ({2})",
       "ko": "{1}({2})의 {0}에서 구매",
       "ru": "Купить: {0}, на празднике «{1}» ({2})"
     },
@@ -2734,9 +2734,9 @@
       "zh-Hans": "在{1}购买{0}",
       "zh-Hant": "在{1}購買{0}",
       "es": "Comprar {0} en {1}",
-      "fr": "Acheter : {0}, à : {1}",
+      "fr": "Acheter : {0}, à : {1}",
       "ko": "{1}에서 {0} 구매",
-      "ru": "Купить: {0}, место: {1}"
+      "ru": "Купить: {0} — {1}"
     },
     "references": [
       {
@@ -2767,9 +2767,9 @@
       "zh-Hans": "{2}，在{1}购买{0}",
       "zh-Hant": "{2}，在{1}購買{0}",
       "es": "Comprar {0} en {1} ({2})",
-      "fr": "Acheter : {0}, à : {1} ({2})",
+      "fr": "Acheter : {0}, à : {1} ({2})",
       "ko": "{2} {1}에서 {0} 구매",
-      "ru": "Купить: {0}, место: {1} ({2})"
+      "ru": "Купить: {0} — {1} ({2})"
     },
     "references": [
       {
@@ -2938,7 +2938,7 @@
       "es": "Obtención aleatoria con {0}",
       "fr": "Butin aléatoire avec {0}",
       "ko": "{0} 보유 시 무작위 드롭",
-      "ru": "Случайная добыча с {0}"
+      "ru": "Случайная добыча, если есть {0}"
     },
     "references": [
       {
@@ -2961,7 +2961,7 @@
   {
     "translations": {
       "en": "Reach Mines floor {0}",
-      "es": "Alcanza el piso {0} de las minas",
+      "es": "Alcanzar el piso {0} de las minas",
       "fr": "Atteindre l’étage {0} des mines",
       "ja": "鉱坑{0}階に到達する",
       "ko": "광산 {0}층 도달",
@@ -3133,7 +3133,7 @@
       "zh-Hans": "捐赠{0}后通过信件获得",
       "zh-Hant": "捐贈{0}後透過信件獲得",
       "es": "Recibir por carta tras donar: {0}",
-      "fr": "Recevoir par lettre après avoir fait don de : {0}",
+      "fr": "Recevoir par lettre après avoir fait don de : {0}",
       "ko": "{0}을(를) 기증한 후 편지로 받기",
       "ru": "Получить письмом после пожертвования: {0}"
     },
@@ -3191,7 +3191,7 @@
       "zh-Hans": "出货{0}后通过信件获得",
       "zh-Hant": "出貨{0}後透過信件獲得",
       "es": "Recibir por carta tras enviar: {0}",
-      "fr": "Recevoir par lettre après avoir expédié : {0}",
+      "fr": "Recevoir par lettre après avoir expédié : {0}",
       "ko": "{0}을(를) 출하한 후 편지로 받기",
       "ru": "Получить письмом после отправки: {0}"
     },
@@ -3264,7 +3264,7 @@
       "zh-Hans": "由{0}复制",
       "zh-Hant": "由{0}複製",
       "es": "Replicar a partir de {0}",
-      "fr": "Répliquer à partir de : {0}",
+      "fr": "Répliquer à partir de : {0}",
       "ko": "{0}에서 복제",
       "ru": "Воспроизвести из: {0}"
     },
@@ -3465,12 +3465,12 @@
   {
     "translations": {
       "en": "Unlock at the Horse Statue ({0} essence) after starting the {1} quest",
-      "ja": "クエスト「{1}」の開始後、馬の像で解放（エッセンス{0}）",
+      "ja": "クエスト「{1}」の開始後、馬の像で解放（魔精{0}）",
       "zh-Hans": "开始任务“{1}”后，在马雕像处解锁（{0}精华）",
       "zh-Hant": "開始任務「{1}」後，在馬雕像處解鎖（{0}精華）",
       "es": "Desbloquear en la estatua del caballo ({0} de esencia) tras empezar la misión: {1}",
-      "fr": "Débloquer à la statue de cheval ({0} d’essence) après avoir commencé la quête : {1}",
-      "ko": "퀘스트 '{1}' 시작 후 말 조각상에서 해금 (정수 {0})",
+      "fr": "Débloquer à la statue de cheval ({0} d’essence) après avoir commencé la quête : {1}",
+      "ko": "“{1}” 퀘스트 시작 후 말 조각상에서 해금 (정수 {0})",
       "ru": "Открыть у статуи лошади ({0} эссенции) после начала задания: {1}"
     },
     "references": [
@@ -3571,7 +3571,7 @@
   {
     "translations": {
       "en": "Upgrade your home a fourth time",
-      "ja": "家を4回目のアップグレードをする",
+      "ja": "家の4回目のアップグレードをする",
       "zh-Hans": "第四次升级房屋",
       "zh-Hant": "第四次升級房屋",
       "es": "Mejorar tu casa por cuarta vez",
@@ -3597,7 +3597,7 @@
       "zh-Hans": "使用{0}",
       "zh-Hant": "使用{0}",
       "es": "Usar: {0}",
-      "fr": "Utiliser : {0}",
+      "fr": "Utiliser : {0}",
       "ko": "{0} 사용",
       "ru": "Использовать: {0}"
     },
@@ -3913,7 +3913,7 @@
       "zh-Hant": "完成「{0}」後",
       "es": "tras completar {0}",
       "fr": "après avoir terminé {0}",
-      "ko": "'{0}' 완료 후",
+      "ko": "“{0}” 완료 후",
       "ru": "после выполнения: {0}"
     },
     "references": [
@@ -3941,7 +3941,7 @@
       "zh-Hans": "满足以下任一条件后：{0}",
       "zh-Hant": "滿足以下任一條件後：{0}",
       "es": "tras una de estas condiciones: {0}",
-      "fr": "après l’une de ces conditions : {0}",
+      "fr": "après l’une de ces conditions : {0}",
       "ko": "다음 중 하나 이후: {0}",
       "ru": "после одного из условий: {0}"
     },
@@ -3999,7 +3999,7 @@
       "zh-Hans": "到达{0}后",
       "zh-Hant": "到達{0}後",
       "es": "tras llegar a {0}",
-      "fr": "après avoir atteint : {0}",
+      "fr": "après avoir atteint : {0}",
       "ko": "{0}이 된 후",
       "ru": "после наступления сезона «{0}»"
     },
@@ -4092,7 +4092,7 @@
   {
     "translations": {
       "en": "any monster",
-      "ja": "すべてのモンスター",
+      "ja": "いずれかのモンスター",
       "zh-Hans": "任意怪物",
       "zh-Hant": "任意怪物",
       "es": "cualquier monstruo",
@@ -4117,7 +4117,7 @@
       "ja": "{1}とのハートが{0}以上",
       "zh-Hans": "与{1}达到{0}颗心",
       "zh-Hant": "與{1}的好感度達到{0}心",
-      "es": "con {0} corazones con {1}",
+      "es": "al tener {0} corazones con {1}",
       "fr": "à {0} cœurs avec {1}",
       "ko": "{1}와(과) 하트 {0}개 이상",
       "ru": "при {0} сердцах с жителем {1}"
@@ -4153,7 +4153,7 @@
       "es": "con {0} al nivel {1}",
       "fr": "avec {0} au niveau {1}",
       "ko": "{0} 레벨 {1} 이상",
-      "ru": "при навыке «{0}» уровня {1}"
+      "ru": "при умении «{0}» уровня {1}"
     },
     "references": [
       {
@@ -4185,7 +4185,7 @@
       "zh-Hant": "完成「{0}」",
       "es": "completar {0}",
       "fr": "terminer {0}",
-      "ko": "'{0}' 완료",
+      "ko": "“{0}” 완료",
       "ru": "выполнение: {0}"
     },
     "references": [
@@ -4214,7 +4214,7 @@
       "zh-Hant": "「{0}」可接取後",
       "es": "cuando {0} esté disponible",
       "fr": "une fois {0} disponible",
-      "ko": "'{0}' 수락 가능 시",
+      "ko": "“{0}” 수락 가능 시",
       "ru": "когда станет доступно: {0}"
     },
     "references": [
@@ -4271,7 +4271,7 @@
       "zh-Hans": "到达{0}",
       "zh-Hant": "到達{0}",
       "es": "llegar a {0}",
-      "fr": "atteindre : {0}",
+      "fr": "atteindre : {0}",
       "ko": "{0} 도달",
       "ru": "наступление сезона «{0}»"
     },
@@ -4320,7 +4320,7 @@
       "en": "the dungeon",
       "ja": "ダンジョン",
       "zh-Hans": "地下城",
-      "zh-Hant": "地下城",
+      "zh-Hant": "地城",
       "es": "Mazmorra",
       "fr": "Donjon",
       "ko": "던전",
@@ -4340,13 +4340,13 @@
   {
     "translations": {
       "en": "the {0} perk ({1} tier {2})",
-      "ja": "スキルボーナス「{0}」（{1}ランク{2}）",
+      "ja": "スキルボーナス「{0}」（{1}ティア{2}）",
       "zh-Hans": "技能特长“{0}”（{1}第{2}阶）",
       "zh-Hant": "技能特長「{0}」（{1}第{2}階）",
       "es": "el don de habilidad {0} ({1}, nivel {2})",
       "fr": "le bonus de compétence {0} ({1}, niveau {2})",
-      "ko": "스킬 특성 '{0}' ({1} {2}단계)",
-      "ru": "навык «{0}» ({1}, уровень {2})"
+      "ko": "스킬 특성 “{0}” ({1} {2}단계)",
+      "ru": "навык «{0}» ({1}, ранг {2})"
     },
     "references": [
       {
@@ -4410,12 +4410,12 @@
     "translations": {
       "en": "while dating someone",
       "ja": "誰かと交際中",
-      "zh-Hans": "与某人交往期间",
+      "zh-Hans": "与某人处于约会关系时",
       "zh-Hant": "與某人交往期間",
       "es": "mientras sales con alguien",
-      "fr": "en fréquentant quelqu’un",
-      "ko": "누군가와 교제 중",
-      "ru": "во время отношений"
+      "fr": "en étant en couple",
+      "ko": "누군가와 데이트 중",
+      "ru": "пока вы с кем-то в отношениях"
     },
     "references": [
       {
@@ -4437,7 +4437,7 @@
       "es": "con {0}",
       "fr": "avec {0}",
       "ko": "{0} 보유 시",
-      "ru": "с {0}"
+      "ru": "если есть {0}"
     },
     "references": [
       {
@@ -4461,7 +4461,7 @@
     "translations": {
       "en": "your farm",
       "ja": "農場",
-      "zh-Hans": "农场",
+      "zh-Hans": "你的农场",
       "zh-Hant": "農場",
       "es": "Granja",
       "fr": "Ferme",
@@ -4482,7 +4482,7 @@
   {
     "translations": {
       "en": "{0} (Mines floors {1}–{2})",
-      "ja": "{0}（鉱坑{1}～{2}階）",
+      "ja": "{0}（鉱坑{1}〜{2}階）",
       "zh-Hans": "{0}（矿洞第{1}–{2}层）",
       "zh-Hant": "{0}（礦洞第{1}–{2}層）",
       "es": "{0} (pisos {1}–{2} de las minas)",
@@ -4712,7 +4712,7 @@
       "ja": "{0}（ミストリル）",
       "zh-Hans": "{0}（秘银）",
       "zh-Hant": "{0}（秘銀）",
-      "es": "{0} (mistril)",
+      "es": "{0} (mistrilo)",
       "fr": "{0} (mistril)",
       "ko": "{0} (미스트릴)",
       "ru": "{0} (мистрил)"
@@ -4884,7 +4884,7 @@
     "translations": {
       "en": "{0} (small orange)",
       "ja": "{0}（小・オレンジ）",
-      "zh-Hans": "{0}（小・橙）",
+      "zh-Hans": "{0}（小橙）",
       "zh-Hant": "{0}（小・橘）",
       "es": "{0} (naranja pequeño)",
       "fr": "{0} (petit orange)",
@@ -4918,7 +4918,7 @@
       "es": "{0} corazones con {1}",
       "fr": "{0} cœurs avec {1}",
       "ko": "{1}와(과) 하트 {0}개",
-      "ru": "{0} сердец с жителем {1}"
+      "ru": "сердец с жителем {1}: {0}"
     },
     "references": [
       {
@@ -4950,7 +4950,7 @@
       "zh-Hant": "「{0}」可接取",
       "es": "{0} está disponible",
       "fr": "{0} est disponible",
-      "ko": "'{0}' 수락 가능",
+      "ko": "“{0}” 수락 가능",
       "ru": "доступно: {0}"
     },
     "references": [
@@ -4980,7 +4980,7 @@
       "es": "{0} al nivel {1}",
       "fr": "{0} au niveau {1}",
       "ko": "{0} 레벨 {1}",
-      "ru": "навык «{0}» уровня {1}"
+      "ru": "умение «{0}» уровня {1}"
     },
     "references": [
       {
