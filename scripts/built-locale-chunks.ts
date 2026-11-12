@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { LOCALE_CODES } from "../src/lib/types/locale.js";
 
@@ -9,8 +10,8 @@ const CLIENT_OUTPUT = ".svelte-kit/output/client";
  * list them before its web server has run the build. (The Vite manifest isn't an option: CI's
  * build artifact omits hidden directories like `.vite/`.)
  */
-export function builtLocaleChunks(): Record<string, string[]> {
-  const worker = readFileSync(`${CLIENT_OUTPUT}/service-worker.js`, "utf8");
+export function builtLocaleChunks(clientDir = CLIENT_OUTPUT): Record<string, string[]> {
+  const worker = readFileSync(join(clientDir, "service-worker.js"), "utf8");
   return Object.fromEntries(
     LOCALE_CODES.map((locale) => {
       const property = `[{,]\\s*["']?${locale}["']?\\s*:\\s*`;

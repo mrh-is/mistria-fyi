@@ -194,9 +194,50 @@ pnpm exec node spikes/wuchale/compare-cold-app.js \
   http://127.0.0.1:5196 .svelte-kit/output/client
 ```
 
-These measurements cover the two app integrations at their current split points. The broader
-evaluation still needs warm navigation and locale-switch timings, worker cache-fill bytes, and the
-same live authoring and translation-review tasks on both branches.
+After the translation review port, the same probe compared Paraglide at `37925af9` with Wuchale at
+`9b3bf27d`. Both builds included the reviewed translations and the same tracker data.
+
+| Spanish route | Paraglide requests | Paraglide gzip bytes | Wuchale requests | Wuchale gzip bytes | Difference |
+| ------------- | -----------------: | -------------------: | ---------------: | -----------------: | ---------: |
+| Home          |                 71 |              406,780 |               70 |            324,801 |     −20.2% |
+| Almanac       |                 95 |              475,736 |               95 |            392,710 |     −17.5% |
+| Data          |                 62 |              441,077 |               66 |            351,360 |     −20.3% |
+| About         |                 57 |              374,847 |               58 |            305,423 |     −18.5% |
+
+### Warm navigation and language switching
+
+The same builds ran in local headless Chromium with reduced motion. Each trial started in a fresh
+browser context on English Home after hydration. The probe activated the actual controls without
+hover preloading and measured from the click to the first animation frame with the destination URL
+and rendered Almanac heading or Spanish toolbar. The worker-controlled trials waited for English
+assets to be cached before measuring. Spanish was still a first switch in each context.
+
+Times are median milliseconds, with the minimum and maximum of seven trials in parentheses. The
+probe alternates build order within each worker condition.
+
+| Service worker | Interaction                     |        Paraglide |          Wuchale |
+| -------------- | ------------------------------- | ---------------: | ---------------: |
+| Blocked        | First Home → Almanac navigation | 52.9 (47.4–59.6) | 58.2 (51.9–64.3) |
+| Blocked        | Home → Almanac revisit          | 34.4 (29.0–39.4) | 32.7 (27.9–36.2) |
+| Blocked        | English → Spanish Home          | 16.8 (16.2–17.5) | 16.4 (15.6–20.7) |
+| Controlling    | First Home → Almanac navigation | 59.0 (53.5–81.7) | 56.5 (55.0–57.6) |
+| Controlling    | Home → Almanac revisit          | 40.6 (28.9–43.2) | 32.6 (29.3–43.6) |
+| Controlling    | English → Spanish Home          | 27.5 (25.4–34.4) | 30.3 (28.3–31.0) |
+
+Every pair of ranges overlaps. The runs use local previews, and the frame-based endpoint includes
+the time until Chromium renders the next frame.
+
+In a separate fresh context on Spanish Home, the probe waited for all English and Spanish assets
+listed in the worker's locale map to appear in Cache Storage. It gzipped each emitted file
+individually. Paraglide cached 44 assets (111,629 bytes) and Wuchale cached 66 (147,727 bytes).
+Wuchale's 22 additional assets are its UI catalogs. Paraglide's UI messages are embedded in
+application chunks outside this locale map. The 36,098-byte difference covers the locale fill.
+
+```sh
+pnpm exec tsx spikes/wuchale/compare-warm-app.ts \
+  http://127.0.0.1:5197 /path/to/paraglide/.svelte-kit/output/client \
+  http://127.0.0.1:5196 .svelte-kit/output/client
+```
 
 ### Feature catalog loading
 
