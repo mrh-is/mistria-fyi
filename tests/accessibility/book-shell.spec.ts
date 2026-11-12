@@ -1,3 +1,4 @@
+import { PROGRESS_STORAGE_KEY } from "../../src/lib/stores/storage-keys.js";
 import { expect, test } from "../browser/test.js";
 import {
   createStoredState,
@@ -5,6 +6,7 @@ import {
   initializeApplication,
 } from "./support/application-state.js";
 import { requireBox, settledBox } from "./support/boxes.js";
+import { villagerRecord } from "./support/scenarios.js";
 
 import type { Page } from "@playwright/test";
 
@@ -29,7 +31,7 @@ function overlaps(a: Box, b: Box): boolean {
 
 test.describe("book shell", () => {
   test.beforeEach(async ({ page }) => {
-    await initializeApplication(page, "light", createStoredState());
+    await initializeApplication(page, "system", createStoredState());
   });
 
   test("a click on a thumb tab behind the feedback scrim keeps the page & the draft", async ({
@@ -125,6 +127,86 @@ test.describe("book shell", () => {
     await expect.poll(() => isTurning(page)).toBe(false);
   });
 
+  for (const key of ["Space", "PageDown"]) {
+    test(`${key} scrolls the document while the thumb index stays pinned`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await gotoApplication(page, "/almanac");
+      const index = await settledBox(tabs(page));
+
+      await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBe(0);
+      await page.keyboard.press(key);
+
+      await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0);
+      const scrolledIndex = await settledBox(tabs(page));
+      expect(scrolledIndex.y).toBe(index.y);
+    });
+  }
+
+  test("a direct section link scrolls the document to the target", async ({ page }) => {
+    await page.setViewportSize(PHONE);
+    await gotoApplication(page, "/en/villagers#villager-valen");
+
+    await expect(villagerRecord(page, "valen")).toBeInViewport();
+    await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0);
+  });
+
+  test("Chromium find-in-page brings an offscreen section into view", async ({ page }) => {
+    await page.setViewportSize(PHONE);
+    await gotoApplication(page, "/en/privacy");
+    const sync = page.getByRole("heading", { exact: true, name: "With sync" });
+
+    await expect(sync).not.toBeInViewport();
+    // Playwright cannot operate the browser's Find bar. Exercise its in-page search via Chromium.
+    const found = await page.evaluate(() =>
+      (globalThis as typeof globalThis & { find: (text: string) => boolean }).find("With sync"),
+    );
+
+    expect(found).toBe(true);
+    await expect(sync).toBeInViewport();
+    await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0);
+  });
+
+  test("tab names can be toggled with the keyboard", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await gotoApplication(page, "/almanac");
+    const toggle = tabs(page).getByRole("button", { name: "Show tab names" });
+    const museum = tabs(page).getByRole("link", { name: "Museum" });
+    const label = museum.getByText("Museum", { exact: true });
+
+    await toggle.focus();
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await expect(label).toHaveCSS("opacity", "0");
+    await page.keyboard.press("Space");
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await expect(label).toHaveCSS("opacity", "1");
+    await page.keyboard.press("Escape");
+    await expect(toggle).toBeFocused();
+    await expect(label).toHaveCSS("opacity", "0");
+  });
+
+  test.describe("touch at book widths", () => {
+    test.use({ hasTouch: true });
+
+    test("the visible Russian tab name can be tapped in a short dark window", async ({ page }) => {
+      await page.setViewportSize(BOOK_MINIMUM);
+      await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+      await gotoApplication(page, "/ru");
+      const index = page.getByRole("navigation", { name: "Закладки разделов" });
+      const toggle = index.getByRole("button", { name: "Показать названия закладок" });
+      const museum = index.getByRole("link", { name: "Музей" });
+      const label = museum.getByText("Музей", { exact: true });
+
+      await toggle.tap();
+      await expect(toggle).toHaveAttribute("aria-pressed", "true");
+      await expect(label).toHaveCSS("opacity", "1");
+      await expect(label).toBeInViewport({ ratio: 1 });
+      await label.tap();
+      await expect(page).toHaveURL(/\/ru\/museum$/);
+      await expect(museum).toHaveAttribute("aria-current", "page");
+      await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    });
+  });
+
   test("quick page turns in a row land on the last page", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -145,3 +227,24 @@ test.describe("book shell", () => {
     expect(errors).toEqual([]);
   });
 });
+
+for (const viewport of [DESKTOP, PHONE]) {
+  test(`newer progress shows recovery at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const state = createStoredState();
+    state.progress.version++;
+    await initializeApplication(page, "light", state);
+    await gotoApplication(page, "/almanac");
+
+    const notice = page
+      .getByRole("alert")
+      .filter({ hasText: "A newer version of the field guide" });
+    const reload = notice.getByRole("button", { name: "Reload" });
+    await expect(reload).toBeInViewport({ ratio: 1 });
+    expect(await page.evaluate((key) => localStorage.getItem(key), PROGRESS_STORAGE_KEY)).toBe(
+      JSON.stringify(state.progress),
+    );
+    await Promise.all([page.waitForEvent("domcontentloaded"), reload.click()]);
+    await expect(reload).toBeVisible();
+  });
+}
