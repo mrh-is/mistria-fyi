@@ -95,7 +95,7 @@
   --color-paper-sunken: #e3e8e7;
   --color-ink: #1b2128;
   --color-ink-muted: #56626c;
-  --color-ink-hairline: #8b98a1;
+  --color-ink-hairline: #7a8892;
   /* The two rule weights drawn from the hairline: a ledger rule, & the faint line between rows. */
   --color-rule: color-mix(in srgb, var(--color-ink-hairline) 58%, transparent);
   --color-rule-faint: color-mix(in srgb, var(--color-ink-hairline) 30%, transparent);

@@ -140,7 +140,7 @@ test("styles the offline page with the app's fonts & the player's saved theme", 
     };
   });
   expect(style).toEqual({
-    background: "rgb(34, 34, 38)",
+    background: "rgb(18, 48, 76)",
     dark: true,
     font: expect.stringMatching(/^"?Petrona"?,/) as unknown,
     themeColor: "#12304c",
