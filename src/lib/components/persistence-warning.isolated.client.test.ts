@@ -1,5 +1,6 @@
 import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
+import { fromStore, writable } from "svelte/store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
@@ -11,6 +12,8 @@ const toastError = vi.hoisted(() => vi.fn(() => "toast-id"));
 const toastDismiss = vi.hoisted(() => vi.fn());
 const downloadJson = vi.hoisted(() => vi.fn());
 const dismissPersistenceWarning = vi.hoisted(() => vi.fn());
+const generationStore = writable(1);
+const generation = fromStore(generationStore);
 
 vi.mock("svelte-sonner", () => ({ toast: { dismiss: toastDismiss, error: toastError } }));
 vi.mock("#lib/utils/download.js", () => ({ BACKUP_FILE_PREFIX: "backup", downloadJson }));
@@ -22,7 +25,7 @@ vi.mock("#lib/stores/user-state.svelte.js", () => ({
       return true;
     },
     get persistenceFailureGeneration() {
-      return 1;
+      return generation.current;
     },
     get persistenceFailureKind() {
       return failure.kind;
@@ -36,6 +39,7 @@ interface ToastOptions {
   action?: { label: string; onClick: () => void };
   description?: string;
   id?: number | string;
+  onDismiss?: () => void;
 }
 
 async function shownToast(kind: PersistenceFailureKind): Promise<[string, ToastOptions]> {
@@ -47,6 +51,8 @@ async function shownToast(kind: PersistenceFailureKind): Promise<[string, ToastO
 }
 
 beforeEach(() => {
+  pageStub.reset();
+  generationStore.set(1);
   toastError.mockClear();
   toastDismiss.mockClear();
   downloadJson.mockClear();
@@ -82,6 +88,25 @@ describe("PersistenceWarning", () => {
     expect(options.id).toBe("toast-id");
     expect(options.action?.label).toBe("Hacer una copia");
     expect(dismissPersistenceWarning).not.toHaveBeenCalled();
+  });
+
+  it("announces another failed save without letting the old toast clear the warning", async () => {
+    const [, first] = await shownToast("unavailable");
+    toastError.mockReturnValueOnce("second-toast-id");
+
+    generationStore.set(2);
+    await tick();
+
+    expect(toastDismiss).toHaveBeenCalledExactlyOnceWith("toast-id");
+    expect(toastError).toHaveBeenCalledTimes(2);
+    const [title, second] = toastError.mock.lastCall as unknown as [string, ToastOptions];
+    expect(title).toBe("We couldn’t save your last change");
+    expect(second.id).toBeUndefined();
+
+    first.onDismiss?.();
+    expect(dismissPersistenceWarning).not.toHaveBeenCalled();
+    second.onDismiss?.();
+    expect(dismissPersistenceWarning).toHaveBeenCalledTimes(1);
   });
 
   it.each<PersistenceFailureKind>(["load-blocked", "newer-data", "unreadable"])(
