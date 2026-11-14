@@ -2,14 +2,17 @@ import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+
 import type { PersistenceFailureKind } from "#lib/stores/user-state.svelte.js";
 
 const failure = vi.hoisted(() => ({ kind: "unavailable" as PersistenceFailureKind }));
 const toastError = vi.hoisted(() => vi.fn(() => "toast-id"));
+const toastDismiss = vi.hoisted(() => vi.fn());
 const downloadJson = vi.hoisted(() => vi.fn());
 const dismissPersistenceWarning = vi.hoisted(() => vi.fn());
 
-vi.mock("svelte-sonner", () => ({ toast: { dismiss: vi.fn(), error: toastError } }));
+vi.mock("svelte-sonner", () => ({ toast: { dismiss: toastDismiss, error: toastError } }));
 vi.mock("#lib/utils/download.js", () => ({ BACKUP_FILE_PREFIX: "backup", downloadJson }));
 vi.mock("#lib/stores/user-state.svelte.js", () => ({
   userState: {
@@ -32,6 +35,7 @@ const { default: PersistenceWarning } = await import("./persistence-warning.svel
 interface ToastOptions {
   action?: { label: string; onClick: () => void };
   description?: string;
+  id?: number | string;
 }
 
 async function shownToast(kind: PersistenceFailureKind): Promise<[string, ToastOptions]> {
@@ -44,6 +48,7 @@ async function shownToast(kind: PersistenceFailureKind): Promise<[string, ToastO
 
 beforeEach(() => {
   toastError.mockClear();
+  toastDismiss.mockClear();
   downloadJson.mockClear();
   dismissPersistenceWarning.mockClear();
 });
@@ -62,6 +67,21 @@ describe("PersistenceWarning", () => {
     expect(downloadJson).toHaveBeenCalledExactlyOnceWith('{"in":"memory"}', "backup");
     // Sonner skips onDismiss for an action, so the action itself has to count as dismissing.
     expect(dismissPersistenceWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it("translates an active save warning in place when the locale changes", async () => {
+    await shownToast("unavailable");
+
+    pageStub.data.locale = "es";
+    await tick();
+
+    expect(toastDismiss).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledTimes(2);
+    const [title, options] = toastError.mock.lastCall as unknown as [string, ToastOptions];
+    expect(title).toBe("No hemos podido guardar tu último cambio");
+    expect(options.id).toBe("toast-id");
+    expect(options.action?.label).toBe("Hacer una copia");
+    expect(dismissPersistenceWarning).not.toHaveBeenCalled();
   });
 
   it.each<PersistenceFailureKind>(["load-blocked", "newer-data", "unreadable"])(

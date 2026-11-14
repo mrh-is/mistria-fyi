@@ -13,10 +13,6 @@
   let deferredTimer: ReturnType<typeof setTimeout> | undefined;
 
   function showToast() {
-    if (activeToastId !== undefined) {
-      toast.dismiss(activeToastId);
-    }
-
     const dismissed = (): void => {
       suppressedUntil = Date.now() + SUPPRESS_MS;
       userState.dismissPersistenceWarning();
@@ -36,6 +32,8 @@
       description:
         "Your browser won’t let the field guide store anything. Check your settings to make sure storage isn’t full or turned off. For now, make a backup so you don’t lose your changes.",
       duration: Infinity,
+      // Locale changes rerun the effect. Updating the toast keeps its dismissal handler from firing.
+      id: activeToastId,
       onDismiss: dismissed,
     });
   }
