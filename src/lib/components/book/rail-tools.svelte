@@ -8,14 +8,13 @@
 
   import { getBookPanels } from "#lib/components/book/book-panels.svelte.js";
   import RailTool from "#lib/components/book/rail-tool.svelte";
-  import * as m from "#lib/paraglide/messages.js";
 
   const panels = getBookPanels();
 </script>
 
 <div class="rail-tools">
   <RailTool
-    aria-label={m.toolbar_send_feedback()}
+    aria-label="Send feedback"
     aria-expanded={panels.active === "feedback"}
     data-panel-entry="feedback"
     onclick={(event) => {
@@ -25,7 +24,7 @@
     <IconMessageReport class="size-4" />
   </RailTool>
   <RailTool
-    aria-label={m.toolbar_quick_settings()}
+    aria-label="Quick settings"
     aria-expanded={panels.active === "settings"}
     aria-controls="quick-settings-panel"
     data-panel-entry="settings"

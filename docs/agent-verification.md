@@ -56,8 +56,7 @@ These CI steps aren’t in the local matrix:
   `pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.github/workflows/ci.yml` changes (manual dispatches
   always audit),
 - the budgeted test run, which is the complete asset-independent suite with per-file timing limits
-  (pull requests skip the relay & most `scripts/` tests unless they change those tests’ inputs),
-- the stale-translation check, which runs only on pull requests that touch `messages/`.
+  (pull requests skip the relay & most `scripts/` tests unless they change those tests’ inputs).
 
 The accessibility & PWA suites run against the build job’s output when `src/`, `static/`, `tests/`,
 or their tooling change. The “CI passed” job aggregates every result. Coverage runs nightly; it’s
@@ -294,7 +293,7 @@ or approval gate.
   [agent-workflow.md](agent-workflow.md#agent-attribution) requires.
 
 A collector script that aggregates findings across PRs is
-[deferred](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-28-review-record-format.md).
+[deferred](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-28-review-record-format.md).
 It waits until a second survey shows that this format isn’t enough for aggregation.
 
 ### Review prompts

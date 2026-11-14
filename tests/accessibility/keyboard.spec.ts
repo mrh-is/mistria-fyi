@@ -21,7 +21,7 @@ test.describe("keyboard and focus accessibility", () => {
     await page.getByRole("button", { exact: true, name: "Send feedback" }).focus();
     await page.keyboard.press("Tab");
     await expect(page.getByRole("button", { exact: true, name: "Quick settings" })).toBeFocused();
-    const tools = page.getByRole("navigation", { name: "Tracker tools" });
+    const tools = page.getByRole("navigation", { name: "Field guide tools" });
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: "Search" })).toBeFocused();
     await page.keyboard.press("Tab");

@@ -1,10 +1,10 @@
 import { SITE_ORIGIN } from "#lib/data/page-metadata.js";
-import { locales, localizeUrl } from "#lib/paraglide/runtime.js";
+import { localizeUrl } from "#lib/i18n/locale-path.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import type { Load } from "@sveltejs/kit";
 
 import type { RobotsDirective } from "#lib/data/page-metadata.js";
-import type { Locale } from "#lib/paraglide/runtime.js";
 import type { Path } from "$app/types";
 
 export const prerender = true;
@@ -73,10 +73,10 @@ ${urls}
 function localizedUrlEntries(path: Path): string[] {
   const canonicalUrl = new URL(path, SITE_ORIGIN);
   const hrefByLocale = new Map(
-    locales.map((locale) => [locale, localizeUrl(canonicalUrl, { locale }).href]),
+    LOCALE_CODES.map((locale) => [locale, localizeUrl(canonicalUrl, locale).href]),
   );
   const alternateLinks = [
-    ...locales.map(
+    ...LOCALE_CODES.map(
       (locale) =>
         `    <xhtml:link rel="alternate" hreflang="${locale}" href="${hrefByLocale.get(locale)}" />`,
     ),
@@ -84,9 +84,8 @@ function localizedUrlEntries(path: Path): string[] {
     `    <xhtml:link rel="alternate" hreflang="x-default" href="${canonicalUrl.href}" />`,
   ].join("\n");
 
-  return locales.map(
-    (locale: Locale) =>
-      `  <url>\n    <loc>${hrefByLocale.get(locale)}</loc>\n${alternateLinks}\n  </url>`,
+  return LOCALE_CODES.map(
+    (locale) => `  <url>\n    <loc>${hrefByLocale.get(locale)}</loc>\n${alternateLinks}\n  </url>`,
   );
 }
 

@@ -3,7 +3,7 @@
 
   import { Icon } from "#lib/components/icon/index.js";
 
-  import type { ThumbTab } from "#lib/components/book/thumb-tab-list.js";
+  import type { ThumbTab } from "#lib/components/book/thumb-tab-messages.js";
 
   let { class: className, key }: { class?: string; key: ThumbTab["key"] } = $props();
 </script>

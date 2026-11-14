@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Icon } from "#lib/components/icon/index.js";
   import { categoryForKey } from "#lib/data/categories.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -32,11 +31,7 @@
 <GroupSection
   id="category-{key}{completed ? '-completed' : ''}"
   {name}
-  description={m.section_progress_label({
-    completed: formatNumber(progress.completed, page.data.locale),
-    name,
-    total: formatNumber(progress.total, page.data.locale),
-  })}
+  description={`${name}, ${formatNumber(progress.completed, page.data.locale)} of ${formatNumber(progress.total, page.data.locale)} completed`}
   {completed}
   {visible}
   {children}

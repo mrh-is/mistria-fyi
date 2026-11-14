@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import SectionGroupsHarness from "#lib/components/section-groups.test-harness.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
-import * as m from "#lib/paraglide/messages.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
 
 import type { SectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
@@ -30,10 +29,10 @@ describe("SectionGroups", () => {
 
     // A section with nothing to count sits on no shelf.
     expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
+      "To do",
       "Artifacts",
       "Fish",
-      m.common_completed_heading(),
+      "Completed",
       "Bugs",
       "Dishes",
       "Crops",
@@ -47,7 +46,7 @@ describe("SectionGroups", () => {
     ]);
     await tick();
 
-    expect(headingOrder()).toEqual([m.shelf_to_do(), "Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
   });
 
   it("starts Not now & Completed closed, and reopens them on request", async () => {
@@ -58,16 +57,9 @@ describe("SectionGroups", () => {
     ]);
     await tick();
 
-    expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
-      "Artifacts",
-      m.shelf_not_now(),
-      "Bugs",
-      m.common_completed_heading(),
-      "Crops",
-    ]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Not now", "Bugs", "Completed", "Crops"]);
     expect(screen.queryByRole("button", { name: /^Bugs,/ })).toBeNull();
-    await fireEvent.click(screen.getByRole("button", { expanded: false, name: m.shelf_not_now() }));
+    await fireEvent.click(screen.getByRole("button", { expanded: false, name: "Not now" }));
     expect(screen.getByRole("button", { name: /^Bugs,/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Crops,/ })).toBeNull();
   });
@@ -108,13 +100,7 @@ describe("SectionGroups", () => {
       { count: 1, id: "Crops", total: 2 },
     ]);
     await tick();
-    expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
-      "Artifacts",
-      "Crops",
-      m.common_completed_heading(),
-      "Bugs",
-    ]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Crops", "Completed", "Bugs"]);
 
     grouping.hold("Bugs");
     await view.rerender({
@@ -126,7 +112,7 @@ describe("SectionGroups", () => {
     });
     await tick();
 
-    expect(headingOrder()).toEqual([m.shelf_to_do(), "Artifacts", "Crops"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Crops"]);
   });
 
   it("regroups a section as soon as its counts change outside a toggle", async () => {
@@ -144,12 +130,7 @@ describe("SectionGroups", () => {
     });
     await tick();
 
-    expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
-      "Bugs",
-      m.common_completed_heading(),
-      "Artifacts",
-    ]);
+    expect(headingOrder()).toEqual(["To do", "Bugs", "Completed", "Artifacts"]);
   });
 
   it("moves a section finished by a toggle only after the row-leaving window", async () => {
@@ -171,18 +152,11 @@ describe("SectionGroups", () => {
       ],
     });
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
-    expect(headingOrder()).toEqual([m.shelf_to_do(), "Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
-      "Bugs",
-      m.common_completed_heading(),
-      "Artifacts",
-    ]);
-    await fireEvent.click(
-      screen.getByRole("button", { expanded: false, name: m.common_completed_heading() }),
-    );
+    expect(headingOrder()).toEqual(["To do", "Bugs", "Completed", "Artifacts"]);
+    await fireEvent.click(screen.getByRole("button", { expanded: false, name: "Completed" }));
     expect(screen.getByRole("button", { name: /^Artifacts,/ })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -206,15 +180,10 @@ describe("SectionGroups", () => {
       ],
     });
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
-    expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
-      "Artifacts",
-      m.common_completed_heading(),
-      "Bugs",
-    ]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Completed", "Bugs"]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(headingOrder()).toEqual([m.shelf_to_do(), "Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
   });
 
   it("restarts the window when a held section is toggled again", async () => {
@@ -235,15 +204,10 @@ describe("SectionGroups", () => {
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
     grouping.hold("Artifacts");
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS - 1);
-    expect(headingOrder()).toEqual([m.shelf_to_do(), "Artifacts", "Bugs"]);
+    expect(headingOrder()).toEqual(["To do", "Artifacts", "Bugs"]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(headingOrder()).toEqual([
-      m.shelf_to_do(),
-      "Bugs",
-      m.common_completed_heading(),
-      "Artifacts",
-    ]);
+    expect(headingOrder()).toEqual(["To do", "Bugs", "Completed", "Artifacts"]);
   });
 
   it("clears pending hold timers when it unmounts", async () => {

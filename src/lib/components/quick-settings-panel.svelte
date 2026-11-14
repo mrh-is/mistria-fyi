@@ -9,7 +9,6 @@
   import QuickSettingsThemePicker from "#lib/components/quick-settings-theme-picker.svelte";
   import TagDialog from "#lib/components/tag-dialog.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -33,9 +32,9 @@
 <TagDialog bind:open={confirmSpoilers} size="narrow">
   <div class="spoiler-tag__body">
     <div class="spoiler-tag__heading">
-      <Dialog.Title>{m.settings_show_spoilers()}</Dialog.Title>
+      <Dialog.Title>Show spoilers?</Dialog.Title>
       <Dialog.Description class="spoiler-tag__desc"
-        >{m.settings_spoilers_dialog_description()}</Dialog.Description
+        >This will reveal hidden content throughout the guide.</Dialog.Description
       >
     </div>
   </div>
@@ -46,7 +45,7 @@
       onclick={() => {
         confirmSpoilers = false;
         spoilerToggleChecked = false;
-      }}>{m.settings_spoilers_cancel()}</button
+      }}><!-- @wc-context: settings spoilers cancel -->Never mind</button
     >
     <button
       class="spoiler-tag__btn spoiler-tag__btn--confirm"
@@ -54,19 +53,17 @@
       onclick={() => {
         userState.toggleShowSpoilers();
         confirmSpoilers = false;
-      }}>{m.settings_spoilers_confirm()}</button
+      }}>Yes, show spoilers</button
     >
   </div>
 </TagDialog>
 
 <div class="quick-settings">
   <div class="quick-settings__row">
-    <span class="quick-settings__label"
-      ><IconEye class="size-3.5" />{m.settings_show_spoilers()}</span
-    >
+    <span class="quick-settings__label"><IconEye class="size-3.5" />Show spoilers?</span>
     <BlockySwitch
       bind:checked={spoilerToggleChecked}
-      label={m.settings_show_spoilers()}
+      label="Show spoilers?"
       onCheckedChange={setSpoilers}
     />
   </div>
@@ -78,12 +75,12 @@
   <div class="quick-settings__links">
     <a class="quick-settings__link" href={localizedHref("data")}>
       <IconTool class="size-4" />
-      <span>{m.settings_data_link()}</span>
+      <span>Data</span>
       <IconChevronRight class="size-4" />
     </a>
     <a class="quick-settings__link" href={localizedHref("about")}>
       <IconInfoCircle class="size-4" />
-      <span>{m.settings_about_link()}</span>
+      <span>About</span>
       <IconChevronRight class="size-4" />
     </a>
   </div>

@@ -114,8 +114,6 @@ void describe("built search metadata", { concurrency: 4, timeout: 120_000 }, () 
           assert.equal(metadata('link[rel="canonical"]', "href"), canonicalUrl, path);
           const expected = {
             "og:image": `${SITE_ORIGIN}/og-image.png`,
-            "og:image:alt":
-              "Mistria Field Guide showing an Everything progress stripe at 27% completion.",
             "og:image:height": "630",
             "og:image:type": "image/png",
             "og:image:width": "1200",
@@ -124,8 +122,14 @@ void describe("built search metadata", { concurrency: 4, timeout: 120_000 }, () 
           for (const [property, value] of Object.entries(expected)) {
             assert.equal(metadata(`meta[property="${property}"]`), value, `${path}: ${property}`);
           }
+          const imageAlt = metadata('meta[property="og:image:alt"]');
+          const englishImageAlt =
+            "Mistria Field Guide showing an Everything progress stripe at 27% completion.";
+          assert.match(imageAlt, /27/u, `${path}: og:image:alt`);
+          if (locale === "en") assert.equal(imageAlt, englishImageAlt, path);
+          else assert.notEqual(imageAlt, englishImageAlt, path);
           assert.equal(metadata('meta[name="twitter:image"]'), expected["og:image"], path);
-          assert.equal(metadata('meta[name="twitter:image:alt"]'), expected["og:image:alt"], path);
+          assert.equal(metadata('meta[name="twitter:image:alt"]'), imageAlt, path);
           assert.equal(document.head.querySelectorAll('meta[name="robots"]').length, 0, path);
           assert.equal(document.querySelectorAll('main, [role="main"]').length, 1, path);
           assert.equal(

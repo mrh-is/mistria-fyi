@@ -3,7 +3,6 @@
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
   import { tick } from "svelte";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { isEditing } from "#lib/pwa/safe-reload.js";
   import { browserGivesHandles, sourceFromTransfer } from "#lib/sync/save-source.js";
 
@@ -36,13 +35,21 @@
   const cantDragId = `${uid}-cant-drag`;
   const cantDragBody = $derived.by(() => {
     if (givesHandles) {
-      if (platform === "linux") return m.sync_find_cant_drag_body_linux();
-      if (platform === "mac") return m.sync_find_cant_drag_body_mac();
-      return m.sync_find_cant_drag_body();
+      if (platform === "linux") {
+        return "Click the autosave in your file manager and press Ctrl+C. Then come back here and press Ctrl+V.";
+      }
+      if (platform === "mac") {
+        return "Click the autosave in Finder and press Command-C. Then come back here and press Command-V.";
+      }
+      return "Click the autosave in File Explorer and press Ctrl+C. Then come back here and press Ctrl+V.";
     }
-    if (platform === "linux") return m.sync_find_cant_drag_body_pick_linux();
-    if (platform === "mac") return m.sync_find_cant_drag_body_pick_mac();
-    return m.sync_find_cant_drag_body_pick();
+    if (platform === "linux") {
+      return "Click “Choose the save file”, press Ctrl+L, paste the folder location, and press Enter. Then pick the autosave.";
+    }
+    if (platform === "mac") {
+      return "Click “Choose the save file”, press Shift-Command-G, paste the folder location, and press Return. Then pick the autosave.";
+    }
+    return "Click “Choose the save file”, paste the folder location into the File name box, and press Enter. Then pick the autosave.";
   });
 
   async function take(source: SaveSource | undefined): Promise<void> {
@@ -52,7 +59,7 @@
     try {
       await onsource(source);
     } catch {
-      error = m.sync_find_bad_file();
+      error = "Hmm, we couldn’t read that one. Pick the newest file that ends in “autosave”.";
     } finally {
       reading = false;
       if (fileInput) fileInput.value = "";
@@ -110,7 +117,7 @@
 >
   {#if reading}
     <IconLoader2 class="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-    <span role="status">{m.sync_find_reading()}</span>
+    <span role="status">Reading your save file…</span>
   {:else}
     <IconUpload aria-hidden="true" />
     <span aria-hidden="true">{label}</span>
@@ -121,14 +128,14 @@
 {/if}
 
 <button type="button" class="save-drop__link" aria-expanded={showCantDrag} onclick={toggleCantDrag}>
-  {m.sync_find_cant_drag()}
+  Can’t drag?
 </button>
 {#if showCantDrag}
   <div class="save-drop__cant-drag">
     <p id={cantDragId}>{cantDragBody}</p>
     {#if !givesHandles}
       <label class="save-drop__choose">
-        {m.sync_find_choose()}
+        Choose the save file
         <input
           bind:this={fileInput}
           class="sr-only"

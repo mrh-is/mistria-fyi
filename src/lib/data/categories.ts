@@ -1,6 +1,6 @@
 import { getName, nameCollator } from "#lib/data/names.js";
 import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
-import * as m from "#lib/paraglide/messages.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -21,27 +21,27 @@ export interface CategoryInfo {
 const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
   almanac: (locale) => getName("ui", "almanac", locale),
   animals: (locale) => getName("ui", "animals", locale),
-  cosmetics: (locale) => m.category_cosmetics_name({}, { locale }),
-  mines: (locale) => m.category_mines_name({}, { locale }),
+  cosmetics: () => "Cosmetics",
+  mines: () => "Mines",
   museum: (locale) => getName("ui", "museum", locale),
-  quests: (locale) => m.category_quests_name({}, { locale }),
-  recipes: (locale) => m.category_recipes_name({}, { locale }),
+  quests: () => "Quests",
+  recipes: () => "Recipes",
   renown: (locale) => getName("ui", "renown", locale),
   skills: (locale) => getName("ui", "skills", locale),
   villagers: (locale) => getName("ui", "villagers", locale),
 };
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string> = {
-  almanac: (locale) => m.category_almanac_description({}, { locale }),
-  animals: (locale) => m.category_animals_description({}, { locale }),
-  cosmetics: (locale) => m.category_cosmetics_description({}, { locale }),
-  mines: (locale) => m.category_mines_description({}, { locale }),
-  museum: (locale) => m.category_museum_description({}, { locale }),
-  quests: (locale) => m.category_quests_description({}, { locale }),
-  recipes: (locale) => m.category_recipes_description({}, { locale }),
+  almanac: () => "Crops, fish, forage, & more",
+  animals: () => "Breeds, variants, & cosmetics",
+  cosmetics: () => "Wardrobe & appearance",
+  mines: () => "Floors & spells",
+  museum: () => "Collections & donations",
+  quests: () => "Story & requests",
+  recipes: () => "Cooking & crafting",
   renown: (locale) => getName("ui", "town_rank", locale),
   skills: (locale) => getName("ui", "skill_levels", locale),
-  villagers: (locale) => m.category_villagers_description({}, { locale }),
+  villagers: () => "Friendship & relationships",
 };
 
 /** A category's color as a CSS `var()` reference; the one lookup that needs no locale. */
@@ -51,12 +51,12 @@ export function categoryColor<Key extends CategoryKey>(key: Key): `var(--color-c
 
 /** Lookup a single category by key. */
 export function categoryForKey(key: CategoryKey, locale: LocaleCode): CategoryInfo {
-  return {
+  return inLocale(locale, () => ({
     color: categoryColor(key),
     description: CATEGORY_DESCRIPTIONS[key](locale),
     href: CATEGORIES[key].route,
     name: CATEGORY_NAMES[key](locale),
-  };
+  }));
 }
 
 /** Look up a category key from its public route. */
@@ -66,7 +66,7 @@ export function categoryKeyForPathname(pathname: string): CategoryKey | undefine
 
 /** Display name for a category, or the raw key when it isn't a known category. */
 export function categoryNameForKey(key: string, locale: LocaleCode): string {
-  return isCategoryKey(key) ? CATEGORY_NAMES[key](locale) : key;
+  return isCategoryKey(key) ? inLocale(locale, () => CATEGORY_NAMES[key](locale)) : key;
 }
 
 export function sortCategoryKeysByName(
@@ -75,8 +75,8 @@ export function sortCategoryKeysByName(
 ): CategoryKey[] {
   return [...keys].toSorted((left, right) => {
     const nameOrder = nameCollator(locale).compare(
-      CATEGORY_NAMES[left](locale),
-      CATEGORY_NAMES[right](locale),
+      categoryNameForKey(left, locale),
+      categoryNameForKey(right, locale),
     );
     return nameOrder === 0 ? left.localeCompare(right) : nameOrder;
   });

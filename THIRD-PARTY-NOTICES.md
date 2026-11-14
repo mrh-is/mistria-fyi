@@ -1,9 +1,8 @@
 # Third-party notices
 
 This file lists the third-party assets bundled with Mistria Field Guide and their applicable
-licenses. npm dependencies are not listed here; every production build generates `/licenses.txt`
-with the name, version, & license text of each package bundled into the client (see
-`src/lib/build/licenses.ts`).
+licenses. Every production build generates `/licenses.txt` with the name, version, & license text of
+each package bundled into the client (see `src/lib/build/licenses.ts`).
 
 ---
 
@@ -37,6 +36,39 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
+
+---
+
+## Wuchale runtime
+
+Wuchale 0.26.7 and its Svelte adapter 0.21.4 declare MIT. The published packages omit the license
+file, so the build includes the notice from the
+[upstream repository](https://github.com/wuchalejs/wuchale/blob/main/LICENSE).
+
+```
+MIT License
+
+Copyright (c) 2025 Kidus Adugna
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 ```
 
 ---

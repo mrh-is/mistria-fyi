@@ -9,7 +9,6 @@ import { getName } from "#lib/data/names.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { getCategoryProgress } from "#lib/engine/categories.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
@@ -65,7 +64,7 @@ describe("subsection counters", () => {
     toolbarState.setSearchQuery(getName("items", hiddenEntry.itemIds[0], "en"));
     const { queries } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
-    expect(queries.queryByRole("button", { name: m.spoiler_reveal_aria() })).toBeNull();
+    expect(queries.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
   });
 
   it("hides recipes whose covered sources all belong to hidden groups", () => {

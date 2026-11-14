@@ -6,7 +6,6 @@ import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { getMaxRenownLevel, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -63,7 +62,7 @@ it("hides the Progress group during a search that matches nothing in it", async 
   toolbarState.setSearchQuery("acorn");
   await tick();
   await tick();
-  expect(view.queryByRole("button", { name: m.everything_progress() })).toBeNull();
+  expect(view.queryByRole("button", { name: "Progress" })).toBeNull();
 });
 
 it("keeps the Progress group during a search that matches a skill", async () => {
@@ -71,7 +70,7 @@ it("keeps the Progress group during a search that matches a skill", async () => 
   toolbarState.setSearchQuery(getName("skills", firstSkill, "en"));
   await tick();
   await tick();
-  expect(view.getByRole("button", { name: m.everything_progress() })).toBeVisible();
+  expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
 });
 
 it("hides the Completed divider when a search leaves only an empty Progress group in it", async () => {
@@ -99,9 +98,9 @@ it("brings the Progress group back when the search clears", async () => {
   toolbarState.setSearchQuery("acorn");
   await tick();
   await tick();
-  expect(view.queryByRole("button", { name: m.everything_progress() })).toBeNull();
+  expect(view.queryByRole("button", { name: "Progress" })).toBeNull();
 
   toolbarState.setSearchQuery("");
   await tick();
-  expect(view.getByRole("button", { name: m.everything_progress() })).toBeVisible();
+  expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
 });

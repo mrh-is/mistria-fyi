@@ -1,5 +1,5 @@
 import { trackerData } from "#lib/data/index.js";
-import { isConditionVisible } from "#lib/engine/visibility.js";
+import { isSourceVisible } from "#lib/engine/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { UserProgressionState } from "#lib/engine/visibility.js";
@@ -9,7 +9,7 @@ import type { StoreId } from "#lib/types/tracker-data.js";
 export function computeSpoileredStoreIds(state: UserProgressionState): Set<StoreId> {
   return new Set(
     recordEntries(trackerData.stores)
-      .filter(([, { visibility }]) => visibility && !isConditionVisible(visibility, state))
+      .filter(([id]) => !isSourceVisible({ type: "store", storeId: id }, state))
       .map(([id]) => id),
   );
 }

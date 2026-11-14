@@ -13,6 +13,7 @@
     "scripts/**/*.ts",
     "eslint-rules/**/*.ts",
     "relay/**/*.test.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "wuchale.config.ts"
   ]
 }

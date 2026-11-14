@@ -1,9 +1,9 @@
+import { categoryNameForKey } from "#lib/data/categories.js";
 /**
  * The words for a question a save asks: what to call the field it's about, & what each answer says.
  * A question names a category of the tracker rather than each fact, so it stays one sentence.
  */
-import { categoryNameForKey } from "#lib/data/categories.js";
-import * as m from "#lib/paraglide/messages.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { AskReason, FactsQuestion, SyncField } from "#lib/engine/sync-apply.js";
@@ -35,15 +35,21 @@ export const FIELD_CATEGORIES: Readonly<Record<FactsQuestion["field"], CategoryK
   villagerRelationships: "villagers",
 } satisfies Record<"household" | SyncField, CategoryKey | null>;
 
-const REASON_BODIES: Readonly<Record<AskReason, (inputs: { field: string }) => string>> = {
-  "level-decrease": m.sync_facts_level,
-  "local-disagrees": m.sync_facts_disagrees,
-  "many-removals": m.sync_facts_removals,
+const REASON_BODIES: Readonly<Record<AskReason, (field: string) => string>> = {
+  "level-decrease": (field) => `${field}: Your save file has lower levels than this device.`,
+  "local-disagrees": (field) =>
+    `${field}: Your save file doesn’t match what’s on this device, and we can’t tell which is newer.`,
+  "many-removals": (field) =>
+    `${field}: Your save file would take back a lot at once. That can happen after a game update, so we wanted to check.`,
 };
 
 /** One sentence naming what a facts question is about & why it asks. */
 export function factsQuestionBody(question: FactsQuestion, locale: LocaleCode): string {
+  return inLocale(locale, () => formatQuestionBody(question, locale));
+}
+
+function formatQuestionBody(question: FactsQuestion, locale: LocaleCode): string {
   const category = FIELD_CATEGORIES[question.field];
-  const field = category ? categoryNameForKey(category, locale) : m.sync_field_farm();
-  return REASON_BODIES[question.reason]({ field });
+  const field = category ? categoryNameForKey(category, locale) : "Your farm";
+  return REASON_BODIES[question.reason](field);
 }

@@ -3,7 +3,6 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import ShelfExplainer from "#lib/components/shelf-explainer.svelte";
-  import * as m from "#lib/paraglide/messages.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
@@ -68,7 +67,7 @@
     <button
       class="shelf-heading__info"
       type="button"
-      aria-label={m.shelf_explainer_open({ shelf: label })}
+      aria-label={`About the ${label} shelf`}
       onclick={() => (explainerOpen = true)}><IconInfoCircle class="size-3.5" /></button
     >
   {/if}

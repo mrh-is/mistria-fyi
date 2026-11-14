@@ -43,9 +43,9 @@
     const radios = [...group.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)')];
     const current = radios.indexOf(event.currentTarget as HTMLButtonElement);
     let next: number | undefined;
-    if (event.key === "Home") {
+    if (event.key === /* @wc-ignore */ "Home") {
       next = 0;
-    } else if (event.key === "End") {
+    } else if (event.key === /* @wc-ignore */ "End") {
       next = radios.length - 1;
     } else if (event.key in step) {
       next = (current + (step[event.key] ?? 0) + radios.length) % radios.length;

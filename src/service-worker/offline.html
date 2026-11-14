@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>%m.offline_page_title%</title>
+    <title>%copy.title%</title>
     <!-- offlinePagePlugin (src/lib/build/offline-page.ts) fills this slot from src/app.css &
          src/app.html: the app's fonts, light & dark tokens, locale font stacks, and saved-theme
-         bootstrap. Each percent-delimited `m.` slot is that Paraglide message in the page's
+         bootstrap. Each percent-delimited `m.` slot is that UI message in the page's
          locale, which the worker picks per request & fills along with `lang`, `dir`, and the
          link to the locale's font stylesheet. -->
     <!-- %offline.app-theme% -->
@@ -131,9 +131,9 @@
   </head>
   <body>
     <main class="note">
-      <p class="eyebrow">%m.offline_eyebrow%</p>
-      <h1>%m.offline_heading%</h1>
-      <p>%m.offline_body%</p>
+      <p class="eyebrow">%copy.eyebrow%</p>
+      <h1>%copy.heading%</h1>
+      <p>%copy.body%</p>
       <!-- Tabler's `mountain` icon (MIT, @tabler/icons-svelte-runes), drawn twice as a range. -->
       <div class="range" aria-hidden="true">
         <svg class="peak-near" viewBox="0 0 24 24">
@@ -146,7 +146,7 @@
         </svg>
       </div>
       <!-- A link, not a script: the CSP blocks inline handlers. An empty href reloads this URL. -->
-      <a class="retry" href="">%m.action_retry%</a>
+      <a class="retry" href="">%copy.retry%</a>
     </main>
   </body>
 </html>

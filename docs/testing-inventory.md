@@ -76,7 +76,7 @@ Reuse these from `src/lib/test-utils/` rather than copying a local version into 
   decorative markup (an SVG stroke count, a class that drives a visual state).
 - Assert observable outcomes: text, `aria-*` state, focus, and store state that the user would see
   reflected. Do not assert on internal component variables.
-- In component & store tests, use the expected Paraglide message function for localized copy. Pass
+- In component & store tests, use the expected localized message function for localized copy. Pass
   the expected parameters from the test fixture so the assertion catches the wrong message or input.
   For example, query a check-off button with
   `{ name: m.tracker_row_check({ name: "Copper Ore" }) }`. Keep literals when testing wording,

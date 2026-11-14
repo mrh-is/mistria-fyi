@@ -5,7 +5,6 @@
   failed doesn't block edits; `persistence-warning.svelte` raises that one as a toast.
 -->
 <script lang="ts">
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -19,18 +18,24 @@
     title: string;
   }
 
-  const reload = (): Notice["action"] => ({ label: m.book_notice_reload(), reload: true });
+  const reload = (): Notice["action"] => ({ label: "Reload", reload: true });
 
   const NOTICES: Record<BlockedKind, () => Notice> = {
     "load-blocked": () => ({
       action: reload(),
-      description: m.persistence_warning_load(),
-      title: m.persistence_warning_load_title(),
+      description:
+        "Your browser won’t let the field guide read its storage, so your progress isn’t showing. Nothing has been erased. Check your settings to make sure storage isn’t turned off, then reload the page.",
+      title: "We can’t reach your saved progress",
     }),
-    "newer-data": () => ({ action: reload(), title: m.persistence_warning_newer_data() }),
+    "newer-data": () => ({
+      action: reload(),
+      title:
+        "Your progress is safe! A newer version of the field guide saved it, so reload this page to get the latest update.",
+    }),
     unreadable: () => ({
-      action: { href: localizedHref("data"), label: m.data_title() },
-      title: m.persistence_warning_unreadable(),
+      action: { href: localizedHref("data"), label: "Data management" },
+      title:
+        "We can’t read your saved progress, so we’re not saving changes for now. This isn’t anything you did. Download a copy of the unreadable data from Data so nothing gets lost.",
     }),
   };
 

@@ -9,16 +9,15 @@
 
   import { getBookPanels } from "#lib/components/book/book-panels.svelte.js";
   import ThumbTabIcon from "#lib/components/book/thumb-tab-icon.svelte";
-  import { thumbTabKeyForPathname, thumbTabs } from "#lib/components/book/thumb-tab-list.js";
-  import * as m from "#lib/paraglide/messages.js";
-  import { deLocalizeHref } from "#lib/paraglide/runtime.js";
+  import { thumbTabKeyForPathname, thumbTabs } from "#lib/components/book/thumb-tab-messages.js";
+  import { stripLocale } from "#lib/i18n/locale-path.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
   const panels = getBookPanels();
 
   let tabs = $derived(thumbTabs(page.data.locale));
-  let current = $derived(thumbTabKeyForPathname(deLocalizeHref(page.url.pathname)));
+  let current = $derived(thumbTabKeyForPathname(stripLocale(page.url.pathname)));
 </script>
 
 <ul class="thumb-index">
@@ -47,7 +46,7 @@
       }}
     >
       <IconMessageReport class="size-4" />
-      <span class="thumb-index__name">{m.toolbar_send_feedback()}</span>
+      <span class="thumb-index__name">Send feedback</span>
     </button>
   </li>
   <li>
@@ -60,7 +59,7 @@
       }}
     >
       <IconSettings class="size-4" />
-      <span class="thumb-index__name">{m.toolbar_quick_settings()}</span>
+      <span class="thumb-index__name">Quick settings</span>
     </button>
   </li>
 </ul>

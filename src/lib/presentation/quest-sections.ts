@@ -2,7 +2,7 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { questSources } from "#lib/engine/projections/quests.js";
-import * as m from "#lib/paraglide/messages.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { displayQuestName } from "#lib/utils/en-grammar.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -78,7 +78,7 @@ export function buildQuestSections(
       .filter(([id]) => !PREGNANCY_QUEST_IDS.has(id))
       .map(([id]) => questRow(questType, id, locale));
     if (questType === "heart") {
-      const craving = cravingRow(completed, locale);
+      const craving = inLocale(locale, () => cravingRow(completed, locale));
       if (craving) sortable.push(craving);
     }
     if (sortable.length === 0) continue;
@@ -87,7 +87,12 @@ export function buildQuestSections(
     const duplicateNames = findDuplicateNames(sortable.map(({ row }) => row.displayName));
     const rows = sortable.map(({ row, villager }) =>
       row.kind === "quest"
-        ? { ...row, subtitle: questSubtitle(row, villager, questType, duplicateNames, locale) }
+        ? {
+            ...row,
+            subtitle: inLocale(locale, () =>
+              questSubtitle(row, villager, questType, duplicateNames, locale),
+            ),
+          }
         : row,
     );
     sections.push({ questType, rows });
@@ -135,7 +140,7 @@ function cravingRow(
     heartLevel: 99,
     row: {
       completed: craving.completed,
-      displayName: m.quest_craving_name({}, { locale }),
+      displayName: "A Craving",
       id: craving.questId ?? CRAVING_PLACEHOLDER_ID,
       kind: "craving",
       questId: craving.questId,
@@ -199,7 +204,7 @@ function questSubtitle(
   const rewardRecipeName =
     questType === "fetch" ? fetchRewardRecipeName(row.id, locale) : undefined;
   return duplicated && rewardRecipeName
-    ? m.quest_subtitle_with_recipe({ recipe: rewardRecipeName, villager: villagerName }, { locale })
+    ? /* @wc-include */ `${villagerName} · ${rewardRecipeName}`
     : villagerName;
 }
 

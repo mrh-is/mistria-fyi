@@ -4,7 +4,6 @@
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
@@ -27,7 +26,7 @@
     <a
       class="villager-search-result__link"
       href="{localizedHref('villagers')}#villager-{id}"
-      aria-label={m.villager_relationship_level_aria({ level, max: MAX_HEART_LEVEL, name })}
+      aria-label={`${name} relationship level, ${level} of ${MAX_HEART_LEVEL}`}
     >
       <span class="villager-search-result__mark" aria-hidden="true">
         <Icon.ProgressMark

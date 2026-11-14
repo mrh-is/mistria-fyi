@@ -17,7 +17,6 @@
   import { factKey } from "#lib/engine/provenance.js";
   import { countShelfRows, filteredCounts, progressShelf, rowShelf } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
@@ -127,7 +126,7 @@
       case "crown":
         return getName("ui", "crown_requests", locale);
       case "fetch":
-        return m.quest_type_fetch();
+        return "Fetch quests";
       case "heart":
         return getName("ui", "heart_quests", locale);
       case "mission":

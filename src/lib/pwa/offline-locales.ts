@@ -1,4 +1,4 @@
-import { baseLocale } from "#lib/paraglide/runtime.js";
+import { BASE_LOCALE } from "#lib/i18n/locale-runtime.js";
 import { CACHE_LOCALES_MESSAGE } from "#lib/pwa/service-worker-cache.js";
 
 import type { CacheLocalesMessage, CacheLocalesReply } from "#lib/pwa/service-worker-cache.js";
@@ -27,7 +27,7 @@ export function keepLocaleOffline(
   const message: CacheLocalesMessage = {
     type: CACHE_LOCALES_MESSAGE,
     current: locale,
-    locales: [...new Set([baseLocale, locale])],
+    locales: [...new Set([BASE_LOCALE, locale])],
   };
   void (async () => {
     const registration = await target.ready;

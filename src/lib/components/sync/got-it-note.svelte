@@ -1,7 +1,6 @@
 <script lang="ts">
   import IconCircleCheck from "@tabler/icons-svelte-runes/icons/circle-check";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { syncNotice } from "#lib/sync/notice.svelte.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -22,8 +21,11 @@
     <span class="got-it__tape" aria-hidden="true"></span>
     <IconCircleCheck class="got-it__icon" aria-hidden="true" />
     <div>
-      <p class="got-it__title">{m.sync_got_it_title()}</p>
-      <p>{m.sync_got_it_body({ time })} {m.sync_got_it_note()}</p>
+      <p class="got-it__title">Got it!</p>
+      <p>
+        {`Your farm as of ${time}. We’ll keep up from here.`}
+        Anything you check off by hand on this device stays here.
+      </p>
     </div>
   </aside>
 {/if}

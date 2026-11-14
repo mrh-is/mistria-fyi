@@ -44,7 +44,7 @@ disposable() {
   [ -L "$1/${2%/}" ] && return 0
   case "$2" in
     node_modules/ | */node_modules/ | .svelte-kit/ | .wrangler/ | build/ | .husky/_/ | \
-      src/lib/paraglide/ | project.inlang/* | _headers | _redirects | .playwright-*/) return 0 ;;
+      _headers | _redirects | .playwright-*/) return 0 ;;
     # Claude Code copies it into each worktree; it holds that session's permission approvals.
     .claude/settings.local.json) return 0 ;;
   esac

@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SearchResults from "#lib/components/search-results.svelte";
 import { NAME_CHUNKS } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 import type * as NamesModule from "#lib/data/names.js";
@@ -51,7 +50,7 @@ describe("SearchResults chunk loading", () => {
 
     renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
 
-    expect(screen.getByRole("status")).toHaveTextContent(m.search_loading());
+    expect(screen.getByRole("status")).toHaveTextContent("Loading search…");
     await waitFor(() => {
       expect(names.loadNames).toHaveBeenCalledWith("ja", NAME_CHUNKS);
       expect(names.loadNames).toHaveBeenCalledWith("en", NAME_CHUNKS);
@@ -72,9 +71,11 @@ describe("SearchResults chunk loading", () => {
     renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(m.search_error());
+    expect(alert).toHaveTextContent(
+      "We couldn’t load search. Check that you’re online, then try again.",
+    );
 
-    await fireEvent.click(screen.getByRole("button", { name: m.action_retry() }));
+    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: /カブ/ }).length).toBeGreaterThan(0);
@@ -106,7 +107,7 @@ describe("SearchResults chunk loading", () => {
       resolve();
     }
     await waitFor(() => {
-      expect(screen.queryByText(m.search_loading())).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading search…")).not.toBeInTheDocument();
     });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -129,7 +130,7 @@ describe("SearchResults chunk loading", () => {
     names.loadNames.mockClear();
     await view.rerender({ locale: "fr", query: "カブ" });
 
-    expect(screen.getByRole("status")).toHaveTextContent(m.search_loading());
+    expect(screen.getByRole("status")).toHaveTextContent("Loading search…");
     expect(names.loadNames).toHaveBeenCalledWith("fr", NAME_CHUNKS);
     expect(names.loadNames).toHaveBeenCalledWith("en", NAME_CHUNKS);
 
@@ -137,7 +138,7 @@ describe("SearchResults chunk loading", () => {
       resolve();
     }
     await waitFor(() => {
-      expect(screen.queryByText(m.search_loading())).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading search…")).not.toBeInTheDocument();
     });
   });
 });

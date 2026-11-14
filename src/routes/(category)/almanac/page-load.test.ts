@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { getName } from "#lib/data/names.js";
-import * as m from "#lib/paraglide/messages.js";
 
 import { load } from "./+page.js";
 
 describe("almanac page load", () => {
   it("renders metadata in the layout's locale during SSR, not the base locale", async () => {
-    // Vitest's server project runs without `window`, so paraglide treats this as SSR: its
-    // `getLocaleForUrl` ignores the URL there and would report `en` for `/ja/almanac`.
     const result = await load({
       parent: () => Promise.resolve({ locale: "ja" as const }),
       url: new URL("https://mistria.fyi/ja/almanac"),
@@ -16,7 +13,8 @@ describe("almanac page load", () => {
 
     expect(result).toMatchObject({
       metadata: {
-        description: m.almanac_page_description({}, { locale: "ja" }),
+        description:
+          "Fields of Mistriaの農作物、採集物、魚、昆虫、遺物など、図鑑の項目を記録します。",
         title: getName("ui", "almanac", "ja"),
       },
     });

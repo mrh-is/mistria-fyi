@@ -5,7 +5,6 @@
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { getRenownPresentation } from "#lib/presentation/renown-presentation.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { page } from "$app/state";
@@ -62,13 +61,10 @@
     <span class="rank-copy">
       <strong>{getName("town-ranks", presentation.currentRankIndex.toString(), locale)}</strong>
       {#if presentation.isMaxed}
-        <small>{m.renown_max_rank_reached()}</small>
+        <small>Max rank reached</small>
       {:else}
         <small>
-          {m.renown_within_rank({
-            span: presentation.rankLevelSpan,
-            within: presentation.levelsIntoRank,
-          })}
+          {`${presentation.levelsIntoRank} / ${presentation.rankLevelSpan} in rank`}
         </small>
       {/if}
     </span>
@@ -77,7 +73,7 @@
   <span
     class="renown-rule"
     role="progressbar"
-    aria-label={m.renown_progress_aria()}
+    aria-label="Renown progress"
     aria-valuemin="0"
     aria-valuemax={presentation.maxLevel}
     aria-valuenow={level}
@@ -89,10 +85,10 @@
     accentColor="var(--color-category-renown)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= presentation.maxLevel}
-    decrementLabel={m.renown_decrease()}
-    incrementLabel={m.renown_increase()}
-    label={m.renown_level_label()}
-    value={m.stepper_level_progress({ level, max: presentation.maxLevel })}
+    decrementLabel="Decrease renown"
+    incrementLabel="Increase renown"
+    label="Renown level"
+    value={/* @wc-context: stepper level progress */ `${level} of ${presentation.maxLevel}`}
     onDecrement={() => {
       setRenownWithCelebration(level - 1);
     }}
@@ -102,7 +98,7 @@
   >
     <span class="renown-readout">
       <input
-        aria-label={m.renown_level_label()}
+        aria-label="Renown level"
         type="number"
         inputmode="numeric"
         max={presentation.maxLevel}

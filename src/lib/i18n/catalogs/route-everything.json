@@ -1,0 +1,124 @@
+[
+  {
+    "translations": {
+      "en": "Category",
+      "ja": "カテゴリー",
+      "zh-Hans": "类别",
+      "zh-Hant": "類別",
+      "es": "Categoría",
+      "fr": "Catégorie",
+      "ko": "카테고리",
+      "ru": "Категории"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Done",
+      "ja": "完了",
+      "zh-Hans": "已完成",
+      "zh-Hant": "已完成",
+      "es": "Completado",
+      "fr": "Terminé",
+      "ko": "완료",
+      "ru": "Готово"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/source-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Group by",
+      "ja": "グループ分け",
+      "zh-Hans": "分组方式",
+      "zh-Hant": "分組方式",
+      "es": "Agrupar por",
+      "fr": "Regrouper par",
+      "ko": "그룹 기준",
+      "ru": "Группировать по"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/+page.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Source",
+      "ja": "入手先",
+      "zh-Hans": "来源",
+      "zh-Hant": "來源",
+      "es": "Fuente",
+      "fr": "Source",
+      "ko": "획득처",
+      "ru": "Источнику"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} · {1}",
+      "ja": "{0} · {1}",
+      "zh-Hans": "{0} · {1}",
+      "zh-Hant": "{0} · {1}",
+      "es": "{0} · {1}",
+      "fr": "{0} · {1}",
+      "ko": "{0} · {1}",
+      "ru": "{0} · {1}"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/source-content.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "section.state === /* @wc-ignore */ \"done\" ? \"Done\" : shelfLabel(stateShelf(section.state))"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  }
+]

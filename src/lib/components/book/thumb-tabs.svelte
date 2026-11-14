@@ -3,9 +3,8 @@
 
   import RailTool from "#lib/components/book/rail-tool.svelte";
   import ThumbTabIcon from "#lib/components/book/thumb-tab-icon.svelte";
-  import { thumbTabKeyForPathname, thumbTabs } from "#lib/components/book/thumb-tab-list.js";
-  import * as m from "#lib/paraglide/messages.js";
-  import { deLocalizeHref } from "#lib/paraglide/runtime.js";
+  import { thumbTabKeyForPathname, thumbTabs } from "#lib/components/book/thumb-tab-messages.js";
+  import { stripLocale } from "#lib/i18n/locale-path.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -15,7 +14,7 @@
   let { inert = false }: { inert?: boolean } = $props();
 
   let tabs = $derived(thumbTabs(page.data.locale));
-  let current = $derived(thumbTabKeyForPathname(deLocalizeHref(page.url.pathname)));
+  let current = $derived(thumbTabKeyForPathname(stripLocale(page.url.pathname)));
 
   // The tabs carry no names until you hover or focus one, or turn names on for all of them, which
   // is how a touch screen reads them. Names go off again once you pick a page.
@@ -27,18 +26,18 @@
 
 <svelte:window
   onkeydown={(event) => {
-    if (event.key === "Escape" && labeled) labeled = false;
+    if (event.key === /* @wc-ignore */ "Escape" && labeled) labeled = false;
   }}
 />
 
 <nav
   class="thumb-tabs"
   class:thumb-tabs--labeled={labeled}
-  aria-label={m.book_tabs_label()}
+  aria-label="Thumb index"
   inert={inert || undefined}
 >
   <RailTool
-    aria-label={m.book_tabs_show_names()}
+    aria-label="Show tab names"
     aria-pressed={labeled}
     onclick={() => {
       labeled = !labeled;

@@ -4,7 +4,6 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { getMaxRenownLevel } from "#lib/engine/progress.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -37,7 +36,7 @@ it("offers one closed Completed fold, only once something's finished", async () 
   const completed = view.getByTestId("everything-completed");
   const fold = within(completed).getByRole("button", {
     expanded: false,
-    name: m.common_completed_heading(),
+    name: "Completed",
   });
   expect(within(completed).queryByRole("button", { name: "Renown" })).toBeNull();
 
@@ -50,19 +49,22 @@ it("opens the Completed fold for a search, then closes it again", async () => {
   const view = renderWithFeedback(AllPage, props);
   await tick();
   const completed = view.getByTestId("everything-completed");
-  expect(
-    within(completed).getByRole("button", { name: m.common_completed_heading() }),
-  ).toHaveAttribute("aria-expanded", "false");
+  expect(within(completed).getByRole("button", { name: "Completed" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
 
   toolbarState.setSearchQuery("restore");
   await tick();
-  expect(
-    within(completed).getByRole("button", { name: m.common_completed_heading() }),
-  ).toHaveAttribute("aria-expanded", "true");
+  expect(within(completed).getByRole("button", { name: "Completed" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
 
   toolbarState.setSearchQuery("");
   await tick();
-  expect(
-    within(completed).getByRole("button", { name: m.common_completed_heading() }),
-  ).toHaveAttribute("aria-expanded", "false");
+  expect(within(completed).getByRole("button", { name: "Completed" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
 });

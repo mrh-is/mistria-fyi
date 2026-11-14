@@ -1,7 +1,6 @@
 <script lang="ts">
   import { getName } from "#lib/data/names.js";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
-  import * as m from "#lib/paraglide/messages.js";
   import {
     formatMergeCount,
     MERGE_COUNT_LABELS,
@@ -33,32 +32,21 @@
   );
 
   function childChoiceLabel(choice: Exclude<ChildChoice, "undeclared">): string {
-    return choice === "yes" ? m.relationship_action_yes() : m.relationship_action_no();
+    return choice === "yes" ? "Kids" : "Child-free";
   }
 
   function conflictMessage(conflict: MergeConflict): string {
     switch (conflict.kind) {
       case "childChoice":
-        return m.merge_conflict_child_choice({
-          incoming: childChoiceLabel(conflict.incomingChildChoice),
-          local: childChoiceLabel(conflict.localChildChoice),
-          villager: getName("villagers", conflict.villagerId, page.data.locale),
-        });
+        return `FYI, you had recorded ${childChoiceLabel(conflict.localChildChoice)} with ${getName("villagers", conflict.villagerId, page.data.locale)}, but the save file said ${childChoiceLabel(conflict.incomingChildChoice)}. We’ve kept your recorded choice.`;
       case "relationship":
-        return m.merge_conflict_relationship({
-          incoming: relationshipLabel(
-            conflict.incomingRelationship as Exclude<VillagerRelationship, "undecided">,
-          ),
-          local: relationshipLabel(
-            conflict.localRelationship as Exclude<VillagerRelationship, "undecided">,
-          ),
-          villager: getName("villagers", conflict.villagerId, page.data.locale),
-        });
+        return `FYI, you had recorded that you are ${relationshipLabel(
+          conflict.localRelationship as Exclude<VillagerRelationship, "undecided">,
+        )} with ${getName("villagers", conflict.villagerId, page.data.locale)}, but the save file said ${relationshipLabel(
+          conflict.incomingRelationship as Exclude<VillagerRelationship, "undecided">,
+        )}. We’ve kept your recorded status.`;
       case "spouse":
-        return m.merge_conflict_spouse({
-          incomingVillager: getName("villagers", conflict.incomingVillagerId, page.data.locale),
-          localVillager: getName("villagers", conflict.localVillagerId, page.data.locale),
-        });
+        return `FYI, you had recorded that you are married to ${getName("villagers", conflict.localVillagerId, page.data.locale)}, but the save file said you married ${getName("villagers", conflict.incomingVillagerId, page.data.locale)}. We’ve kept ${getName("villagers", conflict.localVillagerId, page.data.locale)} as your spouse, and skipped the imported child choice.`;
     }
   }
 
@@ -77,18 +65,15 @@
 </script>
 
 <p class="text-base font-medium">
-  {m.merge_overall_outcome({
-    percent: formatPercent(percent, page.data.locale),
-    remaining: formatNumber(overall.total - overall.completed, page.data.locale),
-  })}
+  {`Your field guide is ${formatPercent(percent, page.data.locale)} complete, with ${formatNumber(overall.total - overall.completed, page.data.locale)} left to go.`}
 </p>
 
 {#if total > 0}
   <details class="mt-2 text-sm">
-    <summary class="cursor-pointer">{m.merge_changes_details()}</summary>
+    <summary class="cursor-pointer">What we added</summary>
     {#if filesUsed.length > 0}
       <p class="mt-1 break-words text-muted-foreground">
-        {m.merge_imported_from({ files: filesUsed.join(", ") })}
+        {`Imported from ${filesUsed.join(", ")}`}
       </p>
     {/if}
     <ul class="mt-1 space-y-0.5 text-muted-foreground">
@@ -105,9 +90,7 @@
     </ul>
   </details>
 {:else}
-  <p class="text-base font-medium">
-    {m.data_no_new_data_import()}
-  </p>
+  <p class="text-base font-medium">No new data to import</p>
 {/if}
 
 {#if conflicts.length > 0}
@@ -115,9 +98,7 @@
     {#each conflicts as conflict, index (index)}
       <li class="text-foreground">
         {conflictMessage(conflict)}
-        <a class="underline" href={localizedHref("villagers")}>
-          {m.merge_conflict_correction_link()}
-        </a>
+        <a class="underline" href={localizedHref("villagers")}> Fix this by hand </a>
       </li>
     {/each}
   </ul>

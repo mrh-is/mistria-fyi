@@ -1,7 +1,6 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { BACKUP_FILE_PREFIX, downloadJson } from "#lib/utils/download.js";
 
@@ -25,16 +24,17 @@
     };
     // The backup exports what's in memory, so it includes the change that didn't save. It skips the
     // backup reminder's bookkeeping, a storage write that would only fail & raise this again.
-    activeToastId = toast.error(m.persistence_warning_title(), {
+    activeToastId = toast.error("We couldn’t save your last change", {
       // Sonner closes the toast on an action without calling onDismiss, so the action counts as one.
       action: {
-        label: m.persistence_warning_backup(),
+        label: "Make a backup",
         onClick: () => {
           downloadJson(userState.exportBackup(), BACKUP_FILE_PREFIX);
           dismissed();
         },
       },
-      description: m.persistence_warning(),
+      description:
+        "Your browser won’t let the field guide store anything. Check your settings to make sure storage isn’t full or turned off. For now, make a backup so you don’t lose your changes.",
       duration: Infinity,
       onDismiss: dismissed,
     });

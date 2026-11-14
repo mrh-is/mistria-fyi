@@ -24,7 +24,7 @@ April 2028.
 
 The checked-in Claude setup script downloads Node from `nodejs.org`, verifies its published SHA-256
 checksum, adds it to `PATH` in the Bash startup files, and runs `pnpm install --frozen-lockfile`.
-The frozen install runs the repository’s `prepare` lifecycle, including Paraglide compilation and
+The frozen install runs the repository’s `prepare` lifecycle, including UI message compilation and
 SvelteKit sync.
 
 ## Cloudflare credential
@@ -215,16 +215,16 @@ pnpm --version
 pnpm install --frozen-lockfile
 pnpm run check
 pnpm run test
-pnpm run paraglide:compile
+pnpm run messages:compile
 pnpm run cloudflare:logs -- <deployment-id>
 ```
 
 `pnpm exec node --version` must match `.node-version` in both environments. Bare `node --version`
-must also match it for Claude, and print a 24.x release of at least 24.15 for Codex; Paraglide must
-compile without requesting jsDelivr; the log command must print timestamped build-log lines. Use a
-real deployment ID from the Pages project; the command intentionally rejects the `<deployment-id>`
-placeholder. For Claude with a protected API credential, `CLOUDFLARE_API_TOKEN` should be unset even
-though the log request succeeds.
+must also match it for Claude, and print a 24.x release of at least 24.15 for Codex; UI messages
+must compile from the checked-in catalogs; the log command must print timestamped build-log lines.
+Use a real deployment ID from the Pages project; the command intentionally rejects the
+`<deployment-id>` placeholder. For Claude with a protected API credential, `CLOUDFLARE_API_TOKEN`
+should be unset even though the log request succeeds.
 
 Install, check, and tests must exit successfully. When filtering their output with `tail`, enable
 `set -o pipefail` first so the pipeline preserves failures from pnpm instead of reporting `tail`’s

@@ -11,7 +11,10 @@ export const LICENSES_FILE_NAME = "licenses.txt";
  * reason it was reviewed & accepted. Adding one is a deliberate decision: say where the license
  * text lives instead & why shipping without it is fine.
  */
-export const LICENSE_ALLOWLIST: Readonly<Record<string, string>> = {};
+export const LICENSE_ALLOWLIST: Readonly<Record<string, string>> = {
+  "@wuchale/svelte": "The reviewed upstream MIT license is included in the Wuchale runtime notice.",
+  wuchale: "The reviewed upstream MIT license is included in the Wuchale runtime notice.",
+};
 
 /**
  * Filenames that carry a license grant or notice: `LICENSE`, `LICENCE`, `COPYING`, or `NOTICE`, with
@@ -192,7 +195,7 @@ export interface LicensesPluginOptions {
   allowlist?: Readonly<Record<string, string>>;
   /**
    * Project directories whose generated code comes from an installed package, keyed by prefix (for
-   * example Paraglide's compiled runtime). A bundled module under a prefix counts that package.
+   * example a generated dependency runtime). A bundled module under a prefix counts that package.
    */
   generatedFrom?: Readonly<Record<string, string>>;
   /** Stylesheets (relative to the project root) whose bare `@import`s ship in the bundle. */

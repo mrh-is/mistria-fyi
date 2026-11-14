@@ -1,13 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 
 import { formatSavArchiveError, formatSaveImportWarning } from "./data-error-messages.js";
 
-const defaultGetLocale = getLocale;
-
 afterEach(() => {
-  overwriteGetLocale(defaultGetLocale);
+  overwriteGetLocale();
 });
 
 describe("data error messages", () => {
@@ -30,7 +28,7 @@ describe("data error messages", () => {
     overwriteGetLocale(() => "fr");
 
     expect(formatSaveImportWarning({ code: "not-a-list", path: "player.perks" })).toBe(
-      "player.perks n’est pas une liste ; ignoré",
+      "player.perks n’est pas une liste\u00A0; ignoré",
     );
   });
 

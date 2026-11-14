@@ -5,8 +5,6 @@
   import IconDeviceMobile from "@tabler/icons-svelte-runes/icons/device-mobile";
   import IconPencil from "@tabler/icons-svelte-runes/icons/pencil";
 
-  import * as m from "#lib/paraglide/messages.js";
-
   let {
     mac,
     onhand,
@@ -25,22 +23,22 @@
   <button type="button" class="where__card" onclick={onother}>
     <IconDeviceMobile class="where__icon" aria-hidden="true" />
     <span class="where__text">
-      <span class="where__title">{m.sync_where_other()}</span>
-      <span class="where__sub">{m.sync_where_other_sub()}</span>
-      <span class="where__body">{m.sync_where_other_body()}</span>
+      <span class="where__title">My save file is on another device</span>
+      <span class="where__sub">Like my gaming computer</span>
+      <span class="where__body">Scan a code from the computer that runs the game.</span>
     </span>
     <IconChevronRight class="where__chevron" aria-hidden="true" />
   </button>
 
   {#if mac}
-    <p class="where__or" aria-hidden="true"><span>{m.sync_where_or()}</span></p>
+    <p class="where__or" aria-hidden="true"><span>or</span></p>
   {:else}
     <button type="button" class="where__card" onclick={onhere}>
       <IconDeviceDesktop class="where__icon" aria-hidden="true" />
       <span class="where__text">
-        <span class="where__title">{m.sync_where_here()}</span>
-        <span class="where__sub">{m.sync_where_here_sub()}</span>
-        <span class="where__body">{m.sync_where_here_body()}</span>
+        <span class="where__title">My save file is on this computer</span>
+        <span class="where__sub">I play right here</span>
+        <span class="where__body">Read it here, and share it with your phone.</span>
       </span>
       <IconChevronRight class="where__chevron" aria-hidden="true" />
     </button>
@@ -49,9 +47,11 @@
   <button type="button" class="where__card" onclick={onhand}>
     <IconPencil class="where__icon" aria-hidden="true" />
     <span class="where__text">
-      <span class="where__title">{m.sync_where_hand()}</span>
-      <span class="where__sub">{m.sync_where_hand_sub()}</span>
-      <span class="where__body">{m.sync_where_hand_body()}</span>
+      <span class="where__title">I’ll track it all by hand</span>
+      <span class="where__sub">No save file</span>
+      <span class="where__body"
+        >Check things off yourself. You can still import a save file now and then.</span
+      >
     </span>
     <IconChevronRight class="where__chevron" aria-hidden="true" />
   </button>
@@ -59,7 +59,7 @@
   {#if mac}
     <button type="button" class="sync-small-button" onclick={onhere}>
       <IconDeviceLaptop aria-hidden="true" />
-      {m.sync_where_here_mac()}
+      The game runs on this Mac
     </button>
   {/if}
 </div>

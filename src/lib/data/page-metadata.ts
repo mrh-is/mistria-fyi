@@ -1,4 +1,4 @@
-import * as m from "#lib/paraglide/messages.js";
+import { inLocale } from "#lib/i18n/locale-runtime.js";
 
 import type { CategoryKey } from "#lib/engine/categories.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -44,8 +44,12 @@ export interface ToolbarConfig {
 const DEFAULT_TOOLBAR: ToolbarConfig = { clock: false, filter: false, search: false };
 
 export function errorPageMetadata(status: number, locale: LocaleCode): PageMetadata {
+  return inLocale(locale, () => formatErrorPageMetadata(status));
+}
+
+function formatErrorPageMetadata(status: number): PageMetadata {
   return pageMetadata({
-    description: m.error_page_description({}, { locale }),
+    description: "We couldn’t find that page in the field guide.",
     robots: "noindex, nofollow",
     title: String(status),
   });

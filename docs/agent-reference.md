@@ -121,8 +121,7 @@ package ships no license text. Instead of weakening that check, list the package
 | `pnpm run preview`            | Preview the production build locally                               |
 | `pnpm run build`              | Production build (Cloudflare Pages)                                |
 | `pnpm run check`              | SvelteKit type checking                                            |
-| `pnpm run check:i18n`         | Verify locale files match `en.json`’s keys                         |
-| `pnpm run check:locale-sync`  | Verify a changed English message changed in each locale too        |
+| `pnpm run check:i18n`         | Verify Wuchale extraction and translation completeness             |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions                        |
 | `pnpm run knip`               | Find unused files, exports, & dependencies                         |
 | `pnpm run lint`               | oxfmt, oxlint, ESLint, Stylelint, directive reasons, & ShellCheck  |
@@ -259,7 +258,7 @@ These rules rest on `AGENTS.md` alone:
   keep them working on Windows. Use the default functions for filesystem paths. Use `path.posix` for
   paths that are `/`-separated everywhere: repo-relative doc paths, git pathspecs, URLs, & zip
   entries. See
-  [the decision record](https://github.com/mrh-is/mistria-fyi/blob/2941c9bf35350d638b77d2d28160556dc76f85de/docs/decisions/2026-10-13-path-apis.md).
+  [the decision record](https://github.com/mrh-is/mistria-fyi/blob/fe6cf301719fb3e85cbcc43312c6a08a101538ac/docs/decisions/2026-10-13-path-apis.md).
 - **Styling:** Tailwind utilities & scoped `<style>` blocks, both built on the design tokens in
   `src/app.css`. Stylelint rejects literal colors, type sizes, shadows, & radii in scoped CSS. See
   [docs/styling.md](styling.md).

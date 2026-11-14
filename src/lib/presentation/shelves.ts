@@ -1,5 +1,3 @@
-import * as m from "#lib/paraglide/messages.js";
-
 import type { FilteredCounts, Shelf } from "#lib/engine/shelves.js";
 
 /** What the page's one filter note reports: the most actionable shelf that lost anything. */
@@ -18,10 +16,10 @@ export function filterNote(counts: FilteredCounts): FilterNote | undefined {
 export function shelfLabel(shelf: Shelf): string {
   switch (shelf) {
     case "completed":
-      return m.common_completed_heading();
+      return /* @wc-context: common completed heading */ "Completed";
     case "notNow":
-      return m.shelf_not_now();
+      return /* @wc-context: shelf not now */ "Not now";
     case "todo":
-      return m.shelf_to_do();
+      return "To do";
   }
 }

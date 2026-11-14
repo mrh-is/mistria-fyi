@@ -6,7 +6,6 @@ import MuseumContent from "#lib/components/museum-content.svelte";
 import PageSearchStatus from "#lib/components/page-search-status.svelte";
 import SearchGuideLink from "#lib/components/search-guide-link.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -25,7 +24,7 @@ function report(visible: number, filtered: Partial<FilteredCounts> = {}): void {
 async function search(query: string) {
   toolbarState.openSearch();
   toolbarState.setSearchQuery(query);
-  const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+  const view = renderWithFeedback(PageSearchStatus);
   await tick();
   return view;
 }
@@ -38,7 +37,7 @@ describe("PageSearchStatus", () => {
   // Client test files share this store, so a search left open would filter their pages.
 
   it("stays quiet without a search", () => {
-    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    const view = renderWithFeedback(PageSearchStatus);
 
     expect(view.getByRole("status")).toHaveTextContent("");
     expect(view.container.querySelector("[data-page-search-status]")).toBeNull();
@@ -48,8 +47,8 @@ describe("PageSearchStatus", () => {
     report(0);
     const view = await search("zzz");
 
-    expect(view.getAllByText(m.search_no_results())).not.toHaveLength(0);
-    expect(view.getByRole("status")).toHaveTextContent(m.search_no_results());
+    expect(view.getAllByText("No items found")).not.toHaveLength(0);
+    expect(view.getByRole("status")).toHaveTextContent("No items found");
   });
 
   it("names the shelf that lost rows, in its heading's typeface", async () => {
@@ -57,10 +56,8 @@ describe("PageSearchStatus", () => {
     const view = await search("bass");
 
     expect(view.getByRole("status")).toHaveTextContent("1 To do item is being filtered out.");
-    expect(view.container.querySelector(".page-search-status__shelf")).toHaveTextContent(
-      m.shelf_to_do(),
-    );
-    expect(view.getByRole("button", { name: m.filter_note_show() })).toBeInTheDocument();
+    expect(view.container.querySelector(".page-search-status__shelf")).toHaveTextContent("To do");
+    expect(view.getByRole("button", { name: "Show anyway" })).toBeInTheDocument();
   });
 
   it("gives one note, for the most actionable shelf", async () => {
@@ -76,12 +73,12 @@ describe("PageSearchStatus", () => {
     report(3, { todo: 2 });
     toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
     toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
-    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    const view = renderWithFeedback(PageSearchStatus);
     await tick();
 
     expect(view.getByRole("status")).toHaveTextContent("2 To do items are being filtered out.");
 
-    await fireEvent.click(view.getByRole("button", { name: m.filter_note_show() }));
+    await fireEvent.click(view.getByRole("button", { name: "Show anyway" }));
     expect(toolbarState.isSourceFilterNarrowing).toBe(false);
     toolbarState.unregisterSourceFilters("test");
   });
@@ -90,10 +87,10 @@ describe("PageSearchStatus", () => {
     report(0);
     toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
     toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
-    const view = renderWithFeedback(PageSearchStatus, { locale: "en" });
+    const view = renderWithFeedback(PageSearchStatus);
     await tick();
 
-    expect(view.getByRole("status")).toHaveTextContent(m.filter_note_nothing_left());
+    expect(view.getByRole("status")).toHaveTextContent("Your filters leave nothing on this page.");
     toolbarState.unregisterSourceFilters("test");
   });
 
@@ -113,12 +110,12 @@ describe("PageSearchStatus", () => {
     report(0, { todo: 3 });
     const view = await search("bass");
 
-    await fireEvent.click(view.getByRole("button", { name: m.filter_note_show() }));
+    await fireEvent.click(view.getByRole("button", { name: "Show anyway" }));
 
     expect(toolbarState.searchShowsAll).toBe(true);
     expect(view.getByText(/Your filters are off for this search/u)).toBeInTheDocument();
 
-    await fireEvent.click(view.getByRole("button", { name: m.search_filters_resume() }));
+    await fireEvent.click(view.getByRole("button", { name: "Turn them back on" }));
 
     expect(toolbarState.searchShowsAll).toBe(false);
   });
@@ -148,7 +145,7 @@ describe("PageSearchStatus", () => {
     await tick();
 
     const link = view.getByRole("link", { name: "Search the entire Field Guide for “zzz”" });
-    expect(view.getByText(m.search_guide_prompt())).toBeInTheDocument();
+    expect(view.getByText("Don’t see what you’re looking for?")).toBeInTheDocument();
 
     link.addEventListener("click", (event) => {
       event.preventDefault();

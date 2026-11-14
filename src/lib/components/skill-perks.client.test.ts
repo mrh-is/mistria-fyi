@@ -6,7 +6,6 @@ import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
-import * as m from "#lib/paraglide/messages.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordKeys } from "#lib/utils/record.js";
 
@@ -132,7 +131,7 @@ describe("SkillPerks", () => {
 
     const tier3 = screen.getByRole("list", { name: /Tier 3,/ });
     await fireEvent.click(
-      within(tier3).getAllByRole("button", { name: m.tracker_row_check_spoilered() })[0],
+      within(tier3).getAllByRole("button", { name: "Check spoilered item" })[0],
     );
     expect(spoilerGuard.open).toBe(true);
     expect(spoilerGuard.condition).toEqual({
@@ -151,7 +150,7 @@ describe("SkillPerks", () => {
     renderPerks();
     await fireEvent.click(toggle());
 
-    await fireEvent.click(screen.getAllByRole("button", { name: m.spoiler_reveal_aria() })[0]);
+    await fireEvent.click(screen.getAllByRole("button", { name: "Reveal spoiler" })[0]);
     expect(await screen.findByText(firstPerkName)).toBeInTheDocument();
     expect(userState.state.progress.unlockedPerks.has(firstPerk)).toBe(false);
   });
@@ -161,7 +160,7 @@ describe("SkillPerks", () => {
     renderPerks();
     await fireEvent.click(toggle());
 
-    expect(screen.queryByRole("button", { name: m.spoiler_reveal_aria() })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
     await fireEvent.click(screen.getByRole("button", { name: `Check ${lockedPerkName}` }));
     expect(spoilerGuard.open).toBe(false);
     expect(userState.state.progress.unlockedPerks.has(lockedPerk)).toBe(true);
@@ -225,7 +224,7 @@ describe("SkillPerks", () => {
 
       expect(document.querySelectorAll(".skill-perks__unlocks")).toHaveLength(0);
       const tier3 = screen.getByRole("list", { name: /Tier 3,/ });
-      const revealButtons = within(tier3).getAllByRole("button", { name: m.spoiler_reveal_aria() });
+      const revealButtons = within(tier3).getAllByRole("button", { name: "Reveal spoiler" });
       await Promise.all(revealButtons.map((button) => fireEvent.click(button)));
       expect(await screen.findByText(/^unlocks \d+ recipes$/)).toBeVisible();
     });

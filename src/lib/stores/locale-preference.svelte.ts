@@ -1,4 +1,5 @@
-import { deLocalizeHref, localizeHref, setLocale } from "#lib/paraglide/runtime.js";
+import { localizePath } from "#lib/i18n/locale-path.js";
+import { rememberLocale } from "#lib/i18n/locale-runtime.js";
 import { ensureLocaleCachedOffline } from "#lib/pwa/offline-locales.js";
 import { goto } from "$app/navigation";
 import { page } from "$app/state";
@@ -6,11 +7,8 @@ import { page } from "$app/state";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 /**
- * Persists a player's selected locale, then navigates to the current page in that locale. Paraglide
- * writes its long-lived locale cookie, which is also the preference read by bare-path redirects on
- * the server. Its own navigation would be a full `location.href` reload, so it is told not to and
- * SvelteKit's client router takes over: the root layout's `load()` re-resolves the locale from the
- * new URL and every rendered name re-derives without losing page state.
+ * Persists a player's selected locale and navigates to the same page using SvelteKit's router.
+ * The root layout reads the locale from the new URL, and bare-path redirects read the cookie.
  */
 export const localePreference = {
   /**
@@ -21,9 +19,9 @@ export const localePreference = {
    */
   async select(locale: LocaleCode): Promise<boolean> {
     if ((await ensureLocaleCachedOffline(locale)) === false) return false;
-    void setLocale(locale, { reload: false });
+    rememberLocale(locale);
     // The target is the page already being displayed, re-localized from the router's own path.
-    void goto(localizeHref(deLocalizeHref(page.url.pathname), { locale }));
+    void goto(localizePath(page.url.pathname, locale));
     return true;
   },
 };

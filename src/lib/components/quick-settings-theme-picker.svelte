@@ -2,23 +2,20 @@
   import IconPalette from "@tabler/icons-svelte-runes/icons/palette";
 
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
-  import * as m from "#lib/paraglide/messages.js";
   import { theme } from "#lib/stores/theme.svelte.js";
 
   import type { Theme } from "#lib/stores/theme.svelte.js";
 
   const themes: Theme[] = ["light", "dark", "system"];
   const themeLabels: Record<Theme, string> = {
-    dark: m.settings_theme_dark(),
-    light: m.settings_theme_light(),
-    system: m.settings_theme_auto(),
+    dark: "Dark",
+    light: "Light",
+    system: "Auto",
   };
 </script>
 
 <div class="theme-setting">
-  <span class="theme-setting__label"
-    ><IconPalette class="size-3.5" />{m.settings_theme_label()}</span
-  >
+  <span class="theme-setting__label"><IconPalette class="size-3.5" />Theme</span>
   <SegmentedPicker
     mode="theme"
     choices={themes}

@@ -4,7 +4,7 @@
   import SearchGuideLink from "#lib/components/search-guide-link.svelte";
   import { categoryForKey, categoryKeyForPathname } from "#lib/data/categories.js";
   import { getCategoryProgress } from "#lib/engine/categories.js";
-  import { deLocalizeHref } from "#lib/paraglide/runtime.js";
+  import { stripLocale } from "#lib/i18n/locale-path.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { page } from "$app/state";
@@ -14,7 +14,7 @@
   let { children, data }: LayoutProps = $props();
 
   let key = $derived.by(() => {
-    const pathname = deLocalizeHref(page.url.pathname);
+    const pathname = stripLocale(page.url.pathname);
     const categoryKey = categoryKeyForPathname(pathname);
     if (!categoryKey) throw new Error(`Unknown category route: ${pathname}`);
     return categoryKey;
@@ -30,7 +30,7 @@
 <div class="min-w-0" style="--primary: {color}">
   <PageHeader title={name} {progress} category={key} />
   <div class="flex flex-col gap-4 px-4 pt-4 pb-4">
-    <PageSearchStatus locale={data.locale} />
+    <PageSearchStatus />
     {@render children()}
     <SearchGuideLink locale={data.locale} />
   </div>

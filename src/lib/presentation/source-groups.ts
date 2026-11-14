@@ -1,7 +1,5 @@
-import { trackerData } from "#lib/data/index.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import { isDoableToday } from "#lib/engine/availability.js";
-import { isConditionVisible } from "#lib/engine/visibility.js";
+import { isDoableToday, isSourceVisible } from "#lib/engine/availability.js";
 
 import type { SourceFilterId } from "#lib/data/source-filters.js";
 import type { DayContext } from "#lib/engine/availability.js";
@@ -161,46 +159,12 @@ export function projectSourceGroups<Row extends SourceGroupRow>(
           rows.length > 0 &&
           rows.every(
             ({ sources }) =>
-              sources.length > 0 && sources.every((source) => !sourceVisible(source, spoilerState)),
+              sources.length > 0 &&
+              sources.every((source) => !isSourceVisible(source, spoilerState)),
           ),
         state,
         total: counted.length,
       },
     ];
   });
-}
-
-function sourceVisible(source: Source, state: UserProgressionState): boolean {
-  if ("visibility" in source && !isConditionVisible(source.visibility, state)) {
-    return false;
-  }
-  if (
-    "storeId" in source &&
-    source.storeId &&
-    !isConditionVisible(trackerData.stores[source.storeId]?.visibility, state)
-  ) {
-    return false;
-  }
-  if (
-    "villagerId" in source &&
-    !isConditionVisible(trackerData.villagers[source.villagerId]?.visibility, state)
-  ) {
-    return false;
-  }
-  if (source.type === "quest") {
-    for (const [type, quests] of Object.entries(trackerData.quests)) {
-      const quest = quests[source.questId];
-      if (
-        Object.hasOwn(quests, source.questId) &&
-        (!isConditionVisible(quest.visibility, state) ||
-          !isConditionVisible(
-            trackerData.categoryVisibility[type as keyof typeof trackerData.categoryVisibility],
-            state,
-          ))
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
 }

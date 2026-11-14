@@ -1,14 +1,13 @@
 <script lang="ts">
   import CategoryStripe from "#lib/components/category-stripe.svelte";
-  import * as m from "#lib/paraglide/messages.js";
 
   let { total }: { total: number } = $props();
 </script>
 
 <div class="og-card">
   <header>
-    <h1>{m.app_name()}</h1>
-    <p>{m.og_share_tagline()}</p>
+    <h1>Mistria Field Guide</h1>
+    <p>Track every collection, quest, skill & more</p>
   </header>
   <div class="stripe-scale">
     <CategoryStripe
@@ -16,11 +15,11 @@
       color="var(--color-brand-accent)"
       completed={1416}
       completedLabel="??"
-      description={m.og_share_description()}
+      description="All of Mistria in one place"
       href=""
       icon="all"
       mobileRibbon
-      name={m.home_everything_label()}
+      name="Everything"
     />
   </div>
 </div>

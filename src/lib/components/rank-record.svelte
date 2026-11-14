@@ -3,7 +3,6 @@
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { getRankState } from "#lib/presentation/renown-presentation.js";
   import { page } from "$app/state";
 
@@ -38,7 +37,7 @@
   let reportable = $derived(
     feedbackContext.reportableAttachment({
       category: "rank",
-      displayName: isSpoilered ? m.tracker_row_spoilered_item() : name,
+      displayName: isSpoilered ? "Spoilered item" : name,
       page: page.url.pathname,
     }),
   );
@@ -70,9 +69,9 @@
     </strong>
     <small>
       {#if rank.levels.start === rank.levels.end}
-        {m.rank_level_single({ level: rank.levels.start })}
+        {`Lv ${rank.levels.start}`}
       {:else}
-        {m.rank_level_range({ start: rank.levels.start, end: rank.levels.end })}
+        {`Lv ${rank.levels.start}–${rank.levels.end}`}
       {/if}
     </small>
   </span>
@@ -80,14 +79,12 @@
   {#if rankState === "completed"}
     <span class="rank-state rank-state--completed">
       <IconCompletion state="completed" class="rank-completion" />
-      {m.rank_state_completed()}
+      <!-- @wc-context: rank state completed -->Completed
     </span>
   {:else if rankState === "current"}
-    <span class="rank-state"
-      ><strong>{m.rank_state_current()}</strong> {levelsIntoRank} / {rankLevelSpan}</span
-    >
+    <span class="rank-state"><strong>Current</strong> {levelsIntoRank} / {rankLevelSpan}</span>
   {:else}
-    <span class="rank-state">{m.rank_state_upcoming()}</span>
+    <span class="rank-state">Upcoming</span>
   {/if}
 </li>
 

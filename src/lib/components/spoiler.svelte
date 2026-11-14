@@ -2,8 +2,6 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
-  import * as m from "#lib/paraglide/messages.js";
-
   import type { Snippet } from "svelte";
 
   let {
@@ -18,12 +16,7 @@
 </script>
 
 {#if spoilered}
-  <button
-    class="spoiler-cover"
-    type="button"
-    onclick={onReveal}
-    aria-label={m.spoiler_reveal_aria()}
-  >
+  <button class="spoiler-cover" type="button" onclick={onReveal} aria-label="Reveal spoiler">
     <span class="spoiler-cover__mask" data-testid="spoiler-cover-mask" aria-hidden="true"
       ><span class="spoiler-cover__content">{@render children()}</span></span
     >

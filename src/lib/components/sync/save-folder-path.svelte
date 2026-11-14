@@ -2,7 +2,6 @@
   import IconCheck from "@tabler/icons-svelte-runes/icons/check";
   import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
 
-  import * as m from "#lib/paraglide/messages.js";
   import { copiedFromPath, SAVE_FOLDERS } from "#lib/sync/save-folders.js";
 
   import type { SaveFolderPlatform } from "#lib/sync/save-folders.js";
@@ -40,9 +39,9 @@
   <code bind:this={pathEl}>{folder}</code>
   <button type="button" class="save-folder__copy" onclick={copyPath}>
     {#if copied}
-      <IconCheck aria-hidden="true" />{m.sync_find_copied()}
+      <IconCheck aria-hidden="true" />Copied!
     {:else}
-      <IconCopy aria-hidden="true" />{m.sync_find_copy()}
+      <IconCopy aria-hidden="true" />Copy
     {/if}
   </button>
 </div>

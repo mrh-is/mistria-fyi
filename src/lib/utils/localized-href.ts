@@ -1,4 +1,5 @@
-import { localizeHref } from "#lib/paraglide/runtime.js";
+import { localizePath } from "#lib/i18n/locale-path.js";
+import { getLocale } from "#lib/i18n/locale-runtime.js";
 import { resolve } from "$app/paths";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -17,5 +18,8 @@ import type { Path, ResolvedPathname } from "$app/types";
  * no per-call-site suppression needed.
  */
 export function localizedHref(path: Path, options?: { locale: LocaleCode }): ResolvedPathname {
-  return localizeHref(resolve(path), options) as ResolvedPathname;
+  // SvelteKit emits `./route` or `../route` during SSR. Locale URLs are origin-relative.
+  const resolved = new URL(resolve(path), "https://mistria.invalid");
+  const localized = localizePath(resolved.pathname, options?.locale ?? getLocale());
+  return `${localized}${resolved.search}${resolved.hash}` as ResolvedPathname;
 }

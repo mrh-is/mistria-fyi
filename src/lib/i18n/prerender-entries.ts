@@ -31,8 +31,7 @@ const UNLOCALIZED_PRERENDERED_PATHS = ["/sitemap.xml"] as const;
 
 /**
  * Every prerender entry: each prerendered route under each locale prefix, matching the
- * all-prefixed `urlPatterns` in `paraglide-options.ts` (`prerender-entries.test.ts` checks them
- * against Paraglide's own `localizeHref`), plus the unlocalized prerendered files.
+ * all-prefixed paths produced by `locale-path.ts`, plus the unlocalized prerendered files.
  */
 export const PRERENDER_ENTRIES: `/${string}`[] = [
   ...LOCALE_CODES.flatMap((locale) =>

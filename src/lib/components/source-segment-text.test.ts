@@ -1,17 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import SourceSegmentText from "#lib/components/source-segment-text.svelte";
-import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { overwriteGetLocale } from "#lib/i18n/locale-runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import type { SourceSegment } from "#lib/sources/source-segments.js";
 
-const defaultGetLocale = getLocale;
-
 afterEach(() => {
   userState.resetAll();
-  overwriteGetLocale(defaultGetLocale);
+  overwriteGetLocale();
 });
 
 describe("SourceSegmentText", () => {

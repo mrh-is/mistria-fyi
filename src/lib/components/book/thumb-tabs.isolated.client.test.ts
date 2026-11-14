@@ -2,7 +2,6 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/sve
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ThumbTabs from "#lib/components/book/thumb-tabs.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 vi.mock("$app/navigation", () => ({ afterNavigate: vi.fn() }));
@@ -13,19 +12,19 @@ afterEach(() => {
 });
 
 function tabs(): HTMLElement {
-  return screen.getByRole("navigation", { name: m.book_tabs_label() });
+  return screen.getByRole("navigation", { name: "Thumb index" });
 }
 
 function namesToggle(): HTMLElement {
-  return within(tabs()).getByRole("button", { name: m.book_tabs_show_names() });
+  return within(tabs()).getByRole("button", { name: "Show tab names" });
 }
 
 describe("ThumbTabs", () => {
   it("names every tab for a screen reader, Home first & Everything last", () => {
     render(ThumbTabs);
     const links = within(tabs()).getAllByRole("link");
-    expect(links.at(0)).toHaveAccessibleName(m.book_tab_home());
-    expect(links.at(-1)).toHaveAccessibleName(m.home_everything_label());
+    expect(links.at(0)).toHaveAccessibleName("Home");
+    expect(links.at(-1)).toHaveAccessibleName("Everything");
     expect(links).toHaveLength(12);
   });
 

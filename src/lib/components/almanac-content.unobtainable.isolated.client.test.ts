@@ -4,7 +4,6 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import AlmanacContent from "#lib/components/almanac-content.svelte";
 import FilterPanel from "#lib/components/filter-panel.svelte";
-import * as m from "#lib/paraglide/messages.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -37,7 +36,7 @@ it("reveals an unobtainable row with the filter and hides it again", async () =>
   const view = renderWithFeedback(AlmanacContent, { locale: "en" });
   await tick();
   const filters = renderWithFeedback(FilterPanel, {});
-  const toggle = filters.getByRole("switch", { name: m.visibility_unobtainable_toggle() });
+  const toggle = filters.getByRole("switch", { name: "Unobtainable" });
   expect(toggle).not.toBeChecked();
   expect(view.queryByText("Turnip", { exact: true })).toBeNull();
   await fireEvent.click(toggle);

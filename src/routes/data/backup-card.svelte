@@ -7,7 +7,6 @@
   import SyncTagDialog from "#lib/components/sync/sync-tag-dialog.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import { downloadProgressBackup } from "#lib/controllers/tracking-reminders.svelte.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { progressBackup } from "#lib/progress/index.js";
   import { holdUpdatesWhile } from "#lib/pwa/update-holds.js";
   import { downloadJson } from "#lib/utils/download.js";
@@ -18,9 +17,12 @@
   import type { BackupRestoreErrorKind } from "#lib/progress/index.js";
 
   const ERROR_MESSAGES: Record<BackupRestoreErrorKind, string> = {
-    "invalid-fields": m.backup_error_invalid_fields(),
-    "malformed-json": m.backup_error_malformed_json(),
-    "newer-version": m.backup_error_newer_version(),
+    "invalid-fields":
+      "This backup is missing some data, so we left your progress as it was. It might be damaged, or from a different app.",
+    "malformed-json":
+      "This doesn’t look like a backup file, so we left your progress as it was. Make sure you picked one you downloaded from here.",
+    "newer-version":
+      "A time traveler! That backup seems to be from a future version of the field guide. To be safe, we left your progress as it was. Reload this page to get the latest update, then try again.",
   };
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -39,8 +41,8 @@
       kept.savedAt,
     );
     return kept.farmName
-      ? m.sync_backup_named({ date, farm: kept.farmName })
-      : m.sync_backup_unnamed({ date });
+      ? `Backup of ${kept.farmName}, from ${date}`
+      : `Backup of your last farm, from ${date}`;
   });
 
   function restoreFarmBackup(): void {
@@ -48,7 +50,7 @@
     restoreError = "";
     const result = progressBackup.restoreFarmSwitchBackup();
     if (result.ok) {
-      restoreStatus = m.sync_backup_restored();
+      restoreStatus = "Restored that backup.";
     } else {
       restoreStatus = "";
       restoreError = ERROR_MESSAGES[result.error];
@@ -68,7 +70,7 @@
     const input = document.createElement("input");
     input.type = "file";
     input.name = "backup-file";
-    input.setAttribute("aria-label", m.backup_choose_file_aria());
+    input.setAttribute("aria-label", "Choose a backup file to restore");
     input.accept = ".json";
     input.addEventListener("change", async () => {
       const file = input.files?.[0];
@@ -76,19 +78,20 @@
       if (!file) return;
       restoring = true;
       restoreError = "";
-      restoreStatus = m.backup_restoring_status();
+      restoreStatus = "Restoring backup…";
       try {
         const text = await file.text();
         const result = progressBackup.restoreBackup(text);
         if (result.ok) {
-          restoreStatus = m.backup_restored_success();
+          restoreStatus = "All set, your backup is restored!";
         } else {
           restoreStatus = "";
           restoreError = ERROR_MESSAGES[result.error];
         }
       } catch {
         restoreStatus = "";
-        restoreError = m.backup_could_not_read();
+        restoreError =
+          "We couldn’t open that file, so we left your progress as it was. Make sure you picked a backup you downloaded from here.";
       } finally {
         restoring = false;
       }
@@ -102,11 +105,11 @@
   }
 </script>
 
-<DataCard bind:open title={m.backup_card_title()} summary={m.backup_card_summary()}>
+<DataCard bind:open title="Backup & restore" summary="Export or restore all your field guide data.">
   <div class="flex flex-col gap-2">
     <Button variant="outline" onclick={handleExport}>
       <IconFileUpload />
-      {m.backup_export_action()}
+      Export backup
     </Button>
     <Button
       variant="outline"
@@ -115,7 +118,7 @@
       onclick={handleImportBackup}
     >
       <IconUpload />
-      {m.backup_restore_action()}
+      Restore from backup
     </Button>
     {#if farmBackupLabel}
       <Button
@@ -131,7 +134,7 @@
     {#if progressBackup.unreadableData !== null}
       <Button variant="outline" onclick={handleDownloadUnreadable}>
         <IconFileAlert />
-        {m.backup_download_unreadable_action()}
+        Download unreadable data
       </Button>
     {/if}
     <div class="sr-only" role="status" aria-live="polite">{restoreStatus}</div>
@@ -145,15 +148,15 @@
 
 <SyncTagDialog
   bind:open={farmBackupOpen}
-  title={m.sync_backup_restore_title()}
-  body={m.sync_backup_restore_body()}
+  title="Restore this backup?"
+  body="It replaces what’s on this device. You’ll stay synced, so your next save file still applies with the usual rules."
   actions={[
     {
-      label: m.sync_backup_restore_cancel(),
+      label: "Cancel",
       onclick: () => {
         farmBackupOpen = false;
       },
     },
-    { label: m.sync_backup_restore_confirm(), onclick: restoreFarmBackup, primary: true },
+    { label: "Restore it", onclick: restoreFarmBackup, primary: true },
   ]}
 />

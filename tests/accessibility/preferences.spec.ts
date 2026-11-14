@@ -10,6 +10,22 @@ import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios
 import { critical } from "./support/tags.js";
 
 test.describe("browser accessibility preferences", () => {
+  test("a locale switch updates the mounted toolbar", async ({ page }) => {
+    await gotoApplication(page, "/");
+    const settings = page.getByRole("button", { name: "Quick settings" });
+    await settings.evaluate((element) => {
+      element.dataset.localeSwitchProbe = "mounted";
+    });
+    await settings.click();
+    await page.getByRole("button", { name: "Choose language" }).click();
+    await page.getByRole("button", { name: /^Español/u }).click();
+
+    await expect(page).toHaveURL(/\/es$/u);
+    await expect(
+      page.getByRole("button", { exact: true, name: "Ajustes rápidos" }),
+    ).toHaveAttribute("data-locale-switch-probe", "mounted");
+  });
+
   for (const theme of ["light", "dark"] as const) {
     test(`theme, season, and weather share an inset hover outline in ${theme} mode`, async ({
       page,

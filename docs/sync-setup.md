@@ -340,13 +340,12 @@ of most of these pieces to borrow from.
 
 ## Copy
 
-The words live in `messages/en.json`, under the `sync_` key prefix, & that file is the one source.
-This document names a key where the journey depends on it. Device variants select separate messages
-(such as `_computer` & `_phone`), text in parentheses after a button is its subtitle, & line breaks
-in a body are paragraphs. Each fact question is a tag dialog: “Not now” (`sync_question_later`), or
-closing it, keeps the status button’s dot & leaves `sync_question_waiting` on Home & in the panel,
-with `sync_question_open` to bring it back. Fact questions name the tracker category they’re about,
-since one question can cover many facts.
+The words live in [the sync route](../src/routes/sync/) and
+[the shared sync components](../src/lib/components/sync/). This document names the relevant controls
+where the journey depends on them. Device variants use separate copy, text in parentheses after a
+button is its subtitle, & line breaks in a body are paragraphs. Each fact question is a tag dialog:
+“Not now” or closing it leaves the status dot and a way to reopen the question. Questions name the
+tracker category they’re about, since one question can cover many facts.
 
 ## Decisions so far
 

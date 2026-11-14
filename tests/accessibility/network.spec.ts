@@ -1,5 +1,143 @@
+import { readFileSync } from "node:fs";
+
+import { patterns as routePatterns } from "../../src/lib/i18n/catalogs/.wuchale/route.proxy.js";
+import { ROUTE_UI_GROUPS, SYNC_CODE_SOURCE } from "../../src/lib/i18n/route-ui-groups.js";
 import { expect, isolateNetwork, test } from "../browser/test.js";
 import { gotoApplication } from "./support/application-state.js";
+
+function catalogAsset(catalog: string, locale = "es"): string {
+  const manifest = JSON.parse(
+    readFileSync(
+      new URL("../../.svelte-kit/output/client/.vite/manifest.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Record<string, { file: string }>;
+  return manifest[`src/lib/i18n/catalogs/.wuchale/${catalog}.${locale}.compiled.js`].file;
+}
+
+test("Home starts its metadata catalog while shared copy is pending", async ({ page }) => {
+  const metadata = catalogAsset("metadata.0");
+  const shared = catalogAsset("shared.0");
+  let sharedRequested = false;
+  let metadataRequested = false;
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === `/${metadata}`) metadataRequested = true;
+  });
+  await page.route(`**/${shared}`, async (route) => {
+    sharedRequested = true;
+    // Hold shared copy to demonstrate that it does not gate the metadata request.
+    if (!metadataRequested) await page.waitForRequest(`**/${metadata}`, { timeout: 5000 });
+    await route.continue();
+  });
+
+  await gotoApplication(page, "/es");
+  expect(sharedRequested).toBe(true);
+  expect(metadataRequested).toBe(true);
+});
+
+test("Data and Sync request the sync-code copy and Home skips it", async ({ page }) => {
+  const asset = `/${catalogAsset(`route.${routePatterns.indexOf(SYNC_CODE_SOURCE)}`)}`;
+  let requests = 0;
+  await page.route(`**${asset}`, async (route) => {
+    requests += 1;
+    await route.continue();
+  });
+
+  await gotoApplication(page, "/es");
+  expect(requests).toBe(0);
+  await gotoApplication(page, "/es/data");
+  expect(requests).toBe(1);
+  await gotoApplication(page, "/es/sync");
+  expect(requests).toBe(2);
+});
+
+test("Only Data requests save-import diagnostics", async ({ page }) => {
+  const asset = catalogAsset("data-errors.0");
+  let requests = 0;
+  await page.route(`**/${asset}`, async (route) => {
+    requests += 1;
+    await route.continue();
+  });
+
+  await gotoApplication(page, "/es");
+  await gotoApplication(page, "/es/almanac");
+  await gotoApplication(page, "/es/sync");
+  expect(requests).toBe(0);
+  await gotoApplication(page, "/es/data");
+  expect(requests).toBe(1);
+});
+
+test("Home defers acquisition copy until bilingual search needs it", async ({ page }) => {
+  const spanish = catalogAsset("acquisition.0");
+  const english = catalogAsset("acquisition.0", "en");
+  const requested = new Set<string>();
+  await page.route(
+    (url) => url.pathname === `/${spanish}` || url.pathname === `/${english}`,
+    (route) => {
+      requested.add(new URL(route.request().url()).pathname.slice(1));
+      return route.continue();
+    },
+  );
+
+  await gotoApplication(page, "/es");
+  expect(requested.size).toBe(0);
+  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
+  await page.getByRole("textbox", { name: "Buscar elementos" }).fill("turnip");
+  await expect.poll(() => requested).toEqual(new Set([spanish, english]));
+  await expect(page.getByRole("status").filter({ hasText: /^\d+ resultados?$/u })).toBeVisible();
+
+  requested.clear();
+  await gotoApplication(page, "/es/almanac");
+  expect(requested).toEqual(new Set([spanish]));
+});
+
+const dataGroup = routePatterns.indexOf(
+  ROUTE_UI_GROUPS.find(({ shard }) => shard === "data")?.pattern ?? "",
+);
+for (const { catalog, path = "/es/data", warmShared } of [
+  { catalog: "shared.0", warmShared: false },
+  { catalog: `route.${dataGroup}`, warmShared: false },
+  { catalog: `route.${dataGroup}`, warmShared: true },
+  { catalog: "data-errors.0", warmShared: false },
+  { catalog: "acquisition.0", path: "/es/almanac", warmShared: false },
+]) {
+  test(`recovers in Spanish when the ${catalog} catalog is unavailable (${warmShared ? "warm" : "cold"} shared copy)`, async ({
+    page,
+  }) => {
+    const file = catalogAsset(catalog);
+    let blocked = false;
+    await page.route(`**/${file}`, (route) => {
+      blocked = true;
+      return route.abort();
+    });
+
+    if (warmShared) {
+      await gotoApplication(page, "/es");
+      await page.getByRole("button", { exact: true, name: "Ajustes rápidos" }).click();
+      await page.getByRole("link", { exact: true, name: "Datos" }).click();
+    } else {
+      await page.goto(path);
+    }
+    await expect(
+      page.getByText("Algo ha fallado por nuestra parte, pero tu progreso está a salvo."),
+    ).toBeVisible();
+    expect(blocked).toBe(true);
+    // Let the font fixture finish before the recovery link unloads the document.
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+
+    await page.unroute(`**/${file}`);
+    const home = page.getByRole("link", { name: "Volver al inicio" });
+    await expect(home).toHaveAttribute("href", "/es");
+    await home.click();
+    await expect(page).toHaveURL(/\/es$/u);
+    await expect(page.getByRole("button", { exact: true, name: "Ajustes rápidos" })).toBeVisible();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+  });
+}
 
 test.describe("privacy disclosure", () => {
   // Turnstile is disclosed for specific actions, so a fresh page must not load it.

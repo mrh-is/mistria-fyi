@@ -160,10 +160,10 @@ keep these properties true so the steps stay short:
       (`git remote add origin <new-repository-url>`), & push (`git push --all origin`, then
       `git push --tags origin`).
    5. The reference rewriting & secret scan that built the original public repository were deleted
-      after the cutover. Commit `e4dd053a` still has them. List the whole directory with
-      `git ls-tree -r e4dd053a scripts/public-repo` (`build-candidate.sh` depends on `gitleaks.toml`
+      after the cutover. Commit `ad176200` still has them. List the whole directory with
+      `git ls-tree -r ad176200 scripts/public-repo` (`build-candidate.sh` depends on `gitleaks.toml`
       & `rewrite-references.py`), & extract it with
-      `git archive e4dd053a scripts/public-repo | tar -x -C <empty-directory>`.
+      `git archive ad176200 scripts/public-repo | tar -x -C <empty-directory>`.
 
 ## Afterward
 

@@ -1,11 +1,11 @@
 import { localizedPageLoad } from "#lib/data/page-load.js";
 import { SITE_NAME } from "#lib/data/page-metadata.js";
-import * as m from "#lib/paraglide/messages.js";
 
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = localizedPageLoad([], (locale) => ({
-  description: m.home_page_description({}, { locale }),
+export const load: PageLoad = localizedPageLoad([], () => ({
+  description:
+    "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
   title: SITE_NAME,
   toolbar: { clock: true, search: true },
 }));
