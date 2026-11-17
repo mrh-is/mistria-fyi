@@ -29,7 +29,8 @@ decisions are in the comments on #477, and the tokens & grammar are in
 | A light theme only                                    | Dark is a cyanotype, pending the maintainer’s choice on #646                        |
 
 `token-options.html` is the options sheet for #646’s open choices: the dark material, the thumb tab
-colors, the Not now sprite, & the provenance marks. Its sprites are stand-ins drawn in the file.
+colors, the Not now sprite, the provenance inks, the meters, & the body face. A strip at its top
+reprints the whole sheet on any of the papers. Its sprites are stand-ins drawn in the file.
 
 ## What’s here
 
