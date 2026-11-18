@@ -49,16 +49,16 @@
     --blend: screen;
     --f-notnow: grayscale(1) contrast(0.5) brightness(1.32);
     --f-notnow2: grayscale(1) contrast(0.36) brightness(1.5);
-    --c-museum: #086618;
-    --c-animals: #3f7a67;
-    --c-skills: #115e5e;
-    --c-almanac: #744e80;
-    --c-cosmetics: #185cb1;
-    --c-villagers: #8d2648;
-    --c-quests: #993b00;
-    --c-renown: #7f7000;
-    --c-recipes: #6f6146;
-    --c-mines: #58371f;
+    --c-museum: #008627;
+    --c-animals: #d6528d;
+    --c-skills: #318c90;
+    --c-almanac: #734b9f;
+    --c-cosmetics: #1861ba;
+    --c-villagers: #a62420;
+    --c-quests: #c45900;
+    --c-renown: #a78d0d;
+    --c-recipes: #907558;
+    --c-mines: #672e13;
     --f-disp: "Instrument Serif", Georgia, serif;
     --f-body: Petrona, Georgia, serif;
     --f-ctl: "Fragment Mono", "Courier New", monospace;
@@ -575,13 +575,6 @@
     fill: var(--muted);
   }
 
-  /* The meters sit edge to edge, so their ground segments read as one horizon. */
-  .horizon {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px 0;
-  }
-
   table {
     border-collapse: collapse;
     font: 13px/1.4 var(--f-ann);
@@ -650,22 +643,17 @@
   <header>
     <h1>Token options</h1>
     <p class="lede">
-      Round three of the redesign’s styling tokens (#646). Settled since round two: 3A+ for Not now,
-      colored provenance marks, 5B’s drawn meters, & Petrona for the body. The strip above reprints
-      the whole sheet on any paper, and every “dark” panel below follows the last dark paper you
-      picked. The sprites are stand-ins drawn for this sheet.
+      Round four of the redesign’s styling tokens (#646). Settled so far: 1D for dark mode, deep
+      tabs in the light theme, 3A+ for Not now, colored provenance marks, 5B’s drawn meters, &
+      Petrona for the body. The strip above switches the whole sheet between light & 1D. The sprites
+      are stand-ins drawn for this sheet.
     </p>
   </header>
 
   <section id="dark">
     <div class="head">
       <h2><span class="n">1</span>What dark mode is made of</h2>
-      <p class="note">
-        You lived in <b>1D</b> through round two. <b>1F</b> is new: 1E’s blue-black with the lamp
-        turned down, so the paper is a step darker and the ink is a soft gray instead of near-white.
-        Its body text is still 11:1 against the paper. Night slate stays as the safe reference; the
-        cyanotype & petrol are gone.
-      </p>
+      <p class="note">Settled: <b>1D</b>, the faded cyanotype.</p>
     </div>
     <div class="grid" id="materials"></div>
   </section>
@@ -674,13 +662,14 @@
     <div class="head">
       <h2><span class="n">2</span>Thumb tab colors</h2>
       <p class="note">
-        Every letter on a strip now takes the same ink. Each category has one hue, read off the game
-        (the key below the sets), in two strengths: a deep one that holds white letters and reads as
-        text on light paper, and a pale one that holds dark letters and reads as text on dark paper.
-        <b>2E</b> uses deep tabs in the light theme; <b>2F</b> uses pale tabs in both, like the
-        game’s own menu. 2C stays for comparison. The figures under each set are the closest pair’s
-        distance (OKLab ΔE), for normal vision & the two common color-vision deficiencies; bigger
-        means easier to tell apart.
+        Ten tabs, ten everyday color names: red, orange, gold, green, teal, blue, purple, pink, tan,
+        & brown. Each color was held to a hue & lightness that keeps it its name, then spread as far
+        apart as those limits allow. The light theme uses deep tabs with white letters; dark mode
+        uses pale tabs with dark letters, a step darker than round three’s. The light theme’s text
+        uses each hue darkened until it reads on the paper. The palette has only one open question:
+        which category gets pink. <b>2G</b> gives it to Animals and <b>2H</b> to Skills. The figures
+        under each set are the closest pair’s distance (OKLab ΔE), for normal vision & the two
+        common color-vision deficiencies; bigger means easier to tell apart.
       </p>
     </div>
     <div class="grid" id="tabs"></div>
@@ -704,9 +693,9 @@
     <div class="head">
       <h2><span class="n">4</span>Who made the mark</h2>
       <p class="note">
-        Four tools, green & amber. Round two’s amber drifted yellower in the dark theme; both pairs
-        here keep one hue across light & dark. <b>4A</b> is the record’s pair with the drift fixed.
-        <b>4C</b> turns the chroma up, so checking things off feels like more of an event.
+        Four tools, green & amber, one hue each across light & dark. <b>4A</b> is the record’s pair;
+        <b>4C</b> has about a third more chroma. The difference only shows in bulk, so each is drawn
+        as a long section, the way a nearly finished collection looks.
       </p>
     </div>
     <div class="grid" id="prov"></div>
@@ -716,10 +705,9 @@
     <div class="head">
       <h2><span class="n">5</span>One meter, three directions</h2>
       <p class="note">
-        5B, cleaned up. Mines & Renown now share one ground line: Renown rises above it and Mines is
-        cut below it, so the direction shows before there’s any progress. The grass is drawn as
-        tufts instead of a sawtooth, the shaft & pole are the same length, and the counts sit on the
-        same side. Skills keeps the plain ruler.
+        5B, second pass. The grass is printed in ink, since it comes with the book, and only the
+        fill is pencil. Each meter stands on its own ground. The pennant flies above the top rank,
+        so a full bar stops short of it, and the pennant is colored in when you get there.
       </p>
     </div>
     <div class="grid" id="meters"></div>
@@ -809,10 +797,9 @@
   <section>
     <div class="head"><h2>What I need from you</h2></div>
     <ol class="asks">
-      <li>Dark paper: 1D or 1F.</li>
-      <li>Tabs: 2E or 2F, or a note on any one hue.</li>
-      <li>Provenance inks: 4A or 4C.</li>
-      <li>Meters: whether the cleaned-up 5B is ready to build.</li>
+      <li>Tabs: who gets pink, Animals (2G) or Skills (2H), or a note on any one color.</li>
+      <li>Provenance inks: 4A or 4C, now that you can see them in bulk.</li>
+      <li>Meters: whether 5B is ready to build.</li>
     </ol>
   </section>
 </div>
@@ -821,16 +808,16 @@
   // Materials. One token table per paper; the script writes each as a class, as a page override for
   // the strip, and as the .m-dark override that the comparison panels use.
   const DARK_CATS = {
-    "c-museum": "#7cbe7c",
-    "c-animals": "#9ad4bf",
-    "c-skills": "#3cc7c7",
-    "c-almanac": "#c690d6",
-    "c-cosmetics": "#97bae9",
-    "c-villagers": "#f093a9",
-    "c-quests": "#e5b7a3",
-    "c-renown": "#c9ba5d",
-    "c-recipes": "#ebdcc0",
-    "c-mines": "#bb8864",
+    "c-museum": "#72be78",
+    "c-animals": "#e092b0",
+    "c-skills": "#33bfc6",
+    "c-almanac": "#a888d1",
+    "c-cosmetics": "#78adf6",
+    "c-villagers": "#ed665a",
+    "c-quests": "#ed955b",
+    "c-renown": "#d7b93f",
+    "c-recipes": "#cfbaa3",
+    "c-mines": "#b48876",
     done: "#81d39f",
     obtained: "#f9b96c",
     "done-hi": "#70e093",
@@ -871,16 +858,16 @@
       blend: "screen",
       "f-notnow": "grayscale(1) contrast(0.5) brightness(1.32)",
       "f-notnow2": "grayscale(1) contrast(0.36) brightness(1.5)",
-      "c-museum": "#086618",
-      "c-animals": "#3f7a67",
-      "c-skills": "#115e5e",
-      "c-almanac": "#744e80",
-      "c-cosmetics": "#185cb1",
-      "c-villagers": "#8d2648",
-      "c-quests": "#993b00",
-      "c-renown": "#7f7000",
-      "c-recipes": "#6f6146",
-      "c-mines": "#58371f",
+      "c-museum": "#008627",
+      "c-animals": "#d6528d",
+      "c-skills": "#318c90",
+      "c-almanac": "#734b9f",
+      "c-cosmetics": "#1861ba",
+      "c-villagers": "#a62420",
+      "c-quests": "#c45900",
+      "c-renown": "#a78d0d",
+      "c-recipes": "#907558",
+      "c-mines": "#672e13",
     },
     faded: dark({
       code: "1D",
@@ -899,61 +886,6 @@
       cover: "#0f1820",
       shadow: "0 1px 1px rgb(2 10 20 / 40%)",
       sticker: "0.8px 1.2px 0.7px rgb(2 10 20 / 55%)",
-    }),
-    ink: dark({
-      code: "1E",
-      name: "Blue-black ink",
-      short: "Ink",
-      paper: "#1b2632",
-      raised: "#222e3a",
-      sunken: "#15202c",
-      ink: "#eaf1f8",
-      muted: "#aabdd1",
-      hair: "#6e8398",
-      voice: "#9fd1f8",
-      pencil: "#f1f6fa",
-      tape: "#2b3949",
-      strip: "rgb(200 214 228 / 20%)",
-      cover: "#0e151c",
-      shadow: "0 1px 1px rgb(0 0 0 / 40%)",
-      sticker: "0.8px 1.2px 0.7px rgb(0 0 0 / 55%)",
-    }),
-    dim: dark({
-      code: "1F",
-      name: "Ink, lamp low",
-      short: "Lamp low",
-      paper: "#17212d",
-      raised: "#1d2833",
-      sunken: "#111c26",
-      ink: "#d2d8df",
-      muted: "#9dadbe",
-      hair: "#657689",
-      voice: "#90bee1",
-      pencil: "#dadee3",
-      tape: "#25323f",
-      strip: "rgb(200 214 228 / 16%)",
-      cover: "#091018",
-      "on-cover": "#c9d2d6",
-      shadow: "0 1px 1px rgb(0 0 0 / 45%)",
-      sticker: "0.8px 1.2px 0.7px rgb(0 0 0 / 60%)",
-    }),
-    slate: dark({
-      code: "1B",
-      name: "Night slate",
-      short: "Slate",
-      paper: "#1c2228",
-      raised: "#232a31",
-      sunken: "#161b20",
-      ink: "#e6ebee",
-      muted: "#a2adb6",
-      hair: "#66737e",
-      voice: "#8fc0ea",
-      pencil: "#dfe5e9",
-      tape: "#2a3640",
-      strip: "rgb(200 214 224 / 18%)",
-      cover: "#0f1a1f",
-      shadow: "0 1px 1px rgb(0 0 0 / 40%)",
-      sticker: "0.8px 1.2px 0.7px rgb(0 0 0 / 55%)",
     }),
   };
   const decl = (t) =>
@@ -984,7 +916,7 @@
       } catch {}
     },
   };
-  const ORDER = ["system", "light", "faded", "ink", "dim", "slate"];
+  const ORDER = ["system", "light", "faded"];
   const stripEl = document.getElementById("strip");
   stripEl.insertAdjacentHTML(
     "beforeend",
@@ -1134,19 +1066,7 @@
     ["light", "For reference: the light theme, from round ten."],
     [
       "faded",
-      "A cyanotype left in a sunny window. Your round-two home: the blue is the first thing you notice, then it settles back.",
-    ],
-    [
-      "ink",
-      "Blue-black, like a bottle of ink, at round two’s brightness. Here to show what 1F changed.",
-    ],
-    [
-      "dim",
-      "1E with the lamp turned down: a darker page and soft gray ink. Ink 11:1, muted text 7:1, hairlines 3.5:1. Quieter at night, less crisp at noon.",
-    ],
-    [
-      "slate",
-      "The light theme with the lamp off: charcoal-blue paper, chalk-white pencil. The safe reference.",
+      "Settled. A cyanotype left in a sunny window: the blue is the first thing you notice, then it settles back.",
     ],
   ];
   document.getElementById("materials").innerHTML = materials
@@ -1169,8 +1089,64 @@
     "recipes",
     "mines",
   ];
-  // One hue per category, read off the game (KEY below), fitted in two strengths. DEEP holds white
-  // letters & reads as text on light paper; PALE holds dark letters & reads as text on dark paper.
+  // Ten everyday color names, one hue each, fitted in three strengths: deep tabs (white letters,
+  // light theme), the deep hue darkened for text on light paper, and pale tabs (dark letters, which
+  // also read as text on 1D). Each name was held to a hue & lightness range that keeps it that name.
+  const NAMED = {
+    deep: {
+      red: "#a62420",
+      orange: "#c45900",
+      gold: "#a78d0d",
+      green: "#008627",
+      teal: "#318c90",
+      blue: "#1861ba",
+      purple: "#734b9f",
+      pink: "#d6528d",
+      tan: "#907558",
+      brown: "#672e13",
+    },
+    text: {
+      red: "#a62420",
+      orange: "#b84f00",
+      gold: "#876d00",
+      green: "#008122",
+      teal: "#1a7b80",
+      blue: "#1861ba",
+      purple: "#734b9f",
+      pink: "#c03d7a",
+      tan: "#856b4e",
+      brown: "#672e13",
+    },
+    pale: {
+      red: "#ed665a",
+      orange: "#ed955b",
+      gold: "#d7b93f",
+      green: "#72be78",
+      teal: "#33bfc6",
+      blue: "#78adf6",
+      purple: "#a888d1",
+      pink: "#e092b0",
+      tan: "#cfbaa3",
+      brown: "#b48876",
+    },
+  };
+  // 2G gives Animals the cow's pink; 2H gives Animals its mint tab & Skills the backpack tab’s pink.
+  const MAP_G = {
+    villagers: "red",
+    quests: "orange",
+    renown: "gold",
+    museum: "green",
+    skills: "teal",
+    cosmetics: "blue",
+    almanac: "purple",
+    animals: "pink",
+    recipes: "tan",
+    mines: "brown",
+  };
+  const MAP_H = { ...MAP_G, skills: "pink", animals: "teal" };
+  const paint = (map, strength) =>
+    Object.fromEntries(CATS.map((c) => [c, NAMED[strength][map[c]]]));
+  // Round three’s 2E, kept for comparison.
   const DEEP = {
     museum: "#086618",
     animals: "#3f7a67",
@@ -1195,51 +1171,32 @@
     recipes: "#ebdcc0",
     mines: "#bb8864",
   };
+  const NAMED_DIST =
+    "Light: ΔE 0.109 · deutan 0.052 · protan 0.052<br>Dark: ΔE 0.106 · deutan 0.050 · protan 0.050";
   const SETS = {
+    "2G": {
+      name: "Ten names · pink animals",
+      why: "Every tab is a different everyday color name. Animals takes the pink of the cow’s nose; Skills keeps the teal of its book.",
+      dist: NAMED_DIST,
+      light: paint(MAP_G, "deep"),
+      lightText: paint(MAP_G, "text"),
+      dark: paint(MAP_G, "pale"),
+      lead: true,
+    },
+    "2H": {
+      name: "Ten names · pink skills",
+      why: "The same ten colors. Animals keeps its mint tab as teal; Skills takes the pink of the backpack tab, whose page holds the skills.",
+      dist: NAMED_DIST,
+      light: paint(MAP_H, "deep"),
+      lightText: paint(MAP_H, "text"),
+      dark: paint(MAP_H, "pale"),
+    },
     "2E": {
-      name: "Bound cloth",
-      why: "Deep tabs with white letters in the light theme, pale tabs with dark letters in the dark one. The tab color is also the text color, so one token per theme does both jobs.",
+      name: "Bound cloth (round three)",
+      why: "For comparison. Distinct to a measuring instrument, but Museum, Animals, & Skills all read as “green”, and Recipes & Mines both as “brown”.",
       dist: "Light: ΔE 0.084 · deutan 0.048 · protan 0.053<br>Dark: ΔE 0.090 · deutan 0.040 · protan 0.042",
       light: DEEP,
       dark: PALE,
-      lead: true,
-    },
-    "2F": {
-      name: "Menu tabs",
-      why: "Pale tabs with dark letters in both themes, like the game’s menu. Brighter on the light cover, but the light theme needs a second, deep token per category for text.",
-      dist: "Tabs: ΔE 0.090 · deutan 0.040 · protan 0.042<br>Light text: as 2E",
-      light: PALE,
-      lightText: DEEP,
-      dark: PALE,
-    },
-    "2C": {
-      name: "Bookstore cloth (round two)",
-      why: "Round two’s set, for comparison. Its tab letters switch between light & dark, and its Quests, Renown, & Recipes are too pale to read as text on light paper.",
-      dist: "ΔE 0.108 · deutan 0.047 · protan 0.064",
-      light: {
-        museum: "#11957c",
-        animals: "#3e7e23",
-        skills: "#347ec4",
-        almanac: "#6d54b7",
-        cosmetics: "#b44e9b",
-        villagers: "#c74150",
-        quests: "#e78a45",
-        renown: "#cfaf1d",
-        recipes: "#dec7a7",
-        mines: "#644535",
-      },
-      dark: {
-        museum: "#7dd1ba",
-        animals: "#84b872",
-        skills: "#83bdf8",
-        almanac: "#a696e9",
-        cosmetics: "#ec96d4",
-        villagers: "#ff8e93",
-        quests: "#ffbd89",
-        renown: "#ead070",
-        recipes: "#e1ceb5",
-        mines: "#9b7f72",
-      },
     },
   };
   const lum = (hex) => {
@@ -1268,30 +1225,22 @@
   // Sources, checked against the wiki’s Journal page & the menu itself, top to bottom: backpack,
   // wardrobe (white), envelope, heart, cow, sparkles (magic), map, book (almanac), gear.
   const KEY = [
-    ["villagers", "The heart on the relationships tab", "Raspberry; the tab itself is apricot."],
-    ["quests", "The envelope tab", "Coral, deepening to rust."],
-    ["animals", "The mint tab with the cow", "Sea green, between the museum & skills."],
-    ["almanac", "The orchid tab with the book", "Orchid. Round two wrongly took the map tab."],
-    [
-      "cosmetics",
-      "The outfit in the wardrobe icon (the tab is white)",
-      "Cornflower blue. Round two’s orchid came from the almanac’s tab.",
-    ],
-    [
-      "skills",
-      "The skills book icon (no tab of its own)",
-      "Teal, from the book’s mint-green base. Round two’s blue came from the magic tab.",
-    ],
-    ["museum", "The museum’s green roof", "Leaf green, not verdigris."],
-    ["recipes", "Aged recipe scrolls", "Parchment, the palest; kraft paper when deep."],
-    ["mines", "Underground", "Umber, the darkest."],
-    ["renown", "No tab in the menu", "Medal gold; old brass when deep."],
+    ["villagers", "red", "The heart on the relationships tab"],
+    ["quests", "orange", "The envelope tab’s coral, pushed to orange"],
+    ["renown", "gold", "Medal gold (no tab in the menu)"],
+    ["museum", "green", "The museum’s green roof"],
+    ["skills", "teal", "2G: the skills book’s mint base · 2H: pink, from the backpack tab"],
+    ["cosmetics", "blue", "The outfit in the wardrobe icon (the tab is white)"],
+    ["almanac", "purple", "The orchid tab with the book, pushed to purple"],
+    ["animals", "pink", "2G: the cow’s pink nose · 2H: teal, from its mint tab"],
+    ["recipes", "tan", "Aged recipe scrolls"],
+    ["mines", "brown", "Underground"],
   ];
   document.getElementById("gamekey").innerHTML =
-    `<tr><th>Category</th><th>Borrowed from</th><th>Deep & pale</th></tr>` +
+    `<tr><th>Category</th><th>Name in 2G</th><th>Borrowed from</th></tr>` +
     KEY.map(
-      ([c, src, note]) =>
-        `<tr><td>${cap(c)}</td><td class="sm">${src}</td><td><span class="chip" style="--c:${DEEP[c]}"></span><span class="chip" style="--c:${PALE[c]}"></span>${note}</td></tr>`,
+      ([c, n, src]) =>
+        `<tr><td>${cap(c)}</td><td><span class="chip" style="--c:${NAMED.deep[n]}"></span><span class="chip" style="--c:${NAMED.pale[n]}"></span>${n}</td><td class="sm">${src}</td></tr>`,
     ).join("");
 
   // 3. Sprites.
@@ -1312,18 +1261,6 @@
     .join("");
 
   // 4. Provenance.
-  const provRows = (ink) =>
-    [
-      ["pen", pen, "You", "pen, with a nib blot"],
-      ["stamp", stamp, "Your save", "rubber stamp"],
-      ["pencil", (c, d) => pencil(c, d, 0.75), "Inferred", "colored pencil, lighter"],
-      ["type", type, "Unknown", "typewriter"],
-    ]
-      .map(
-        ([, draw, who, how]) =>
-          `${box(draw(ink.done, X))}${box(draw(ink.obtained, SL))}<span>${who}<small>${how}</small></span>`,
-      )
-      .join("");
   const provs = [
     [
       "4A",
@@ -1338,31 +1275,63 @@
       "The same hues with about a third more chroma: a bottle of green ink and a marigold pencil. Louder in a long list of finished rows, which is either the fun or the noise.",
     ],
   ];
+  // A long, nearly finished section: mostly stamped from the save, with a few of each other tool.
+  const TOOL = {
+    pen: [pen, "you"],
+    stamp: [stamp, "your save"],
+    pencil: [(c, d) => pencil(c, d, 0.75), "inferred"],
+    type: [type, "unknown"],
+  };
+  const FISH = [
+    ["Minnow", X, "stamp"],
+    ["Perch", X, "stamp"],
+    ["Carp", X, "pen"],
+    ["Bluegill", SL, "stamp"],
+    ["Catfish", X, "stamp"],
+    ["Trout", X, "pencil"],
+    ["Eel", null],
+    ["Pike", X, "stamp"],
+    ["Sunfish", SL, "pen"],
+    ["Bass", X, "type"],
+    ["Sturgeon", X, "stamp"],
+    ["Koi", null],
+    ["Salmon", X, "pencil"],
+    ["Tuna", SL, "stamp"],
+  ];
+  const ARTS = ["fish", "mushroom", "gem"];
+  const longList = (ink) =>
+    `<div class="sec"><b>Fish</b><span><span class="hand">12</span> <span class="of">/ 14</span></span><span class="lbl">To do 2</span></div>` +
+    FISH.map(([nm, d, tool], i) => {
+      const [draw, who] = tool ? TOOL[tool] : [];
+      const mark = d ? draw(d === X ? ink.done : ink.obtained, d) : "";
+      const sprite = d ? spr(ARTS[i % 3], "completed") : spr(ARTS[i % 3], "todo", "--c-cosmetics");
+      return `<div class="row${d ? " done" : ""}">${box(mark)}${sprite}<span class="nm">${nm}<small>${d ? (d === X ? "recorded" : "caught, not donated") + ` · ${who}` : "in the river"}</small></span><span class="src"></span></div>`;
+    }).join("");
   document.getElementById("prov").innerHTML = provs
     .map(
       ([k, name, ink, why]) =>
-        `<div class="opt"><h3><b>${k}</b> · ${name}</h3><div class="m-light"><div class="page"><div class="prov">${provRows(ink)}</div></div></div><h3 data-darkname></h3><div class="m-dark"><div class="page"><div class="prov">${provRows(ink)}</div></div></div><p class="note">${why}</p></div>`,
+        `<div class="opt"><h3><b>${k}</b> · ${name}</h3><div class="m-light"><div class="page onpaper">${longList(ink)}</div></div><h3 data-darkname></h3><div class="m-dark"><div class="page onpaper">${longList(ink)}</div></div><p class="note">${why}</p></div>`,
     )
     .join("");
 
   // 5. Meters. The fill carries the ink; the frame only says where it starts & which way it runs.
-  // Ground: one horizon shared by every Mines & Renown meter, with a few uneven tufts of grass.
-  const G = 168;
+  // Ground: a printed line with a few uneven tufts of grass. Both come with the book, so they’re
+  // ink, not pencil; only the fill is the player’s.
   const LEN = 130;
   const CX = 46;
-  const tuft = (x, s = 1) =>
-    `M${x} ${G} q ${-1.2 * s} ${-3 * s} ${-3.4 * s} ${-5 * s} M${x + 1.6} ${G} q ${0.2 * s} ${-4.5 * s} ${0.8 * s} ${-7.5 * s} M${x + 3.2} ${G} q ${1.2 * s} ${-2.4 * s} ${3.2 * s} ${-4 * s}`;
-  const ground = (gap) => {
-    const line = gap ? `M0 ${G} H${CX - gap} M${CX + gap} ${G} H120` : `M0 ${G} H120`;
+  const tuft = (x, g, s = 1) =>
+    `M${x} ${g} q ${-1.2 * s} ${-3 * s} ${-3.4 * s} ${-5 * s} M${x + 1.6} ${g} q ${0.2 * s} ${-4.5 * s} ${0.8 * s} ${-7.5 * s} M${x + 3.2} ${g} q ${1.2 * s} ${-2.4 * s} ${3.2 * s} ${-4 * s}`;
+  const ground = (g, gap) => {
+    const line = gap ? `M0 ${g} H${CX - gap} M${CX + gap} ${g} H100` : `M0 ${g} H100`;
     const tufts = [
       [6, 1],
       [27, 0.8],
-      [74, 1.1],
-      [101, 0.9],
+      [66, 1.1],
+      [86, 0.9],
     ]
-      .map(([x, s]) => tuft(x, s))
+      .map(([x, s]) => tuft(x, g, s))
       .join(" ");
-    return `<path d="${line}" stroke="var(--ink)" stroke-width="1.6"/><path d="${tufts}" stroke="var(--c-animals)" stroke-width="1.2" fill="none" stroke-linecap="round" filter="url(#graphite)"/>`;
+    return `<path d="${line}" stroke="var(--ink)" stroke-width="1.6"/><path d="${tufts}" stroke="var(--ink)" stroke-width="1" fill="none" stroke-linecap="round"/>`;
   };
   // A rect, not a stroked line: a straight line has a zero-height box, which hides it under a filter.
   const fill = (x1, y1, x2, y2, color, w = 10) =>
@@ -1385,15 +1354,15 @@
         `<text class="v" x="${b}" y="16" text-anchor="middle" filter="url(#graphite)">${value}</text>`;
     return `<svg width="${len + 44}" height="60" viewBox="0 0 ${len + 44} 60" role="img" aria-label="${value} of ${max}">${s}</svg>`;
   }
-  // 5B: a drawn diagram on a shared ground line. Mines is a shaft cut below it, with a rung every
-  // 20 floors; Renown is a pole above it with a pennant at the top rank. Both are LEN long, and
-  // both put the count to the right of the fill.
-  const H = G + LEN + 26;
-  const meter = (label, s) =>
-    `<svg width="120" height="${H}" viewBox="0 0 120 ${H}" role="img" aria-label="${label}">${s}</svg>`;
+  // 5B: a drawn diagram. Mines is a shaft cut below its ground, with a rung every 20 floors;
+  // Renown is a pole above its ground, with a pennant flying clear of the top rank. Both are LEN
+  // long, and both put the count to the right of the fill.
+  const meter = (label, h, s) =>
+    `<svg width="130" height="${h}" viewBox="0 0 130 ${h}" role="img" aria-label="${label}">${s}</svg>`;
   // Each shaft defines its own hatch, so var(--pencil) resolves in the panel's paper, not the page's.
   let shafts = 0;
   function shaft(value, max) {
+    const G = 14;
     const y = (v) => G + (v / max) * LEN;
     const id = `earth${shafts++}`;
     let s = `<defs><pattern id="${id}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--pencil)" stroke-width="1" opacity="0.3"/></pattern></defs>`;
@@ -1405,14 +1374,18 @@
       s +=
         fill(CX, G, CX, y(value), "var(--c-mines)", 12) +
         `<text class="v" x="${CX + 28}" y="${y(value) + 7}" filter="url(#graphite)">${value}</text>`;
-    s += ground(8) + `<text x="${CX + 28}" y="${G + LEN + 4}">${max}</text>`;
-    return meter(`Floor ${value} of ${max}`, s);
+    s += ground(G, 8) + `<text x="${CX + 28}" y="${G + LEN + 4}">${max}</text>`;
+    return meter(`Floor ${value} of ${max}`, G + LEN + 12, s);
   }
   function pole(value, max) {
+    const G = LEN + 34;
     const y = (v) => G - (v / max) * LEN;
     const top = y(max);
-    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${top - 6}" stroke="var(--hair)" stroke-width="1.2"/>`;
-    s += `<path d="M${CX} ${top - 6} L ${CX + 22} ${top + 1} L ${CX} ${top + 8} Z" fill="${value >= max ? "var(--c-renown)" : "none"}" stroke="var(--hair)" stroke-width="1.2"/>`;
+    // The pennant flies 10px above the top rank's stop, so a full bar meets the stop, not the flag.
+    const flag = top - 10;
+    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${flag - 16}" stroke="var(--hair)" stroke-width="1.2"/>`;
+    s += `<path d="M${CX} ${flag - 16} L ${CX + 22} ${flag - 8} L ${CX} ${flag} Z" fill="${value >= max ? "var(--c-renown)" : "none"}" stroke="var(--hair)" stroke-width="1.2"/>`;
+    s += `<line x1="${CX - 8}" x2="${CX + 8}" y1="${top}" y2="${top}" stroke="var(--ink)" stroke-width="1.6"/>`;
     for (let v = 20; v < max; v += 20)
       s += `<line x1="${CX - 5}" x2="${CX + 5}" y1="${y(v)}" y2="${y(v)}" stroke="var(--hair)" opacity=".5"/>`;
     // At the top rank the filled pennant says it, so the count steps aside.
@@ -1422,12 +1395,12 @@
         (value < max
           ? `<text class="v" x="${CX + 28}" y="${y(value) + 7}" filter="url(#graphite)">${value}</text>`
           : "");
-    s += ground(0) + `<text class="w" x="${CX + 26}" y="${top + 5}">top rank</text>`;
-    return meter(`Rank ${value} of ${max}`, s);
+    s += ground(G, 0) + `<text class="w" x="${CX + 26}" y="${flag - 4}">top rank</text>`;
+    return meter(`Rank ${value} of ${max}`, G + 4, s);
   }
   const f = (svg, label, wide) => `<figure${wide ? ' class="wide"' : ""}>${svg}${label}</figure>`;
   const meters = () =>
-    `<div class="meters">${f(ruler({ max: 60, value: 37, major: 15, color: "var(--c-skills)" }), "Skills", 1)}<div class="horizon">${f(pole(0, 100), "Renown, new")}${f(pole(42, 100), "Renown")}${f(pole(100, 100), "Renown, top")}${f(shaft(0, 100), "Mines, new")}${f(shaft(64, 100), "Mines")}</div></div>`;
+    `<div class="meters">${f(ruler({ max: 60, value: 37, major: 15, color: "var(--c-skills)" }), "Skills", 1)}${f(pole(0, 100), "Renown, new")}${f(pole(42, 100), "Renown")}${f(pole(100, 100), "Renown, top")}${f(shaft(0, 100), "Mines, new")}${f(shaft(64, 100), "Mines")}</div>`;
   document.getElementById("meters").innerHTML = [
     ["m-light", "<h3><b>5B</b> · Light</h3>"],
     ["m-dark", "<h3 data-darkname></h3>"],
