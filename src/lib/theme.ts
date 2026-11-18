@@ -9,6 +9,6 @@ export const THEME_STORAGE_KEY = "mistria-fyi:theme";
 
 /** Mobile browser chrome colors: each theme's `--color-paper` in `app.css`. */
 export const THEME_COLORS = {
-  dark: "#12304c",
+  dark: "#182c40",
   light: "#f2f4f3",
 } as const;

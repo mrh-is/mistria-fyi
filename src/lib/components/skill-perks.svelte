@@ -254,7 +254,7 @@
   }
 
   .skill-perks__toggle :global(.skill-perks__disclosure) {
-    color: var(--color-category-skills);
+    color: var(--color-category-skills-text);
   }
 
   .skill-perks__label {
@@ -297,7 +297,7 @@
   }
 
   .skill-perks__tier-name {
-    color: var(--color-category-skills);
+    color: var(--color-category-skills-text);
     font-family: var(--font-annotation);
     font-size: var(--text-sm);
     font-style: italic;

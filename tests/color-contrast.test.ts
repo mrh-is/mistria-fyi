@@ -77,4 +77,35 @@ describe("theme contrast tokens", () => {
     expect(contrast(color("border"), color("background"))).toBeGreaterThanOrEqual(3);
     expect(contrast(color("input"), color("background"))).toBeGreaterThanOrEqual(3);
   });
+
+  const categories = [
+    "villagers",
+    "quests",
+    "renown",
+    "museum",
+    "skills",
+    "cosmetics",
+    "almanac",
+    "animals",
+    "recipes",
+    "mines",
+  ];
+
+  it.each([
+    ["light", lightTokens],
+    ["dark", darkTokens],
+  ] as const)("%s theme's category tabs & words read", (_, tokens) => {
+    const color = (token: string) => resolveColor(tokens, token);
+    for (const key of categories) {
+      // Every tab & ribbon in a theme takes the same letter ink.
+      expect(
+        contrast(color("color-ribbon-foreground"), color(`color-category-${key}`)),
+        `${key} tab`,
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(
+        contrast(color(`color-category-${key}-text`), color("color-paper")),
+        `${key} text`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });

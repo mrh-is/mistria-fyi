@@ -224,7 +224,7 @@
     width: 18px;
     height: 18px;
     flex: 0 0 18px;
-    color: var(--color-category-skills);
+    color: var(--color-category-skills-text);
   }
 
   .skill-segments {
@@ -291,14 +291,14 @@
   }
 
   .skill-count:is(:active, :focus-visible) {
-    color: var(--color-category-skills);
+    color: var(--color-category-skills-text);
     outline: 2px solid var(--color-category-skills);
     outline-offset: 2px;
   }
 
   @media (hover: hover) {
     .skill-count:hover {
-      color: var(--color-category-skills);
+      color: var(--color-category-skills-text);
       outline: 2px solid var(--color-category-skills);
       outline-offset: 2px;
     }

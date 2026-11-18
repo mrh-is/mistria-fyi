@@ -140,10 +140,10 @@ test("styles the offline page with the app's fonts & the player's saved theme", 
     };
   });
   expect(style).toEqual({
-    background: "rgb(18, 48, 76)",
+    background: "rgb(24, 44, 64)",
     dark: true,
     font: expect.stringMatching(/^"?Petrona"?,/) as unknown,
-    themeColor: "#12304c",
+    themeColor: "#182c40",
   });
   // Petrona is a precached static font, so it renders offline on first sight.
   await expect.poll(() => page.evaluate(() => document.fonts.check('16px "Petrona"'))).toBe(true);

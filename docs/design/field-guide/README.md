@@ -26,11 +26,14 @@ decisions are in the comments on #477, and the tokens & grammar are in
 | Recipe sources in timetable cells                     | The recipe source moves to the expanded row (#650)                                  |
 | Dots in empty timetable cells                         | An empty cell is blank or shows a dash (#650)                                       |
 | Half-pixel type sizes (15.5px, 11.5px, …)             | The type scale; `docs/styling.md` has the mapping                                   |
-| A light theme only                                    | Dark is a cyanotype, pending the maintainer’s choice on #646                        |
+| A light theme only                                    | Dark is a faded cyanotype (#646)                                                    |
+| Earth-toned category colors & Source Serif 4          | Ten named category colors; Petrona stays the body face (#646)                       |
+| Pencil-only checkmarks                                | Four provenance tools in the palette’s green & gold (#646)                          |
+| A ruler for every meter                               | Mines is a shaft; Renown is a climbing star (#646)                                  |
 
-`token-options.html` is the options sheet for #646’s open choices: the dark paper, the thumb tab
-colors, & the provenance inks, beside the settled Not now sprite, meters, & body face. A strip at
-its top reprints the whole sheet on any of the papers. Its sprites are stand-ins drawn in the file.
+`token-options.html` is the options sheet that settled #646: the dark paper, the category colors,
+the Not now sprite, the provenance inks, the meters, & the body face. A strip at its top switches
+the whole sheet between light & dark. Its sprites are stand-ins drawn in the file.
 
 ## What’s here
 

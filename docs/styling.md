@@ -30,11 +30,15 @@ Three kinds of mark each mean one thing. A screen that mixes them up reads as de
 - **Print is the guide’s voice.** Names, sources, rules, column heads, & anything the guide knows
   are set in type. Print that points or acts (a link, an active filter, a count of what’s left) uses
   `--color-guide-voice`, the cobalt.
-- **Hand marks are the player’s.** A checked box, a heart, a level on a ruler, & the `80` in
-  `80 / 95` are drawn in pencil (`--color-hand-pencil`), with the pencil filter in
+- **Hand marks are the player’s.** A heart, a level on a meter, & the `80` in `80 / 95` are drawn in
+  pencil (`--color-hand-pencil`), with the pencil filter in
   `src/lib/components/pencil-filter.svelte`. The guide never writes by hand, and the player never
-  prints. How a mark shows who made it (#276) is undecided; until it’s settled, every mark is
-  pencil.
+  prints.
+- **A checkmark says who made it.** Done is an X, obtained is a slash, and the tool that drew it
+  says where the fact came from: a pen for you, a rubber stamp for your save, a lighter colored
+  pencil for an inference, and a typewriter for unknown (`src/lib/engine/provenance-marks.ts`).
+  Every tool draws in the same two colors, `--color-tracker-checked` & `--color-tracker-obtained`:
+  the category palette’s green & gold, so the marks add no colors of their own.
 - **Tape marks what’s time-sensitive.** A taped note holds something that expires: the next
   festival, a birthday this week. Its label uses `--color-tape-urgent`. Nothing permanent gets tape.
 
@@ -49,18 +53,21 @@ The book has four props, and each has one job:
 | The taped note | Holds one time-sensitive fact                            | `--color-tape-*`                           |
 | The bookplate  | Names whose book this is: the farm & the save it follows | `--color-paper-raised`, `--color-rule`     |
 
-A new prop needs the maintainer’s approval. Don’t add a paper clip, a coffee ring, a ribbon, or a
-sticky note because a screen feels bare; a bare page is fine.
+Two meters carry small printed props of their own: grass along the Mines ground line, and the Renown
+star (see [Meters](#meters)). A new prop needs the maintainer’s approval. Don’t add a paper clip, a
+coffee ring, a ribbon, or a sticky note because a screen feels bare; a bare page is fine.
 
 ### Materials
 
 Each theme is a material, not only a set of colors.
 
 - **Light is slate paper.** A cool white page, blue-black ink, graphite pencil, & a petrol cover.
-- **Dark is a cyanotype.** Pencil doesn’t read on dark paper, so the dark theme is a blueprint
-  print: Prussian-blue paper where print & hand marks are both white, and the cover is near-black so
-  the page stands off it. The hand marks keep their pencil filter. The category colors lighten to
-  read on blue, and the ink on a thumb tab or ribbon turns dark.
+- **Dark is a faded cyanotype.** Pencil doesn’t read on dark paper, so the dark theme is a blueprint
+  print left in a sunny window: faded blue paper (`#182c40`) where print & hand marks are both
+  white, and the cover is near-black so the page stands off it. A full-strength cyanotype read as
+  “blue” rather than as the page; the faded one keeps about three quarters of its chroma. The hand
+  marks keep their pencil filter. The category colors turn pale to read on the paper, and the ink on
+  a thumb tab or ribbon turns dark.
 
 A component reads the role tokens and gets both materials. If a mark needs a different shape in
 dark, not only a different color, raise it instead of branching on `.dark` in the component.
@@ -90,11 +97,58 @@ silhouette: “out of season” isn’t “never discovered”.
 
 ### Meters
 
-Skills, Mines, & Renown share one ruler: a printed rule (`--color-meter-rule`, `--size-meter-rule`)
-with minor & major ticks (`--color-meter-tick`, `--size-meter-tick`, `--size-meter-tick-major`), and
-the player’s level drawn along it in pencil (`--color-meter-mark`, `--size-meter-mark`), with the
-number in the hand face. Each page keeps its own direction: a skill reads left to right, the mines
-go down as they get deeper, & renown climbs.
+A meter’s frame is printed, and only its fill is the player’s. The fill is the category color with
+the pencil filter, and the count beside it is in the hand face. Ticks stay faint & unlabeled, so the
+fill is the loudest thing on the meter. Each meter shows its direction before there’s any progress,
+so an empty one already says which way it runs:
+
+- **Skills** is a horizontal ruler (`--color-meter-rule`, `--size-meter-rule`, the
+  `--size-meter-tick*` sizes): a heavy stop at zero and an arrow at the open end.
+- **Mines** is a shaft cut down from a ground line, with hatched earth on both sides, a rung every
+  20 floors, & a few tufts of grass printed in ink along the ground.
+- **Renown** is a pole on a plain ground line with a tick at every town rank (every 10 levels). A
+  plump five-point star, drawn after the game’s rank stars but not copied from them, rides the top
+  of the gold fill and names the current rank (“42 Iron”). The fill ends at the star’s lower notch,
+  so it flows into the star, and the star sits in front of the ground line, so a new player’s star
+  stands on the ground. Star & fill are both `--color-category-renown`.
+
+The options sheet ([`token-options.html`](design/field-guide/token-options.html), section 5) draws
+each one, empty & partway, in both themes.
+
+### Category colors
+
+Each category has its own everyday color name, so a player can learn “purple is the Almanac”. Each
+hue comes from the game’s menu where the game has one:
+
+| Category  | Name   | From the game                                     | Light tab | Dark tab  |
+| --------- | ------ | ------------------------------------------------- | --------- | --------- |
+| Villagers | red    | The heart on the relationships tab                | `#a30017` | `#e86963` |
+| Quests    | orange | The envelope tab’s coral                          | `#a34704` | `#f68f59` |
+| Renown    | gold   | Medal gold (no tab in the menu)                   | `#956e00` | `#e5b23f` |
+| Museum    | green  | The museum’s roof                                 | `#288546` | `#5ac576` |
+| Skills    | teal   | The skills book icon’s mint base                  | `#008084` | `#51b5b8` |
+| Cosmetics | blue   | The outfit in the wardrobe icon (the tab’s white) | `#376dca` | `#86abe8` |
+| Almanac   | purple | The book tab’s orchid                             | `#8148a9` | `#ad7dd2` |
+| Animals   | pink   | The cow’s nose                                    | `#a02665` | `#ef84b2` |
+| Recipes   | tan    | Aged recipe scrolls                               | `#6f5d48` | `#cdb59b` |
+| Mines     | stone  | Underground, as cut stone                         | `#51453c` | `#958a80` |
+
+Rules for the set:
+
+- **Every tab on a strip takes the same letter ink.** Light tabs are deep and hold
+  `--color-ribbon-foreground` (near-white) at 4.5:1; dark tabs are pale and hold it (near-black) at
+  4.5:1. `tests/color-contrast.test.ts` checks both themes.
+- **Fills & words use different tokens.** `--color-category-<key>` fills tabs, ribbons, & meters;
+  `--color-category-<key>-text` colors words, and reads at 4.5:1 on the paper. They’re the same hue,
+  and differ only where the paper needs it: Renown, Museum, & Skills darken slightly in light, and
+  Mines’ dark tab sits darker than its text to match the other tabs’ weight.
+- **Each color stays its name.** The set was fitted in OKLCH, with each color held to a hue &
+  lightness range that keeps its name, then spread as far apart as those ranges allow. The closest
+  pair is ΔE 0.092 (light) & 0.097 (dark) for normal vision, and about 0.044 under the two common
+  red-green deficiencies. Color is never the only signal (every category also has its name & icon),
+  and #682 tracks an optional pattern overlay.
+- **Change one color, refit the set.** Moving one hue changes its neighbors’ distances. Recheck the
+  closest pairs, the letter ink, & the text contrast before changing a value.
 
 ## Type roles
 
@@ -108,8 +162,8 @@ go down as they get deeper, & renown climbs.
 | Data       | `--font-data`       | IBM Plex Mono    | Printed counts, column labels, & tick labels    |
 | Hand       | `--font-hand`       | Undecided (#677) | The player’s numbers: digits & their separators |
 
-The redesign replaces Petrona with Source Serif 4 for body text. That swap isn’t made yet, because
-it adds a font file; until it lands, `--font-body` is still Petrona.
+The body face stays Petrona. Round ten of the mockup swapped in Source Serif 4, but the two are
+close, Petrona is a little more delicate, and neither changes how warm or cool the page feels.
 
 Every role except Hand has a stack per locale, set by the `html:lang()` rules in `src/app.css`; see
 [font-assets.md](font-assets.md#locale-fonts). The Hand role is limited to digits & the separators
@@ -173,7 +227,7 @@ Every token is defined in `src/app.css`, and nowhere else.
 | Paper & ink   | `--color-paper`, `--color-paper-raised`, `--color-paper-sunken`, `--color-ink`, `--color-ink-muted`, `--color-ink-hairline`, `--color-rule`, `--color-rule-faint`                                                                       | `:root` (light) & `.dark`                             |
 | Hues          | `--color-hue-green`, `-amber`, `-rose`, `-blue`, `-brown`, `-cobalt`, `-wax`, `-graphite` (only role aliases read these)                                                                                                                | `:root` & `.dark`                                     |
 | Color roles   | `--color-guide-voice`, `--color-hand-pencil`, `--color-tape-urgent`, `--color-brand-*`, `--color-status-*`, `--color-tracker-*`, `--color-progress-*`, `--color-toolbar-*`, `--color-season-*`, `--color-feedback-*`, `--color-meter-*` | `:root` (aliases of hues)                             |
-| Domain colors | `--color-category-*`, `--color-cover*`, `--color-wire*`, `--color-page-*`, `--color-tape-paper`, `--color-tape-strip`, `--color-home-accent`, `--color-ribbon-*`, `--color-tag-*`, `--color-sprite-*`                                   | `:root` & `.dark`                                     |
+| Domain colors | `--color-category-*` & `--color-category-*-text`, `--color-cover*`, `--color-wire*`, `--color-page-*`, `--color-tape-paper`, `--color-tape-strip`, `--color-home-accent`, `--color-ribbon-*`, `--color-tag-*`, `--color-sprite-*`       | `:root` & `.dark`                                     |
 | Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                                                                                                                                               | `:root` & `.dark`                                     |
 | Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                                                                                                                                               | `:root` & `.dark`                                     |
 | Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--shadow-tag-string`, `--shadow-tag-ring`, `--filter-tag-shadow`                                                                                                                                | `:root`                                               |

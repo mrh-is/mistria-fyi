@@ -110,8 +110,10 @@
   --shadow-sticker: 0.8px 1.2px 0.7px rgb(18 28 34 / 35%);
 
   /* Hues: the raw ink colors. Components read a role below, never a hue directly. */
-  --color-hue-green: #1c7a48;
-  --color-hue-amber: #a85a0e;
+  /* Green & amber are the category palette's green & gold text shades, so provenance marks &
+   * statuses add no colors of their own. */
+  --color-hue-green: #207f40;
+  --color-hue-amber: #8f6800;
   --color-hue-rose: #b83060;
   --color-hue-blue: #1860a8;
   --color-hue-brown: #7a5a3a;
@@ -162,7 +164,7 @@
   --filter-sprite-todo: grayscale(1) contrast(1.15);
   --blend-sprite-tint: screen;
   --filter-sprite-completed: drop-shadow(var(--shadow-sticker));
-  --filter-sprite-not-now: grayscale(1) contrast(0.5) brightness(1.32);
+  --filter-sprite-not-now: grayscale(1) contrast(0.36) brightness(1.5);
   --color-sprite-silhouette: color-mix(in srgb, var(--color-ink-hairline) 55%, var(--color-paper));
 
   /* Meters: the one ruler style Skills, Mines, & Renown share. Each page sets its own direction. */
@@ -220,17 +222,32 @@
   --border: var(--color-ink-hairline);
   --input: var(--color-ink-hairline);
   --ring: var(--color-brand-accent);
-  /* Category colors — jewel tones */
-  --color-category-museum: #2e8a30;
-  --color-category-almanac: #5848c0;
-  --color-category-recipes: #b87028;
-  --color-category-animals: #c03838;
-  --color-category-villagers: #c03060;
-  --color-category-cosmetics: #9838a8;
-  --color-category-skills: #1a8878;
-  --color-category-renown: #a48018;
-  --color-category-quests: #1878b8;
-  --color-category-mines: #7a5a3a;
+  /*
+   * Category colors: ten everyday color names, one hue each, taken from the game where it has one
+   * (docs/styling.md has the key). The plain token fills tabs, ribbons, & meters, and holds the
+   * ribbon foreground at 4.5:1; the -text token is the same hue, darkened only where the paper
+   * needs it, for category-colored words.
+   */
+  --color-category-villagers: #a30017; /* red */
+  --color-category-quests: #a34704; /* orange */
+  --color-category-renown: #956e00; /* gold */
+  --color-category-museum: #288546; /* green */
+  --color-category-skills: #008084; /* teal */
+  --color-category-cosmetics: #376dca; /* blue */
+  --color-category-almanac: #8148a9; /* purple */
+  --color-category-animals: #a02665; /* pink */
+  --color-category-recipes: #6f5d48; /* tan */
+  --color-category-mines: #51453c; /* stone */
+  --color-category-villagers-text: var(--color-category-villagers);
+  --color-category-quests-text: var(--color-category-quests);
+  --color-category-renown-text: #8f6800;
+  --color-category-museum-text: #207f40;
+  --color-category-skills-text: #007b7f;
+  --color-category-cosmetics-text: var(--color-category-cosmetics);
+  --color-category-almanac-text: var(--color-category-almanac);
+  --color-category-animals-text: var(--color-category-animals);
+  --color-category-recipes-text: var(--color-category-recipes);
+  --color-category-mines-text: var(--color-category-mines);
 
   /* Heart level marks (villager-record.svelte), the town rank ladder (renown), & confetti
    * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. Heart
@@ -286,17 +303,19 @@
 }
 
 .dark {
-  /* ── Field Guide palette: dark ("cyanotype") ───────── */
+  /* ── Field Guide palette: dark ("faded cyanotype") ─── */
   /* Pencil doesn't read on dark paper, so dark mode changes the material, not only the colors: a
-   * cyanotype, Prussian-blue paper where every mark prints white. See docs/styling.md. */
-  --color-paper: #12304c;
-  --color-paper-raised: #183a5a;
-  --color-paper-sunken: #0d2740;
-  --color-ink: #eef4f8;
-  --color-ink-muted: #a9bfd0;
-  --color-ink-hairline: #6d8ca8;
-  --color-ribbon-foreground: #0d2740;
-  --color-sprite-slot-outline: #2c4d6c;
+   * cyanotype left in a sunny window, faded blue paper where every mark prints white. See
+   * docs/styling.md. */
+  --color-paper: #182c40;
+  --color-paper-raised: #1f3348;
+  --color-paper-sunken: #122539;
+  --color-ink: #eaf1f8;
+  --color-ink-muted: #aabdd1;
+  --color-ink-hairline: #6e8398;
+  /* Dark letters on the pale category tabs & ribbons */
+  --color-ribbon-foreground: #0f1820;
+  --color-sprite-slot-outline: #2e4358;
   --shadow-small: 0 1px 1px rgb(2 10 20 / 40%);
   --shadow-medium: 0 3px 10px rgb(2 10 20 / 30%);
   --shadow-large: 0 6px 16px rgb(2 10 20 / 34%);
@@ -304,25 +323,26 @@
   --shadow-ribbon: 0 3px 2px rgb(2 10 20 / 45%);
   --shadow-sticker: 0.8px 1.2px 0.7px rgb(2 10 20 / 55%);
 
-  --color-hue-green: #7fd09a;
-  --color-hue-amber: #f0b060;
+  /* Green & amber are the category palette's pale green & gold. */
+  --color-hue-green: #5ac576;
+  --color-hue-amber: #e5b23f;
   --color-hue-rose: #f590b0;
   --color-hue-blue: #9ccaf4;
   --color-hue-brown: #d4ae80;
-  --color-hue-cobalt: #b9dcf6;
+  --color-hue-cobalt: #9fd1f8;
   --color-hue-wax: #f79a88;
   /* The hand marks in white on a cyanotype. */
-  --color-hue-graphite: #f4f8fb;
-  --color-home-accent-foreground: #0d2740;
+  --color-hue-graphite: #f1f6fa;
+  --color-home-accent-foreground: #0f1820;
 
-  --color-tape-paper: #1e4568;
+  --color-tape-paper: #283f57;
   --color-tape-strip: rgb(190 214 232 / 22%);
 
   --filter-sprite-todo: grayscale(1) contrast(1.1) brightness(1.5);
   --blend-sprite-tint: multiply;
-  --filter-sprite-not-now: grayscale(1) contrast(0.55) brightness(0.9) opacity(0.6);
+  --filter-sprite-not-now: grayscale(1) contrast(0.42) brightness(0.85) opacity(0.45);
 
-  --color-cover: #101b21;
+  --color-cover: #0f1820;
   --color-cover-deep: #0a1216;
   --color-cover-ink: #dfe8ea;
   --color-cover-ink-muted: #8ea2a8;
@@ -330,32 +350,43 @@
   --color-wire: #7d858c;
   --color-wire-highlight: #b9c0c6;
   --color-wire-hole: #06090b;
-  --color-page-under: #0d2740;
+  --color-page-under: #122539;
   --color-page-gutter: rgb(0 0 0 / 28%);
-  --shadow-page: 2px 2px 0 #0f2a44, 4px 4px 0 #0b2238, 0 10px 30px rgb(0 0 0 / 55%);
+  --shadow-page: 2px 2px 0 #15283b, 4px 4px 0 #112232, 0 10px 30px rgb(0 0 0 / 55%);
 
-  --card: #183a5a;
+  --card: #1f3348;
   --card-foreground: var(--color-ink);
   --popover: var(--card);
   --popover-foreground: var(--color-ink);
-  --primary-foreground: #0d2740;
-  --secondary-foreground: #0d2740;
-  --muted: #1a3f61;
-  --accent: #20486c;
+  --primary-foreground: #0f1820;
+  --secondary-foreground: #0f1820;
+  --muted: #1c3044;
+  --accent: #24394f;
   --accent-foreground: var(--color-ink);
   --destructive: #ff9a8c;
 
-  /* Category colors, lightened to read as text on the blue paper & as tabs on the cover */
-  --color-category-animals: #f08a84;
-  --color-category-recipes: #e6a860;
-  --color-category-renown: #dcbc50;
-  --color-category-museum: #78c87c;
-  --color-category-skills: #62ccb8;
-  --color-category-quests: #78bcec;
-  --color-category-almanac: #b0a8f4;
-  --color-category-cosmetics: #d894e6;
-  --color-category-villagers: #f48cb0;
-  --color-category-mines: #d0aa78;
+  /* Category colors: the same hues, pale, so tabs hold dark letters & words read on the paper.
+   * Only Mines' tab sits darker than its text, to match the other tabs' weight. */
+  --color-category-villagers: #e86963;
+  --color-category-quests: #f68f59;
+  --color-category-renown: #e5b23f;
+  --color-category-museum: #5ac576;
+  --color-category-skills: #51b5b8;
+  --color-category-cosmetics: #86abe8;
+  --color-category-almanac: #ad7dd2;
+  --color-category-animals: #ef84b2;
+  --color-category-recipes: #cdb59b;
+  --color-category-mines: #958a80;
+  --color-category-villagers-text: var(--color-category-villagers);
+  --color-category-quests-text: var(--color-category-quests);
+  --color-category-renown-text: var(--color-category-renown);
+  --color-category-museum-text: var(--color-category-museum);
+  --color-category-skills-text: var(--color-category-skills);
+  --color-category-cosmetics-text: var(--color-category-cosmetics);
+  --color-category-almanac-text: var(--color-category-almanac);
+  --color-category-animals-text: var(--color-category-animals);
+  --color-category-recipes-text: var(--color-category-recipes);
+  --color-category-mines-text: #9c9187;
 
   --color-tag-accent: #c36d5a;
   --color-tag-action-accent: color-mix(
