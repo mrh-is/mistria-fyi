@@ -692,9 +692,9 @@
     <div class="head">
       <h2><span class="n">5</span>One meter, three directions</h2>
       <p class="note">
-        5B, third pass. A star now caps the Renown pole in place of the pennant, after the game’s
-        rank stars. It’s our own plump five-point drawing, printed in ink, sitting clear of the
-        top-rank stop, and colored in at Mistril.
+        5B, fourth pass. A star caps the Renown pole, after the game’s rank stars: our own plump
+        five-point drawing, printed in ink. The scale tops out at the star’s lower notch, so a full
+        bar flows into the star, which is colored in at Mistril.
       </p>
     </div>
     <div class="grid" id="meters"></div>
@@ -1333,29 +1333,29 @@
     return meter(`Floor ${value} of ${max}`, G + LEN + 12, s);
   }
   function pole(value, max) {
-    const G = LEN + 34;
+    // A star caps the pole, like the game's rank stars: a plump star of our own drawing. The scale
+    // tops out at the star's lower notch, so the bar flows straight into it; a full bar runs on to
+    // the star's center, hidden under the star, which is drawn last and colored in at the top rank.
+    const sy = 14;
+    const NOTCH = 6.9;
+    const G = sy + NOTCH + LEN;
     const y = (v) => G - (v / max) * LEN;
-    const top = y(max);
-    // A star caps the pole, like the game's rank stars, 10px clear of the top rank's stop, so a full
-    // bar meets the stop, not the star. It's a plump star of our own drawing, colored in at the top.
-    const sy = top - 21;
     const star = Array.from({ length: 10 }, (_, i) => {
-      const r = i % 2 ? 6.9 : 11;
+      const r = i % 2 ? NOTCH : 11;
       const a = (Math.PI / 5) * i - Math.PI / 2;
       return `${(CX + r * Math.cos(a)).toFixed(1)} ${(sy + r * Math.sin(a)).toFixed(1)}`;
     });
-    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${sy + 6}" stroke="var(--hair)" stroke-width="1.2"/>`;
-    s += `<path d="M${star.join(" L")} Z" fill="${value >= max ? "var(--c-renown)" : "var(--paper)"}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`;
-    s += `<line x1="${CX - 8}" x2="${CX + 8}" y1="${top}" y2="${top}" stroke="var(--ink)" stroke-width="1.6"/>`;
+    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${sy}" stroke="var(--hair)" stroke-width="1.2"/>`;
     for (let v = 20; v < max; v += 20)
       s += `<line x1="${CX - 5}" x2="${CX + 5}" y1="${y(v)}" y2="${y(v)}" stroke="var(--hair)" opacity=".5"/>`;
-    // At the top rank the filled pennant says it, so the count steps aside.
+    // At the top rank the colored star says it, so the count steps aside.
     if (value)
       s +=
-        fill(CX, G, CX, y(value), "var(--c-renown)", 12) +
+        fill(CX, G, CX, value >= max ? sy : y(value), "var(--c-renown)", 12) +
         (value < max
           ? `<text class="v" x="${CX + 28}" y="${y(value) + 7}" filter="url(#graphite)">${value}</text>`
           : "");
+    s += `<path d="M${star.join(" L")} Z" fill="${value >= max ? "var(--c-renown)" : "var(--paper)"}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`;
     s += ground(G, 0) + `<text class="w" x="${CX + 16}" y="${sy + 4}">Mistril</text>`;
     return meter(`Rank ${value} of ${max}`, G + 4, s);
   }
