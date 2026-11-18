@@ -23,6 +23,18 @@ could an LLM have generated this? If it could, choose something else. Avoid in p
 - Monochromatic schemes, perfectly symmetrical layouts, & fade-up-on-scroll animations
 - Everything “too smooth”, rigid grids, Swiss minimalism, & maximalism
 
+### Built & specified
+
+This guide is the brief for the redesign’s per-screen sessions, so it covers some pieces before any
+component draws them.
+
+- **Live in the app:** the two materials, the category colors, the thumb tabs, the provenance marks,
+  the type scale, & every token in `src/app.css`.
+- **Specified, not built yet:** the sprite treatments, the meters, the taped note, & the hand face
+  (#677). Their tokens & rules exist, and the options sheet
+  ([`token-options.html`](design/field-guide/token-options.html)) draws them, but no screen uses
+  them until its session builds them.
+
 ### The book’s grammar
 
 Three kinds of mark each mean one thing. A screen that mixes them up reads as decoration.
@@ -74,8 +86,9 @@ dark, not only a different color, raise it instead of branching on `.dark` in th
 
 ### Sprites
 
-A sprite’s treatment says which shelf its row is on. The treatments are CSS filters & masks applied
-at runtime, so the project ships no derivative images, and a palette change stays a CSS change.
+Specified, not built yet. A sprite’s treatment says which shelf its row is on. The treatments are
+CSS filters & masks applied at runtime, so the project ships no derivative images, and a palette
+change stays a CSS change.
 
 | Treatment   | Looks like                               | Means                          |
 | ----------- | ---------------------------------------- | ------------------------------ |
@@ -84,11 +97,13 @@ at runtime, so the project ships no derivative images, and a palette change stay
 | `not-now`   | Washed out, still recognizable           | Known, but out of reach today  |
 | `spoiler`   | A flat silhouette                        | Not discovered; the shape only |
 
-Wrap the image, name the treatment, & pass the image’s URL for the two masked treatments:
+Wrap the image, name the treatment, & pass the image’s URL for the two masked treatments. Keep
+`crossorigin="anonymous"`, as `sprite-slot.svelte` does: the service worker caches a sprite for
+offline use only when it was fetched with CORS.
 
 ```svelte
 <span data-sprite-treatment="todo" style:--sprite-url="url({src})" style:--sprite-tint={color}>
-  <img {src} alt="" />
+  <img {src} alt="" crossorigin="anonymous" />
 </span>
 ```
 
@@ -97,10 +112,10 @@ silhouette: “out of season” isn’t “never discovered”.
 
 ### Meters
 
-A meter’s frame is printed, and only its fill is the player’s. The fill is the category color with
-the pencil filter, and the count beside it is in the hand face. Ticks stay faint & unlabeled, so the
-fill is the loudest thing on the meter. Each meter shows its direction before there’s any progress,
-so an empty one already says which way it runs:
+Specified, not built yet. A meter’s frame is printed, and only its fill is the player’s. The fill is
+the category color with the pencil filter, and the count beside it is in the hand face. Ticks stay
+faint & unlabeled, so the fill is the loudest thing on the meter. Each meter shows its direction
+before there’s any progress, so an empty one already says which way it runs:
 
 - **Skills** is a horizontal ruler (`--color-meter-rule`, `--size-meter-rule`, the
   `--size-meter-tick*` sizes): a heavy stop at zero and an arrow at the open end.
@@ -140,8 +155,13 @@ Rules for the set:
   4.5:1. `tests/color-contrast.test.ts` checks both themes.
 - **Fills & words use different tokens.** `--color-category-<key>` fills tabs, ribbons, & meters;
   `--color-category-<key>-text` colors words, and reads at 4.5:1 on the paper. They’re the same hue,
-  and differ only where the paper needs it: Renown, Museum, & Skills darken slightly in light, and
-  Mines’ dark tab sits darker than its text to match the other tabs’ weight.
+  and differ only where the paper needs it: Renown, Museum, & Skills darken slightly in light;
+  Villagers’ dark text is lighter than its tab, so the 10px alphabet index reads on its red wash;
+  and Mines’ dark tab sits darker than its text to match the other tabs’ weight.
+- **Words on a category tint stay ink.** Most category colors miss 4.5:1 on a tint of themselves, so
+  an active filter chip or segment keeps its label in `--color-ink` and lets the border & tint carry
+  the color. The contrast test checks the chip, the villager index, & filled destructive actions
+  (`--destructive-foreground`), as composited.
 - **Each color stays its name.** The set was fitted in OKLCH, with each color held to a hue &
   lightness range that keeps its name, then spread as far apart as those ranges allow. The closest
   pair is ΔE 0.092 (light) & 0.097 (dark) for normal vision, and about 0.044 under the two common
@@ -222,22 +242,22 @@ cyanotype: `--color-hue-graphite` changes, and `--color-hand-pencil` never does.
 
 Every token is defined in `src/app.css`, and nowhere else.
 
-| Kind          | Tokens                                                                                                                                                                                                                                  | Defined in                                            |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Paper & ink   | `--color-paper`, `--color-paper-raised`, `--color-paper-sunken`, `--color-ink`, `--color-ink-muted`, `--color-ink-hairline`, `--color-rule`, `--color-rule-faint`                                                                       | `:root` (light) & `.dark`                             |
-| Hues          | `--color-hue-green`, `-amber`, `-rose`, `-blue`, `-brown`, `-cobalt`, `-wax`, `-graphite` (only role aliases read these)                                                                                                                | `:root` & `.dark`                                     |
-| Color roles   | `--color-guide-voice`, `--color-hand-pencil`, `--color-tape-urgent`, `--color-brand-*`, `--color-status-*`, `--color-tracker-*`, `--color-progress-*`, `--color-toolbar-*`, `--color-season-*`, `--color-feedback-*`, `--color-meter-*` | `:root` (aliases of hues)                             |
-| Domain colors | `--color-category-*` & `--color-category-*-text`, `--color-cover*`, `--color-wire*`, `--color-page-*`, `--color-tape-paper`, `--color-tape-strip`, `--color-home-accent`, `--color-ribbon-*`, `--color-tag-*`, `--color-sprite-*`       | `:root` & `.dark`                                     |
-| Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                                                                                                                                               | `:root` & `.dark`                                     |
-| Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                                                                                                                                               | `:root` & `.dark`                                     |
-| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--shadow-tag-string`, `--shadow-tag-ring`, `--filter-tag-shadow`                                                                                                                                | `:root`                                               |
-| Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up                                                                                                                                                    | `@theme`                                              |
-| Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                                                                                                                                                                              | `:root` & `@theme inline`                             |
-| Sizes         | `--size-book-*`, `--size-page-inset`, `--size-page-inset-compact`, `--size-section-gap`, `--size-ledger-row`, `--size-ledger-gutter`, `--size-sprite`, `--size-meter-*`, `--size-ribbon-width`                                          | `:root`                                               |
-| Level & rank  | `--color-relationship-level-1`…`--color-relationship-level-10` (villager marks), `--color-town-rank-1`…`--color-town-rank-11`, `--color-confetti-1`…`7`                                                                                 | `:root` (one palette, both themes)                    |
-| Z-index       | `--z-section-header`, `--z-page-header`, `--z-home-header`, `--z-toolbar`, `--z-panel`, `--z-picker`, `--z-dialog`                                                                                                                      | `@theme`                                              |
-| Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data`, `--font-hand`                                                                                                                                   | `:root`, overridden per locale (except `--font-hand`) |
-| Sprites       | `--filter-sprite-todo`, `--filter-sprite-completed`, `--filter-sprite-not-now`, `--blend-sprite-tint`                                                                                                                                   | `:root` & `.dark`                                     |
+| Kind          | Tokens                                                                                                                                                                                                                                  | Defined in                                                    |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Paper & ink   | `--color-paper`, `--color-paper-raised`, `--color-paper-sunken`, `--color-ink`, `--color-ink-muted`, `--color-ink-hairline`, `--color-rule`, `--color-rule-faint`                                                                       | `:root` (light) & `.dark`                                     |
+| Hues          | `--color-hue-green`, `-amber`, `-rose`, `-blue`, `-brown`, `-cobalt`, `-wax`, `-graphite` (only role aliases read these)                                                                                                                | `:root` & `.dark`                                             |
+| Color roles   | `--color-guide-voice`, `--color-hand-pencil`, `--color-tape-urgent`, `--color-brand-*`, `--color-status-*`, `--color-tracker-*`, `--color-progress-*`, `--color-toolbar-*`, `--color-season-*`, `--color-feedback-*`, `--color-meter-*` | `:root` (aliases of hues)                                     |
+| Domain colors | `--color-category-*` & `--color-category-*-text`, `--color-cover*`, `--color-wire*`, `--color-page-*`, `--color-tape-paper`, `--color-tape-strip`, `--color-home-accent`, `--color-ribbon-*`, `--color-tag-*`, `--color-sprite-*`       | `:root` & `.dark`                                             |
+| Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                                                                                                                                               | `:root` & `.dark`                                             |
+| Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                                                                                                                                               | `:root` & `.dark`                                             |
+| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--shadow-tag-string`, `--shadow-tag-ring`, `--filter-tag-shadow`                                                                                                                                | `:root` (`--shadow-ribbon` & `--shadow-sticker` also `.dark`) |
+| Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up                                                                                                                                                    | `@theme`                                                      |
+| Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                                                                                                                                                                              | `:root` & `@theme inline`                                     |
+| Sizes         | `--size-book-*`, `--size-page-inset`, `--size-page-inset-compact`, `--size-section-gap`, `--size-ledger-row`, `--size-ledger-gutter`, `--size-sprite`, `--size-meter-*`, `--size-ribbon-width`                                          | `:root`                                                       |
+| Level & rank  | `--color-relationship-level-1`…`--color-relationship-level-10` (villager marks), `--color-town-rank-1`…`--color-town-rank-11`, `--color-confetti-1`…`7`                                                                                 | `:root` (one palette, both themes)                            |
+| Z-index       | `--z-section-header`, `--z-page-header`, `--z-home-header`, `--z-toolbar`, `--z-panel`, `--z-picker`, `--z-dialog`                                                                                                                      | `@theme`                                                      |
+| Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data`, `--font-hand`                                                                                                                                   | `:root`, overridden per locale (except `--font-hand`)         |
+| Sprites       | `--filter-sprite-todo`, `--filter-sprite-completed`, `--filter-sprite-not-now`, `--blend-sprite-tint`                                                                                                                                   | `:root` & `.dark`                                             |
 
 App colors sit in `:root`, not `@theme`: Tailwind would otherwise generate `bg-…` utilities nothing
 uses, and it drops theme variables it can't see used, which breaks names built at runtime (like

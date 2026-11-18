@@ -173,8 +173,9 @@
     border-radius: 0;
   }
 
+  /* Ink, like the plain segment: a category color misses 4.5:1 on its own tint. */
   :global(.segmented-picker-theme .segmented-picker-option[data-state="on"]) {
-    color: var(--primary);
+    color: var(--color-ink);
   }
 
   .strip.slotted {

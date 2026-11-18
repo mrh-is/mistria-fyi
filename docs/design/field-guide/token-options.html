@@ -201,7 +201,7 @@
     font-size: 13px;
   }
   .opt.lead > h3::after {
-    content: " · leading";
+    content: " · approved";
     color: var(--wax);
   }
   ol.asks {
@@ -637,9 +637,9 @@
   <header>
     <h1>Token options</h1>
     <p class="lede">
-      Round eight of the redesign’s styling tokens (#646): everything here is settled except a final
-      look at the tuned tabs & the gold Renown star. The strip above switches the whole sheet
-      between light & 1D. The sprites are stand-ins drawn for this sheet.
+      The redesign’s styling tokens (#646), as approved after eight rounds & applied to the app.
+      Every section shows the settled choice; 2K stays beside 2M as design history. The strip above
+      switches the whole sheet between light & 1D. The sprites are stand-ins drawn for this sheet.
     </p>
   </header>
 
@@ -780,11 +780,13 @@
   </section>
 
   <section>
-    <div class="head"><h2>What I need from you</h2></div>
+    <div class="head"><h2>Approved</h2></div>
     <ol class="asks">
-      <li>Tabs: 2M or 2K.</li>
-      <li>Renown: whether 5F is ready.</li>
-      <li>Then I apply all of it to the app’s tokens.</li>
+      <li>Dark mode: 1D, the faded cyanotype.</li>
+      <li>Category colors: 2M, ten named colors with stone Mines.</li>
+      <li>Not now: 3A+. Provenance: four tools in the palette’s green & gold.</li>
+      <li>Meters: the Skills ruler, the Mines shaft, & the climbing gold star (5F).</li>
+      <li>Body face: Petrona.</li>
     </ol>
   </section>
 </div>
@@ -1180,7 +1182,8 @@
     light: { ...GRAY.stone.light, recipes: "#6f5d48" },
     lightText: { ...GRAY.stone.lightText, recipes: "#6f5d48" },
     dark: { ...GRAY.stone.dark, mines: "#958a80" },
-    darkText: GRAY.stone.dark,
+    // Review fix: dark Villagers text is lighter, so it reads on its own 12% wash.
+    darkText: { ...GRAY.stone.dark, villagers: "#fa7972" },
   };
   const SETS = {
     "2M": {

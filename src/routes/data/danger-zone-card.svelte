@@ -42,7 +42,7 @@
           ><!-- @wc-context: settings spoilers cancel -->Never mind</AlertDialog.Cancel
         >
         <AlertDialog.Action
-          class="bg-destructive text-white hover:bg-destructive/90"
+          class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           onclick={handleReset}
         >
           <IconTrash />

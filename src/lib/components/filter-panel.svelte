@@ -350,9 +350,11 @@
     }
   }
 
+  /* The border & tint carry the category color; the label stays ink, since a category color misses
+   * 4.5:1 on its own tint. */
   .filter-chip--active {
     border-color: var(--primary);
-    color: var(--primary);
+    color: var(--color-ink);
     background: color-mix(in srgb, var(--primary) 14%, var(--color-paper-raised));
   }
 

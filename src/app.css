@@ -219,6 +219,8 @@
   --accent: #dde5e6;
   --accent-foreground: var(--color-ink);
   --destructive: #b8322e;
+  /* Text on a filled destructive action, like the reset confirmation */
+  --destructive-foreground: var(--color-ribbon-foreground);
   --border: var(--color-ink-hairline);
   --input: var(--color-ink-hairline);
   --ring: var(--color-brand-accent);
@@ -377,7 +379,8 @@
   --color-category-animals: #ef84b2;
   --color-category-recipes: #cdb59b;
   --color-category-mines: #958a80;
-  --color-category-villagers-text: var(--color-category-villagers);
+  /* Lighter than its tab, so the 10px alphabet index letter still reads on its red wash */
+  --color-category-villagers-text: #fa7972;
   --color-category-quests-text: var(--color-category-quests);
   --color-category-renown-text: var(--color-category-renown);
   --color-category-museum-text: var(--color-category-museum);
@@ -514,6 +517,7 @@ html:lang(ru) {
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
