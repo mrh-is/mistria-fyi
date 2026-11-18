@@ -637,9 +637,9 @@
   <header>
     <h1>Token options</h1>
     <p class="lede">
-      Round five of the redesign’s styling tokens (#646): everything here is settled except the last
-      tweaks to the tab colors and the meter’s star. The strip above switches the whole sheet
-      between light & 1D. The sprites are stand-ins drawn for this sheet.
+      Round six of the redesign’s styling tokens (#646): everything here is settled except Mines’
+      color and the Renown meter. The strip above switches the whole sheet between light & 1D. The
+      sprites are stand-ins drawn for this sheet.
     </p>
   </header>
 
@@ -655,12 +655,13 @@
     <div class="head">
       <h2><span class="n">2</span>Thumb tab colors</h2>
       <p class="note">
-        <b>2G</b>, refitted. Ten tabs, ten everyday color names: red, orange, gold, green, teal,
-        blue, purple, pink, tan, & brown. Every light tab now holds white letters at 4.5:1, and each
-        category gets a second token for text, darkened only where the paper needs it. Dark mode
-        keeps pale tabs with dark letters. The figures under each set are the closest pair’s
-        distance (OKLab ΔE), for normal vision & the two common color-vision deficiencies; bigger
-        means easier to tell apart.
+        Ten tabs, ten everyday color names, white letters on every light tab, and a text token per
+        category. The open question is Mines: <b>2G</b> keeps it brown; <b>2J</b> makes it slate
+        gray and <b>2K</b> stone gray-brown, each refitted so the warm colors could spread out.
+        Normal vision barely notices the difference. Without full color vision, both grays do
+        better, mostly in dark mode. The figures under each set are the closest pair’s distance
+        (OKLab ΔE), for normal vision & the two common color-vision deficiencies; bigger means
+        easier to tell apart.
       </p>
     </div>
     <div class="grid" id="tabs"></div>
@@ -692,9 +693,10 @@
     <div class="head">
       <h2><span class="n">5</span>One meter, three directions</h2>
       <p class="note">
-        5B, fourth pass. A star caps the Renown pole, after the game’s rank stars: our own plump
-        five-point drawing, printed in ink. The scale tops out at the star’s lower notch, so a full
-        bar flows into the star, which is colored in at Mistril.
+        Renown has lost its grass, since it’s no longer a flagpole. The star is our own plump
+        drawing, after the game’s rank stars, and the rank colors come from those stars, made
+        readable on each paper. <b>5B</b> is the settled meter; <b>5C</b> & <b>5D</b> bring in the
+        town ranks, which change every 10 levels.
       </p>
     </div>
     <div class="grid" id="meters"></div>
@@ -784,8 +786,8 @@
   <section>
     <div class="head"><h2>What I need from you</h2></div>
     <ol class="asks">
-      <li>Tabs: whether the refitted 2G is ready, or a note on any one color.</li>
-      <li>Meters: whether 5B with the star is ready to build.</li>
+      <li>Mines: brown (2G), slate (2J), or stone (2K).</li>
+      <li>Renown: star on top (5B), rank bands (5C), or a climbing star (5D).</li>
       <li>Then I apply all of it to the app’s tokens.</li>
     </ol>
   </section>
@@ -813,6 +815,18 @@
     "f-notnow": "grayscale(1) contrast(0.55) brightness(0.9) opacity(0.6)",
     "f-notnow2": "grayscale(1) contrast(0.42) brightness(0.85) opacity(0.45)",
     "on-cover": "#dfe8ea",
+    // Town rank stars, sampled from the game's rank icons & lifted to 3.2:1 on 1D.
+    "rank-0": "#b26b38",
+    "rank-1": "#927d80",
+    "rank-2": "#d87f50",
+    "rank-3": "#d34842",
+    "rank-4": "#75769b",
+    "rank-5": "#656cde",
+    "rank-6": "#9793c0",
+    "rank-7": "#2a924d",
+    "rank-8": "#e0a85c",
+    "rank-9": "#95bcda",
+    "rank-10": "#f3a7c0",
   };
   const dark = (t) => ({ ...DARK_CATS, ...t, scheme: "dark" });
   const MATS = {
@@ -851,6 +865,18 @@
       "c-renown": "#956d00",
       "c-recipes": "#785d45",
       "c-mines": "#602e02",
+      // Town rank stars, sampled from the game's rank icons & deepened to 3.2:1 on light paper.
+      "rank-0": "#b26b38",
+      "rank-1": "#927d80",
+      "rank-2": "#c97142",
+      "rank-3": "#b02424",
+      "rank-4": "#6c6d92",
+      "rank-5": "#4b4dbc",
+      "rank-6": "#8682ae",
+      "rank-7": "#2a924d",
+      "rank-8": "#b27d2d",
+      "rank-9": "#668ca8",
+      "rank-10": "#ba738b",
     },
     faded: dark({
       code: "1D",
@@ -1114,19 +1140,6 @@
       brown: "#b28b72",
     },
   };
-  // Round four’s deep set, kept to show which letters flipped to black.
-  const R4_DEEP = {
-    museum: "#008627",
-    animals: "#d6528d",
-    skills: "#318c90",
-    almanac: "#734b9f",
-    cosmetics: "#1861ba",
-    villagers: "#a62420",
-    quests: "#c45900",
-    renown: "#a78d0d",
-    recipes: "#907558",
-    mines: "#672e13",
-  };
   // Animals takes the cow's pink; Skills keeps the teal of its book.
   const MAP_G = {
     villagers: "red",
@@ -1142,23 +1155,112 @@
   };
   const paint = (map, strength) =>
     Object.fromEntries(CATS.map((c) => [c, NAMED[strength][map[c]]]));
+  // Two refits with Mines in gray, so the warm colors could spread out. Same order as MAP_G, with
+  // Mines last: villagers, quests, renown, museum, skills, cosmetics, almanac, animals, recipes, mines.
+  const ORDER_G = Object.keys(MAP_G);
+  const set = (deep, text, pale) => {
+    const m = (list) => Object.fromEntries(ORDER_G.map((c, i) => [c, list[i]]));
+    return { light: m(deep), lightText: m(text), dark: m(pale) };
+  };
+  const GRAY = {
+    slate: set(
+      [
+        "#9f102a",
+        "#a54500",
+        "#8f7104",
+        "#298546",
+        "#006d6f",
+        "#0065c5",
+        "#6230a7",
+        "#ba468b",
+        "#785d46",
+        "#3d4d56",
+      ],
+      [
+        "#9f102a",
+        "#a54500",
+        "#896b00",
+        "#217f40",
+        "#006d6f",
+        "#0065c5",
+        "#6230a7",
+        "#b64388",
+        "#785d46",
+        "#3d4d56",
+      ],
+      [
+        "#ed646b",
+        "#e68e60",
+        "#d8b246",
+        "#6fc081",
+        "#3db2b5",
+        "#88aede",
+        "#a287db",
+        "#e78bbc",
+        "#cfb6a2",
+        "#86939a",
+      ],
+    ),
+    stone: set(
+      [
+        "#a30017",
+        "#a34704",
+        "#956e00",
+        "#288546",
+        "#008084",
+        "#376dca",
+        "#8148a9",
+        "#a02665",
+        "#735c41",
+        "#51453c",
+      ],
+      [
+        "#a30017",
+        "#a34704",
+        "#8f6800",
+        "#207f40",
+        "#007b7f",
+        "#376dca",
+        "#8148a9",
+        "#a02665",
+        "#735c41",
+        "#51453c",
+      ],
+      [
+        "#e86963",
+        "#f68f59",
+        "#e5b23f",
+        "#5ac576",
+        "#51b5b8",
+        "#86abe8",
+        "#ad7dd2",
+        "#ef84b2",
+        "#cdb59b",
+        "#9c9187",
+      ],
+    ),
+  };
   const SETS = {
     "2G": {
-      name: "Ten names",
-      why: "Every light tab now holds white letters at 4.5:1. Gold moved warmer so it stays gold rather than olive at that depth.",
+      name: "Brown mines",
+      why: "Round five’s set. Every light tab holds white letters at 4.5:1. Its weak spot is red & brown in dark mode without full color vision.",
       dist: "Light: ΔE 0.092 · deutan 0.045 · protan 0.044<br>Dark: ΔE 0.099 · deutan 0.036 · protan 0.048",
       light: paint(MAP_G, "deep"),
       lightText: paint(MAP_G, "text"),
       dark: paint(MAP_G, "pale"),
       lead: true,
     },
-    "2G, round four": {
-      name: "For comparison",
-      why: "Teal, Gold, & Pink (Skills, Renown, & Animals) were light enough that black letters won.",
-      dist: "Light: ΔE 0.109 · deutan 0.052 · protan 0.052",
-      light: R4_DEEP,
-      lightText: paint(MAP_G, "text"),
-      dark: paint(MAP_G, "pale"),
+    "2J": {
+      name: "Slate mines",
+      why: "Mines turns cool slate gray, like the cover; red, orange, & gold get a little more room. Holds up better without full color vision, especially in dark mode.",
+      dist: "Light: ΔE 0.097 · deutan 0.046 · protan 0.048<br>Dark: ΔE 0.098 · deutan 0.046 · protan 0.045",
+      ...GRAY.slate,
+    },
+    "2K": {
+      name: "Stone mines",
+      why: "Mines turns warm gray-brown, like cut stone. The best of the three without full color vision, though Mines & Recipes sit close together in the light theme.",
+      dist: "Light: ΔE 0.095 · deutan 0.049 · protan 0.052<br>Dark: ΔE 0.097 · deutan 0.049 · protan 0.051",
+      ...GRAY.stone,
     },
   };
   const lum = (hex) => {
@@ -1276,8 +1378,9 @@
   const CX = 46;
   const tuft = (x, g, s = 1) =>
     `M${x} ${g} q ${-1.2 * s} ${-3 * s} ${-3.4 * s} ${-5 * s} M${x + 1.6} ${g} q ${0.2 * s} ${-4.5 * s} ${0.8 * s} ${-7.5 * s} M${x + 3.2} ${g} q ${1.2 * s} ${-2.4 * s} ${3.2 * s} ${-4 * s}`;
-  const ground = (g, gap) => {
+  const ground = (g, gap, grass = true) => {
     const line = gap ? `M0 ${g} H${CX - gap} M${CX + gap} ${g} H100` : `M0 ${g} H100`;
+    if (!grass) return `<path d="${line}" stroke="var(--ink)" stroke-width="1.6"/>`;
     const tufts = [
       [6, 1],
       [27, 0.8],
@@ -1332,43 +1435,102 @@
     s += ground(G, 8) + `<text x="${CX + 28}" y="${G + LEN + 4}">${max}</text>`;
     return meter(`Floor ${value} of ${max}`, G + LEN + 12, s);
   }
-  function pole(value, max) {
-    // A star caps the pole, like the game's rank stars: a plump star of our own drawing. The scale
-    // tops out at the star's lower notch, so the bar flows straight into it; a full bar runs on to
-    // the star's center, hidden under the star, which is drawn last and colored in at the top rank.
-    const sy = 14;
-    const NOTCH = 6.9;
-    const G = sy + NOTCH + LEN;
-    const y = (v) => G - (v / max) * LEN;
-    const star = Array.from({ length: 10 }, (_, i) => {
+  // Town ranks change every 10 renown levels, Wood at 0 through Mistril at 100.
+  const RANKS = [
+    "Wood",
+    "Stone",
+    "Copper",
+    "Ruby",
+    "Iron",
+    "Sapphire",
+    "Silver",
+    "Emerald",
+    "Gold",
+    "Diamond",
+    "Mistril",
+  ];
+  const rankOf = (v) => Math.min(10, Math.floor(v / 10));
+  // A plump five-point star of our own drawing, after the game's rank stars; its lower notch sits
+  // NOTCH below its center, so a bar that ends there flows straight into it.
+  const NOTCH = 6.9;
+  const starAt = (cy, color) => {
+    const pts = Array.from({ length: 10 }, (_, i) => {
       const r = i % 2 ? NOTCH : 11;
       const a = (Math.PI / 5) * i - Math.PI / 2;
-      return `${(CX + r * Math.cos(a)).toFixed(1)} ${(sy + r * Math.sin(a)).toFixed(1)}`;
+      return `${(CX + r * Math.cos(a)).toFixed(1)} ${(cy + r * Math.sin(a)).toFixed(1)}`;
     });
-    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${sy}" stroke="var(--hair)" stroke-width="1.2"/>`;
-    for (let v = 20; v < max; v += 20)
+    return `<path d="M${pts.join(" L")} Z" fill="${color}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`;
+  };
+  // Renown, three ways:
+  // - "top": 5B. The star caps the pole and is colored in at Mistril; the bar is the category color.
+  // - "bands": the bar is cut into rank bands, each in its rank's color.
+  // - "climb": the star rides the top of the bar, and star & bar both take the current rank's color.
+  function pole(value, max, mode = "top") {
+    const top = 14;
+    const G = top + NOTCH + LEN;
+    const y = (v) => G - (v / max) * LEN;
+    const rank = rankOf(value);
+    const rankColor = `var(--rank-${rank})`;
+    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${top}" stroke="var(--hair)" stroke-width="1.2"/>`;
+    const step = mode === "top" ? 20 : 10;
+    for (let v = step; v < max; v += step)
       s += `<line x1="${CX - 5}" x2="${CX + 5}" y1="${y(v)}" y2="${y(v)}" stroke="var(--hair)" opacity=".5"/>`;
-    // At the top rank the colored star says it, so the count steps aside.
-    if (value)
-      s +=
-        fill(CX, G, CX, value >= max ? sy : y(value), "var(--c-renown)", 12) +
-        (value < max
-          ? `<text class="v" x="${CX + 28}" y="${y(value) + 7}" filter="url(#graphite)">${value}</text>`
-          : "");
-    s += `<path d="M${star.join(" L")} Z" fill="${value >= max ? "var(--c-renown)" : "var(--paper)"}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`;
-    s += ground(G, 0) + `<text class="w" x="${CX + 16}" y="${sy + 4}">Mistril</text>`;
-    return meter(`Rank ${value} of ${max}`, G + 4, s);
+    const starY = mode === "climb" ? y(value) - NOTCH : top;
+    // A full bar runs on under the star, which is drawn last, so the join is clean.
+    const barTop = value >= max ? top : y(value);
+    if (value && mode === "bands") {
+      for (let r = 0; r * 10 < value; r++) {
+        const hi = Math.min(value, r * 10 + 10);
+        s += fill(CX, y(r * 10), CX, hi >= max ? top : y(hi), `var(--rank-${r})`, 12);
+      }
+    } else if (value) {
+      s += fill(CX, G, CX, barTop, mode === "climb" ? rankColor : "var(--c-renown)", 12);
+    }
+    const reached = value >= max;
+    const starFill =
+      mode === "climb"
+        ? rankColor
+        : reached
+          ? mode === "bands"
+            ? "var(--rank-10)"
+            : "var(--c-renown)"
+          : "var(--paper)";
+    s += starAt(starY, starFill);
+    if (mode === "climb") {
+      s += `<text x="${CX + 15}" y="${starY + 2}"><tspan class="v" filter="url(#graphite)">${value}</tspan><tspan class="w" dx="5">${RANKS[rank]}</tspan></text>`;
+    } else {
+      if (value && !reached)
+        s += `<text class="v" x="${CX + 28}" y="${y(value) + 7}" filter="url(#graphite)">${value}</text>`;
+      s += `<text class="w" x="${CX + 16}" y="${top + 4}">Mistril</text>`;
+    }
+    s += ground(G, 0, false);
+    return meter(`Renown ${value} of ${max}, ${RANKS[rank]} rank`, G + 4, s);
   }
   const f = (svg, label, wide) => `<figure${wide ? ' class="wide"' : ""}>${svg}${label}</figure>`;
-  const meters = () =>
-    `<div class="meters">${f(ruler({ max: 60, value: 37, major: 15, color: "var(--c-skills)" }), "Skills", 1)}${f(pole(0, 100), "Renown, new")}${f(pole(42, 100), "Renown")}${f(pole(100, 100), "Renown, top")}${f(shaft(0, 100), "Mines, new")}${f(shaft(64, 100), "Mines")}</div>`;
-  document.getElementById("meters").innerHTML = [
-    ["m-light", "<h3><b>5B</b> · Light</h3>"],
-    ["m-dark", "<h3 data-darkname></h3>"],
-  ]
+  const OPTS = {
+    "5B": [
+      "Star on top",
+      () =>
+        `${f(ruler({ max: 60, value: 37, major: 15, color: "var(--c-skills)" }), "Skills", 1)}${f(pole(0, 100), "Renown, new")}${f(pole(42, 100), "Renown")}${f(pole(100, 100), "Renown, top")}${f(shaft(0, 100), "Mines, new")}${f(shaft(64, 100), "Mines")}`,
+      "The settled meter, with the grass gone from Renown. Mines keeps its grass, which marks the surface the shaft is cut from.",
+    ],
+    "5C": [
+      "Rank bands",
+      () =>
+        `${f(pole(0, 100, "bands"), "Renown, new")}${f(pole(42, 100, "bands"), "Renown")}${f(pole(77, 100, "bands"), "Renown")}${f(pole(100, 100, "bands"), "Renown, top")}`,
+      "Every rank you’ve passed keeps its band, Wood at the bottom. The bar tells your history; the full one is a rainbow of metals & gems.",
+    ],
+    "5D": [
+      "Climbing star",
+      () =>
+        `${f(pole(0, 100, "climb"), "Renown, new")}${f(pole(7, 100, "climb"), "Renown")}${f(pole(42, 100, "climb"), "Renown")}${f(pole(77, 100, "climb"), "Renown")}${f(pole(100, 100, "climb"), "Renown, top")}`,
+      "The star rides the top of the bar and names your rank; star & bar take the current rank’s color. A new player’s star sits on the ground, so the climb reads before there’s any progress.",
+    ],
+  };
+  document.getElementById("meters").innerHTML = Object.entries(OPTS)
     .map(
-      ([m, h]) =>
-        `<div class="opt" style="grid-column:1/-1">${h}<div class="${m}"><div class="page">${meters()}</div></div></div>`,
+      ([k, [name, draw, why]]) =>
+        `<div class="opt" style="grid-column:1/-1"><h3><b>${k}</b> · ${name}</h3><div class="m-light"><div class="page"><div class="meters">${draw()}</div></div></div><h3 data-darkname></h3><div class="m-dark"><div class="page"><div class="meters">${draw()}</div></div></div><p class="note">${why}</p></div>`,
     )
     .join("");
 
