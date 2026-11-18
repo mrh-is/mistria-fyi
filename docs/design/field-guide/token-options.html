@@ -55,7 +55,7 @@
     --c-villagers: #a30017;
     --c-quests: #a34704;
     --c-renown: #956e00;
-    --c-recipes: #735c41;
+    --c-recipes: #6f5d48;
     --c-mines: #51453c;
     --f-disp: "Instrument Serif", Georgia, serif;
     --f-body: Petrona, Georgia, serif;
@@ -637,9 +637,9 @@
   <header>
     <h1>Token options</h1>
     <p class="lede">
-      Round seven of the redesign’s styling tokens (#646): everything here is settled except the
-      last word on Recipes vs Mines and the Renown bar’s color. The strip above switches the whole
-      sheet between light & 1D. The sprites are stand-ins drawn for this sheet.
+      Round eight of the redesign’s styling tokens (#646): everything here is settled except a final
+      look at the tuned tabs & the gold Renown star. The strip above switches the whole sheet
+      between light & 1D. The sprites are stand-ins drawn for this sheet.
     </p>
   </header>
 
@@ -656,11 +656,10 @@
       <h2><span class="n">2</span>Thumb tab colors</h2>
       <p class="note">
         Ten tabs, ten everyday color names, white letters on every light tab, and a text token per
-        category, with Mines in stone gray-brown. <b>2K</b> is round six’s set; <b>2L</b> lightens
-        Recipes as far as white letters allow and darkens Mines. White letters cap how light a deep
-        tab can go, so a lighter tan crowds gold & green and the whole set tightens. The figures
-        under each set are the closest pair’s distance (OKLab ΔE), for normal vision & the two
-        common color-vision deficiencies; bigger means easier to tell apart.
+        category, with Mines in stone gray-brown. <b>2M</b> tunes round six’s 2K: a quieter Recipes
+        in the light theme, and a darker Mines tab in dark mode. The figures under each set are the
+        closest pair’s distance (OKLab ΔE), for normal vision & the two common color-vision
+        deficiencies; bigger means easier to tell apart.
       </p>
     </div>
     <div class="grid" id="tabs"></div>
@@ -692,10 +691,8 @@
     <div class="head">
       <h2><span class="n">5</span>One meter, three directions</h2>
       <p class="note">
-        Renown is a climbing star: it rides the top of the bar and names the current town rank, in
-        that rank’s color. The star is our own plump drawing after the game’s rank stars, and the
-        rank colors come from those stars, made readable on each paper. The last question is the
-        bar: the rank’s color (<b>5D</b>) or Renown’s gold (<b>5E</b>).
+        Renown is a climbing gold star (<b>5F</b>): it rides the top of a gold bar and names your
+        town rank. The star is our own plump drawing, after the game’s rank stars.
       </p>
     </div>
     <div class="grid" id="meters"></div>
@@ -785,8 +782,8 @@
   <section>
     <div class="head"><h2>What I need from you</h2></div>
     <ol class="asks">
-      <li>Tabs: 2K or 2L.</li>
-      <li>Renown bar: the rank’s color (5D) or gold (5E).</li>
+      <li>Tabs: 2M or 2K.</li>
+      <li>Renown: whether 5F is ready.</li>
       <li>Then I apply all of it to the app’s tokens.</li>
     </ol>
   </section>
@@ -805,7 +802,7 @@
     "c-quests": "#f68f59",
     "c-renown": "#e5b23f",
     "c-recipes": "#cdb59b",
-    "c-mines": "#9c9187",
+    "c-mines": "#958a80",
     done: "#5ac576",
     obtained: "#e5b23f",
     wax: "#f79a88",
@@ -814,18 +811,6 @@
     "f-notnow": "grayscale(1) contrast(0.55) brightness(0.9) opacity(0.6)",
     "f-notnow2": "grayscale(1) contrast(0.42) brightness(0.85) opacity(0.45)",
     "on-cover": "#dfe8ea",
-    // Town rank stars, sampled from the game's rank icons & lifted to 3.2:1 on 1D.
-    "rank-0": "#b26b38",
-    "rank-1": "#927d80",
-    "rank-2": "#d87f50",
-    "rank-3": "#d34842",
-    "rank-4": "#75769b",
-    "rank-5": "#656cde",
-    "rank-6": "#9793c0",
-    "rank-7": "#2a924d",
-    "rank-8": "#e0a85c",
-    "rank-9": "#95bcda",
-    "rank-10": "#f3a7c0",
   };
   const dark = (t) => ({ ...DARK_CATS, ...t, scheme: "dark" });
   const MATS = {
@@ -862,20 +847,8 @@
       "c-villagers": "#a30017",
       "c-quests": "#a34704",
       "c-renown": "#956e00",
-      "c-recipes": "#735c41",
+      "c-recipes": "#6f5d48",
       "c-mines": "#51453c",
-      // Town rank stars, sampled from the game's rank icons & deepened to 3.2:1 on light paper.
-      "rank-0": "#b26b38",
-      "rank-1": "#927d80",
-      "rank-2": "#c97142",
-      "rank-3": "#b02424",
-      "rank-4": "#6c6d92",
-      "rank-5": "#4b4dbc",
-      "rank-6": "#8682ae",
-      "rank-7": "#2a924d",
-      "rank-8": "#b27d2d",
-      "rank-9": "#668ca8",
-      "rank-10": "#ba738b",
     },
     faded: dark({
       code: "1D",
@@ -1162,45 +1135,6 @@
     return { light: m(deep), lightText: m(text), dark: m(pale) };
   };
   const GRAY = {
-    // 2K refitted with Recipes as light as white letters allow & Mines darker, gold held gold.
-    stoneLight: set(
-      [
-        "#c14347",
-        "#a34300",
-        "#8d7200",
-        "#007230",
-        "#26786d",
-        "#015ab0",
-        "#5e3c95",
-        "#c02f83",
-        "#846851",
-        "#463c2f",
-      ],
-      [
-        "#c14347",
-        "#a34300",
-        "#876c00",
-        "#007230",
-        "#26786d",
-        "#015ab0",
-        "#5e3c95",
-        "#c02f83",
-        "#846851",
-        "#463c2f",
-      ],
-      [
-        "#f3696a",
-        "#ed8e5f",
-        "#d1b045",
-        "#66c27c",
-        "#3aad9d",
-        "#6f9cd4",
-        "#ac8bee",
-        "#e68ab7",
-        "#d2b094",
-        "#a08f7b",
-      ],
-    ),
     stone: set(
       [
         "#a30017",
@@ -1240,19 +1174,27 @@
       ],
     ),
   };
+  // 2M: 2K with a quieter Recipes in the light theme & a darker Mines tab in dark. The darker Mines
+  // tab reads at 4.2:1 on 1D, so dark-mode Mines text keeps 2K's lighter shade.
+  const S2M = {
+    light: { ...GRAY.stone.light, recipes: "#6f5d48" },
+    lightText: { ...GRAY.stone.lightText, recipes: "#6f5d48" },
+    dark: { ...GRAY.stone.dark, mines: "#958a80" },
+    darkText: GRAY.stone.dark,
+  };
   const SETS = {
-    "2K": {
-      name: "Stone mines",
-      why: "Round six’s set: Mines in warm gray-brown, like cut stone. The best spread of any set so far, but Recipes & Mines sit close in the light theme.",
-      dist: "Light: ΔE 0.095 · deutan 0.049 · protan 0.052<br>Dark: ΔE 0.097 · deutan 0.049 · protan 0.051",
-      ...GRAY.stone,
+    "2M": {
+      name: "Stone mines, tuned",
+      why: "Recipes drops from chroma 0.05 to 0.04 in the light theme, and the dark Mines tab drops a step toward Villagers’ weight. Mines keeps a separate, lighter text shade in dark mode.",
+      dist: "Light: ΔE 0.092 · deutan 0.043 · protan 0.052<br>Dark: ΔE 0.097 · deutan 0.049 · protan 0.044",
+      ...S2M,
       lead: true,
     },
-    "2L": {
-      name: "Stone mines, lighter recipes",
-      why: "Recipes as light as white letters allow, and Mines darker, which pulls them clearly apart. A lighter tan crowds gold & green, so everything else shifts to make room, and the closest pairs come closer.",
-      dist: "Light: ΔE 0.080 · deutan 0.041 · protan 0.043<br>Dark: ΔE 0.087 · deutan 0.036 · protan 0.039",
-      ...GRAY.stoneLight,
+    "2K": {
+      name: "Stone mines (round six)",
+      why: "For comparison.",
+      dist: "Light: ΔE 0.095 · deutan 0.049 · protan 0.052<br>Dark: ΔE 0.097 · deutan 0.049 · protan 0.051",
+      ...GRAY.stone,
     },
   };
   const lum = (hex) => {
@@ -1275,7 +1217,7 @@
   document.getElementById("tabs").innerHTML = Object.entries(SETS)
     .map(
       ([k, s]) =>
-        `<div class="opt${s.lead ? " lead" : ""}"><h3><b>${k}</b> · ${s.name}</h3>${strip("m-light", s.light, s.lightText)}<h3 data-darkname></h3>${strip("m-dark", s.dark)}<p class="dist">${s.dist}</p><p class="note">${s.why}</p></div>`,
+        `<div class="opt${s.lead ? " lead" : ""}"><h3><b>${k}</b> · ${s.name}</h3>${strip("m-light", s.light, s.lightText)}<h3 data-darkname></h3>${strip("m-dark", s.dark, s.darkText)}<p class="dist">${s.dist}</p><p class="note">${s.why}</p></div>`,
     )
     .join("");
   // Sources, checked against the wiki’s Journal page & the menu itself, top to bottom: backpack,
@@ -1293,10 +1235,10 @@
     ["mines", "stone", "Underground, as cut stone"],
   ];
   document.getElementById("gamekey").innerHTML =
-    `<tr><th>Category</th><th>Name in 2K</th><th>Borrowed from</th></tr>` +
+    `<tr><th>Category</th><th>Name in 2M</th><th>Borrowed from</th></tr>` +
     KEY.map(
       ([c, n, src]) =>
-        `<tr><td>${cap(c)}</td><td><span class="chip" style="--c:${SETS["2K"].light[c]}"></span><span class="chip" style="--c:${SETS["2K"].dark[c]}"></span>${n}</td><td class="sm">${src}</td></tr>`,
+        `<tr><td>${cap(c)}</td><td><span class="chip" style="--c:${SETS["2M"].light[c]}"></span><span class="chip" style="--c:${SETS["2M"].dark[c]}"></span>${n}</td><td class="sm">${src}</td></tr>`,
     ).join("");
 
   // 3. Sprites.
@@ -1453,42 +1395,35 @@
     });
     return `<path d="M${pts.join(" L")} Z" fill="${color}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`;
   };
-  // Renown: the star rides the top of the bar and names the current town rank, in that rank's
-  // color. With goldBar the bar stays the Renown category color; otherwise it matches the star.
-  function pole(value, max, goldBar) {
+  // Renown: a gold star rides the top of a gold bar and names the current town rank, with a tick
+  // at every rank boundary. Drawing order: frame, floor, bar, then the star over all of them.
+  function pole(value, max) {
     const top = 14;
     const G = top + NOTCH + LEN;
     const y = (v) => G - (v / max) * LEN;
     const rank = rankOf(value);
-    const rankColor = `var(--rank-${rank})`;
     let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${top}" stroke="var(--hair)" stroke-width="1.2"/>`;
     for (let v = 10; v < max; v += 10)
       s += `<line x1="${CX - 5}" x2="${CX + 5}" y1="${y(v)}" y2="${y(v)}" stroke="var(--hair)" opacity=".5"/>`;
-    const starY = y(value) - NOTCH;
-    // The bar ends at the star's lower notch, and the star is drawn last, so the join is clean.
-    if (value) s += fill(CX, G, CX, y(value), goldBar ? "var(--c-renown)" : rankColor, 12);
-    s += starAt(starY, rankColor);
-    s += `<text x="${CX + 15}" y="${starY + 2}"><tspan class="v" filter="url(#graphite)">${value}</tspan><tspan class="w" dx="5">${RANKS[rank]}</tspan></text>`;
     s += ground(G, 0, false);
+    const starY = y(value) - NOTCH;
+    // The bar ends at the star's lower notch, so it flows straight into the star.
+    if (value) s += fill(CX, G, CX, y(value), "var(--c-renown)", 12);
+    s += starAt(starY, "var(--c-renown)");
+    s += `<text x="${CX + 15}" y="${starY + 2}"><tspan class="v" filter="url(#graphite)">${value}</tspan><tspan class="w" dx="5">${RANKS[rank]}</tspan></text>`;
     return meter(`Renown ${value} of ${max}, ${RANKS[rank]} rank`, G + 4, s);
   }
   const f = (svg, label, wide) => `<figure${wide ? ' class="wide"' : ""}>${svg}${label}</figure>`;
-  const climb = (gold) =>
-    [0, 7, 42, 77, 100]
-      .map((v) =>
-        f(pole(v, 100, gold), v === 0 ? "Renown, new" : v === 100 ? "Renown, top" : "Renown"),
-      )
-      .join("");
   const OPTS = {
-    "5D": [
-      "Climbing star, rank-colored bar",
-      () => climb(false),
-      "Star & bar both take the current rank’s color, so the whole meter changes color as you rank up.",
-    ],
-    "5E": [
-      "Climbing star, gold bar",
-      () => climb(true),
-      "The bar stays Renown’s gold, like every other meter keeps its category color; only the star changes with your rank. Gold & copper-toned ranks sit close to the bar, so the star’s ink outline does the separating.",
+    "5F": [
+      "Climbing gold star",
+      () =>
+        [0, 7, 42, 77, 100]
+          .map((v) =>
+            f(pole(v, 100), v === 0 ? "Renown, new" : v === 100 ? "Renown, top" : "Renown"),
+          )
+          .join(""),
+      "Star & bar are both Renown’s gold, like every other meter’s category color. The star climbs the bar and names your town rank, with a tick at each rank boundary every 10 levels. It sits in front of the floor, so a new player’s star stands on the ground.",
     ],
     Settled: [
       "Skills & Mines",
