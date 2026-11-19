@@ -12,15 +12,15 @@ function inputVersion() {
 /** Capture after hydration, on language changes, and on explicit refresh. */
 export function createLedgerSnapshot<T>(
   readLocale: () => LocaleCode,
-  build: () => T,
+  build: () => readonly T[],
 ): {
   readonly needsRefresh: boolean;
   readonly ready: boolean;
   refresh: () => void;
-  readonly value: T;
+  readonly value: readonly T[];
 } {
-  let snapshot = $state.raw(untrack(build));
-  let version = $state(untrack(inputVersion));
+  let snapshot = $state.raw<readonly T[]>([]);
+  let version = $state("");
   // The store preserves this object across check-offs and replaces it for a new progress base.
   let progressBase = $state.raw(untrack(() => userState.state.progress));
   let capturedLocale = untrack(readLocale);
@@ -58,7 +58,7 @@ export function createLedgerSnapshot<T>(
       return ready;
     },
     refresh,
-    get value(): T {
+    get value(): readonly T[] {
       return snapshot;
     },
   };

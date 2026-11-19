@@ -11,6 +11,7 @@
     completed = false,
     count,
     description,
+    findable = false,
     icon,
     id,
     name,
@@ -21,6 +22,7 @@
     completed?: boolean;
     count?: Snippet;
     description?: string;
+    findable?: boolean;
     icon: Snippet;
     id: string;
     name: string;
@@ -75,7 +77,12 @@
     </button>
   </h2>
   {#if description}<span id="{contentId}-description" class="sr-only">{description}</span>{/if}
-  <div id={contentId} hidden={!isOpen} class="flex flex-col gap-1">
+  <div
+    id={contentId}
+    hidden={isOpen ? undefined : findable ? "until-found" : true}
+    onbeforematch={() => (open = true)}
+    class="flex flex-col gap-1"
+  >
     {@render children()}
   </div>
 </section>

@@ -80,7 +80,7 @@ export function ledgerPlacement(
 }
 
 export function ledgerShelf(row: LedgerPlacement, showsSource: (source: Source) => boolean): Shelf {
-  if (row.completed && !row.spoilered) return "completed";
+  if (row.completed) return "completed";
   if (row.doable && (row.sources.length === 0 || row.readySources.some(showsSource))) return "todo";
   return "notNow";
 }

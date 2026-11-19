@@ -6,12 +6,13 @@
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { ledgerSourceFamily } from "#lib/presentation/ledger.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { seasonLabel } from "#lib/utils/format.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
@@ -21,8 +22,10 @@
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { LedgerPlacement } from "#lib/presentation/ledger.js";
   import type { SegmentLookups } from "#lib/sources/source-segments.js";
+  import type { Season } from "#lib/types/tracker-data.js";
 
   let {
+    active = true,
     category,
     columns,
     completed,
@@ -33,6 +36,7 @@
     lookups,
     name,
     obtained = false,
+    onFind,
     onToggle,
     placement,
     reportCategory,
@@ -41,6 +45,7 @@
     subtitle,
     variant,
   }: {
+    active?: boolean;
     category: CategoryKey;
     columns: readonly SourceFilterId[];
     completed: boolean;
@@ -51,6 +56,7 @@
     lookups: SegmentLookups;
     name: string;
     obtained?: boolean;
+    onFind?: (event: Event) => void;
     onToggle: (covered: boolean) => void;
     placement: LedgerPlacement;
     reportCategory: ReportCategory;
@@ -72,7 +78,9 @@
     revealSources = opening && includeHidden;
     expanded = opening;
   }
-  let covered = $derived(placement.spoilered && !revealed && !userState.state.showSpoilers);
+  let covered = $derived(
+    placement.spoilered && !(active && revealed) && !userState.state.showSpoilers,
+  );
   let nameWithVariant = $derived(variant ? /* @wc-include */ `${name}, ${variant}` : name);
   let spriteUrl = $derived(sprite ? itemSpriteUrl(sprite) : undefined);
   let treatment = $derived.by(() => {
@@ -94,8 +102,8 @@
     ),
   ]);
   let checkState = $derived.by<CheckboxState>(() => {
-    if (covered) return "unchecked";
     if (completed) return "checked";
+    if (covered) return "unchecked";
     return obtained ? "obtained" : "unchecked";
   });
   let reportable = $derived(
@@ -103,38 +111,64 @@
       ? { category: reportCategory, displayName: "Spoilered item", page: page.url.pathname }
       : { category: reportCategory, displayName: name, entityId: id, page: page.url.pathname },
   );
+
+  function waitingSeasonPhrase(season: Season): string {
+    switch (season) {
+      case "spring":
+        return /* @wc-include */ "in spring";
+      case "summer":
+        return /* @wc-include */ "in summer";
+      case "fall":
+        return /* @wc-include */ "in fall";
+      case "winter":
+        return /* @wc-include */ "in winter";
+    }
+  }
 </script>
 
 <div
-  data-tracker-row
-  data-ledger-row
+  data-tracker-row={active || undefined}
+  data-ledger-row={active || undefined}
+  hidden={active ? undefined : "until-found"}
+  onbeforematch={onFind}
   data-highlighted={highlighted}
   data-source-state={expanded ? "open" : "closed"}
   style:--sprite-tint={`var(--color-category-${category})`}
-  {@attach feedback.reportableAttachment(reportable)}
+  {@attach active ? feedback.reportableAttachment(reportable) : undefined}
 >
   <div class="line">
-    <TrackerCheckbox
-      {fact}
-      provenance={userState.provenanceOf(fact)}
-      state={checkState}
-      label={covered
-        ? "Check spoilered item"
-        : completed
-          ? `Uncheck ${nameWithVariant}`
-          : `Check ${nameWithVariant}`}
-      onclick={() => onToggle(covered)}
-    />
-    {#if spriteUrl}
-      <span
-        class="sprite"
-        data-sprite-treatment={treatment}
-        {@attach treatment === "todo" || treatment === "spoiler"
-          ? ledgerSpriteMask(spriteUrl)
-          : undefined}
-      >
-        <img src={spriteUrl} alt="" crossorigin="anonymous" loading="lazy" width="30" height="30" />
-      </span>
+    {#if active}
+      <TrackerCheckbox
+        {fact}
+        provenance={userState.provenanceOf(fact)}
+        state={checkState}
+        label={covered
+          ? completed
+            ? "Uncheck spoilered item"
+            : "Check spoilered item"
+          : completed
+            ? `Uncheck ${nameWithVariant}`
+            : `Check ${nameWithVariant}`}
+        onclick={() => onToggle(covered)}
+      />
+      {#if spriteUrl}
+        <span
+          class="sprite"
+          data-sprite-treatment={treatment}
+          {@attach treatment === "todo" || treatment === "spoiler"
+            ? ledgerSpriteMask(spriteUrl)
+            : undefined}
+        >
+          <img
+            src={spriteUrl}
+            alt=""
+            crossorigin="anonymous"
+            loading="lazy"
+            width="30"
+            height="30"
+          />
+        </span>
+      {/if}
     {/if}
     <div class="item">
       {#snippet label()}
@@ -144,7 +178,7 @@
         </span>
       {/snippet}
       {#if covered}
-        <Spoiler onReveal={() => (revealed = true)}>{@render label()}</Spoiler>
+        {#if active}<Spoiler onReveal={() => (revealed = true)}>{@render label()}</Spoiler>{/if}
       {:else if placement.allSources.length > 0}
         <button
           class="item-name"
@@ -154,7 +188,10 @@
           onclick={() => toggleSources(false)}
         >
           {@render label()}
-          <Icon.UI type="disclosure" class="size-3 {expanded ? 'rotate-90' : ''}" />
+          {#if active}<Icon.UI
+              type="disclosure"
+              class="size-3 {expanded ? 'rotate-90' : ''}"
+            />{/if}
         </button>
       {:else}
         {@render label()}
@@ -171,43 +208,44 @@
     {#if discovery}
       <span class="discovery">
         {#if placement.hiddenCount > 0 && !covered && !userState.state.showSpoilers}
+          {@const count = formatNumber(placement.hiddenCount, lookups.locale)}
           <button
             type="button"
             aria-expanded={expanded && revealSources}
             aria-controls={detailsId}
             onclick={() => toggleSources(true)}
           >
-            +{placement.hiddenCount} to discover
+            {plural(placement.hiddenCount, [`+${count} to discover`, `+${count} to discover`])}
           </button>
         {/if}
       </span>
     {/if}
   </div>
-  <div id={detailsId} hidden={!expanded} class="details">
-    {#if expanded}
-      {#if shelf === "notNow" && waitingSeasons.length > 0}
-        {@const seasons = new Intl.ListFormat(lookups.locale).format(
-          waitingSeasons.map((season) => seasonLabel(season, lookups.locale)),
-        )}
-        <p>Comes back by waiting, in {seasons}.</p>
+  {#if active}<div id={detailsId} hidden={!expanded} class="details">
+      {#if expanded}
+        {#if shelf === "notNow" && waitingSeasons.length > 0}
+          {@const seasons = new Intl.ListFormat(lookups.locale).format(
+            waitingSeasons.map((season) => waitingSeasonPhrase(season)),
+          )}
+          <p>Comes back by waiting, {seasons}.</p>
+        {/if}
+        <SourceCard
+          {sources}
+          sourceSegments={sources.map((source) => buildSourceSegments(source, lookups))}
+          sourceBadges={sources.map((source) =>
+            "availability" in source && source.availability
+              ? extractDisplayBadges(source.availability)
+              : {},
+          )}
+        />
       {/if}
-      <SourceCard
-        {sources}
-        sourceSegments={sources.map((source) => buildSourceSegments(source, lookups))}
-        sourceBadges={sources.map((source) =>
-          "availability" in source && source.availability
-            ? extractDisplayBadges(source.availability)
-            : {},
-        )}
-      />
-    {/if}
-  </div>
+    </div>{/if}
 </div>
 
 <style>
   [data-ledger-row] {
     content-visibility: auto;
-    contain-intrinsic-block-size: auto 48px;
+    contain-intrinsic-block-size: auto var(--tracker-row-min-size);
     border-block-end: 1px solid var(--color-ink-hairline);
     border-inline-start: 2px solid transparent;
   }
@@ -219,7 +257,7 @@
 
   .line {
     display: flex;
-    min-block-size: 48px;
+    min-block-size: var(--tracker-row-min-size);
     align-items: center;
     gap: 0.35rem;
   }
@@ -238,7 +276,7 @@
 
   .item-name {
     display: inline-flex;
-    min-block-size: 44px;
+    min-block-size: var(--tracker-target-size);
     align-items: center;
     gap: 0.35rem;
     text-align: start;
@@ -264,7 +302,7 @@
   }
 
   .discovery button {
-    min-block-size: 44px;
+    min-block-size: var(--tracker-target-size);
     padding-inline: 0.25rem;
     color: var(--color-guide-voice);
     font-family: var(--font-controls);

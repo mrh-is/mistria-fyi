@@ -1,14 +1,30 @@
 [
   {
     "translations": {
-      "en": "+{0} to discover",
-      "ja": "+{0}件の未発見の入手先",
-      "zh-Hans": "还有 {0} 处待发现",
-      "zh-Hant": "+{0} 個入手途徑待探索",
-      "es": "+{0} por descubrir",
-      "fr": "+{0} à découvrir",
-      "ko": "+{0}개 더 발견 가능",
-      "ru": "Ещё {0} предстоит открыть"
+      "en": [
+        "+{0} to discover",
+        "+{0} to discover"
+      ],
+      "ja": ["あと{0}件を発見"],
+      "zh-Hans": ["还有 {0} 个来源待发现"],
+      "zh-Hant": ["還有 {0} 個來源待發現"],
+      "es": [
+        "+{0} por descubrir",
+        "+{0} por descubrir",
+        "+{0} por descubrir"
+      ],
+      "fr": [
+        "+{0} à découvrir",
+        "+{0} à découvrir",
+        "+{0} à découvrir"
+      ],
+      "ko": ["발견할 곳 {0}개 더"],
+      "ru": [
+        "+{0} источник предстоит открыть",
+        "+{0} источника предстоит открыть",
+        "+{0} источников предстоит открыть",
+        "+{0} источника предстоит открыть"
+      ]
     },
     "references": [
       {
@@ -18,7 +34,11 @@
             "placeholders": [
               [
                 "0",
-                "placement.hiddenCount"
+                "count"
+              ],
+              [
+                "0",
+                "count"
               ]
             ]
           }
@@ -2133,14 +2153,14 @@
   },
   {
     "translations": {
-      "en": "Comes back by waiting, in {0}.",
+      "en": "Comes back by waiting, {0}.",
       "ja": "{0}まで待つと、また手に入ります。",
       "zh-Hans": "等到{0}就能再次获得。",
       "zh-Hant": "等到{0}就能再次取得。",
-      "es": "Volverá a estar disponible en {0}.",
-      "fr": "De nouveau disponible en {0}.",
-      "ko": "{0}까지 기다리면 다시 얻을 수 있어요.",
-      "ru": "Снова можно будет получить в следующие сезоны: {0}."
+      "es": "Volverá a estar disponible {0}.",
+      "fr": "De nouveau disponible {0}.",
+      "ko": "{0} 다시 얻을 수 있어요.",
+      "ru": "Снова будет доступно {0}."
     },
     "references": [
       {
@@ -3789,6 +3809,35 @@
         "refs": [
           null,
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Highlight rows from {0}",
+      "ja": "「{0}」から入手できる行を強調",
+      "zh-Hans": "突出显示来自“{0}”的条目",
+      "zh-Hant": "醒目顯示來自「{0}」的項目",
+      "es": "Resaltar las filas con «{0}» como fuente",
+      "fr": "Mettre en évidence les lignes de la source « {0} »",
+      "ko": "‘{0}’에서 얻는 항목 강조",
+      "ru": "Выделить строки с источником «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "label"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -8119,28 +8168,6 @@
   },
   {
     "translations": {
-      "en": "The day or save changed.",
-      "ja": "日付またはセーブデータが変わりました。",
-      "zh-Hans": "日期或存档有变化。",
-      "zh-Hant": "日期或存檔有變動。",
-      "es": "Ha cambiado el día o la partida guardada.",
-      "fr": "La date ou la sauvegarde a changé.",
-      "ko": "날짜 또는 저장 데이터가 바뀌었어요.",
-      "ru": "День или сохранение изменились."
-    },
-    "references": [
-      {
-        "file": "src/lib/components/ledger/ledger-notice.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "The field guide on this device needs a refresh to keep your save file syncing.",
       "ja": "セーブデータの同期を続けるには、この端末のフィールドガイドを更新する必要があります。",
       "zh-Hans": "这台设备上的田野指南需要刷新，才能继续同步你的存档。",
@@ -8618,6 +8645,28 @@
       },
       {
         "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Uncheck spoilered item",
+      "ja": "未公開の項目のチェックを外す",
+      "zh-Hans": "取消勾选隐藏条目",
+      "zh-Hant": "取消勾選隱藏項目",
+      "es": "Desmarcar elemento oculto",
+      "fr": "Décocher l’élément masqué",
+      "ko": "숨겨진 항목 체크 해제",
+      "ru": "Снять отметку со скрытого предмета"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
         "refs": [
           null
         ]
@@ -10429,6 +10478,28 @@
   },
   {
     "translations": {
+      "en": "Your progress or the day changed.",
+      "ja": "進み具合か、ゲーム内の日付や天気が変わりました。",
+      "zh-Hans": "你的进度或游戏内的日期和天气有变动。",
+      "zh-Hant": "你的進度或遊戲內的日期和天氣有變動。",
+      "es": "Tu progreso o el día han cambiado.",
+      "fr": "Ta progression ou la journée a changé.",
+      "ko": "진행 상황이나 게임 속 하루가 바뀌었어요.",
+      "ru": "Ваш прогресс или игровой день изменились."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-notice.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Your progress stays right here, and you’ll check things off by hand from now on. If you sync your save file again later, it’ll start fresh.",
       "ja": "進捗はここに残り、これからは手動でチェックをつけます。あとでまたセーブデータを同期すると、最初からやり直しになります。",
       "zh-Hans": "你的进度会留在这里，之后你将手动勾选。如果以后再同步存档，会重新开始。",
@@ -10712,6 +10783,94 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in fall",
+      "ja": "秋",
+      "zh-Hans": "秋天",
+      "zh-Hant": "秋天",
+      "es": "en otoño",
+      "fr": "en automne",
+      "ko": "가을에",
+      "ru": "осенью"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in spring",
+      "ja": "春",
+      "zh-Hans": "春天",
+      "zh-Hant": "春天",
+      "es": "en primavera",
+      "fr": "au printemps",
+      "ko": "봄에",
+      "ru": "весной"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in summer",
+      "ja": "夏",
+      "zh-Hans": "夏天",
+      "zh-Hant": "夏天",
+      "es": "en verano",
+      "fr": "en été",
+      "ko": "여름에",
+      "ru": "летом"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in winter",
+      "ja": "冬",
+      "zh-Hans": "冬天",
+      "zh-Hant": "冬天",
+      "es": "en invierno",
+      "fr": "en hiver",
+      "ko": "겨울에",
+      "ru": "зимой"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
         "refs": [
           null
         ]
@@ -11256,11 +11415,11 @@
             "placeholders": [
               [
                 "0",
-                "entries.length"
+                "count"
               ],
               [
                 "0",
-                "entries.length"
+                "count"
               ]
             ]
           }
@@ -11273,11 +11432,11 @@
             "placeholders": [
               [
                 "0",
-                "matchCount"
+                "countLabel"
               ],
               [
                 "0",
-                "matchCount"
+                "countLabel"
               ]
             ]
           }
@@ -11843,14 +12002,30 @@
   },
   {
     "translations": {
-      "en": "{0} to do",
-      "ja": "今日できること：{0}件",
-      "zh-Hans": "今日可做 {0} 项",
-      "zh-Hant": "今日可做 {0} 項",
-      "es": "{0} por hacer",
-      "fr": "{0} à faire",
-      "ko": "오늘 할 수 있는 일 {0}개",
-      "ru": "Можно сделать: {0}"
+      "en": [
+        "{0} to do",
+        "{0} to do"
+      ],
+      "ja": ["今日できること：{0}件"],
+      "zh-Hans": ["今日可做 {0} 项"],
+      "zh-Hant": ["今日可做 {0} 項"],
+      "es": [
+        "{0} por hacer",
+        "{0} por hacer",
+        "{0} por hacer"
+      ],
+      "fr": [
+        "{0} à faire",
+        "{0} à faire",
+        "{0} à faire"
+      ],
+      "ko": ["오늘 할 수 있는 일 {0}개"],
+      "ru": [
+        "{0} дело на сегодня",
+        "{0} дела на сегодня",
+        "{0} дел на сегодня",
+        "{0} дела на сегодня"
+      ]
     },
     "references": [
       {
@@ -11860,7 +12035,11 @@
             "placeholders": [
               [
                 "0",
-                "formatNumber(groups.todo.length, locale)"
+                "count"
+              ],
+              [
+                "0",
+                "count"
               ]
             ]
           }
@@ -11873,7 +12052,11 @@
             "placeholders": [
               [
                 "0",
-                "formatNumber(count, locale)"
+                "formatted"
+              ],
+              [
+                "0",
+                "formatted"
               ]
             ]
           }

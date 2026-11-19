@@ -9,8 +9,7 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
   import { createRowCheckOff } from "#lib/controllers/check-off.svelte.js";
-  import { createLedgerSnapshot } from "#lib/controllers/ledger-snapshot.svelte.js";
-  import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
+  import { createLedgerPage, useLedgerArrival } from "#lib/controllers/ledger-page.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
@@ -21,13 +20,8 @@
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
-  import { filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import {
-    ledgerShelf,
-    ledgerSourceFamily,
-    sourceLedgerPlacement,
-  } from "#lib/presentation/ledger.js";
+  import { ledgerSourceFamily, sourceLedgerPlacement } from "#lib/presentation/ledger.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
   import {
     compareSourceSections,
@@ -103,7 +97,7 @@
       isVillagerComplete(id as VillagerId, userState.state.progress),
     ),
   ]);
-  const ledger = createLedgerSnapshot(
+  const { snapshot: ledger, visible: visibleRow } = createLedgerPage(
     () => locale,
     () => {
       const day = userState.progressContext;
@@ -121,16 +115,11 @@
           .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
       }));
     },
+    (row) => matchesSearch(row.entry),
+    { excludeCoveredFromFilterCounts: true },
   );
 
-  type Placement = (typeof ledger.value)[number]["rows"][number];
-  function visibleRow(row: Placement): boolean {
-    if (!row.entry.obtainable && !toolbarState.showUnobtainable) return false;
-    return (
-      !toolbarState.searchQuery ||
-      ((!row.spoilered || userState.state.showSpoilers) && matchesSearch(row.entry))
-    );
-  }
+  useLedgerArrival(() => (ledger.ready ? anchor : ""));
 
   let groups = $derived(
     SOURCE_TYPE_ORDER.map((group) => ({
@@ -215,38 +204,6 @@
     );
   }
 
-  // A row can sit under several sources, but it's still one match.
-  registerPageSearch(() => {
-    const matches = ledger.value
-      .filter(({ spoilered }) => !spoilered || userState.state.showSpoilers)
-      .flatMap(({ rows }) => rows)
-      .filter((row) => (!row.spoilered || userState.state.showSpoilers) && visibleRow(row));
-    const visible = matches.filter(({ sources }) => toolbarState.matchesSourceFilters(sources));
-    const visibleKeys = new Set(visible.map(({ entry }) => entry.key));
-    // A row is doable anywhere through any source, & doable here through a source still shown.
-    const shownDoable = new Set(
-      visible
-        .filter((row) => ledgerShelf(row, toolbarState.showsSource) === "todo")
-        .map(({ entry }) => entry.key),
-    );
-    const doableAnywhere = new Set(
-      matches.filter(({ doable }) => doable).map(({ entry }) => entry.key),
-    );
-    const rows = new Map(
-      matches.map(({ entry, hiddenCount, visibleSources }) => [
-        entry.key,
-        {
-          completed: entry.completed,
-          doable: shownDoable.has(entry.key),
-          doableAnywhere: doableAnywhere.has(entry.key),
-          shown: visibleKeys.has(entry.key),
-          sourceDisclosure: { hiddenCount, visibleSources },
-        },
-      ]),
-    );
-    return { filtered: filteredCounts([...rows.values()]), visible: visibleKeys.size };
-  });
-
   function toggle(entry: SourceChecklistRow, covered: boolean): void {
     checkOff.run({
       category: entry.category,
@@ -319,6 +276,7 @@
         id={groupId}
         name={sourceTypeLabel(group, locale)}
         {completed}
+        findable
         visible={!toolbarState.searchQuery || searchMatches}
         revealTarget={anchor === groupId ||
         groupSections.some(
@@ -354,10 +312,14 @@
                 forceOpen={anchor === section.id ||
                   (section.id === "progress" && anchor === "source-progress")}
               >
-                {#snippet row(placement, shelf, columns, discovery, highlighted)}
-                  {@const entry = liveEntries.get(placement.key) ?? placement.entry}
+                {#snippet row(placement, shelf, columns, discovery, highlighted, active, onFind)}
+                  {@const entry = active
+                    ? (liveEntries.get(placement.key) ?? placement.entry)
+                    : placement.entry}
                   <LedgerRow
                     {placement}
+                    {active}
+                    {onFind}
                     {columns}
                     {shelf}
                     {discovery}
@@ -422,8 +384,8 @@
   <div class="flex flex-col gap-6" data-testid="everything-completed" hidden={!hasCompletedContent}>
     <ShelfFold
       explains
+      findable
       forceOpen={anchorInCompleted}
-      keepMounted={Boolean(toolbarState.searchQuery)}
       level={2}
       matchCount={completedMatches}
       shelf="completed"

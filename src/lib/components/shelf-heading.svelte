@@ -75,8 +75,9 @@
     >
   {/if}
   {#if matchCount !== undefined}
+    {@const countLabel = formatNumber(matchCount, page.data.locale)}
     <span class="shelf-heading__count">
-      {plural(matchCount, [`${matchCount} match`, `${matchCount} matches`])}
+      {plural(matchCount, [`${countLabel} match`, `${countLabel} matches`])}
     </span>
   {:else if count !== undefined}
     <span class="shelf-heading__count">{formatNumber(count, page.data.locale)}</span>

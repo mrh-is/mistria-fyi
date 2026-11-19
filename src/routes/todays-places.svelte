@@ -3,6 +3,7 @@
 
   import { projectSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { getName } from "#lib/data/names.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { ledgerShelf, sourceLedgerPlacement } from "#lib/presentation/ledger.js";
   import { projectSourceGroups } from "#lib/presentation/source-groups.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -38,9 +39,10 @@
   <section aria-labelledby="places-heading">
     <h2 id="places-heading">Places to go today</h2>
     {#each places as { id, storeId, count } (id)}
+      {@const formatted = formatNumber(count, locale)}
       <a href={`${localizedHref("everything")}?group=source#${id}`}>
         <span>{getName("stores", storeId, locale)}</span>
-        <small>{`${formatNumber(count, locale)} to do`}</small>
+        <small>{plural(count, [`${formatted} to do`, `${formatted} to do`])}</small>
       </a>
     {/each}
   </section>

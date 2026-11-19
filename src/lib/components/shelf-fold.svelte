@@ -8,11 +8,12 @@
 
   import type { Shelf } from "#lib/engine/shelves.js";
 
-  /** A shelf that starts closed and renders nothing until opened. Navigating away resets it. */
+  /** A shelf that starts closed. Navigating away resets it. */
   let {
     children,
     count,
     explains = false,
+    findable = false,
     forceOpen = false,
     keepMounted = false,
     level = 4,
@@ -22,6 +23,8 @@
     children: Snippet;
     count?: number;
     explains?: boolean;
+    /** Lets browser Find open the fold while keeping its contents out of view. */
+    findable?: boolean;
     /** Opens the fold for as long as it holds, as a search does. */
     forceOpen?: boolean;
     /** Lets search count the closed content without expanding the fold. */
@@ -44,9 +47,10 @@
   onToggle={() => (open = !open)}
   {shelf}
 />
-{#if isOpen || keepMounted}
+{#if isOpen || keepMounted || findable}
   <div
-    hidden={!isOpen && keepMounted}
+    hidden={isOpen ? undefined : findable ? "until-found" : true}
+    onbeforematch={() => (open = true)}
     transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
   >
     {@render children()}

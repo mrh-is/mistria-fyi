@@ -4,7 +4,7 @@
 
 <div class="ledger-notice" aria-live="polite">
   {#if changed}
-    <span>The day or save changed.</span>
+    <span>Your progress or the day changed.</span>
     <button type="button" onclick={onRefresh}>Refresh shelves</button>
   {/if}
 </div>

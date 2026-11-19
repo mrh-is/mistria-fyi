@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { tick } from "svelte";
   import { SvelteURL } from "svelte/reactivity";
 
   import AllCompleted from "#lib/components/all-completed.svelte";
@@ -8,6 +7,7 @@
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import ShelfFold from "#lib/components/shelf-fold.svelte";
   import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
+  import { useLedgerArrival } from "#lib/controllers/ledger-page.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
@@ -68,34 +68,7 @@
     void goto(url, { reset: false });
   }
 
-  $effect(() => {
-    const target = anchor;
-    void grouping;
-    if (!target) return;
-    let cancelled = false;
-    async function scrollToAnchor(): Promise<void> {
-      await tick();
-      // A previous hash target can still be closing. Its slide changes the next target’s offset.
-      const animations = document.getAnimations().filter((animation) => {
-        const element = animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
-        return element instanceof Element && element.closest("[data-source-section]");
-      });
-      await Promise.allSettled(animations.map((animation) => animation.finished));
-      await tick();
-      if (!cancelled) {
-        const section = document.getElementById(target);
-        section?.scrollIntoView({ block: "start" });
-        const heading = section?.matches("[data-ledger-index-heading]")
-          ? section
-          : section?.querySelector<HTMLElement>("h3");
-        heading?.focus({ preventScroll: true });
-      }
-    }
-    void scrollToAnchor();
-    return () => {
-      cancelled = true;
-    };
-  });
+  useLedgerArrival(() => (grouping === "category" ? anchor : ""));
 </script>
 
 <PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>

@@ -105,7 +105,7 @@ function mockChecklist() {
   });
 }
 
-it("names the Almanac variant in the source view’s checkbox label", () => {
+it("names the Almanac variant in the source view’s checkbox label", async () => {
   const sources: Source[] = [{ type: "store", storeId: "balor" as StoreId }];
   vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
     {
@@ -118,7 +118,7 @@ it("names the Almanac variant in the source view’s checkbox label", () => {
   const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
 
   expect(
-    view.getByRole("button", { name: "Check Animated Clouds Window, Oak" }),
+    await view.findByRole("button", { name: "Check Animated Clouds Window, Oak" }),
   ).toBeInTheDocument();
   expect(view.getByRole("button", { name: "Check Turnip" })).toBeInTheDocument();
   expect(view.queryByRole("button", { name: "Check Animated Clouds Window" })).toBeNull();
@@ -131,16 +131,16 @@ it("uses each shelf's sources for its columns and omits the place’s own family
     checklistRow("Acorn", true, [store, { type: "forage" }]),
   ]);
   const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
-  const place = within(view.getByRole("region", { name: "Balor's Wagon" }));
+  const place = within(await view.findByRole("region", { name: "Balor's Wagon" }));
   await fireEvent.click(place.getByRole("button", { name: "Balor's Wagon" }));
   const completed = place.getByText("Completed", { exact: true }).closest("details");
   expect(completed).not.toHaveAttribute("open");
-  const fishing = place.getByRole("button", { name: "Fishing" });
-  const gathering = place.getByRole("button", { name: "Gathering" });
+  const fishing = place.getByRole("button", { name: "Highlight rows from Fishing" });
+  const gathering = place.getByRole("button", { name: "Highlight rows from Gathering" });
   expect(fishing).toBeVisible();
   expect(fishing.closest("details")).toBeNull();
   expect(gathering.closest("details")).toBe(completed);
-  expect(place.queryByRole("button", { name: "Stores" })).toBeNull();
+  expect(place.queryByRole("button", { name: "Highlight rows from Stores" })).toBeNull();
   await fireEvent.click(fishing);
   expect(fishing).toHaveAttribute("aria-pressed", "true");
   await fireEvent.click(fishing);
@@ -327,12 +327,13 @@ describe("while source shelves hold", () => {
       ]),
     ]);
     const view = renderWithFeedback(SourceContent, { anchor: "fish-ocean", locale: "en" });
+    await tick();
     const place = view.container.querySelector<HTMLElement>("#fish-ocean");
     if (!place) throw new Error("Expected the Ocean section");
     const ocean = within(place);
     await fireEvent.click(ocean.getByText("Not now", { exact: true }));
     await fireEvent.click(ocean.getByRole("button", { name: /Anchovy Almanac/u }));
-    expect(ocean.getByText("Comes back by waiting, in Winter.")).toBeVisible();
+    expect(ocean.getByText("Comes back by waiting, in winter.")).toBeVisible();
   });
 
   it("celebrates a source the toggle finishes, but not unticking it again", async () => {

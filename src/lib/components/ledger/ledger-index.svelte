@@ -13,6 +13,14 @@
 
   let current = $state("");
   let arrival: undefined | { id: string; scrollTop: number };
+  let frame: number | undefined;
+
+  function scheduleRead(): void {
+    frame ??= requestAnimationFrame(() => {
+      frame = undefined;
+      readPosition();
+    });
+  }
 
   function readPosition(): void {
     const scrollingElement = document.scrollingElement;
@@ -73,9 +81,13 @@
     void sections;
     void readAfterRender();
   });
+
+  $effect(() => () => {
+    if (frame !== undefined) cancelAnimationFrame(frame);
+  });
 </script>
 
-<svelte:window onscroll={readPosition} onresize={readPosition} />
+<svelte:window onscroll={scheduleRead} onresize={scheduleRead} />
 
 <div class="ledger-layout" data-ledger-layout>
   <nav aria-label="Page sections">

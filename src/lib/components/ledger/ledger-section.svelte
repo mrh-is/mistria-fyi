@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends LedgerPlacement & { key: string; obtainable: boolean }">
-  import { untrack } from "svelte";
+  import { tick, untrack } from "svelte";
 
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
@@ -26,7 +26,6 @@
     locale,
     name,
     progress,
-    renderRows = true,
     row,
     rows,
     visible,
@@ -39,8 +38,9 @@
     locale: LocaleCode;
     name: string;
     progress?: { completed: number; total: number };
-    renderRows?: boolean;
-    row: Snippet<[T, Shelf, readonly SourceFilterId[], boolean, boolean]>;
+    row: Snippet<
+      [T, Shelf, readonly SourceFilterId[], boolean, boolean, boolean, (event: Event) => void]
+    >;
     /** Every placement at the last refresh, including the rows filters can bring back. */
     rows: readonly T[];
     visible: (entry: T) => boolean;
@@ -49,6 +49,7 @@
   const shelves: readonly Shelf[] = ["todo", "notNow", "completed"];
   const instance = $props.id();
   let open = $state(untrack(() => !collapsible));
+  let matchedShelf = $state<Shelf>();
   const highlights = $state<Partial<Record<Shelf, SourceFilterId>>>({});
   let groups = $derived.by(() => {
     const grouped: Record<Shelf, T[]> = { completed: [], notNow: [], todo: [] };
@@ -71,6 +72,14 @@
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
 
+  async function revealFindMatch(event: Event, shelf: Shelf): Promise<void> {
+    const target = event.currentTarget;
+    open = true;
+    matchedShelf = shelf;
+    await tick();
+    if (target instanceof HTMLElement) target.scrollIntoView({ block: "center" });
+  }
+
   function timetable(entries: readonly T[]): SourceFilterId[] {
     // Search hides rows, but the shelf's headings still describe the whole filtered shelf.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scratch counts for this snapshot.
@@ -87,9 +96,13 @@
         }
       }
     }
-    return [...counts]
+    const ranked = [...counts]
       .toSorted(([a, aCount], [b, bCount]) => bCount - aCount || a.localeCompare(b))
-      .slice(0, 3)
+      .slice(0, 3);
+    // In a place, alternate sources earn a column when they cover a quarter of the shelf.
+    // Keep the most common alternative if none reach that share.
+    return ranked
+      .filter(([, count], index) => !collapsible || index === 0 || count * 4 >= entries.length)
       .map(([family]) => family);
   }
 </script>
@@ -112,8 +125,9 @@
         />
         <span id={`${instance}-name`}>{name}</span>
         {#if progress}
+          {@const count = formatNumber(groups.todo.length, locale)}
           <span class="remaining" id={`${instance}-remaining`}
-            >{`${formatNumber(groups.todo.length, locale)} to do`}</span
+            >{plural(groups.todo.length, [`${count} to do`, `${count} to do`])}</span
           >
         {/if}
       </button>
@@ -130,17 +144,26 @@
     </p>
   {/if}
 
-  <div id={`${instance}-rows`} hidden={!expanded}>
-    {#if expanded}
-      {#each shelves as shelf (shelf)}
-        {@const entries = matches[shelf]}
-        {#if entries.length > 0}
-          {#if shelf === "todo"}
-            <ShelfHeading {shelf} {explains} count={entries.length} level={4} />
-            {@render shelfRows(entries, shelf)}
-          {:else}
-            <details open={forceOpen && shelf === "completed"}>
-              <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
+  <div
+    id={`${instance}-rows`}
+    hidden={expanded ? undefined : "until-found"}
+    onbeforematch={() => (open = true)}
+  >
+    {#each shelves as shelf (shelf)}
+      {@const entries = matches[shelf]}
+      {#if entries.length > 0}
+        {#if shelf === "todo"}
+          {#if expanded}<ShelfHeading
+              {shelf}
+              {explains}
+              count={collapsible && progress && !isSearching ? undefined : entries.length}
+              level={4}
+            />{/if}
+          {@render shelfRows(entries, shelf)}
+        {:else}
+          <details open={matchedShelf === shelf || (forceOpen && shelf === "completed")}>
+            <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
+              {#if expanded}
                 <Icon.UI type="disclosure" class="shelf-chevron size-3.5 shrink-0" />
                 {#if shelf === "completed"}<Icon.Category
                     category="complete"
@@ -149,39 +172,39 @@
                 <span>{shelfLabel(shelf)}</span>
                 <span class="shelf-count">
                   {#if isSearching}
-                    {plural(entries.length, [
-                      `${entries.length} match`,
-                      `${entries.length} matches`,
-                    ])}
+                    {@const count = formatNumber(entries.length, locale)}
+                    {plural(entries.length, [`${count} match`, `${count} matches`])}
                   {:else}
                     {formatNumber(entries.length, locale)}
                   {/if}
                 </span>
-              </summary>
-              {@render shelfRows(entries, shelf)}
-            </details>
-          {/if}
+              {/if}
+            </summary>
+            {@render shelfRows(entries, shelf)}
+          </details>
         {/if}
-      {/each}
-    {/if}
+      {/if}
+    {/each}
   </div>
 </section>
 
 {#snippet shelfRows(entries: readonly T[], shelf: Shelf)}
-  {@const columns = timetable(groups[shelf])}
-  {@const discovery = groups[shelf].some((entry) => entry.hiddenCount > 0)}
+  {@const columns = expanded ? timetable(groups[shelf]) : []}
+  {@const discovery = expanded && groups[shelf].some((entry) => entry.hiddenCount > 0)}
   {@const highlight = highlights[shelf]}
   {#if columns.length > 0 || discovery}
     <div class="timetable">
       {#each columns as family (family)}
         {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
+        {@const label = sourceFilterLabel(family, locale)}
         <button
           type="button"
+          aria-label={`Highlight rows from ${label}`}
           aria-pressed={highlight === family}
           onclick={() => (highlights[shelf] = highlight === family ? undefined : family)}
         >
           <FamilyIcon class="size-4 shrink-0" />
-          {sourceFilterLabel(family, locale)}
+          <span>{label}</span>
         </button>
       {/each}
       {#if discovery}
@@ -189,20 +212,25 @@
       {/if}
     </div>
   {/if}
-  {#if renderRows}
-    <div data-tracker-list>
-      {#each entries as entry (entry.key)}
-        {@const highlighted =
-          highlight !== undefined &&
-          columns.includes(highlight) &&
-          entry.visibleSources.some(
-            (source) =>
-              toolbarState.showsSource(source) && ledgerSourceFamily(source) === highlight,
-          )}
-        {@render row(entry, shelf, columns, discovery, highlighted)}
-      {/each}
-    </div>
-  {/if}
+  <div data-tracker-list>
+    {#each entries as entry (entry.key)}
+      {@const highlighted =
+        highlight !== undefined &&
+        columns.includes(highlight) &&
+        entry.visibleSources.some(
+          (source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === highlight,
+        )}
+      {@render row(
+        entry,
+        shelf,
+        columns,
+        discovery,
+        highlighted,
+        expanded,
+        (event) => void revealFindMatch(event, shelf),
+      )}
+    {/each}
+  </div>
 {/snippet}
 
 <style>
@@ -318,8 +346,17 @@
 
     .timetable button {
       inline-size: 6rem;
+      flex-direction: column;
       justify-content: center;
+      gap: 0.125rem;
+      padding-block: 0.25rem;
       text-align: center;
+    }
+
+    .timetable button span {
+      min-inline-size: 0;
+      overflow-wrap: anywhere;
+      hyphens: auto;
     }
 
     .timetable > span {

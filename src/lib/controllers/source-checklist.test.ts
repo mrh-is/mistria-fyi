@@ -3,10 +3,14 @@ import { beforeEach, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
 import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
+import { createProgressContext } from "#lib/engine/progress.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { projectSourceGroups } from "#lib/presentation/source-groups.js";
+import { readProgressBlob } from "#lib/stores/progress-storage.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
+import progressFixtures from "../../../scripts/fixtures/field-guide-progress.json";
 import { buildSourceChecklist, projectSourceChecklist } from "./source-checklist.js";
 
 import type { SourceGroupRow } from "#lib/presentation/source-groups.js";
@@ -32,6 +36,20 @@ function sourceFacts(rows: readonly SourceGroupRow[]) {
 
 it("gives Home the same source facts as the localized Everything checklist", () => {
   const context = userState.progressContext;
+  expect(sourceFacts(projectSourceChecklist(context))).toEqual(
+    sourceFacts(buildSourceChecklist(context, "en")),
+  );
+});
+
+it.each(["mid-game", "late-game"] as const)("keeps Home counts aligned at %s", (preset) => {
+  const read = readProgressBlob(JSON.stringify(progressFixtures[preset]), "strict");
+  if (read.kind !== "ok") throw new Error(`Invalid progress fixture ${preset}`);
+  const { progress, worldState } = read.loaded;
+  const context = createProgressContext(
+    progress,
+    deriveProgressionState(progress, trackerData, false),
+    worldState,
+  );
   expect(sourceFacts(projectSourceChecklist(context))).toEqual(
     sourceFacts(buildSourceChecklist(context, "en")),
   );

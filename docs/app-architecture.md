@@ -435,14 +435,18 @@ Choosing the control updates the preference & URL.
 
 In the Source grouping and on the Almanac page, the ledger captures its sections, shelves, & columns
 after local progress loads. A check-off updates the mark at each placement of that fact. Placements
-& shelf counts hold until the page remounts or the reader refreshes the shelves. A date change or
-applied save offers that refresh. The source filter can narrow availability using the captured day.
+& shelf counts hold until the page remounts or the reader refreshes the shelves. A calendar or
+weather change, save import, sync receipt, backup restore, reset, or progress replacement from
+another tab offers that refresh. The source filter can narrow availability using the captured day.
 Search counts matching placements in each shelf while the page total counts each fact once. A column
-heading highlights matching rows within its section.
+heading highlights matching rows within its shelf. Both ledgers share their snapshot, search, &
+arrival behavior through `controllers/ledger-page.svelte.ts`.
 
 A place link opens its containing source group & focuses the place heading after scrolling to it.
 The Completed fold starts closed. A place link into it opens the fold, and search can count the
-closed fold’s rows. The desktop section index follows document scroll.
+closed fold’s rows. Closed places expose their unmasked item names to browser Find through
+`hidden="until-found"`. A match opens its place & shelf and scrolls the corresponding interactive
+row into view. The desktop section index follows document scroll.
 
 In Everything’s Category grouping, `controllers/completion-scope.svelte.ts` partitions sections by
 the completion their headers show. Compact records & masked top-level spoiler sections register

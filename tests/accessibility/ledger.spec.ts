@@ -36,14 +36,17 @@ for (const { theme, touch, width } of [
       const name = label?.slice(6) ?? "";
       const checkItem = place.getByRole("button", { exact: true, name: `Check ${name}` });
       const uncheckItem = place.getByRole("button", { exact: true, name: `Uncheck ${name}` });
-      const todo = place.getByRole("heading", { exact: true, name: "To do" });
-      const shelfCount = () =>
-        todo.evaluate((heading) => heading.parentElement?.textContent.trim());
-      await expect.poll(shelfCount).toMatch(new RegExp(`\\b${homeCount}$`, "u"));
+      const shelfCount = place.getByText(`${homeCount} to do`, { exact: true });
+      await expect(shelfCount).toBeVisible();
+      const rowHeight = await checkItem.evaluate(
+        (button) => button.closest("[data-ledger-row]")?.getBoundingClientRect().height ?? 0,
+      );
+      if (touch) expect(rowHeight).toBeGreaterThanOrEqual(48);
+      else expect(rowHeight).toBeLessThan(48);
       await (touch ? checkItem.tap() : checkItem.click());
 
       await expect(uncheckItem).toBeVisible();
-      await expect.poll(shelfCount).toMatch(new RegExp(`\\b${homeCount}$`, "u"));
+      await expect(shelfCount).toBeVisible();
       if (!touch) await expect(uncheckItem).toBeFocused();
       await page.getByRole("button", { exact: true, name: "Undo" }).click();
       await expect(checkItem).toBeVisible();
@@ -89,9 +92,9 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await clock.click();
   await page.getByRole("radio", { exact: true, name: "Winter" }).click();
   await page.keyboard.press("Escape");
-  await expect(page.getByText("The day or save changed.")).toBeInViewport();
+  await expect(page.getByText("Your progress or the day changed.")).toBeInViewport();
   await page.getByRole("button", { name: "Refresh shelves" }).click();
-  await expect(page.getByText("The day or save changed.")).toHaveCount(0);
+  await expect(page.getByText("Your progress or the day changed.")).toHaveCount(0);
 
   await contents.evaluate((nav) => {
     nav.parentElement?.style.setProperty("--ledger-anchor-offset", "12rem");
@@ -106,5 +109,35 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await expect(page).toHaveURL(/#song_crystal$/u);
   await expect(songCrystals).toHaveAttribute("aria-current", "location");
   const crystals = page.getByRole("region", { exact: false, name: /^Song Crystals/ });
-  await expect(crystals.getByRole("button", { exact: true, name: "Chests" })).toBeVisible();
+  await expect(
+    crystals.getByRole("button", { exact: true, name: "Highlight rows from Chests" }),
+  ).toBeVisible();
+});
+
+test("closed source names are findable and native reveal opens the matching row", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/everything?group=source");
+  const balor = page.getByRole("button", { exact: true, name: "Balor's Wagon" });
+  await expect(balor).toHaveAttribute("aria-expanded", "false");
+
+  const found = await page.evaluate(() =>
+    (globalThis as typeof globalThis & { find: (query: string) => boolean }).find("Barrel Hat"),
+  );
+  expect(found).toBe(true);
+  const contentId = await balor.getAttribute("aria-controls");
+  // Chromium's window.find can find hidden text but the browser Find bar performs the reveal.
+  // A fragment navigation exercises the same native beforematch algorithm.
+  // oxlint-disable-next-line playwright/no-raw-locators -- the disclosure supplies the content ID
+  const hiddenMatch = page.locator(`[id="${contentId}"]`).getByText("Barrel Hat", { exact: true });
+  await hiddenMatch.evaluate((match) => {
+    match.id = "test-browser-find-target";
+    location.hash = match.id;
+  });
+  await expect(balor).toHaveAttribute("aria-expanded", "true");
+  await expect(hiddenMatch).toHaveAttribute("id", "test-browser-find-target");
+  await expect(
+    page.getByRole("button", { exact: true, name: "Check Barrel Hat" }),
+  ).toBeInViewport();
 });
