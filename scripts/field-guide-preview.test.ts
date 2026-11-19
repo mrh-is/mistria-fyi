@@ -8,7 +8,7 @@ describe("field guide preview URL", () => {
     "http://127.0.0.1:5173/en/museum",
     "http://[::1]:5173/en/museum",
     "https://next.mistria.fyi/en/museum",
-    "https://codex-676-preview-progress.mistria-fyi.pages.dev/en/museum",
+    "https://example-branch.mistria-fyi.pages.dev/en/museum",
   ])("accepts %s", (url) => {
     expect(previewUrl(url).href).toBe(url);
   });
