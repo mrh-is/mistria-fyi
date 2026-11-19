@@ -69,13 +69,13 @@ export async function isolateNetwork(
       const key = /^\/sprites\/(items|villagers)\/([^/]+)\.webp$/.exec(url.pathname);
       const size = key ? spriteDimensions[`${key[1]}/${key[2]}`] : undefined;
       if (size !== undefined) {
+        external.delete(request);
         await route.fulfill({
           body: size === null ? "" : sprites.get(size),
           contentType: "image/webp",
           headers: { "access-control-allow-origin": "*" },
           status: size === null ? 404 : 200,
         });
-        external.delete(request);
         return;
       }
       if (url.href === SATOSHI_URL && satoshi !== undefined) {
@@ -118,7 +118,11 @@ export const test = base.extend<{ allowTurnstile: boolean; networkIsolation: und
       if (baseURL === undefined) throw new Error("Browser tests require a local baseURL");
       const unexpectedRequests = await isolateNetwork(context, baseURL, allowTurnstile);
       await use(undefined);
-      expect(unexpectedRequests(), "Unexpected internet requests; add a local fixture").toEqual([]);
+      // A page can finish its last assertion while its intercepted sprite requests are still
+      // arriving at the route handler. Unknown destinations remain in the list and still fail.
+      await expect
+        .poll(unexpectedRequests, { message: "Unexpected internet requests; add a local fixture" })
+        .toEqual([]);
     },
     { auto: true },
   ],

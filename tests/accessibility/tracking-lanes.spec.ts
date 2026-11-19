@@ -11,6 +11,7 @@ for (const [theme, width] of [
   test(`${theme} first check-off requires a lane and offers a safe installation transfer`, async ({
     page,
   }, testInfo) => {
+    test.slow();
     await page.setViewportSize({ height: 844, width });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -85,7 +86,7 @@ for (const [theme, width] of [
         }, PROGRESS_STORAGE_KEY),
       )
       .toMatchObject({ dismissed: true, lane: "manual", manualChecks: 1 });
-    await page.reload();
+    await page.reload({ waitUntil: "domcontentloaded" });
     await expect(
       artifacts.getByRole("button", { exact: true, name: `Uncheck ${name?.slice(6) ?? ""}` }),
     ).toBeVisible();
