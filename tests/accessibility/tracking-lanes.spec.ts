@@ -87,6 +87,7 @@ for (const [theme, width] of [
       )
       .toMatchObject({ dismissed: true, lane: "manual", manualChecks: 1 });
     await page.reload({ waitUntil: "domcontentloaded" });
+    await artifacts.getByText(/^Completed ·/u).click();
     await expect(
       artifacts.getByRole("button", { exact: true, name: `Uncheck ${name?.slice(6) ?? ""}` }),
     ).toBeVisible();
