@@ -99,33 +99,36 @@
       isVillagerComplete(id as VillagerId, userState.state.progress),
     ),
   ]);
-  const ledger = createLedgerSnapshot(() => {
-    const day = userState.progressContext;
-    const visibility = day.progressionState;
-    return projectSourceGroups(entries, day, undefined, visibility).map((section) => ({
-      section,
-      ...sourceSectionLabel(section, lookups, visibility),
-      rows: section.rows
-        .map(({ doable, entry, sources }) => ({
-          entry,
-          key: entry.key,
-          ...ledgerPlacement(
-            sources,
-            day,
-            visibility,
-            {
-              completed: entry.completed,
-              doable: doable && entry.obtainable,
-              spoilered: Boolean(
-                entry.spoilered || !isConditionVisible(entry.visibility, visibility),
-              ),
-            },
-            entry.sources,
-          ),
-        }))
-        .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
-    }));
-  });
+  const ledger = createLedgerSnapshot(
+    () => locale,
+    () => {
+      const day = userState.progressContext;
+      const visibility = day.progressionState;
+      return projectSourceGroups(entries, day, undefined, visibility).map((section) => ({
+        section,
+        ...sourceSectionLabel(section, lookups, visibility),
+        rows: section.rows
+          .map(({ doable, entry, sources }) => ({
+            entry,
+            key: entry.key,
+            ...ledgerPlacement(
+              sources,
+              day,
+              visibility,
+              {
+                completed: entry.completed,
+                doable: doable && entry.obtainable,
+                spoilered: Boolean(
+                  entry.spoilered || !isConditionVisible(entry.visibility, visibility),
+                ),
+              },
+              entry.sources,
+            ),
+          }))
+          .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
+      }));
+    },
+  );
 
   type Placement = (typeof ledger.value)[number]["rows"][number];
   function visibleRow(row: Placement): boolean {
@@ -167,7 +170,8 @@
           rows.filter((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)),
         ),
     );
-    return matches.length > 0 ? matches.length : undefined;
+    const uniqueCount = new Set(matches.map(({ key }) => key)).size;
+    return uniqueCount > 0 ? uniqueCount : undefined;
   });
 
   // A link to a finished source has to reach it through the closed fold.

@@ -21,7 +21,11 @@
       const target = heading.matches("[data-ledger-index-heading]")
         ? heading.parentElement
         : heading;
-      if (!target || target.getBoundingClientRect().top > 161) break;
+      // Computed scroll margins are in pixels. Allow a pixel for scroll rounding.
+      const anchorOffset = Number(
+        getComputedStyle(heading).scrollMarginBlockStart.replace("px", ""),
+      );
+      if (!target || target.getBoundingClientRect().top > anchorOffset + 1) break;
       next = id;
     }
     current = next;

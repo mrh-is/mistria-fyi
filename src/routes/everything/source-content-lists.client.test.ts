@@ -3,6 +3,7 @@ import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
+import { loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import * as celebration from "#lib/effects/celebrate.js";
 import { factKey } from "#lib/engine/provenance.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -150,6 +151,7 @@ describe("while source shelves hold", () => {
     expect(view.getByRole("button", { name: "Uncheck Anchovy" })).toBe(row);
     expect(row).toHaveFocus();
     expect(view.getByText("To do · 1")).toBeVisible();
+    expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
   });
 
   it("moves a finished source section to Completed after refreshing the shelves", async () => {
@@ -192,17 +194,75 @@ describe("while source shelves hold", () => {
 
   it("counts matches in finished places without opening the Completed fold", async () => {
     vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
-      checklistRow("Anchovy", true, [{ type: "fish", waterTypes: ["ocean" as WaterType] }]),
+      checklistRow("Anchovy", true, [
+        { type: "fish", waterTypes: ["ocean" as WaterType, "river" as WaterType] },
+      ]),
     ]);
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
     toolbarState.setSearchQuery("Anchovy");
     await tick();
     const completed = within(view.getByTestId("everything-completed"));
+    expect(completed.queryByText("2 matches")).toBeNull();
     expect(completed.getAllByText("1 match")[0]).toBeVisible();
     expect(completed.getByRole("button", { name: "Completed" })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
+  });
+
+  it("offers to refresh an open ledger after a backup restore with the same clock", async () => {
+    const backup = userState.exportBackup();
+    userState.toggleAlmanacItem("acorn" as ItemId);
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockImplementation(() => [
+      checklistRow("Acorn", userState.state.progress.almanac.has("acorn" as ItemId), [
+        { type: "store", storeId: "balor" as StoreId },
+      ]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
+    await tick();
+    const row = view.getByRole("button", { name: "Uncheck Acorn" });
+
+    expect(userState.restoreBackup(backup)).toEqual({ ok: true });
+    await tick();
+    expect(view.getByRole("button", { name: "Check Acorn" })).toBe(row);
+    await fireEvent.click(view.getByRole("button", { name: "Refresh shelves" }));
+    expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
+    expect(view.getByText("To do · 1")).toBeVisible();
+  });
+
+  it("rebuilds the captured place names when a mounted ledger changes language", async () => {
+    await loadNames("fr", NAME_CHUNKS);
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Acorn", false, [{ type: "store", storeId: "balor" as StoreId }]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
+    await tick();
+    expect(view.getByRole("button", { name: "Balor's Wagon" })).toBeVisible();
+    await view.rerender({ anchor: "store-balor", locale: "fr" });
+    expect(view.getByRole("button", { name: "Chariot de Balor" })).toBeVisible();
+    expect(view.queryByRole("button", { name: "Balor's Wagon" })).toBeNull();
+  });
+
+  it("closes the source panel when the discovery chip is pressed again", async () => {
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Acorn", false, [
+        { type: "store", storeId: "balor" as StoreId },
+        {
+          type: "store",
+          storeId: "balor" as StoreId,
+          visibility: { type: "mineFloor", floor: 80 },
+        },
+      ]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
+    await tick();
+    const chip = view.getByRole("button", { name: "+1 to discover" });
+    await fireEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-expanded", "true");
+    expect(view.getByTestId("source-card")).toBeVisible();
+    await fireEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-expanded", "false");
+    expect(view.queryByTestId("source-card")).toBeNull();
   });
 
   it("updates spoiler masks without replacing the current shelf", async () => {

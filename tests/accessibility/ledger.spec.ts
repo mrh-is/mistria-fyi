@@ -86,4 +86,12 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await expect(page.getByText("The day or save changed.")).toBeInViewport();
   await page.getByRole("button", { name: "Refresh shelves" }).click();
   await expect(page.getByText("The day or save changed.")).toHaveCount(0);
+
+  await contents.evaluate((nav) => {
+    nav.parentElement?.style.setProperty("--ledger-anchor-offset", "12rem");
+  });
+  const materials = contents.getByRole("link", { exact: true, name: "Materials" });
+  await materials.click();
+  await expect(page).toHaveURL(/#materials$/u);
+  await expect(materials).toHaveAttribute("aria-current", "location");
 });

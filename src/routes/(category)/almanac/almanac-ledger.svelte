@@ -52,29 +52,32 @@
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
-  const ledger = createLedgerSnapshot(() => {
-    const context = userState.progressContext;
-    const visibility = context.progressionState;
-    return projectAlmanac(context, { progressionState: visibility }).sections.map((section) => ({
-      canonicalIds: section.canonicalIds,
-      id: section.id,
-      name: getName("ui", section.id, locale),
-      rows: section.rows
-        .map((row) => {
-          const names = getAlmanacEntryNames(row.entry, locale);
-          return {
-            ...ledgerPlacement(row.sources, context, visibility, row),
-            key: row.canonicalId,
-            name: names[0],
-            names,
-            obtainable: row.obtainable,
-            variant: getAlmanacEntryVariant(row.entry, locale),
-            visibility: row.item.visibility,
-          };
-        })
-        .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
-    }));
-  });
+  const ledger = createLedgerSnapshot(
+    () => locale,
+    () => {
+      const context = userState.progressContext;
+      const visibility = context.progressionState;
+      return projectAlmanac(context, { progressionState: visibility }).sections.map((section) => ({
+        canonicalIds: section.canonicalIds,
+        id: section.id,
+        name: getName("ui", section.id, locale),
+        rows: section.rows
+          .map((row) => {
+            const names = getAlmanacEntryNames(row.entry, locale);
+            return {
+              ...ledgerPlacement(row.sources, context, visibility, row),
+              key: row.canonicalId,
+              name: names[0],
+              names,
+              obtainable: row.obtainable,
+              variant: getAlmanacEntryVariant(row.entry, locale),
+              visibility: row.item.visibility,
+            };
+          })
+          .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
+      }));
+    },
+  );
 
   let hash = $derived(building ? "" : new SvelteURL(page.url.href).hash.slice(1));
   async function alignSection(id: string): Promise<void> {

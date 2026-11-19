@@ -67,6 +67,12 @@
   let expanded = $state(false);
   let revealed = $state(false);
   let revealSources = $state(false);
+
+  function toggleSources(includeHidden: boolean): void {
+    const opening = includeHidden ? !(expanded && revealSources) : !expanded;
+    revealSources = opening && includeHidden;
+    expanded = opening;
+  }
   let covered = $derived(placement.spoilered && !revealed && !userState.state.showSpoilers);
   let nameWithVariant = $derived(variant ? /* @wc-include */ `${name}, ${variant}` : name);
   let spriteUrl = $derived(sprite ? itemSpriteUrl(sprite) : undefined);
@@ -146,7 +152,7 @@
           type="button"
           aria-expanded={expanded}
           aria-controls={detailsId}
-          onclick={() => (expanded = !expanded)}
+          onclick={() => toggleSources(false)}
         >
           {@render label()}
           <Icon.UI type="disclosure" class="size-3 {expanded ? 'rotate-90' : ''}" />
@@ -169,10 +175,7 @@
             type="button"
             aria-expanded={expanded && revealSources}
             aria-controls={detailsId}
-            onclick={() => {
-              revealSources = !revealSources;
-              expanded = true;
-            }}
+            onclick={() => toggleSources(true)}
           >
             +{placement.hiddenCount} to discover
           </button>
