@@ -1,7 +1,9 @@
 <script lang="ts">
+  import IconListDetails from "@tabler/icons-svelte-runes/icons/list-details";
   import { onMount, untrack } from "svelte";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import { getLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
   import type { Snippet } from "svelte";
@@ -37,6 +39,8 @@
   // A search has to reach rows inside a closed group, as it does inside closed sections.
   let isOpen = $derived(open || Boolean(toolbarState.searchQuery));
   const instanceId = $props.id();
+  // Without the index rail (phones & half screens), each group's head offers the jump list.
+  const index = getLedgerIndexContext();
   let contentId = $derived(`group-${instanceId}`);
   $effect(() => {
     if (revealTarget) open = true;
@@ -48,7 +52,7 @@
     {id}
     tabindex="-1"
     data-ledger-index-heading
-    class="sticky z-[var(--z-section-header)] scroll-mt-[var(--ledger-anchor-offset,8rem)] bg-background"
+    class="sticky z-[var(--z-section-header)] flex scroll-mt-[var(--ledger-anchor-offset,8rem)] items-center bg-background"
     style="top: var(--section-header-sticky-top, 0px)"
   >
     <button
@@ -75,6 +79,16 @@
       <span class="flex-1">{name}</span>
       {#if count}{@render count()}{/if}
     </button>
+    {#if index?.jumpList}
+      <button
+        type="button"
+        class="grid size-11 shrink-0 place-items-center text-muted-foreground hover:text-foreground"
+        popovertarget={index.jumpList}
+        aria-label="Jump to a section"
+      >
+        <IconListDetails class="size-4" />
+      </button>
+    {/if}
   </h2>
   {#if description}<span id="{contentId}-description" class="sr-only">{description}</span>{/if}
   <div

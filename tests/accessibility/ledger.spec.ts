@@ -151,3 +151,22 @@ test("closed source names are findable and native reveal opens the matching row"
     page.getByRole("button", { exact: true, name: "Check Barrel Hat" }),
   ).toBeInViewport();
 });
+
+test("a section's stuck head names the shelf scrolling under it", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // oxlint-disable-next-line playwright/no-raw-locators -- the head is a layout box with no role
+  const head = furniture.locator("[data-ledger-head]");
+  await expect(head).toContainText("To do");
+
+  await furniture.getByText("Not now", { exact: true }).click();
+  const notNowRow = furniture
+    .getByRole("group")
+    .getByRole("button", { name: /^Check / })
+    .nth(5);
+  await notNowRow.evaluate((row) => {
+    row.scrollIntoView({ block: "center" });
+  });
+  await expect(head).toContainText("Not now");
+});

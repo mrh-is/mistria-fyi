@@ -46,6 +46,28 @@
   },
   {
     "translations": {
+      "en": "Jump to a section",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/group-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Source",
       "ja": "入手先",
       "zh-Hans": "来源",

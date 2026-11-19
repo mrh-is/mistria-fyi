@@ -112,24 +112,29 @@
 </div>
 
 <style>
-  .clock-panel {
-    padding: 11px 18px;
-  }
-
+  /*
+   * Season over weather, each a section ruled off like the filter panel's, with its label set as a
+   * small-caps head. The panel is narrow wherever it opens, so the two never sit side by side.
+   */
   .world-state-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
+  }
+
+  .world-state-grid > div {
+    padding: 11px 18px 14px;
+  }
+
+  .world-state-grid > div + div {
+    border-top: 1px solid color-mix(in srgb, var(--color-ink-hairline) 28%, transparent);
   }
 
   .world-state-grid p {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 4px;
+    margin-bottom: 7px;
     color: var(--color-ink-muted);
-    font-family: var(--font-annotation);
-    font-size: var(--text-3xs);
+    font-family: var(--font-controls);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
   .weather-content {
@@ -140,11 +145,5 @@
     gap: 3px;
     transition-property: opacity;
     transition-timing-function: ease-out;
-  }
-
-  @media (max-width: 479px) {
-    .world-state-grid {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

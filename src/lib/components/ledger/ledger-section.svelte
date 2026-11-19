@@ -78,6 +78,33 @@
   let isSearching = $derived(Boolean(toolbarState.searchQuery));
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
+
+  // The stuck head names the shelf passing under it, as in “Furniture · Completed 159”.
+  let head = $state<HTMLElement>();
+  let shelvesElement = $state<HTMLElement>();
+  let shelfInView = $state<Shelf>("todo");
+  let headShelf = $derived(matches[shelfInView].length > 0 ? shelfInView : "todo");
+  let frame: number | undefined;
+
+  function readShelfInView(): void {
+    frame = undefined;
+    if (!head || !shelvesElement) return;
+    const line = head.getBoundingClientRect().bottom + 1;
+    let next: Shelf = "todo";
+    for (const element of shelvesElement.querySelectorAll<HTMLElement>("[data-shelf]")) {
+      if (element.getBoundingClientRect().top <= line) next = element.dataset.shelf as Shelf;
+    }
+    shelfInView = next;
+  }
+
+  function scheduleShelfRead(): void {
+    if (collapsible) return;
+    frame ??= requestAnimationFrame(readShelfInView);
+  }
+
+  $effect(() => () => {
+    if (frame !== undefined) cancelAnimationFrame(frame);
+  });
   // A stable sprig per section, so filtering never reshuffles them.
   let sprig = $derived(
     [...(id ?? name)].reduce((hash, char) => (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0, 7) %
@@ -131,6 +158,8 @@
   }
 </script>
 
+<svelte:window onscroll={scheduleShelfRead} />
+
 <section
   {id}
   data-ledger-section
@@ -140,7 +169,7 @@
   hidden={!hasRows}
   aria-labelledby={`${instance}-heading`}
 >
-  <div class="head" data-ledger-head>
+  <div class="head" data-ledger-head bind:this={head}>
     <h3 id={`${instance}-heading`} tabindex="-1">
       {#if collapsible}
         <button
@@ -187,20 +216,23 @@
         <span aria-hidden="true"><span class="hand">{completed}</span> / {total}</span>
       </p>
     {/if}
-    {#if !collapsible && matches.todo.length > 0}
-      <ShelfHeading
-        class="head-shelf"
-        shelf="todo"
-        {explains}
-        count={matches.todo.length}
-        level={4}
-      />
+    {#if !collapsible && matches[headShelf].length > 0}
+      {#key headShelf}
+        <ShelfHeading
+          class="head-shelf"
+          shelf={headShelf}
+          explains={explains && headShelf === "todo"}
+          count={matches[headShelf].length}
+          level={4}
+        />
+      {/key}
     {/if}
   </div>
 
   <div
     id={`${instance}-rows`}
     class="shelves"
+    bind:this={shelvesElement}
     hidden={expanded ? undefined : "until-found"}
     onbeforematch={() => (open = true)}
   >
@@ -208,7 +240,7 @@
       {@const entries = matches[shelf]}
       {#if entries.length > 0}
         {#if shelf === "todo"}
-          <div class="shelf">
+          <div class="shelf" data-shelf={shelf}>
             {#if expanded && collapsible}<ShelfHeading
                 {shelf}
                 {explains}
@@ -220,6 +252,7 @@
         {:else}
           <details
             class="shelf"
+            data-shelf={shelf}
             open={revealedShelves[shelf] === true || (forceOpen && shelf === "completed")}
           >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
