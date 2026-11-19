@@ -28,9 +28,9 @@ export async function analyzeAccessibility(
 ): Promise<AxeAssessment> {
   await waitForRendering(page);
   const builder = new AxeBuilder({ page });
-  if (context.route === "/almanac" && page.frames().length === 1) {
-    // The ledger produces thousands of passing nodes. Finish the scan in the page so axe can
-    // trim passing results before Playwright transfers them. Pages with frames use the normal scan.
+  if (page.frames().length === 1) {
+    // Finish single-frame scans in the page so axe can trim passing nodes before transfer.
+    // The default scan collects results across frames, including cross-origin frames.
     builder.options({ resultTypes: ["violations", "incomplete"] }).setLegacyMode();
   }
   if (rules) builder.withRules(rules);
