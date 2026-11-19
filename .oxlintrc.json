@@ -304,6 +304,7 @@
         "vitest/require-test-timeout": "off", // The global Vitest timeout applies.
         "vitest/require-top-level-describe": "off", // Small test files don't need a wrapper.
         "vitest/prefer-called-once": "off", // vitest/prefer-called-times states every count the same way.
+        "vitest/prefer-called-with": "off", // Its fix writes an empty `toHaveBeenCalledWith()`, which fails on any call that passed arguments.
         "vitest/prefer-strict-boolean-matchers": "off", // Its fix turns truthiness checks on elements into `toBe(true)`.
         "vitest/prefer-to-be-falsy": "off", // `toBe(false)` is stricter on real booleans.
         "vitest/prefer-to-be-truthy": "off", // `toBe(true)` is stricter on real booleans.
