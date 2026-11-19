@@ -1,17 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import { trackerData } from "#lib/data/index.js";
+  import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { getName } from "#lib/data/names.js";
-  import { isSourceDoable } from "#lib/engine/availability.js";
-  import { projectAlmanac } from "#lib/engine/projections/almanac.js";
-  import { isConditionVisible } from "#lib/engine/visibility.js";
-  import plural from "#lib/i18n/catalogs/plural.js";
+  import { ledgerShelf, sourceLedgerPlacement } from "#lib/presentation/ledger.js";
+  import { projectSourceGroups } from "#lib/presentation/source-groups.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { StoreId } from "#lib/types/tracker-data.js";
 
   let { locale }: { locale: LocaleCode } = $props();
   let mounted = $state(false);
@@ -23,33 +21,15 @@
     // The available places belong to the player's local save, not the prerendered home page.
     if (!mounted) return [];
     const context = userState.progressContext;
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scratch counts for this projection.
-    const counts = new Map<StoreId, number>();
-    for (const row of projectAlmanac(context).rows) {
-      if (
-        row.completed ||
-        !row.doable ||
-        !isConditionVisible(row.item.visibility, context.progressionState)
-      ) {
-        continue;
-      }
-      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Count each item once per store.
-      const stores = new Set<StoreId>();
-      for (const source of row.sources) {
-        if (
-          "storeId" in source &&
-          source.storeId &&
-          source.type !== "festival" &&
-          trackerData.stores[source.storeId] &&
-          isSourceDoable(source, context)
-        ) {
-          stores.add(source.storeId);
-        }
-      }
-      for (const store of stores) counts.set(store, (counts.get(store) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .toSorted((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    return projectSourceGroups(buildSourceChecklist(context, locale), context)
+      .flatMap(({ id, rows, source, spoilered }) => {
+        if (!source || !("storeId" in source) || source.type === "festival" || spoilered) return [];
+        const count = rows.filter(
+          (row) => ledgerShelf(sourceLedgerPlacement(row, context), () => true) === "todo",
+        ).length;
+        return count > 0 ? [{ count, id, storeId: source.storeId }] : [];
+      })
+      .toSorted((a, b) => b.count - a.count || a.id.localeCompare(b.id))
       .slice(0, 3);
   });
 </script>
@@ -57,10 +37,10 @@
 {#if places.length > 0}
   <section aria-labelledby="places-heading">
     <h2 id="places-heading">Places to go today</h2>
-    {#each places as [id, count] (id)}
-      <a href={`${localizedHref("everything")}?group=source#store-${id}`}>
-        <span>{getName("stores", id, locale)}</span>
-        <small>{plural(count, [`${count} almanac find`, `${count} almanac finds`])}</small>
+    {#each places as { id, storeId, count } (id)}
+      <a href={`${localizedHref("everything")}?group=source#${id}`}>
+        <span>{getName("stores", storeId, locale)}</span>
+        <small>{`${formatNumber(count, locale)} to do`}</small>
       </a>
     {/each}
   </section>

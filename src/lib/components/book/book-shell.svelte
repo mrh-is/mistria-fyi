@@ -170,19 +170,48 @@
     }
 
     .book--tools:has(:global([data-ledger-layout])) {
-      --ledger-sticky-top: 5rem;
-      --ledger-anchor-offset: 10rem;
+      --ledger-anchor-offset: 8rem;
+      --ledger-header-height: 4.5rem;
+      --ledger-tools-width: 15rem;
+      --ledger-tools-edge: 1rem;
 
-      grid-template-rows: var(--ledger-sticky-top) 1fr;
+      grid-template-rows: 0 1fr;
+    }
+
+    .book--tools:has(:global([data-ledger-layout])):has(:global(#tracker-search)) {
+      --ledger-tools-width: clamp(15rem, 34vw, 24rem);
+    }
+
+    .book--tools:has(:global([data-ledger-layout])):has(:global([data-page-header="category"])) {
+      --ledger-tools-edge: 4rem;
     }
 
     .book--tools:has(:global([data-ledger-layout])) .book__tools {
       position: sticky;
       top: 0;
       z-index: var(--z-toolbar);
-      min-block-size: var(--ledger-sticky-top);
+      display: grid;
+      inline-size: var(--ledger-tools-width);
+      min-block-size: var(--ledger-header-height);
+      justify-self: end;
+      align-items: center;
+      margin-inline-end: var(--ledger-tools-edge);
+      padding: 0;
       grid-area: 1 / 2 / 3 / 3;
-      background: var(--color-paper);
+    }
+
+    /* The warning can occupy the first line when saved progress is unavailable. */
+    .book--tools:has(:global([data-ledger-layout])):has(:global(.write-blocked)) {
+      grid-template-rows: auto 1fr;
+    }
+
+    .book--tools:has(:global([data-ledger-layout])):has(:global(.write-blocked)) .book__tools {
+      position: relative;
+      inline-size: auto;
+      justify-self: stretch;
+      margin-inline-end: 0;
+      padding: 0.75rem 1.25rem;
+      grid-area: 1 / 2;
     }
 
     /* The wire runs the page's height, through holes just inside its left edge. */

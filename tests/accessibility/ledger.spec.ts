@@ -22,6 +22,9 @@ for (const { theme, touch, width } of [
         .getByRole("link")
         .first();
       const destination = await link.getAttribute("href");
+      const homeLabel = await link.textContent();
+      const homeCount = homeLabel?.match(/([\d,]+) to do/u)?.[1] ?? "";
+      expect(homeCount).toBeTruthy();
       await (touch ? link.tap() : link.click());
       await expect(page).toHaveURL(new URL(destination ?? "", page.url()).href);
 
@@ -33,11 +36,14 @@ for (const { theme, touch, width } of [
       const name = label?.slice(6) ?? "";
       const checkItem = place.getByRole("button", { exact: true, name: `Check ${name}` });
       const uncheckItem = place.getByRole("button", { exact: true, name: `Uncheck ${name}` });
-      const count = await place.getByText(/^To do ·/).textContent();
+      const todo = place.getByRole("heading", { exact: true, name: "To do" });
+      const shelfCount = () =>
+        todo.evaluate((heading) => heading.parentElement?.textContent.trim());
+      await expect.poll(shelfCount).toMatch(new RegExp(`\\b${homeCount}$`, "u"));
       await (touch ? checkItem.tap() : checkItem.click());
 
       await expect(uncheckItem).toBeVisible();
-      await expect(place.getByText(/^To do ·/)).toHaveText(count ?? "");
+      await expect.poll(shelfCount).toMatch(new RegExp(`\\b${homeCount}$`, "u"));
       if (!touch) await expect(uncheckItem).toBeFocused();
       await page.getByRole("button", { exact: true, name: "Undo" }).click();
       await expect(checkItem).toBeVisible();
@@ -94,4 +100,11 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await materials.click();
   await expect(page).toHaveURL(/#materials$/u);
   await expect(materials).toHaveAttribute("aria-current", "location");
+
+  const songCrystals = contents.getByRole("link", { exact: true, name: "Song Crystals" });
+  await songCrystals.click();
+  await expect(page).toHaveURL(/#song_crystal$/u);
+  await expect(songCrystals).toHaveAttribute("aria-current", "location");
+  const crystals = page.getByRole("region", { exact: false, name: /^Song Crystals/ });
+  await expect(crystals.getByRole("button", { exact: true, name: "Chests" })).toBeVisible();
 });

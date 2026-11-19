@@ -12,12 +12,26 @@
   } = $props();
 
   let current = $state("");
+  let arrival: undefined | { id: string; scrollTop: number };
 
   function readPosition(): void {
-    let next = sections[0]?.id ?? "";
+    const scrollingElement = document.scrollingElement;
+    const scrollTop = scrollingElement?.scrollTop ?? 0;
+    let next = "";
+    let last = "";
+    const atBottom = Boolean(
+      scrollingElement &&
+      scrollTop > 0 &&
+      scrollTop + scrollingElement.clientHeight >= scrollingElement.scrollHeight - 1,
+    );
     for (const { id } of sections) {
       const heading = document.getElementById(id);
       if (!heading?.checkVisibility()) continue;
+      last = id;
+      if (arrival?.id === id && Math.abs(scrollTop - arrival.scrollTop) <= 1) {
+        current = id;
+        return;
+      }
       const target = heading.matches("[data-ledger-index-heading]")
         ? heading.parentElement
         : heading;
@@ -25,10 +39,29 @@
       const anchorOffset = Number(
         getComputedStyle(heading).scrollMarginBlockStart.replace("px", ""),
       );
-      if (!target || target.getBoundingClientRect().top > anchorOffset + 1) break;
-      next = id;
+      if (!next || (target && target.getBoundingClientRect().top <= anchorOffset + 1)) {
+        next = id;
+      }
     }
-    current = next;
+    arrival = undefined;
+    current = atBottom ? last : next;
+  }
+
+  function markArrival(event: FocusEvent): void {
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !target.matches(":is(h2, h3)[tabindex='-1']")) return;
+    const section = sections.find(({ id }) => {
+      const heading = document.getElementById(id);
+      return (
+        heading?.contains(target) ||
+        (heading?.dataset.ledgerIndexHeading !== undefined &&
+          heading.parentElement?.contains(target))
+      );
+    });
+    if (section) {
+      arrival = { id: section.id, scrollTop: document.scrollingElement?.scrollTop ?? 0 };
+      readPosition();
+    }
   }
 
   async function readAfterRender(): Promise<void> {
@@ -50,7 +83,7 @@
       <a href={`#${id}`} aria-current={id === current ? "location" : undefined}>{name}</a>
     {/each}
   </nav>
-  <div class="min-w-0">
+  <div class="min-w-0" onfocusin={markArrival}>
     {@render children()}
   </div>
 </div>
@@ -70,7 +103,7 @@
 
     nav {
       position: sticky;
-      top: calc(var(--ledger-sticky-top, 0px) + 5rem);
+      top: calc(var(--ledger-header-height, 4rem) + 1rem);
       display: flex;
       max-block-size: calc(100dvh - 8rem);
       flex-direction: column;

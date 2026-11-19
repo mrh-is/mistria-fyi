@@ -84,7 +84,7 @@
 <style>
   .page-header {
     position: sticky;
-    top: var(--ledger-sticky-top, 0px);
+    top: 0;
     z-index: var(--z-page-header);
     display: flex;
     min-width: 0;
@@ -272,6 +272,43 @@
     .page-header__progress i,
     .page-header__progress b {
       transition-duration: 0.01ms;
+    }
+  }
+
+  @media (min-width: 48rem) and (min-height: 34rem) {
+    :global(.book:has([data-ledger-layout]):not(:has(.write-blocked))) .page-header {
+      min-block-size: var(--ledger-header-height);
+      padding-block: 0.5rem;
+      padding-inline-end: calc(var(--ledger-tools-width) + var(--ledger-tools-edge) + 0.75rem);
+    }
+
+    :global(.book:has([data-ledger-layout])) .page-header__ribbon {
+      right: 0;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
+    }
+
+    :global(.book:has([data-ledger-layout])) .page-header__edge-mask {
+      display: none;
+    }
+
+    :global(.book:has([data-ledger-layout])) .page-header--complete .page-header__ribbon::after {
+      right: auto;
+      left: 0;
+      background:
+        linear-gradient(
+            to top right,
+            transparent 46%,
+            var(--color-ribbon-fill) 48% 57%,
+            transparent 59%
+          )
+          top / 9px 50% no-repeat,
+        linear-gradient(
+            to bottom right,
+            transparent 46%,
+            var(--color-ribbon-fill) 48% 57%,
+            transparent 59%
+          )
+          bottom / 9px 50% no-repeat;
     }
   }
 </style>

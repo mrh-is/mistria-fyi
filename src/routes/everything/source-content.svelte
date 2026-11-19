@@ -23,7 +23,11 @@
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import { ledgerPlacement, ledgerShelf } from "#lib/presentation/ledger.js";
+  import {
+    ledgerShelf,
+    ledgerSourceFamily,
+    sourceLedgerPlacement,
+  } from "#lib/presentation/ledger.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
   import {
     compareSourceSections,
@@ -108,22 +112,11 @@
         section,
         ...sourceSectionLabel(section, lookups, visibility),
         rows: section.rows
-          .map(({ doable, entry, sources }) => ({
-            entry,
-            key: entry.key,
-            ...ledgerPlacement(
-              sources,
-              day,
-              visibility,
-              {
-                completed: entry.completed,
-                doable: doable && entry.obtainable,
-                spoilered: Boolean(
-                  entry.spoilered || !isConditionVisible(entry.visibility, visibility),
-                ),
-              },
-              entry.sources,
-            ),
+          .map((placement) => ({
+            entry: placement.entry,
+            key: placement.entry.key,
+            obtainable: placement.entry.obtainable,
+            ...sourceLedgerPlacement(placement, day),
           }))
           .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
       }));
@@ -355,6 +348,8 @@
                 {locale}
                 {name}
                 {rows}
+                contextualFamily={section.source && ledgerSourceFamily(section.source)}
+                progress={spoilered ? undefined : section}
                 visible={visibleRow}
                 forceOpen={anchor === section.id ||
                   (section.id === "progress" && anchor === "source-progress")}

@@ -3,9 +3,25 @@ import { SITE_NAME } from "#lib/data/page-metadata.js";
 
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = localizedPageLoad(["stores"], () => ({
-  description:
-    "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
-  title: SITE_NAME,
-  toolbar: { clock: true, search: true },
-}));
+export const load: PageLoad = localizedPageLoad(
+  [
+    "animals",
+    "cosmetics",
+    "items",
+    "mount",
+    "perks",
+    "pets/cosmetic_sets",
+    "pets/skins",
+    "quests",
+    "recipes",
+    "spells",
+    "stores",
+    "villagers",
+  ],
+  () => ({
+    description:
+      "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
+    title: SITE_NAME,
+    toolbar: { clock: true, search: true },
+  }),
+);

@@ -107,7 +107,7 @@ test.describe("stateful accessibility", () => {
     test.setTimeout(60_000);
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    await artifacts.getByText(/^Not now ·/).click();
+    await artifacts.getByText("Not now", { exact: true }).click();
     const spoiler = artifacts.getByRole("button", { name: "Reveal spoiler" }).first();
     await expect(spoiler).toBeVisible();
     const spoilerText = await spoiler.textContent();
@@ -122,7 +122,7 @@ test.describe("stateful accessibility", () => {
     );
 
     await page.getByRole("button", { name: "Cancel" }).click();
-    await artifacts.getByText(/^Not now ·/).click();
+    await artifacts.getByText("Not now", { exact: true }).click();
     await expect(spoiler).toBeVisible();
     await spoiler.click();
     await analyzeAccessibility(

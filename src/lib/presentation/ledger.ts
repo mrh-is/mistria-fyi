@@ -1,12 +1,14 @@
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { hasSelectiveSeasonCondition } from "#lib/engine/availability-condition.js";
 import { getSourceDisclosure, isSourceDoable } from "#lib/engine/availability.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 
 import type { SourceFilterId } from "#lib/data/source-filters.js";
 import type { DayContext } from "#lib/engine/availability.js";
 import type { Shelf } from "#lib/engine/shelves.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { SourceGroupRow, SourceSection } from "#lib/presentation/source-groups.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { Season } from "#lib/types/tracker-data.js";
 
@@ -81,4 +83,22 @@ export function ledgerShelf(row: LedgerPlacement, showsSource: (source: Source) 
   if (row.completed && !row.spoilered) return "completed";
   if (row.doable && (row.sources.length === 0 || row.readySources.some(showsSource))) return "todo";
   return "notNow";
+}
+
+export function sourceLedgerPlacement<Row extends SourceGroupRow>(
+  { doable, entry, sources }: SourceSection<Row>["rows"][number],
+  day: DayContext,
+): LedgerPlacement {
+  const visibility = day.progressionState;
+  return ledgerPlacement(
+    sources,
+    day,
+    visibility,
+    {
+      completed: entry.completed,
+      doable: doable && entry.obtainable,
+      spoilered: entry.spoilered === true || !isConditionVisible(entry.visibility, visibility),
+    },
+    entry.sources,
+  );
 }

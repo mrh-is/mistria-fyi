@@ -85,7 +85,10 @@
       if (!cancelled) {
         const section = document.getElementById(target);
         section?.scrollIntoView({ block: "start" });
-        section?.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
+        const heading = section?.matches("[data-ledger-index-heading]")
+          ? section
+          : section?.querySelector<HTMLElement>("h3");
+        heading?.focus({ preventScroll: true });
       }
     }
     void scrollToAnchor();

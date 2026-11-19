@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ledgerSpriteMask } from "#lib/attachments/ledger-sprite-mask.js";
-  import { Icon } from "#lib/components/icon/index.js";
+  import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import SourceCard from "#lib/components/source-card.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
@@ -21,7 +21,6 @@
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { LedgerPlacement } from "#lib/presentation/ledger.js";
   import type { SegmentLookups } from "#lib/sources/source-segments.js";
-  import type { Source } from "#lib/types/acquisition.js";
 
   let {
     category,
@@ -43,7 +42,7 @@
     variant,
   }: {
     category: CategoryKey;
-    columns: readonly { type: Source["type"]; id: SourceFilterId }[];
+    columns: readonly SourceFilterId[];
     completed: boolean;
     discovery: boolean;
     fact: string;
@@ -161,10 +160,11 @@
         {@render label()}
       {/if}
     </div>
-    {#each columns as column (column.id)}
+    {#each columns as family (family)}
+      {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
       <span class="cell" aria-hidden="true">
-        {#if placement.visibleSources.some((source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === column.id)}
-          <Icon.Source type={column.type} class="size-4" />
+        {#if placement.visibleSources.some((source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === family)}
+          <FamilyIcon class="size-4" />
         {/if}
       </span>
     {/each}

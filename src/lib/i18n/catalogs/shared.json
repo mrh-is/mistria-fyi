@@ -11120,63 +11120,6 @@
   },
   {
     "translations": {
-      "en": [
-        "{0} almanac find",
-        "{0} almanac finds"
-      ],
-      "ja": [
-        "図鑑の収集品{0}点"
-      ],
-      "zh-Hans": [
-        "{0} 件图鉴物品"
-      ],
-      "zh-Hant": [
-        "{0} 件圖鑑物品"
-      ],
-      "es": [
-        "{0} hallazgo del almanaque",
-        "{0} hallazgos del almanaque",
-        "{0} hallazgos del almanaque"
-      ],
-      "fr": [
-        "{0} trouvaille pour l’almanach",
-        "{0} trouvailles pour l’almanach",
-        "{0} trouvailles pour l’almanach"
-      ],
-      "ko": [
-        "도감 수집품 {0}개"
-      ],
-      "ru": [
-        "{0} находка для альманаха",
-        "{0} находки для альманаха",
-        "{0} находок для альманаха",
-        "{0} находки для альманаха"
-      ]
-    },
-    "references": [
-      {
-        "file": "src/routes/todays-places.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "count"
-              ],
-              [
-                "0",
-                "count"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "{0} categories",
       "ja": "{0}のカテゴリー",
       "zh-Hans": "{0}分类",
@@ -11486,6 +11429,23 @@
       "ru": "Выполнено {0} из {1}"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "completed"
+              ],
+              [
+                "1",
+                "total"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/page-header.svelte",
         "refs": [
@@ -11872,6 +11832,48 @@
               [
                 "0",
                 "isSpoilered ? \"Spoilered item\" : name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} to do",
+      "ja": "今日できること：{0}件",
+      "zh-Hans": "今日可做 {0} 项",
+      "zh-Hant": "今日可做 {0} 項",
+      "es": "{0} por hacer",
+      "fr": "{0} à faire",
+      "ko": "오늘 할 수 있는 일 {0}개",
+      "ru": "Можно сделать: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatNumber(groups.todo.length, locale)"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatNumber(count, locale)"
               ]
             ]
           }

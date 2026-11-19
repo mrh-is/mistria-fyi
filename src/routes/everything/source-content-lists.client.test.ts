@@ -124,6 +124,33 @@ it("names the Almanac variant in the source view’s checkbox label", () => {
   expect(view.queryByRole("button", { name: "Check Animated Clouds Window" })).toBeNull();
 });
 
+it("uses each shelf's sources for its columns and omits the place’s own family", async () => {
+  const store: Source = { type: "store", storeId: "balor" as StoreId };
+  vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+    checklistRow("Anchovy", false, [store, { type: "fish", waterTypes: ["ocean" as WaterType] }]),
+    checklistRow("Acorn", true, [store, { type: "forage" }]),
+  ]);
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  const place = within(view.getByRole("region", { name: "Balor's Wagon" }));
+  await fireEvent.click(place.getByRole("button", { name: "Balor's Wagon" }));
+  const completed = place.getByText("Completed", { exact: true }).closest("details");
+  expect(completed).not.toHaveAttribute("open");
+  const fishing = place.getByRole("button", { name: "Fishing" });
+  const gathering = place.getByRole("button", { name: "Gathering" });
+  expect(fishing).toBeVisible();
+  expect(fishing.closest("details")).toBeNull();
+  expect(gathering.closest("details")).toBe(completed);
+  expect(place.queryByRole("button", { name: "Stores" })).toBeNull();
+  await fireEvent.click(fishing);
+  expect(fishing).toHaveAttribute("aria-pressed", "true");
+  await fireEvent.click(fishing);
+  expect(fishing).toHaveAttribute("aria-pressed", "false");
+
+  await fireEvent.click(place.getByText("Completed", { exact: true }));
+  expect(completed).toHaveAttribute("open");
+  expect(gathering).toBeVisible();
+});
+
 const openFishing = async (view: ReturnType<typeof renderWithFeedback>) => {
   await fireEvent.click(view.getByRole("button", { name: /Ocean/ }));
   await tick();
@@ -150,7 +177,7 @@ describe("while source shelves hold", () => {
     expect(view.getByRole("button", { name: "Fishing" })).toBeInTheDocument();
     expect(view.getByRole("button", { name: "Uncheck Anchovy" })).toBe(row);
     expect(row).toHaveFocus();
-    expect(view.getByText("To do · 1")).toBeVisible();
+    expect(within(view.getByRole("region", { name: /Ocean/ })).getByText("1 to do")).toBeVisible();
     expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
   });
 
@@ -227,7 +254,7 @@ describe("while source shelves hold", () => {
     expect(view.getByRole("button", { name: "Check Acorn" })).toBe(row);
     await fireEvent.click(view.getByRole("button", { name: "Refresh shelves" }));
     expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
-    expect(view.getByText("To do · 1")).toBeVisible();
+    expect(view.getByText("1 to do")).toBeVisible();
   });
 
   it("rebuilds the captured place names when a mounted ledger changes language", async () => {
@@ -303,7 +330,7 @@ describe("while source shelves hold", () => {
     const place = view.container.querySelector<HTMLElement>("#fish-ocean");
     if (!place) throw new Error("Expected the Ocean section");
     const ocean = within(place);
-    await fireEvent.click(ocean.getByText(/^Not now ·/u));
+    await fireEvent.click(ocean.getByText("Not now", { exact: true }));
     await fireEvent.click(ocean.getByRole("button", { name: /Anchovy Almanac/u }));
     expect(ocean.getByText("Comes back by waiting, in Winter.")).toBeVisible();
   });

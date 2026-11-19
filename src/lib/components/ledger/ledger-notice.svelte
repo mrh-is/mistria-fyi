@@ -12,7 +12,7 @@
 <style>
   .ledger-notice:not(:empty) {
     position: sticky;
-    top: calc(var(--ledger-sticky-top, 0px) + 3.25rem);
+    top: var(--ledger-header-height, 3.25rem);
     z-index: calc(var(--z-page-header) + 1);
     display: flex;
     flex-wrap: wrap;

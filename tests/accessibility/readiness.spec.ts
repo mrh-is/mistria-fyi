@@ -81,7 +81,7 @@ test.describe("@readiness application readiness", () => {
     await gotoApplication(page, "/almanac");
     await expectResolvedTheme(page, "dark");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    await artifacts.getByText(/^Not now ·/).click();
+    await artifacts.getByText("Not now", { exact: true }).click();
     await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
   });

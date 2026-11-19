@@ -61,6 +61,7 @@
         canonicalIds: section.canonicalIds,
         id: section.id,
         name: getName("ui", section.id, locale),
+        progress: section.progress,
         rows: section.rows
           .map((row) => {
             const names = getAlmanacEntryNames(row.entry, locale);
@@ -131,11 +132,12 @@
 <SpoilerGuardDialog guard={checkOff.guard} />
 <LedgerNotice changed={ledger.needsRefresh} onRefresh={ledger.refresh} />
 <LedgerIndex {sections}>
-  {#each sections as { id, name, rows, canonicalIds }, index (id)}
+  {#each sections as { id, name, rows, canonicalIds, progress }, index (id)}
     <LedgerSection
       {id}
       {locale}
       {name}
+      {progress}
       {rows}
       {visible}
       explains={index === 0}

@@ -47,7 +47,7 @@
     tabindex="-1"
     data-ledger-index-heading
     class="sticky z-[var(--z-section-header)] scroll-mt-[var(--ledger-anchor-offset,8rem)] bg-background"
-    style="top: calc(var(--ledger-sticky-top, 0px) + var(--section-header-sticky-top, 0px))"
+    style="top: var(--section-header-sticky-top, 0px)"
   >
     <button
       type="button"
@@ -79,3 +79,12 @@
     {@render children()}
   </div>
 </section>
+
+<style>
+  h2[data-ledger-index-heading]:focus-visible {
+    outline: none;
+    text-decoration: underline;
+    text-decoration-color: var(--color-guide-voice);
+    text-underline-offset: 0.25em;
+  }
+</style>
