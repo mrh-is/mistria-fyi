@@ -27,13 +27,14 @@ export async function analyzeAccessibility(
   rules?: string[],
 ): Promise<AxeAssessment> {
   await waitForRendering(page);
-  let builder = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]);
+  const builder = new AxeBuilder({ page });
   if (context.route === "/almanac" && page.frames().length === 1) {
     // The ledger produces thousands of passing nodes. Finish the scan in the page so axe can
     // trim passing results before Playwright transfers them. Pages with frames use the normal scan.
-    builder = builder.options({ resultTypes: ["violations", "incomplete"] }).setLegacyMode();
+    builder.options({ resultTypes: ["violations", "incomplete"] }).setLegacyMode();
   }
-  if (rules) builder = builder.withRules(rules);
+  if (rules) builder.withRules(rules);
+  else builder.withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]);
   const results = await builder.analyze();
   const assessment = assessAxeResults(results, context);
 
