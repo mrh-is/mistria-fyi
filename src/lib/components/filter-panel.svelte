@@ -344,9 +344,38 @@
     font-size: var(--text-3xs);
   }
 
+  /*
+   * With a mouse the sources read as a two-column checklist in print, not a pile of buttons: a
+   * shown source in ink with a mark in the page's color, a hidden one muted & struck through.
+   */
   @media (hover: hover) and (pointer: fine) {
-    .filter-chip {
-      min-height: 34px;
+    .chip-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 8px;
+    }
+
+    .chip-row .filter-chip {
+      min-height: 32px;
+      justify-content: flex-start;
+      padding: 4px 8px;
+      border: 0;
+      border-inline-start: 2px solid transparent;
+      background: none;
+      font-size: var(--text-2xs);
+      text-decoration: line-through;
+      text-decoration-color: var(--color-rule);
+    }
+
+    .chip-row .filter-chip--active {
+      border-inline-start-color: var(--primary);
+      background: none;
+      text-decoration: none;
+    }
+
+    .chip-row .filter-chip:hover {
+      background: var(--color-paper-sunken);
+      outline: none;
     }
   }
 

@@ -183,21 +183,32 @@
     }
 
     .book--tools:has(:global([data-ledger-layout])):has(:global([data-page-header="category"])) {
-      --ledger-tools-edge: 4rem;
+      --ledger-tools-edge: calc(var(--size-ribbon-width) + 1rem);
     }
 
+    /*
+     * The tools share the page header's centered column (the root layout's max-w-6xl), so they end
+     * just inside the header's ribbon at any width. The row itself lets clicks through to the
+     * header's back link & title; only the tools take them.
+     */
     .book--tools:has(:global([data-ledger-layout])) .book__tools {
       position: sticky;
       top: 0;
       z-index: var(--z-toolbar);
-      display: grid;
-      inline-size: var(--ledger-tools-width);
+      display: flex;
+      inline-size: min(100%, 72rem);
       min-block-size: var(--ledger-header-height);
-      justify-self: end;
+      justify-self: center;
       align-items: center;
-      margin-inline-end: var(--ledger-tools-edge);
-      padding: 0;
+      justify-content: flex-end;
+      padding: 0 var(--ledger-tools-edge) 0 0;
       grid-area: 1 / 2 / 3 / 3;
+      pointer-events: none;
+    }
+
+    .book--tools:has(:global([data-ledger-layout])) .book__tools > :global(*) {
+      inline-size: var(--ledger-tools-width);
+      pointer-events: auto;
     }
 
     /* The warning can occupy the first line when saved progress is unavailable. */

@@ -446,7 +446,17 @@ A place link opens its containing source group & focuses the place heading after
 The Completed fold starts closed. A place link into it opens the fold, and search can count the
 closed fold’s rows. Closed places expose their unmasked item names to browser Find through
 `hidden="until-found"`. A match opens its place & shelf and scrolls the corresponding interactive
-row into view. The desktop section index follows document scroll.
+row into view.
+
+`components/ledger/ledger-index.svelte` lists the sections. At wide widths it's a rail beside the
+ledger, and below them each section's sticky head opens it as a jump list. A section counts as
+current once its head passes a reading line 30% of the way down the viewport. The index also owns
+scroll during search. The first keystroke remembers the row at the reading line, by its fact. Each
+new query starts at the top of the ledger, and clearing the search scrolls that row back to where it
+was. Navigating away forgets it.
+
+Ledger rows can't share a CSS subgrid, because `content-visibility` contains their layout. Each row
+lays out the same deterministic tracks instead, which its shelf passes as `--ledger-tracks`.
 
 In Everything’s Category grouping, `controllers/completion-scope.svelte.ts` partitions sections by
 the completion their headers show. Compact records & masked top-level spoiler sections register

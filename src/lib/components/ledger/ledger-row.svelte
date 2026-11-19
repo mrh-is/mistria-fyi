@@ -5,9 +5,10 @@
   import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import plural from "#lib/i18n/catalogs/plural.js";
-  import { ledgerSourceFamily } from "#lib/presentation/ledger.js";
+  import { ledgerCellText, ledgerSourceFamily } from "#lib/presentation/ledger.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -106,6 +107,30 @@
     if (covered) return "unchecked";
     return obtained ? "obtained" : "unchecked";
   });
+  /** Each timetable column's text: the first shown source in that family, in plain words. */
+  let cells = $derived(
+    columns.map((family) => {
+      const source = placement.visibleSources.find(
+        (candidate) =>
+          toolbarState.showsSource(candidate) && ledgerSourceFamily(candidate) === family,
+      );
+      if (!source) return { family, present: false, text: undefined };
+      const text = ledgerCellText(buildSourceSegments(source, lookups), (condition) =>
+        isConditionVisible(condition, userState.progressionState),
+      );
+      return { family, present: true, text };
+    }),
+  );
+  let opensSources = $derived(active && !covered && placement.allSources.length > 0);
+
+  /** A click anywhere on the line opens the sources, except on its own controls. */
+  function openFromLine(event: MouseEvent): void {
+    if (!opensSources) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest("button, a, input, label")) return;
+    if (globalThis.getSelection()?.toString()) return;
+    toggleSources(false);
+  }
   let reportable = $derived(
     covered
       ? { category: reportCategory, displayName: "Spoilered item", page: page.url.pathname }
@@ -131,12 +156,15 @@
   data-ledger-row={active || undefined}
   hidden={active ? undefined : "until-found"}
   onbeforematch={onFind}
+  data-ledger-fact={fact}
   data-highlighted={highlighted}
   data-source-state={expanded ? "open" : "closed"}
   style:--sprite-tint={`var(--color-category-${category})`}
   {@attach active ? feedback.reportableAttachment(reportable) : undefined}
 >
-  <div class="line">
+  <!-- The name button is the keyboard path; the line only widens the pointer target. -->
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="line" class:opens={opensSources} onclick={openFromLine}>
     {#if active}
       <TrackerCheckbox
         {fact}
@@ -168,6 +196,8 @@
             height="30"
           />
         </span>
+      {:else}
+        <span class="sprite" aria-hidden="true"></span>
       {/if}
     {/if}
     <div class="item">
@@ -197,11 +227,11 @@
         {@render label()}
       {/if}
     </div>
-    {#each columns as family (family)}
+    {#each cells as { family, text, present }, column (family)}
       {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
-      <span class="cell" aria-hidden="true">
-        {#if placement.visibleSources.some((source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === family)}
-          <FamilyIcon class="size-4" />
+      <span class="cell" class:first={column === 0} aria-hidden="true">
+        {#if present}
+          {#if text}{text}{:else}<FamilyIcon class="size-4" />{/if}
         {/if}
       </span>
     {/each}
@@ -246,29 +276,49 @@
   [data-ledger-row] {
     content-visibility: auto;
     contain-intrinsic-block-size: auto var(--tracker-row-min-size);
-    border-block-end: 1px solid var(--color-ink-hairline);
     border-inline-start: 2px solid transparent;
+    border-block-end: 1px solid var(--color-rule);
+  }
+
+  /* Many rows to a page: compact for a mouse, a full fingertip for touch. */
+  @media (pointer: fine) and (hover: hover) {
+    [data-ledger-row] {
+      --tracker-target-size: 32px;
+      --tracker-row-min-size: 36px;
+    }
+  }
+
+  @media (any-pointer: coarse), (hover: none) {
+    [data-ledger-row] {
+      --tracker-target-size: 44px;
+      --tracker-row-min-size: 44px;
+    }
   }
 
   [data-highlighted="true"] {
-    background: color-mix(in srgb, var(--color-guide-voice) 12%, var(--color-paper));
-    border-inline-start-color: var(--color-guide-voice);
+    background: color-mix(in srgb, var(--primary) 9%, var(--color-paper));
+    border-inline-start-color: var(--primary);
   }
 
   .line {
-    display: flex;
+    display: grid;
     min-block-size: var(--tracker-row-min-size);
     align-items: center;
-    gap: 0.35rem;
+    column-gap: 0.35rem;
+    grid-template-columns: var(--ledger-row-tracks, auto auto minmax(0, 1fr));
+  }
+
+  .line.opens {
+    cursor: pointer;
   }
 
   .sprite {
-    flex: none;
+    display: block;
+    inline-size: 30px;
   }
 
   .item {
     min-inline-size: 0;
-    flex: 1;
     font-size: var(--text-base);
     line-height: 1.15;
     overflow-wrap: anywhere;
@@ -287,6 +337,12 @@
     color: var(--color-guide-voice);
   }
 
+  .line.opens:hover .item-name > span {
+    text-decoration: underline;
+    text-decoration-color: var(--color-rule);
+    text-underline-offset: 0.2em;
+  }
+
   small {
     display: block;
     color: var(--color-ink-muted);
@@ -297,16 +353,9 @@
     text-decoration: line-through;
   }
 
-  .cell {
+  .cell,
+  .discovery {
     display: none;
-  }
-
-  .discovery button {
-    min-block-size: var(--tracker-target-size);
-    padding-inline: 0.25rem;
-    color: var(--color-guide-voice);
-    font-family: var(--font-controls);
-    font-size: var(--text-xs);
   }
 
   .details {
@@ -322,17 +371,39 @@
 
   @media (min-width: 60rem) {
     .cell {
-      display: grid;
-      inline-size: 6rem;
-      flex: none;
-      place-items: center;
+      display: flex;
+      align-self: stretch;
+      align-items: center;
+      padding-inline: 0.5rem;
       color: var(--color-ink-muted);
+      font-family: var(--font-annotation);
+      font-size: var(--text-xs);
+      line-height: 1.25;
     }
 
+    .cell.first {
+      border-inline-start: 1px solid var(--color-rule-faint);
+    }
+
+    /* An aside, not a source: small & quiet beside the real columns. */
     .discovery {
-      inline-size: 8rem;
-      flex: none;
-      text-align: center;
+      display: block;
+      text-align: start;
+    }
+
+    .discovery button {
+      max-inline-size: 6rem;
+      min-block-size: var(--tracker-target-size);
+      padding-inline: 0.25rem;
+      color: var(--color-ink-muted);
+      font-family: var(--font-annotation);
+      font-size: var(--text-2xs);
+      line-height: 1.2;
+      text-align: start;
+    }
+
+    .discovery button:hover {
+      color: var(--color-guide-voice);
     }
   }
 </style>

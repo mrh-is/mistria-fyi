@@ -2235,6 +2235,28 @@
   {
     "translations": {
       "en": "Completed",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-index.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Completed",
       "ja": "完了済み",
       "zh-Hans": "已完成",
       "zh-Hant": "已完成",
@@ -2936,6 +2958,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Escape",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
         ]
@@ -4287,6 +4331,28 @@
   },
   {
     "translations": {
+      "en": "Jump to a section",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-index.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Jump to {0}, first villager record",
       "ja": "{0}へジャンプ、最初の町の住民の記録",
       "zh-Hans": "跳转到{0}，第一个村民记录",
@@ -5220,6 +5286,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Name",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
         ]
       }
     ],
@@ -9230,6 +9318,28 @@
   },
   {
     "translations": {
+      "en": "Visibility filters, some hidden",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "WIN",
       "ja": "冬",
       "zh-Hans": "冬",
@@ -11426,6 +11536,39 @@
   },
   {
     "translations": {
+      "en": "{0} left: auto; right: {1}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "vertical"
+              ],
+              [
+                "1",
+                "right"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} level",
       "ja": "{0}レベル",
       "zh-Hans": "{0}等级",
@@ -12501,6 +12644,35 @@
               [
                 "2",
                 "48"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}. Jump to a section",
+      "ja": "",
+      "zh-Hans": "",
+      "zh-Hant": "",
+      "es": "",
+      "fr": "",
+      "ko": "",
+      "ru": ""
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
               ]
             ]
           }

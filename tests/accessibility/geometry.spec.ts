@@ -17,6 +17,7 @@ import {
   findTargetSizeViolations,
 } from "./support/geometry.js";
 import {
+  closeSearch,
   openLegacyArtifacts,
   openSearch,
   openSettingsCard,
@@ -70,7 +71,7 @@ test.describe("320-pixel reflow", () => {
     await gotoApplication(page, "/");
     await openSearch(page, "turnip");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await closeSearch(page);
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
@@ -217,7 +218,7 @@ test.describe("interactive target geometry", () => {
         target: styles.getPropertyValue("--tracker-target-size"),
       };
     });
-    expect(responsiveSizes).toEqual({ row: "40px", sprite: "36px", target: "32px" });
+    expect(responsiveSizes).toEqual({ row: "36px", sprite: "36px", target: "32px" });
 
     const control = row.getByRole("button", { name: /^Check / });
     const box = await control.boundingBox();

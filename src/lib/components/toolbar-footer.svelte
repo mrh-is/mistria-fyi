@@ -5,8 +5,9 @@
   import IconPlugConnected from "@tabler/icons-svelte-runes/icons/plug-connected";
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconSearch from "@tabler/icons-svelte-runes/icons/search";
-  import { flushSync, onDestroy, tick, untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
+  import { MediaQuery } from "svelte/reactivity";
   import { fade } from "svelte/transition";
 
   import { getBookPanels } from "#lib/components/book/book-panels.svelte.js";
@@ -19,9 +20,7 @@
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
-  import { Input } from "#lib/components/ui/input/index.js";
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
-  import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { stripLocale } from "#lib/i18n/locale-path.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -74,6 +73,22 @@
   });
 
   let panelElement = $state<HTMLElement | null>(null);
+
+  // At book widths a panel opens from the control that opened it, not from the screen's foot.
+  const bookWidth = new MediaQuery("(min-width: 48rem) and (min-height: 34rem)", false);
+  let viewportTick = $state(0);
+  let panelAnchor = $derived.by(() => {
+    void viewportTick;
+    const opener = panels.active === null ? null : panels.opener;
+    if (!bookWidth.current || !opener?.isConnected) return "";
+    const rect = opener.getBoundingClientRect();
+    const right = Math.max(8, globalThis.innerWidth - rect.right);
+    const below = rect.top < globalThis.innerHeight / 2;
+    const vertical = below
+      ? `top: ${rect.bottom + 8}px; bottom: auto;`
+      : `top: auto; bottom: ${globalThis.innerHeight - rect.top + 8}px;`;
+    return `${vertical} left: auto; right: ${right}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;`;
+  });
 
   function focusedElement(): HTMLElement | null {
     return document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -136,11 +151,6 @@
     feedbackContext.reset();
   });
 
-  async function afterTick(run: () => void): Promise<void> {
-    await tick();
-    run();
-  }
-
   function closePanel(): void {
     panels.close();
   }
@@ -158,22 +168,8 @@
   });
 
   let searchInput = $state<HTMLInputElement | null>(null);
-  let searchOpener: HTMLElement | null = null;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(debounceTimer));
-
-  function closeSearch(): void {
-    clearTimeout(debounceTimer);
-    toolbarState.closeSearch();
-    const focusTarget = searchOpener;
-    searchOpener = null;
-    void afterTick(() => {
-      const restoredTarget = focusTarget?.isConnected
-        ? focusTarget
-        : document.querySelector<HTMLElement>("[data-toolbar-search-trigger]");
-      restoredTarget?.focus();
-    });
-  }
 
   function handleSearchInput(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -183,12 +179,26 @@
     }, 200);
   }
 
-  function openSearch(): void {
+  // The field is always there; focusing it is what opens a search (Home lifts its layout for it).
+  function focusSearch(): void {
     panels.close(false);
-    searchOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     toolbarState.openSearch();
-    flushSync();
-    searchInput?.focus();
+  }
+
+  function blurSearch(): void {
+    if (!toolbarState.searchQuery) toolbarState.searchOpen = false;
+  }
+
+  function clearSearch(): void {
+    clearTimeout(debounceTimer);
+    toolbarState.setSearchQuery("");
+    if (searchInput) searchInput.value = "";
+  }
+
+  function handleSearchKey(event: KeyboardEvent): void {
+    if (event.key !== "Escape") return;
+    clearSearch();
+    searchInput?.blur();
   }
 
   let filtersActive = $derived(
@@ -224,155 +234,137 @@
 
   <nav
     aria-label="Field guide tools"
-    class="toolbar pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
+    class="toolbar fixed right-0 bottom-0 left-0 z-[var(--z-toolbar)]"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
   >
-    {#if toolbarState.searchOpen}
-      <div class="search-bar pointer-events-auto flex items-center gap-2 p-1 shadow-lg">
-        <div class="relative flex-1">
-          <IconSearch
-            class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          />
+    <div class="toolbar__row">
+      <!-- Contents holds the thumb tabs, Send a note, & Settings; at book widths the rail does. -->
+      <button
+        class="floating-tool floating-tool--phone {panels.active === 'contents'
+          ? 'floating-tool--active'
+          : ''}"
+        type="button"
+        aria-label="Contents"
+        aria-expanded={panels.active === "contents"}
+        aria-controls="contents-panel"
+        data-panel-entry="contents feedback settings"
+        onclick={(event) => {
+          panels.toggle("contents", event.currentTarget);
+        }}
+      >
+        <IconListDetails class="size-5" />
+      </button>
+      {#if syncing}
+        <div class="sync-tool">
+          {#if syncReceiver.gapDays !== undefined && panels.active !== "sync"}
+            <p class="sync-tool__slip">
+              {`Haven’t heard from your game in ${syncReceiver.gapDays} days`}
+            </p>
+          {/if}
+          <button
+            class="floating-tool {panels.active === 'sync' ? 'floating-tool--active' : ''}"
+            type="button"
+            aria-label={`Save file sync: ${syncStatusLabel}`}
+            aria-expanded={panels.active === "sync"}
+            aria-controls="sync-status-panel"
+            onclick={(event) => {
+              panels.toggle("sync", event.currentTarget);
+            }}
+          >
+            <IconPlugConnected class="size-5" />
+            {#if syncSpeaksUp}<span class="sync-tool__dot" aria-hidden="true"></span>{/if}
+          </button>
+        </div>
+      {/if}
+
+      {#if toolbar.search}
+        <div class="search-field" data-toolbar-search>
+          <IconSearch class="search-field__icon size-4" />
           <label class="sr-only" for="tracker-search">Search items</label>
-          <Input
-            bind:ref={searchInput}
-            class="min-h-11 px-9"
+          <input
+            bind:this={searchInput}
+            class="search-field__input"
             id="tracker-search"
             placeholder="Search items…"
             type="text"
+            enterkeyhint="search"
+            autocomplete="off"
             value={toolbarState.searchQuery}
             oninput={handleSearchInput}
+            onfocus={focusSearch}
+            onblur={blurSearch}
+            onkeydown={handleSearchKey}
           />
           {#if toolbarState.searchQuery}
             <button
-              class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+              class="search-field__clear"
               type="button"
               aria-label="Clear search"
-              onclick={() => {
-                toolbarState.setSearchQuery("");
-              }}>×</button
+              onclick={clearSearch}>×</button
             >
           {/if}
         </div>
-        <button
-          class="min-h-11 px-2 font-controls text-xs text-muted-foreground hover:text-foreground"
-          type="button"
-          onclick={closeSearch}>{getName("ui", "cancel", page.data.locale)}</button
-        >
-      </div>
-    {:else}
-      <div class="flex items-end justify-between gap-3">
-        <div class="flex items-center gap-1.5">
-          <!-- Contents holds the thumb tabs, Send a note, & Settings; at book widths the rail does. -->
-          <button
-            class="floating-tool floating-tool--phone {panels.active === 'contents'
-              ? 'floating-tool--active'
-              : ''}"
-            type="button"
-            aria-label="Contents"
-            aria-expanded={panels.active === "contents"}
-            aria-controls="contents-panel"
-            data-panel-entry="contents feedback settings"
-            onclick={(event) => {
-              panels.toggle("contents", event.currentTarget);
-            }}
-          >
-            <IconListDetails class="size-5" />
-          </button>
-          {#if syncing}
-            <div class="sync-tool">
-              {#if syncReceiver.gapDays !== undefined && panels.active !== "sync"}
-                <p class="sync-tool__slip">
-                  {`Haven’t heard from your game in ${syncReceiver.gapDays} days`}
-                </p>
-              {/if}
-              <button
-                class="floating-tool {panels.active === 'sync' ? 'floating-tool--active' : ''}"
-                type="button"
-                aria-label={`Save file sync: ${syncStatusLabel}`}
-                aria-expanded={panels.active === "sync"}
-                aria-controls="sync-status-panel"
-                onclick={(event) => {
-                  panels.toggle("sync", event.currentTarget);
-                }}
-              >
-                <IconPlugConnected class="size-5" />
-                {#if syncSpeaksUp}<span class="sync-tool__dot" aria-hidden="true"></span>{/if}
-              </button>
-            </div>
-          {/if}
-        </div>
+      {:else}
+        <span class="toolbar__spacer"></span>
+      {/if}
 
-        <div class="flex items-center gap-1.5">
-          {#if toolbar.search}
-            <button
-              class="floating-tool"
-              type="button"
-              aria-label="Search"
-              data-toolbar-search-trigger
-              onclick={openSearch}
-            >
-              <IconSearch class="size-5" />
-            </button>
+      {#if toolbar.filter}
+        <button
+          class="floating-tool {panels.active === 'visibility'
+            ? 'floating-tool--active'
+            : filtersActive
+              ? 'floating-tool--filtered'
+              : ''}"
+          type="button"
+          aria-label="Visibility filters"
+          aria-expanded={panels.active === "visibility"}
+          aria-controls="filter-panel"
+          onclick={(event) => {
+            panels.toggle("visibility", event.currentTarget);
+          }}
+        >
+          <IconFilter class="size-5" />
+          {#if filtersActive}<span class="filter-tool__dot" aria-hidden="true"></span>{/if}
+        </button>
+      {/if}
+      {#if toolbar.clock}
+        <button
+          class="floating-tool floating-tool--tabbed {panels.active === 'clock'
+            ? 'floating-tool--active'
+            : ''}"
+          type="button"
+          aria-label={trackingReminders.clockHint
+            ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                userState.state.worldState.weather,
+                userState.state.worldState.season,
+              )}. This sorts your lists; set today’s day.`
+            : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                userState.state.worldState.weather,
+                userState.state.worldState.season,
+              )}`}
+          aria-expanded={panels.active === "clock"}
+          aria-controls="clock-panel"
+          onclick={(event) => {
+            panels.toggle("clock", event.currentTarget);
+          }}
+        >
+          <IconClock class="size-5" />
+          {#if trackingReminders.clockHint}
+            <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
           {/if}
-          {#if toolbar.filter}
-            <button
-              class="floating-tool {panels.active === 'visibility'
-                ? 'floating-tool--active'
-                : filtersActive
-                  ? 'floating-tool--filtered'
-                  : ''}"
-              type="button"
-              aria-label="Visibility filters"
-              aria-expanded={panels.active === "visibility"}
-              aria-controls="filter-panel"
-              onclick={(event) => {
-                panels.toggle("visibility", event.currentTarget);
-              }}
-            >
-              <IconFilter class="size-5" />
-            </button>
-          {/if}
-          {#if toolbar.clock}
-            <button
-              class="floating-tool floating-tool--tabbed {panels.active === 'clock'
-                ? 'floating-tool--active'
-                : ''}"
-              type="button"
-              aria-label={trackingReminders.clockHint
-                ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
-                    userState.state.worldState.weather,
-                    userState.state.worldState.season,
-                  )}. This sorts your lists; set today’s day.`
-                : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
-                    userState.state.worldState.weather,
-                    userState.state.worldState.season,
-                  )}`}
-              aria-expanded={panels.active === "clock"}
-              aria-controls="clock-panel"
-              onclick={(event) => {
-                panels.toggle("clock", event.currentTarget);
-              }}
-            >
-              <IconClock class="size-5" />
-              {#if trackingReminders.clockHint}
-                <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
-              {/if}
-              <!-- Sits behind the button's edge, at the screen's edge. -->
-              <span class="clock-tab" data-clock-tab aria-hidden="true">
-                <Icon.Season season={userState.state.worldState.season} class="size-3" />
-                <Icon.Weather
-                  season={userState.state.worldState.season}
-                  weather={userState.state.worldState.weather}
-                  class="size-3"
-                />
-              </span>
-            </button>
-          {/if}
-        </div>
-      </div>
-    {/if}
+          <!-- Sits behind the button's edge, at the screen's edge. -->
+          <span class="clock-tab" data-clock-tab aria-hidden="true">
+            <Icon.Season season={userState.state.worldState.season} class="size-3" />
+            <Icon.Weather
+              season={userState.state.worldState.season}
+              weather={userState.state.worldState.weather}
+              class="size-3"
+            />
+          </span>
+        </button>
+      {/if}
+    </div>
   </nav>
 
   {#if panels.active !== null && panels.active !== "feedback"}
@@ -381,7 +373,7 @@
       animateOut
       closeLabel="Close panel"
       onClose={closePanel}
-      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
+      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}; {panelAnchor}"
     >
       {#if panels.active === "contents"}
         <FoldoutPanel id="contents-panel" title="Contents" onClose={closePanel}>
@@ -422,17 +414,104 @@
   <p class="sr-only" role="status" aria-live="polite">{filterStatus}</p>
 {/if}
 
+<svelte:window onresize={() => (viewportTick += 1)} />
+
 <style>
   /* Stays put, above the page, while a page turns (see app.css). */
   .toolbar {
     view-transition-name: book-toolbar;
   }
 
-  .search-bar,
+  /*
+   * On phones the tools sit on a strip of the cover's cloth along the screen's foot, running under
+   * the home indicator, as the mockups in #477 draw it.
+   */
+  .toolbar {
+    /* No end padding: the clock's season tab runs off the screen's edge. */
+    padding: 0.5rem 0 max(0.5rem, env(safe-area-inset-bottom)) 0.75rem;
+    border-block-start: 1px solid var(--color-cover-deep);
+    background-color: var(--color-cover);
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--color-cover-ink) 3%, transparent) 0 1px,
+        transparent 1px 3px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-cover-deep) 40%, transparent) 0 1px,
+        transparent 1px 3px
+      );
+    color: var(--color-cover-ink);
+  }
+
+  .toolbar__row {
+    display: flex;
+    max-inline-size: 32rem;
+    align-items: center;
+    gap: 0.375rem;
+    margin-inline: auto;
+  }
+
+  .toolbar__spacer {
+    flex: 1;
+  }
+
+  .search-field {
+    position: relative;
+    display: flex;
+    min-inline-size: 0;
+    flex: 1;
+    align-items: center;
+  }
+
+  .search-field :global(.search-field__icon) {
+    position: absolute;
+    inset-inline-start: 0.6rem;
+    color: var(--color-cover-ink-muted);
+    pointer-events: none;
+  }
+
+  .search-field__input {
+    min-inline-size: 0;
+    min-block-size: 44px;
+    flex: 1;
+    padding-inline: 2rem 2.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-cover-ink) 28%, transparent);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--color-cover-deep) 55%, transparent);
+    color: var(--color-cover-ink);
+    font-family: var(--font-body);
+    font-style: italic;
+  }
+
+  .search-field__input::placeholder {
+    color: var(--color-cover-ink-muted);
+  }
+
+  .search-field__input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+
+  .search-field__clear {
+    position: absolute;
+    inset-inline-end: 0;
+    display: grid;
+    inline-size: 44px;
+    block-size: 44px;
+    place-items: center;
+    color: var(--color-cover-ink-muted);
+  }
+
+  .search-field__clear:hover {
+    color: var(--color-cover-ink);
+  }
+
   .floating-tool {
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
-    background: var(--color-paper-raised);
+    background: transparent;
   }
 
   .floating-tool :global(svg) {
@@ -445,9 +524,8 @@
     min-height: 44px;
     align-items: center;
     justify-content: center;
-    color: var(--color-ink-muted);
-    box-shadow: var(--shadow-medium);
-    pointer-events: auto;
+    position: relative;
+    color: var(--color-cover-ink);
     transition:
       box-shadow 150ms ease-out,
       color 150ms ease-out,
@@ -480,11 +558,13 @@
 
   .floating-tool:is(:hover, :focus-visible),
   .floating-tool--active {
-    color: var(--primary);
-    box-shadow: var(--shadow-large);
+    border-color: color-mix(in srgb, var(--color-cover-ink) 40%, transparent);
+    outline: none;
+  }
+
+  .floating-tool:focus-visible {
     outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    transform: translateY(-2px);
+    outline-offset: 1px;
   }
 
   .sync-tool {
@@ -530,9 +610,19 @@
     transform: translateX(-50%) rotate(-1deg);
   }
 
+  /* Filters that hide something take the page's color, with a dot, like the sync tool's. */
   .floating-tool--filtered {
-    color: var(--color-toolbar-filtered);
-    background: color-mix(in srgb, var(--color-paper-raised) 86%, var(--color-toolbar-filtered));
+    color: var(--primary);
+  }
+
+  .filter-tool__dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
   }
 
   .floating-tool:is(:hover, :focus-visible) :global(svg) {
@@ -545,8 +635,6 @@
       transition-duration: 0.01ms;
     }
 
-    .floating-tool:is(:hover, :focus-visible),
-    .floating-tool--active,
     .floating-tool:is(:hover, :focus-visible) :global(svg) {
       transform: none;
     }
@@ -563,12 +651,60 @@
     .toolbar {
       position: relative;
       inset: auto;
-      max-width: none;
-      padding-inline: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--color-ink-muted);
+    }
+
+    .toolbar__row {
+      max-inline-size: none;
+      justify-content: flex-end;
+    }
+
+    .search-field {
+      max-inline-size: 22rem;
+    }
+
+    /* On the page's paper the field is a ruled line to write on, not a box. */
+    .search-field :global(.search-field__icon) {
+      color: var(--color-ink-muted);
+    }
+
+    .search-field__input {
+      padding-inline-start: 1.75rem;
+      border: 0;
+      border-block-end: 1px solid var(--color-ink-hairline);
+      border-radius: 0;
+      background: none;
+      color: var(--color-ink);
+    }
+
+    .search-field :global(.search-field__icon) {
+      inset-inline-start: 0.25rem;
+    }
+
+    .search-field__input::placeholder,
+    .search-field__clear {
+      color: var(--color-ink-muted);
+    }
+
+    .search-field__clear:hover {
+      color: var(--color-ink);
     }
 
     .floating-tool {
-      box-shadow: none;
+      color: var(--color-ink-muted);
+    }
+
+    .floating-tool:is(:hover, :focus-visible),
+    .floating-tool--active {
+      border-color: var(--color-rule);
+      color: var(--primary);
+    }
+
+    .floating-tool--filtered {
+      color: var(--primary);
     }
 
     .sync-tool__slip {

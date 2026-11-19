@@ -106,6 +106,7 @@
       {rows}
       {visible}
       explains={index === 0}
+      divider={index > 0}
       forceOpen={hash === id}
     >
       {#snippet row(placement, shelf, columns, discovery, highlighted)}

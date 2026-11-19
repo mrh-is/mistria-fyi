@@ -25,6 +25,11 @@ export class BookPanels {
     this.#root = root;
   }
 
+  /** The control that opened the current panel, which a wide layout anchors the panel to. */
+  get opener(): HTMLElement | null {
+    return this.#opener;
+  }
+
   /** Closes the open panel; by default, focus returns to its trigger or a visible equivalent. */
   close(restoreFocus = true): void {
     const closing = this.active;

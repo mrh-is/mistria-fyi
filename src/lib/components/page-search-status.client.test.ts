@@ -51,13 +51,13 @@ describe("PageSearchStatus", () => {
     expect(view.getByRole("status")).toHaveTextContent("No items found");
   });
 
-  it("names the shelf that lost rows, in its heading's typeface", async () => {
+  it("blames the filters, quietly, when they hide every match", async () => {
     report(0, { todo: 1 });
     const view = await search("bass");
 
     expect(view.getByRole("status")).toHaveTextContent("1 To do item is being filtered out.");
-    expect(view.container.querySelector(".page-search-status__shelf")).toHaveTextContent("To do");
-    expect(view.getByRole("button", { name: "Show anyway" })).toBeInTheDocument();
+    expect(view.getAllByText("Your filters leave nothing on this page.")).not.toHaveLength(0);
+    expect(view.queryByRole("button", { name: "Show anyway" })).toBeNull();
   });
 
   it("gives one note, for the most actionable shelf", async () => {
@@ -69,7 +69,8 @@ describe("PageSearchStatus", () => {
     );
   });
 
-  it("notes what filters take away without a search", async () => {
+  // The reader set the filters, & the filter button shows they're on, so only a screen reader hears it.
+  it("announces what filters take away without showing a notice", async () => {
     report(3, { todo: 2 });
     toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
     toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
@@ -77,9 +78,7 @@ describe("PageSearchStatus", () => {
     await tick();
 
     expect(view.getByRole("status")).toHaveTextContent("2 To do items are being filtered out.");
-
-    await fireEvent.click(view.getByRole("button", { name: "Show anyway" }));
-    expect(toolbarState.isSourceFilterNarrowing).toBe(false);
+    expect(view.container.querySelector("[data-page-search-status]")).toBeNull();
     toolbarState.unregisterSourceFilters("test");
   });
 
@@ -104,20 +103,6 @@ describe("PageSearchStatus", () => {
     await tick();
 
     expect(view.getByRole("status")).toHaveTextContent("1 result");
-  });
-
-  it("pauses filters for the search without changing them, & can undo that", async () => {
-    report(0, { todo: 3 });
-    const view = await search("bass");
-
-    await fireEvent.click(view.getByRole("button", { name: "Show anyway" }));
-
-    expect(toolbarState.searchShowsAll).toBe(true);
-    expect(view.getByText(/Your filters are off for this search/u)).toBeInTheDocument();
-
-    await fireEvent.click(view.getByRole("button", { name: "Turn them back on" }));
-
-    expect(toolbarState.searchShowsAll).toBe(false);
   });
 
   it("ends the pause with the search", () => {

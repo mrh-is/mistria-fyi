@@ -23,7 +23,7 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(page.getByRole("button", { exact: true, name: "Quick settings" })).toBeFocused();
     const tools = page.getByRole("navigation", { name: "Field guide tools" });
     await page.keyboard.press("Tab");
-    await expect(tools.getByRole("button", { name: "Search" })).toBeFocused();
+    await expect(tools.getByRole("textbox", { name: "Search items" })).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: /^Season & weather/ })).toBeFocused();
   });
@@ -91,17 +91,16 @@ test.describe("keyboard and focus accessibility", () => {
 
   test("search supports keyboard entry, clearing, and closure", async ({ page }) => {
     await gotoApplication(page, "/");
-    const trigger = page.getByRole("button", { name: "Search" });
-    await trigger.focus();
-    await page.keyboard.press("Enter");
     const search = page.getByRole("textbox", { name: "Search items" });
-    await expect(search).toBeFocused();
-    await search.fill("turnip");
+    await search.focus();
+    await page.keyboard.type("turnip");
     await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
     await page.getByRole("button", { name: "Clear search" }).press("Enter");
     await expect(search).toHaveValue("");
-    await page.getByRole("button", { name: "Cancel" }).press("Enter");
-    await expect(trigger).toBeFocused();
+    await search.fill("turnip");
+    await search.press("Escape");
+    await expect(search).toHaveValue("");
+    await expect(search).not.toBeFocused();
   });
 
   test("data management links home from a category page", async ({ page }) => {

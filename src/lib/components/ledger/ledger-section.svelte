@@ -2,6 +2,7 @@
   import { tick, untrack } from "svelte";
 
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
+  import { getLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { sourceFilterLabel } from "#lib/data/source-filters.js";
   import plural from "#lib/i18n/catalogs/plural.js";
@@ -20,6 +21,7 @@
   let {
     collapsible = false,
     contextualFamily,
+    divider = false,
     explains = false,
     forceOpen = false,
     id,
@@ -32,6 +34,8 @@
   }: {
     collapsible?: boolean;
     contextualFamily?: SourceFilterId;
+    /** Draws the sprig divider above this section; the parent passes `index > 0`. */
+    divider?: boolean;
     explains?: boolean;
     forceOpen?: boolean;
     id?: string;
@@ -48,6 +52,8 @@
 
   const shelves: readonly Shelf[] = ["todo", "notNow", "completed"];
   const instance = $props.id();
+  const index = getLedgerIndexContext();
+  const SPRIG_COUNT = 6;
   let open = $state(untrack(() => !collapsible));
   // Every shelf a Find match revealed stays open, so a later match elsewhere doesn't close it.
   const revealedShelves = $state<Partial<Record<Shelf, true>>>({});
@@ -72,6 +78,11 @@
   let isSearching = $derived(Boolean(toolbarState.searchQuery));
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
+  // A stable sprig per section, so filtering never reshuffles them.
+  let sprig = $derived(
+    [...(id ?? name)].reduce((hash, char) => (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0, 7) %
+      SPRIG_COUNT,
+  );
 
   async function revealFindMatch(event: Event, shelf: Shelf): Promise<void> {
     const target = event.currentTarget;
@@ -103,50 +114,93 @@
     // In a place, alternate sources earn a column when they cover a quarter of the shelf.
     // Keep the most common alternative if none reach that share.
     return ranked
-      .filter(([, count], index) => !collapsible || index === 0 || count * 4 >= entries.length)
+      .filter(([, count], rank) => !collapsible || rank === 0 || count * 4 >= entries.length)
       .map(([family]) => family);
+  }
+
+  /** The wide table's tracks: checkbox, sprite, name, each source, discovery, & the slack. */
+  function gridTracks(columns: number, discovery: boolean): string {
+    return [
+      "var(--ledger-check-size, 44px) 30px minmax(12rem, 20rem)",
+      ...Array.from({ length: columns }, () => "minmax(7rem, 12rem)"),
+      discovery ? "6rem" : "",
+      "minmax(0, 1fr)",
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 </script>
 
-<section {id} data-ledger-section hidden={!hasRows} aria-labelledby={`${instance}-heading`}>
-  <h3 id={`${instance}-heading`} tabindex="-1">
-    {#if collapsible}
-      <button
-        type="button"
-        data-section-trigger
-        aria-expanded={expanded}
-        aria-labelledby={`${instance}-name`}
-        aria-describedby={progress ? `${instance}-remaining ${instance}-progress` : undefined}
-        aria-controls={`${instance}-rows`}
-        onclick={() => (open = !open)}
-      >
-        <Icon.UI
-          type="disclosure"
-          class="size-4 {open || forceOpen || isSearching ? 'rotate-90' : ''}"
-        />
-        <span id={`${instance}-name`}>{name}</span>
-        {#if progress}
-          {@const count = formatNumber(groups.todo.length, locale)}
-          <span class="remaining" id={`${instance}-remaining`}
-            >{plural(groups.todo.length, [`${count} to do`, `${count} to do`])}</span
-          >
-        {/if}
-      </button>
-    {:else}
-      {name}
+<section
+  {id}
+  data-ledger-section
+  data-divider={divider || undefined}
+  data-sprig={sprig}
+  class:collapsible
+  hidden={!hasRows}
+  aria-labelledby={`${instance}-heading`}
+>
+  <div class="head" data-ledger-head>
+    <h3 id={`${instance}-heading`} tabindex="-1">
+      {#if collapsible}
+        <button
+          type="button"
+          data-section-trigger
+          aria-expanded={expanded}
+          aria-labelledby={`${instance}-name`}
+          aria-describedby={progress ? `${instance}-remaining ${instance}-progress` : undefined}
+          aria-controls={`${instance}-rows`}
+          onclick={() => (open = !open)}
+        >
+          <Icon.UI
+            type="disclosure"
+            class="size-4 {open || forceOpen || isSearching ? 'rotate-90' : ''}"
+          />
+          <span id={`${instance}-name`}>{name}</span>
+          {#if progress}
+            {@const count = formatNumber(groups.todo.length, locale)}
+            <span class="remaining" id={`${instance}-remaining`}
+              >{plural(groups.todo.length, [`${count} to do`, `${count} to do`])}</span
+            >
+          {/if}
+        </button>
+      {:else if index?.jumpList}
+        <!-- On phones the section's own head opens the jump list, since there's no index rail. -->
+        <button
+          type="button"
+          class="jump"
+          popovertarget={index.jumpList}
+          aria-label={`${name}. Jump to a section`}
+        >
+          <span>{name}</span>
+          <Icon.UI type="disclosure" class="size-3.5 rotate-90" />
+        </button>
+      {:else}
+        {name}
+      {/if}
+    </h3>
+    {#if progress}
+      {@const completed = formatNumber(progress.completed, locale)}
+      {@const total = formatNumber(progress.total, locale)}
+      <p class="section-progress" id={`${instance}-progress`}>
+        <span class="sr-only">{`${completed} of ${total} completed`}</span>
+        <span aria-hidden="true"><span class="hand">{completed}</span> / {total}</span>
+      </p>
     {/if}
-  </h3>
-  {#if progress}
-    {@const completed = formatNumber(progress.completed, locale)}
-    {@const total = formatNumber(progress.total, locale)}
-    <p class="section-progress" id={`${instance}-progress`}>
-      <span class="sr-only">{`${completed} of ${total} completed`}</span>
-      <span aria-hidden="true">{completed} / {total}</span>
-    </p>
-  {/if}
+    {#if !collapsible && matches.todo.length > 0}
+      <ShelfHeading
+        class="head-shelf"
+        shelf="todo"
+        {explains}
+        count={matches.todo.length}
+        level={4}
+      />
+    {/if}
+  </div>
 
   <div
     id={`${instance}-rows`}
+    class="shelves"
     hidden={expanded ? undefined : "until-found"}
     onbeforematch={() => (open = true)}
   >
@@ -154,15 +208,20 @@
       {@const entries = matches[shelf]}
       {#if entries.length > 0}
         {#if shelf === "todo"}
-          {#if expanded}<ShelfHeading
-              {shelf}
-              {explains}
-              count={collapsible && progress && !isSearching ? undefined : entries.length}
-              level={4}
-            />{/if}
-          {@render shelfRows(entries, shelf)}
+          <div class="shelf">
+            {#if expanded && collapsible}<ShelfHeading
+                {shelf}
+                {explains}
+                count={progress && !isSearching ? undefined : entries.length}
+                level={4}
+              />{/if}
+            {@render shelfRows(entries, shelf)}
+          </div>
         {:else}
-          <details open={revealedShelves[shelf] === true || (forceOpen && shelf === "completed")}>
+          <details
+            class="shelf"
+            open={revealedShelves[shelf] === true || (forceOpen && shelf === "completed")}
+          >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
               {#if expanded}
                 <Icon.UI type="disclosure" class="shelf-chevron size-3.5 shrink-0" />
@@ -193,27 +252,31 @@
   {@const columns = expanded ? timetable(groups[shelf]) : []}
   {@const discovery = expanded && groups[shelf].some((entry) => entry.hiddenCount > 0)}
   {@const highlight = highlights[shelf]}
-  {#if columns.length > 0 || discovery}
-    <div class="timetable">
-      {#each columns as family (family)}
-        {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
-        {@const label = sourceFilterLabel(family, locale)}
-        <button
-          type="button"
-          aria-label={`Highlight rows from ${label}`}
-          aria-pressed={highlight === family}
-          onclick={() => (highlights[shelf] = highlight === family ? undefined : family)}
-        >
-          <FamilyIcon class="size-4 shrink-0" />
-          <span>{label}</span>
-        </button>
-      {/each}
-      {#if discovery}
-        <span>Undiscovered sources</span>
-      {/if}
-    </div>
-  {/if}
-  <div data-tracker-list>
+  <div
+    class="ledger-table"
+    data-tracker-list
+    style:--ledger-tracks={gridTracks(columns.length, discovery)}
+    data-has-timetable={columns.length > 0 || undefined}
+  >
+    {#if columns.length > 0}
+      <div class="timetable">
+        <span class="name-head">Name</span>
+        {#each columns as family, column (family)}
+          {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
+          {@const label = sourceFilterLabel(family, locale)}
+          <button
+            type="button"
+            class:first={column === 0}
+            aria-label={`Highlight rows from ${label}`}
+            aria-pressed={highlight === family}
+            onclick={() => (highlights[shelf] = highlight === family ? undefined : family)}
+          >
+            <FamilyIcon class="size-3.5 shrink-0" />
+            <span>{label}</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
     {#each entries as entry (entry.key)}
       {@const highlighted =
         highlight !== undefined &&
@@ -235,59 +298,146 @@
 {/snippet}
 
 <style>
+  /*
+   * Section dividers: a muted sprig between tapering hairlines, centered in the gap between one
+   * section's last row & the next section's head. The sprigs were drawn for this project. To swap
+   * in other art, replace the --ledger-sprig URLs; each is a 44 × 16 mask with the stem entering
+   * from the left.
+   */
   section {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    column-gap: 0.75rem;
-    margin-block: 0.75rem 1.5rem;
+    --ledger-section-gap: 3rem;
+    --ledger-head-size: 3rem;
+    /* 0: fern */
+    --ledger-sprig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16'%3E%3Cpath d='M3 8.6 C13 7.4 27 9.4 39 7.9' fill='none' stroke='%23000' stroke-width='0.9' stroke-linecap='round'/%3E%3Cellipse cx='10' cy='6' rx='3.3' ry='1.15' transform='rotate(-32 10 6)'/%3E%3Cellipse cx='13.6' cy='10.7' rx='3.3' ry='1.15' transform='rotate(30 13.6 10.7)'/%3E%3Cellipse cx='19.4' cy='6.3' rx='3' ry='1.1' transform='rotate(-30 19.4 6.3)'/%3E%3Cellipse cx='23.2' cy='10.6' rx='3' ry='1.1' transform='rotate(28 23.2 10.6)'/%3E%3Cellipse cx='28.6' cy='6.5' rx='2.5' ry='1' transform='rotate(-28 28.6 6.5)'/%3E%3Cellipse cx='32.2' cy='10' rx='2.4' ry='1' transform='rotate(26 32.2 10)'/%3E%3Ccircle cx='40.4' cy='7.8' r='1.5'/%3E%3C/svg%3E");
+
+    position: relative;
     scroll-margin-block-start: var(--ledger-anchor-offset, 7rem);
-    border-block-start: 2px solid var(--color-ink-hairline);
+  }
+
+  /* 1: laurel */
+  section[data-sprig="1"] {
+    --ledger-sprig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16'%3E%3Cpath d='M3 8.3 C15 7.7 27 8.5 38 8' fill='none' stroke='%23000' stroke-width='0.9' stroke-linecap='round'/%3E%3Cellipse cx='11' cy='5.5' rx='3.7' ry='1.25' transform='rotate(-24 11 5.5)'/%3E%3Cellipse cx='11' cy='10.9' rx='3.7' ry='1.25' transform='rotate(24 11 10.9)'/%3E%3Cellipse cx='19.5' cy='5.5' rx='3.7' ry='1.25' transform='rotate(-24 19.5 5.5)'/%3E%3Cellipse cx='19.5' cy='10.9' rx='3.7' ry='1.25' transform='rotate(24 19.5 10.9)'/%3E%3Cellipse cx='28' cy='5.7' rx='3.3' ry='1.15' transform='rotate(-22 28 5.7)'/%3E%3Cellipse cx='28' cy='10.6' rx='3.3' ry='1.15' transform='rotate(22 28 10.6)'/%3E%3Cellipse cx='38.6' cy='8' rx='3.4' ry='1.2'/%3E%3C/svg%3E");
+  }
+
+  /* 2: berries */
+  section[data-sprig="2"] {
+    --ledger-sprig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16'%3E%3Cpath d='M3 9.2 C12 8.6 22 9.2 30 7.6 M30 7.6 L35.6 4.9 M30 7.6 L37.6 9.2 M30 7.6 L33.2 11.8' fill='none' stroke='%23000' stroke-width='0.85' stroke-linecap='round'/%3E%3Cellipse cx='12.5' cy='6.1' rx='3.9' ry='1.55' transform='rotate(-30 12.5 6.1)'/%3E%3Cellipse cx='20' cy='11.6' rx='3.7' ry='1.45' transform='rotate(28 20 11.6)'/%3E%3Ccircle cx='36.3' cy='4.5' r='1.8'/%3E%3Ccircle cx='38.8' cy='9.4' r='1.8'/%3E%3Ccircle cx='33.4' cy='12.5' r='1.7'/%3E%3C/svg%3E");
+  }
+
+  /* 3: wheat */
+  section[data-sprig="3"] {
+    --ledger-sprig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16'%3E%3Cpath d='M3 8.4 C10 8.2 17 8.1 23 8' fill='none' stroke='%23000' stroke-width='0.9' stroke-linecap='round'/%3E%3Cellipse cx='13' cy='10.4' rx='5' ry='0.85' transform='rotate(16 13 10.4)'/%3E%3Cellipse cx='25' cy='6.6' rx='2.5' ry='1.15' transform='rotate(-38 25 6.6)'/%3E%3Cellipse cx='25' cy='9.4' rx='2.5' ry='1.15' transform='rotate(38 25 9.4)'/%3E%3Cellipse cx='29' cy='6.6' rx='2.5' ry='1.15' transform='rotate(-38 29 6.6)'/%3E%3Cellipse cx='29' cy='9.4' rx='2.5' ry='1.15' transform='rotate(38 29 9.4)'/%3E%3Cellipse cx='33' cy='6.7' rx='2.3' ry='1.1' transform='rotate(-38 33 6.7)'/%3E%3Cellipse cx='33' cy='9.3' rx='2.3' ry='1.1' transform='rotate(38 33 9.3)'/%3E%3Cellipse cx='37.6' cy='8' rx='2.4' ry='1.05'/%3E%3Cpath d='M39.5 8 L42.5 6.2 M39.5 8 L42.5 9.8' stroke='%23000' stroke-width='0.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+
+  /* 4: clover */
+  section[data-sprig="4"] {
+    --ledger-sprig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16'%3E%3Cpath d='M4 10.2 C12 10.6 21 9.6 30.5 8.4' fill='none' stroke='%23000' stroke-width='0.9' stroke-linecap='round'/%3E%3Cellipse cx='15' cy='8' rx='2.8' ry='1.05' transform='rotate(-26 15 8)'/%3E%3Ccircle cx='32.4' cy='5.3' r='2.4'/%3E%3Ccircle cx='35.6' cy='8.6' r='2.4'/%3E%3Ccircle cx='32.4' cy='11.6' r='2.4'/%3E%3C/svg%3E");
+  }
+
+  /* 5: fiddlehead */
+  section[data-sprig="5"] {
+    --ledger-sprig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 16'%3E%3Cpath d='M3 9.2 C14 9.6 24 8.6 30 7.2 C35 5.8 39.2 7 38.8 10.1 C38.4 12.8 34.6 12.8 34.1 10.4 C33.8 8.9 35.6 8.3 36.4 9.7' fill='none' stroke='%23000' stroke-width='1' stroke-linecap='round'/%3E%3Cellipse cx='11' cy='7.3' rx='2.2' ry='0.85' transform='rotate(-32 11 7.3)'/%3E%3Cellipse cx='12.4' cy='11.2' rx='2.2' ry='0.85' transform='rotate(30 12.4 11.2)'/%3E%3Cellipse cx='19.6' cy='6.9' rx='2' ry='0.8' transform='rotate(-30 19.6 6.9)'/%3E%3Cellipse cx='21' cy='10.6' rx='2' ry='0.8' transform='rotate(28 21 10.6)'/%3E%3C/svg%3E");
   }
 
   section[hidden] {
     display: none;
   }
 
-  section > div {
-    grid-column: 1 / -1;
-    min-inline-size: 0;
+  section[data-divider] {
+    margin-block-start: var(--ledger-section-gap);
+  }
+
+  section[data-divider]::before,
+  section[data-divider]::after {
+    position: absolute;
+    inset-block-start: calc(var(--ledger-section-gap) / -2);
+    inset-inline: 0;
+    margin-inline: auto;
+    content: "";
+    pointer-events: none;
+    translate: 0 -50%;
+  }
+
+  /* Tapering hairlines, in neutral ink */
+  section[data-divider]::before {
+    block-size: 12px;
+    inline-size: 15rem;
+    background: var(--color-rule);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 12'%3E%3Cpath d='M6 6 L94 5.35 L94 6.65 Z M146 5.35 L234 6 L146 6.65 Z'/%3E%3C/svg%3E")
+      center / 100% 100% no-repeat;
+  }
+
+  /* The sprig: the page's color mixed 62% into the paper, so it reads printed, not inked */
+  section[data-divider]::after {
+    block-size: 16px;
+    inline-size: 44px;
+    background: color-mix(in srgb, var(--primary, var(--color-ink-muted)) 62%, var(--color-paper));
+    mask: var(--ledger-sprig) center / 100% 100% no-repeat;
+  }
+
+  /* Everything's places fold up, so they list as quiet rows rather than chapters. */
+  section.collapsible {
+    border-block-start: 1px solid var(--color-rule-faint);
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.75rem;
+    padding-block-end: 0.25rem;
+  }
+
+  section:not(.collapsible) .head {
+    position: sticky;
+    z-index: 2;
+    top: var(--ledger-sticky-top, 0px);
+    min-block-size: var(--ledger-head-size);
+    background: var(--color-paper);
   }
 
   h3 {
+    flex: 1 1 auto;
     padding-block: 0.6rem 0.25rem;
     font-family: var(--font-brand);
     font-size: var(--text-xl);
     line-height: 1.2;
   }
 
+  section:not(.collapsible) h3 {
+    flex: 0 1 auto;
+  }
+
   h3:focus-visible,
   h3:focus-visible button > span:first-of-type {
     outline: none;
     text-decoration: underline;
-    text-decoration-color: var(--color-guide-voice);
+    text-decoration-color: var(--primary);
     text-underline-offset: 0.25em;
   }
 
-  h3 button,
-  .timetable button {
+  h3 button {
     display: inline-flex;
     min-block-size: 44px;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem;
     text-align: start;
   }
 
+  .jump :global(svg) {
+    color: var(--color-ink-muted);
+  }
+
+  .head :global(.head-shelf) {
+    gap: 0.5rem;
+  }
+
   .remaining,
-  .section-progress,
-  .timetable {
+  .section-progress {
     color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-sm);
-  }
-
-  h3 button {
-    flex-wrap: wrap;
   }
 
   .remaining {
@@ -303,55 +453,109 @@
     white-space: nowrap;
   }
 
+  /* Only the player's own count is handwritten. */
+  .hand {
+    color: var(--color-hand-pencil);
+    font-family: var(--font-hand);
+  }
+
+  .shelves {
+    min-inline-size: 0;
+  }
+
+  /*
+   * Rows can't share a subgrid: their content-visibility contains layout, which turns subgrid off.
+   * Every track is sized the same way for every row instead, so the columns still line up.
+   */
+  .ledger-table {
+    --ledger-row-tracks: auto auto minmax(0, 1fr);
+  }
+
+  /* The checkbox's track, matching the row's own target size (ledger-row.svelte). */
+  @media (pointer: fine) and (hover: hover) {
+    .ledger-table {
+      --ledger-check-size: 32px;
+    }
+  }
+
+  @media (any-pointer: coarse), (hover: none) {
+    .ledger-table {
+      --ledger-check-size: 44px;
+    }
+  }
+
   .timetable {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
     align-items: center;
-    column-gap: 0.65rem;
-    border-block-end: 1px solid var(--color-ink-hairline);
+    gap: 0.25rem 0.5rem;
+    padding-block: 0.25rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-controls);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  @media (width < 60rem) {
-    .timetable {
-      gap: 0.25rem 0.5rem;
-      padding-block: 0.25rem;
-    }
+  .name-head {
+    display: none;
+  }
 
-    .timetable button {
-      padding-inline: 0.55rem;
-      border: 1px solid var(--color-ink-hairline);
-      border-radius: var(--radius);
-    }
+  .timetable button {
+    display: inline-flex;
+    min-block-size: 44px;
+    align-items: center;
+    gap: 0.35rem;
+    padding-inline: 0.55rem;
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius);
+    text-align: start;
+    text-transform: inherit;
+  }
 
-    .timetable > span {
-      display: none;
-    }
-
-    .timetable:not(:has(button)) {
-      display: none;
-    }
+  .timetable button:hover span {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.3em;
   }
 
   .timetable button[aria-pressed="true"] {
-    color: var(--color-guide-voice);
-    text-decoration: underline;
-    text-underline-offset: 0.25em;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--color-paper));
   }
 
   @media (min-width: 60rem) {
+    .ledger-table {
+      --ledger-row-tracks: var(--ledger-tracks);
+    }
+
     .timetable {
-      justify-content: flex-end;
+      position: sticky;
+      z-index: 1;
+      top: calc(var(--ledger-sticky-top, 0px) + var(--ledger-head-size));
+      display: grid;
       column-gap: 0.35rem;
+      grid-template-columns: var(--ledger-row-tracks);
+      padding-block: 0;
+      border-block-end: 1px solid var(--color-ink-hairline);
+      background: var(--color-paper);
+    }
+
+    .name-head {
+      display: block;
+      grid-column: 3;
     }
 
     .timetable button {
-      inline-size: 6rem;
-      flex-direction: column;
-      justify-content: center;
-      gap: 0.125rem;
-      padding-block: 0.25rem;
-      text-align: center;
+      min-block-size: 2rem;
+      justify-content: flex-start;
+      padding-inline: 0.5rem;
+      border: 0;
+      border-radius: 0;
+    }
+
+    /* The one vertical rule: between the name and the sources it came from. */
+    .timetable button.first {
+      border-inline-start: 1px solid var(--color-rule-faint);
     }
 
     .timetable button span {
@@ -359,15 +563,16 @@
       overflow-wrap: anywhere;
       hyphens: auto;
     }
+  }
 
-    .timetable > span {
-      inline-size: 8rem;
-      text-align: center;
-    }
+  /* The final row hands off to the shelf fold's own dashed rule. */
+  .ledger-table > :global([data-ledger-row]:last-child) {
+    border-block-end: 0;
   }
 
   details {
-    border-block-start: 1px dashed var(--color-ink-hairline);
+    margin-block-start: 0.5rem;
+    border-block-start: 1px dashed var(--color-rule);
   }
 
   summary {

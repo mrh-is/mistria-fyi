@@ -4,7 +4,7 @@ import {
   gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
-import { openSearch, openVisibilityPanel } from "./support/scenarios.js";
+import { closeSearch, openSearch, openVisibilityPanel } from "./support/scenarios.js";
 
 for (const { theme, touch, width } of [
   { theme: "light", touch: false, width: 1440 },
@@ -44,8 +44,8 @@ for (const { theme, touch, width } of [
       const rowHeight = await checkItem.evaluate(
         (button) => button.closest("[data-ledger-row]")?.getBoundingClientRect().height ?? 0,
       );
-      if (touch) expect(rowHeight).toBeGreaterThanOrEqual(48);
-      else expect(rowHeight).toBeLessThan(48);
+      if (touch) expect(rowHeight).toBeGreaterThanOrEqual(44);
+      else expect(rowHeight).toBeLessThan(44);
       await (touch ? checkItem.tap() : checkItem.click());
 
       await expect(uncheckItem).toBeVisible();
@@ -56,7 +56,7 @@ for (const { theme, touch, width } of [
 
       await openSearch(page, name);
       await expect(checkItem).toBeVisible();
-      await page.getByRole("button", { exact: true, name: "Cancel" }).click();
+      await closeSearch(page);
       await openVisibilityPanel(page);
       const filters = page.getByRole("dialog", { name: "Filters" });
       if (width < 701) await filters.getByRole("button", { name: /^Source types/ }).click();

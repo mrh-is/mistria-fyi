@@ -27,7 +27,7 @@
   );
 </script>
 
-<div class="min-w-0" style="--primary: {color}">
+<div class="min-w-0" style="--primary: {color}; --ring: {color}">
   <PageHeader title={name} {progress} category={key} />
   <div class="flex flex-col gap-4 px-4 pt-4 pb-4">
     <PageSearchStatus />

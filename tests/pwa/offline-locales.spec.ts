@@ -51,10 +51,10 @@ test("keeps the visited locale offline and leaves other locales to download on d
   // Sitewide search, on the home page, loads every category's names on first open.
   await page.goBack();
   await expect(page).toHaveURL(/\/en$/);
-  await page.getByRole("button", { name: "Search" }).click();
-  await page.getByRole("textbox", { name: "Search items" }).fill("turnip");
+  const search = page.getByRole("textbox", { name: "Search items" });
+  await search.fill("turnip");
   await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await search.press("Escape");
 
   // An incomplete locale explains itself instead of navigating to a broken page.
   await page.getByRole("button", { name: "Quick settings" }).click();

@@ -10,6 +10,7 @@ import {
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
 import {
+  closeSearch,
   openFeedbackValidation,
   openSearch,
   openSettingsCard,
@@ -121,7 +122,7 @@ test.describe("stateful accessibility", () => {
       testInfo,
     );
 
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await closeSearch(page);
     await artifacts.getByText("Not now", { exact: true }).click();
     await expect(spoiler).toBeVisible();
     await spoiler.click();

@@ -15,10 +15,16 @@ export async function openFeedbackValidation(page: Page): Promise<void> {
 }
 
 export async function openSearch(page: Page, query: string): Promise<void> {
-  await page.getByRole("button", { name: "Search" }).click();
   const search = page.getByRole("textbox", { name: "Search items" });
   await search.fill(query);
   await expect(search).toHaveValue(query);
+}
+
+/** Ends a search the way a reader would: Escape in the always-present field. */
+export async function closeSearch(page: Page): Promise<void> {
+  const search = page.getByRole("textbox", { name: "Search items" });
+  await search.press("Escape");
+  await expect(search).toHaveValue("");
 }
 
 export async function openSettingsCard(page: Page, name: string): Promise<void> {

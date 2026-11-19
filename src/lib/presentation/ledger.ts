@@ -9,8 +9,10 @@ import type { DayContext } from "#lib/engine/availability.js";
 import type { Shelf } from "#lib/engine/shelves.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { SourceGroupRow, SourceSection } from "#lib/presentation/source-groups.js";
+import type { SourceSegment } from "#lib/sources/source-segments.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { Season } from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 const sourceFamilies = new Map(
   SOURCE_FILTERS.flatMap(({ id, types }) => types.map((type) => [type, id] as const)),
@@ -77,6 +79,29 @@ export function ledgerPlacement(
     spoilered,
     visibleSources,
   };
+}
+
+/**
+ * A source's sentence as plain text for a timetable cell, or `undefined` when any part of it is
+ * still behind a spoiler. The cell can't offer a reveal, so the row's details keep that job.
+ */
+export function ledgerCellText(
+  segments: readonly SourceSegment[],
+  isVisible: (condition: VisibilityCondition) => boolean,
+): string | undefined {
+  let text = "";
+  for (const segment of segments) {
+    if (typeof segment === "string") {
+      text += segment;
+    } else if ("condition" in segment && isVisible(segment.condition)) {
+      const inner = ledgerCellText(segment.unspoilered, isVisible);
+      if (inner === undefined) return undefined;
+      text += inner;
+    } else {
+      return undefined;
+    }
+  }
+  return text;
 }
 
 export function ledgerShelf(row: LedgerPlacement, showsSource: (source: Source) => boolean): Shelf {
