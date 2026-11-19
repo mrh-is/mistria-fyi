@@ -232,6 +232,14 @@
     if (frame !== undefined) cancelAnimationFrame(frame);
   });
 
+  /** Opens the jump list just under the page header, wherever the header sits right now. */
+  function placeJumpList(event: Event): void {
+    const list = event.currentTarget;
+    const header = document.querySelector<HTMLElement>("[data-page-header]");
+    if (!(list instanceof HTMLElement) || !header) return;
+    list.style.setProperty("--jump-list-top", `${header.getBoundingClientRect().bottom}px`);
+  }
+
   function count(value: number): string {
     return formatNumber(value, page.data.locale);
   }
@@ -287,18 +295,17 @@
   <div class="min-w-0" data-ledger-content onfocusin={markArrival}>
     {@render children()}
   </div>
+  {#if !wide.current}
+    <div class="jump-list" id={jumpListId} popover onbeforetoggle={placeJumpList}>
+      <nav aria-label="Jump to a section">
+        {#each grouped as { label, sections: list } (label)}
+          {#if label}<p class="group-label">{label}</p>{/if}
+          {@render entries(list, () => document.getElementById(jumpListId)?.hidePopover())}
+        {/each}
+      </nav>
+    </div>
+  {/if}
 </div>
-
-{#if !wide.current}
-  <div class="jump-list" id={jumpListId} popover>
-    <nav aria-label="Jump to a section">
-      {#each grouped as { label, sections: list } (label)}
-        {#if label}<p class="group-label">{label}</p>{/if}
-        {@render entries(list, () => document.getElementById(jumpListId)?.hidePopover())}
-      {/each}
-    </nav>
-  </div>
-{/if}
 
 <style>
   .ledger-layout > nav {
@@ -360,8 +367,8 @@
   .jump-list {
     inline-size: auto;
     block-size: auto;
-    inset: var(--ledger-sticky-top, 4rem) 0.75rem auto;
-    max-block-size: calc(100dvh - var(--ledger-sticky-top, 4rem) - 6rem);
+    inset: var(--jump-list-top, 4rem) 0.75rem auto;
+    max-block-size: calc(100dvh - var(--jump-list-top, 4rem) - 6rem);
     margin: 0;
     overflow: auto;
     padding-block: 0.75rem;
