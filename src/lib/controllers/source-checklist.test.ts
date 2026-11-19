@@ -7,12 +7,34 @@ import { projectSourceGroups } from "#lib/presentation/source-groups.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
-import { buildSourceChecklist } from "./source-checklist.js";
+import { buildSourceChecklist, projectSourceChecklist } from "./source-checklist.js";
 
+import type { SourceGroupRow } from "#lib/presentation/source-groups.js";
 import type { ItemId } from "#lib/types/tracker-data.js";
 
 beforeEach(() => {
   userState.resetAll();
+});
+
+function sourceFacts(rows: readonly SourceGroupRow[]) {
+  return rows
+    .map(({ completed, key, locked, obtainable, sources, spoilered, visibility }) => ({
+      completed,
+      key,
+      locked,
+      obtainable,
+      sources,
+      spoilered,
+      visibility,
+    }))
+    .toSorted((a, b) => a.key.localeCompare(b.key));
+}
+
+it("gives Home the same source facts as the localized Everything checklist", () => {
+  const context = userState.progressContext;
+  expect(sourceFacts(projectSourceChecklist(context))).toEqual(
+    sourceFacts(buildSourceChecklist(context, "en")),
+  );
 });
 
 function fennelPlacements() {

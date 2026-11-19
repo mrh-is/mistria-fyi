@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
+  import { projectSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { getName } from "#lib/data/names.js";
   import { ledgerShelf, sourceLedgerPlacement } from "#lib/presentation/ledger.js";
   import { projectSourceGroups } from "#lib/presentation/source-groups.js";
@@ -21,7 +21,7 @@
     // The available places belong to the player's local save, not the prerendered home page.
     if (!mounted) return [];
     const context = userState.progressContext;
-    return projectSourceGroups(buildSourceChecklist(context, locale), context)
+    return projectSourceGroups(projectSourceChecklist(context), context)
       .flatMap(({ id, rows, source, spoilered }) => {
         if (!source || !("storeId" in source) || source.type === "festival" || spoilered) return [];
         const count = rows.filter(
