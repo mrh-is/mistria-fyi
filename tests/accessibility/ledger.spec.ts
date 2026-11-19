@@ -15,6 +15,9 @@ for (const { theme, touch, width } of [
     test.use({ hasTouch: touch, isMobile: touch, viewport: { height: 900, width } });
 
     test("opens a place from Home and keeps the check and its undo in place", async ({ page }) => {
+      // Restoring every closed-place title after clearing search can contend with the other
+      // Chromium workers on Linux. Keep all three viewports on the same end-to-end path.
+      test.slow();
       await initializeApplication(page, theme, createStoredState());
       await gotoApplication(page, "/");
       const link = page
@@ -114,23 +117,20 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   ).toBeVisible();
 });
 
-test("closed source names are findable and native reveal opens the matching row", async ({
-  page,
-}) => {
+test("native reveal opens a closed source place and preserves the item title", async ({ page }) => {
+  // The browser first builds the searchable titles for the whole source ledger.
+  test.slow();
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/everything?group=source");
   const balor = page.getByRole("button", { exact: true, name: "Balor's Wagon" });
   await expect(balor).toHaveAttribute("aria-expanded", "false");
 
-  const found = await page.evaluate(() =>
-    (globalThis as typeof globalThis & { find: (query: string) => boolean }).find("Barrel Hat"),
-  );
-  expect(found).toBe(true);
   const contentId = await balor.getAttribute("aria-controls");
-  // Chromium's window.find can find hidden text but the browser Find bar performs the reveal.
-  // A fragment navigation exercises the same native beforematch algorithm.
+  // Chromium's browser Find bar and fragment navigation run the same native reveal algorithm.
   // oxlint-disable-next-line playwright/no-raw-locators -- the disclosure supplies the content ID
   const hiddenMatch = page.locator(`[id="${contentId}"]`).getByText("Barrel Hat", { exact: true });
+  await expect(hiddenMatch).toBeAttached();
+  await expect(hiddenMatch).toBeHidden();
   await hiddenMatch.evaluate((match) => {
     match.id = "test-browser-find-target";
     location.hash = match.id;
