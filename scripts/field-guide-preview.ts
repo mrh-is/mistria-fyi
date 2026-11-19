@@ -1,3 +1,5 @@
+import "#scripts/lib/require-pinned-node";
+
 import { chromium } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
@@ -35,7 +37,7 @@ async function main(): Promise<void> {
   const [preset, target] = positionals;
   if (positionals.length !== 2 || !preset || !target || !PRESETS.includes(preset as Preset)) {
     throw new Error(
-      "Usage: pnpm run field-guide:preview <day-one|mid-game|late-game> <url> [--screenshot <path>]",
+      "Usage: pnpm exec tsx scripts/field-guide-preview.ts <day-one|mid-game|late-game> <url> [--screenshot <path>]",
     );
   }
   const url = previewUrl(target);

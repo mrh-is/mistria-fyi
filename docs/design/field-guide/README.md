@@ -78,8 +78,8 @@ to check. Start your dev server first for a local URL. For a deployed branch, us
 `*.mistria-fyi.pages.dev` URL or `https://next.mistria.fyi`.
 
 ```sh
-pnpm run field-guide:preview mid-game http://localhost:5173/en/museum
-pnpm run field-guide:preview late-game https://next.mistria.fyi/en/museum
+pnpm exec tsx scripts/field-guide-preview.ts mid-game http://localhost:5173/en/museum
+pnpm exec tsx scripts/field-guide-preview.ts late-game https://next.mistria.fyi/en/museum
 ```
 
 The command opens a fresh Chromium session with the selected progress already loaded. Close the tab
