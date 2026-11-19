@@ -149,6 +149,10 @@ follow the bounded checklist below instead of browsing around.
 5. Check the relevant states: empty, loaded, error, & disabled.
 6. Check the browser console for errors.
 
+For field guide redesign work, attach screenshots from at least the mid-game state. Use the
+[field guide preview command](design/field-guide/README.md#preview-with-progress) to load the same
+progress as the mockup before capturing the changed screens.
+
 Note: feedback runs as a dry run everywhere except production, including branch previews & local
 servers. Submitting it checks the form & Turnstile (Cloudflare’s bot check) but files no issue.
 Instead, the page shows a “Preview build” notice, and that notice is the expected result
