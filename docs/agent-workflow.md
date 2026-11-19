@@ -81,7 +81,10 @@ Use `--current` in place of the slug for an already-branched harness worktree. W
 absent, run `node scripts/start-work.ts` with the pinned Node instead of `pnpm run start-work`. For
 cloud checkouts or harnesses that require separate Git operations, follow
 [Worktrees](../AGENTS.md#worktrees). Apply the same claim with `gh issue edit` & read it back with
-`gh issue view <number> --json labels,assignees` before implementing.
+`gh issue view <number> --json labels,assignees` before implementing. Label names have a space after
+the colon, so the manual claim is
+`gh issue edit 123 --add-label "status: in progress" --add-label "agent: codex"`, not `agent:codex`.
+List the agent labels with `gh label list --search agent`.
 
 If claiming fails after setup, the prepared worktree remains. Inspect the issue, then use
 `--current` in that worktree if it remains unclaimed. If a takeover fails partway through, inspect
@@ -174,9 +177,15 @@ blocked. One issue covers each month. Find the current one with
 - **Format:** one comment per friction, with “What”, “Workaround”, “Where”, & “Task” lines and the
   `Agent:` line. The log issue’s body has an example.
 - **Repeats:** log a friction again even when someone already has. The repeat count is the signal.
+- **Handled frictions:** the log issue’s body keeps a “Handled this month” table. Each row names a
+  friction & the PR or issue that fixes it. An agent that opens a fix for a logged friction adds its
+  row then, so the log never shows a solved problem as open. Before logging a friction that matches
+  a row, check whether the fix merged with `gh pr view <number> --json mergedAt`. If it had, add a
+  “Recurred after” line naming the fix’s PR; that entry tells the owner the fix didn’t work.
 - **Monthly review:** when the month ends, the owner (or an agent the owner asks) tallies the
   comments. Anything logged about three times becomes an issue, linked from the tally. The tally is
-  the old log’s closing comment, and a new log issue replaces it.
+  the old log’s closing comment, and a new log issue replaces it. The new log carries over the
+  handled rows whose fixes merged in the past month, so a recurrence still has a row to match.
 
 ## Recording decisions
 
