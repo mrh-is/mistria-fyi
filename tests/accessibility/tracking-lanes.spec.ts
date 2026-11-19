@@ -64,23 +64,32 @@ for (const [theme, width] of [
     expect(downloaded.suggestedFilename()).toMatch(/^mistria-field-guide-backup-/);
     await install.getByRole("button", { name: "I’ve installed it" }).click();
     await expect(install).toBeHidden();
-    await page.getByRole("button", { name: "Undo starter checks" }).click();
     await expect
       .poll(() =>
         page.evaluate((key) => {
           const stored = JSON.parse(localStorage.getItem(key) ?? "null") as null | {
             local?: { reminders?: { install?: { dismissed?: boolean } }; trackingLane?: string };
-            progress?: { almanac?: string[] };
+            progress?: {
+              almanac?: string[];
+              provenance?: Record<string, { source: string }>;
+            };
           };
           return {
-            count: stored?.progress?.almanac?.length ?? 0,
             dismissed: stored?.local?.reminders?.install?.dismissed,
             lane: stored?.local?.trackingLane,
+            manualChecks:
+              stored?.progress?.almanac?.filter(
+                (id) => stored.progress?.provenance?.[`almanac/${id}`]?.source === "manual",
+              ).length ?? 0,
           };
         }, PROGRESS_STORAGE_KEY),
       )
-      .toMatchObject({ count: 1, dismissed: true, lane: "manual" });
+      .toMatchObject({ dismissed: true, lane: "manual", manualChecks: 1 });
     await page.reload();
+    await expect(
+      artifacts.getByRole("button", { exact: true, name: `Uncheck ${name?.slice(6) ?? ""}` }),
+    ).toBeVisible();
+    await waitForRendering(page);
     await expect(install).toBeHidden();
     expect(errors).toEqual([]);
   });
