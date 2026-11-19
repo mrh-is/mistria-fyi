@@ -84,7 +84,7 @@
 <style>
   .page-header {
     position: sticky;
-    top: 0;
+    top: var(--ledger-sticky-top, 0px);
     z-index: var(--z-page-header);
     display: flex;
     min-width: 0;

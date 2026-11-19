@@ -1,9 +1,9 @@
 <script lang="ts">
-  import AlmanacContent from "#lib/components/almanac-content.svelte";
+  import AlmanacLedger from "./almanac-ledger.svelte";
 
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>
 
-<AlmanacContent locale={data.locale} />
+<AlmanacLedger locale={data.locale} />

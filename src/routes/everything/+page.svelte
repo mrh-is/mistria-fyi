@@ -82,7 +82,11 @@
       });
       await Promise.allSettled(animations.map((animation) => animation.finished));
       await tick();
-      if (!cancelled) document.getElementById(target)?.scrollIntoView({ block: "start" });
+      if (!cancelled) {
+        const section = document.getElementById(target);
+        section?.scrollIntoView({ block: "start" });
+        section?.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
+      }
     }
     void scrollToAnchor();
     return () => {

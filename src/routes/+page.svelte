@@ -15,6 +15,8 @@
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
+  import TodaysPlaces from "./todays-places.svelte";
+
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -66,6 +68,7 @@
       {#if userState.trackingLane === undefined && !userState.hasAnyProgress}
         <WelcomeCard />
       {/if}
+      <TodaysPlaces locale={data.locale} />
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"

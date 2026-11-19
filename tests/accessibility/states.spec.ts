@@ -13,7 +13,6 @@ import {
   openFeedbackValidation,
   openSearch,
   openSettingsCard,
-  openShelf,
   openVisibilityPanel,
 } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
@@ -105,9 +104,9 @@ test.describe("stateful accessibility", () => {
 
   test("spoiler-hidden and revealed rows pass axe", critical, async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
-    await openShelf(page, "Not now");
-    const spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    await artifacts.getByText(/^Not now ·/).click();
+    const spoiler = artifacts.getByRole("button", { name: "Reveal spoiler" }).first();
     await expect(spoiler).toBeVisible();
     const spoilerText = await spoiler.textContent();
     const spoilerName = spoilerText?.trim();
@@ -121,8 +120,7 @@ test.describe("stateful accessibility", () => {
     );
 
     await page.getByRole("button", { name: "Cancel" }).click();
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
-    await openShelf(page, "Not now");
+    await artifacts.getByText(/^Not now ·/).click();
     await expect(spoiler).toBeVisible();
     await spoiler.click();
     await analyzeAccessibility(
@@ -134,19 +132,12 @@ test.describe("stateful accessibility", () => {
 
   test("completed rows and Undo pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
-    const completion = page.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    const completion = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     await completion.click();
     await expect(page.getByRole("button", { exact: true, name: "Undo" })).toBeVisible();
 
-    await analyzeAccessibility(
-      page,
-      { route: "/almanac", state: "completed-row-hidden-with-undo", theme: "light" },
-      testInfo,
-    );
-
-    await page.getByRole("button", { expanded: false, name: "Completed" }).first().click();
-    await expect(page.getByRole("button", { name: /^Uncheck / }).first()).toBeVisible();
+    await expect(artifacts.getByRole("button", { name: /^Uncheck / }).first()).toBeVisible();
     await analyzeAccessibility(
       page,
       { route: "/almanac", state: "completed-row-shown", theme: "light" },

@@ -169,6 +169,22 @@
       grid-area: 1 / 2;
     }
 
+    .book--tools:has(:global([data-ledger-layout])) {
+      --ledger-sticky-top: 5rem;
+      --ledger-anchor-offset: 10rem;
+
+      grid-template-rows: var(--ledger-sticky-top) 1fr;
+    }
+
+    .book--tools:has(:global([data-ledger-layout])) .book__tools {
+      position: sticky;
+      top: 0;
+      z-index: var(--z-toolbar);
+      min-block-size: var(--ledger-sticky-top);
+      grid-area: 1 / 2 / 3 / 3;
+      background: var(--color-paper);
+    }
+
     /* The wire runs the page's height, through holes just inside its left edge. */
     .book :global(.book-wire) {
       align-self: stretch;

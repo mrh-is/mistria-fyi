@@ -1,6 +1,35 @@
 [
   {
     "translations": {
+      "en": "+{0} to discover",
+      "ja": "+{0}件の未発見の入手先",
+      "zh-Hans": "还有 {0} 处待发现",
+      "zh-Hant": "+{0} 個入手途徑待探索",
+      "es": "+{0} por descubrir",
+      "fr": "+{0} à découvrir",
+      "ko": "+{0}개 더 발견 가능",
+      "ru": "Ещё {0} предстоит открыть"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "placement.hiddenCount"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "1. Download a backup of your progress first.",
       "ja": "1. まず進捗のバックアップをダウンロードしてください。",
       "zh-Hans": "1. 先下载一份进度备份。",
@@ -1437,6 +1466,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           null
@@ -1464,6 +1499,19 @@
       "ru": "Отметить «{0}»"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "nameWithVariant"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/skill-perks.svelte",
         "refs": [
@@ -2077,6 +2125,35 @@
         "file": "src/lib/data/categories.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Comes back by waiting, in {0}.",
+      "ja": "{0}まで待つと、また手に入ります。",
+      "zh-Hans": "等到{0}就能再次获得。",
+      "zh-Hant": "等到{0}就能再次取得。",
+      "es": "Volverá a estar disponible en {0}.",
+      "fr": "De nouveau disponible en {0}.",
+      "ko": "{0}까지 기다리면 다시 얻을 수 있어요.",
+      "ru": "Снова можно будет получить в следующие сезоны: {0}."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "seasons"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -5648,6 +5725,28 @@
   },
   {
     "translations": {
+      "en": "Page sections",
+      "ja": "このページの目次",
+      "zh-Hans": "本页目录",
+      "zh-Hant": "本頁目錄",
+      "es": "Secciones de la página",
+      "fr": "Sommaire de la page",
+      "ko": "이 페이지의 목차",
+      "ru": "Разделы страницы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-index.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Path not chosen",
       "ja": "未選択",
       "zh-Hans": "尚未选择关系",
@@ -5905,6 +6004,28 @@
         "file": "src/lib/components/feedback-picker.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Places to go today",
+      "ja": "今日行ける場所",
+      "zh-Hans": "今天可以去的地方",
+      "zh-Hant": "今天可以去的地方",
+      "es": "Lugares para visitar hoy",
+      "fr": "Où aller aujourd’hui",
+      "ko": "오늘 갈 만한 곳",
+      "ru": "Куда сходить сегодня"
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
           null
         ]
       }
@@ -6280,6 +6401,28 @@
       },
       {
         "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Refresh shelves",
+      "ja": "一覧を更新",
+      "zh-Hans": "更新分组",
+      "zh-Hant": "更新分組",
+      "es": "Actualizar listas",
+      "fr": "Actualiser les listes",
+      "ko": "목록 새로고침",
+      "ru": "Обновить списки"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-notice.svelte",
         "refs": [
           null
         ]
@@ -7569,6 +7712,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/rank-record.svelte",
         "refs": [
           null
@@ -7960,6 +8109,28 @@
     "references": [
       {
         "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "The day or save changed.",
+      "ja": "日付またはセーブデータが変わりました。",
+      "zh-Hans": "日期或存档有变化。",
+      "zh-Hant": "日期或存檔有變動。",
+      "es": "Ha cambiado el día o la partida guardada.",
+      "fr": "La date ou la sauvegarde a changé.",
+      "ko": "날짜 또는 저장 데이터가 바뀌었어요.",
+      "ru": "День или сохранение изменились."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-notice.svelte",
         "refs": [
           null
         ]
@@ -8468,6 +8639,19 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "nameWithVariant"
+              ]
+            ]
+          }
+        ]
+      },
+      {
         "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           {
@@ -8520,6 +8704,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Undiscovered sources",
+      "ja": "未発見の入手先",
+      "zh-Hans": "未发现的来源",
+      "zh-Hant": "未發現的入手途徑",
+      "es": "Fuentes por descubrir",
+      "fr": "Sources à découvrir",
+      "ko": "아직 발견하지 못한 획득처",
+      "ru": "Неоткрытые источники"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
         ]
       }
     ],
@@ -10914,6 +11120,63 @@
   },
   {
     "translations": {
+      "en": [
+        "{0} almanac find",
+        "{0} almanac finds"
+      ],
+      "ja": [
+        "図鑑の収集品{0}点"
+      ],
+      "zh-Hans": [
+        "{0} 件图鉴物品"
+      ],
+      "zh-Hant": [
+        "{0} 件圖鑑物品"
+      ],
+      "es": [
+        "{0} hallazgo del almanaque",
+        "{0} hallazgos del almanaque",
+        "{0} hallazgos del almanaque"
+      ],
+      "fr": [
+        "{0} trouvaille pour l’almanach",
+        "{0} trouvailles pour l’almanach",
+        "{0} trouvailles pour l’almanach"
+      ],
+      "ko": [
+        "도감 수집품 {0}개"
+      ],
+      "ru": [
+        "{0} находка для альманаха",
+        "{0} находки для альманаха",
+        "{0} находок для альманаха",
+        "{0} находки для альманаха"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} categories",
       "ja": "{0}のカテゴリー",
       "zh-Hans": "{0}分类",
@@ -10998,6 +11261,80 @@
               [
                 "0",
                 "locked"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} match",
+        "{0} matches"
+      ],
+      "ja": [
+        "{0}件一致"
+      ],
+      "zh-Hans": [
+        "{0} 个匹配项"
+      ],
+      "zh-Hant": [
+        "{0} 個符合項目"
+      ],
+      "es": [
+        "{0} coincidencia",
+        "{0} coincidencias",
+        "{0} coincidencias"
+      ],
+      "fr": [
+        "{0} résultat",
+        "{0} résultats",
+        "{0} résultats"
+      ],
+      "ko": [
+        "검색 결과 {0}개"
+      ],
+      "ru": [
+        "{0} совпадение",
+        "{0} совпадения",
+        "{0} совпадений",
+        "{0} совпадения"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "entries.length"
+              ],
+              [
+                "0",
+                "entries.length"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/lib/components/shelf-heading.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "matchCount"
+              ],
+              [
+                "0",
+                "matchCount"
               ]
             ]
           }
@@ -11711,6 +12048,23 @@
       "ru": "{0}, {1}"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "variant"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [

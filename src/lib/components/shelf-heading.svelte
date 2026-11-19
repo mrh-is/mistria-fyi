@@ -3,6 +3,7 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import ShelfExplainer from "#lib/components/shelf-explainer.svelte";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
@@ -19,6 +20,7 @@
     expanded = false,
     explains = true,
     level = 2,
+    matchCount,
     onToggle,
     shelf,
   }: {
@@ -29,6 +31,7 @@
     /** Offers the explainer. Folds inside a section leave it to the page's own headings. */
     explains?: boolean;
     level?: 2 | 3 | 4;
+    matchCount?: number;
     onToggle?: () => void;
     shelf: Shelf;
   } = $props();
@@ -71,7 +74,11 @@
       onclick={() => (explainerOpen = true)}><IconInfoCircle class="size-3.5" /></button
     >
   {/if}
-  {#if count !== undefined}
+  {#if matchCount !== undefined}
+    <span class="shelf-heading__count">
+      {plural(matchCount, [`${matchCount} match`, `${matchCount} matches`])}
+    </span>
+  {:else if count !== undefined}
     <span class="shelf-heading__count">{formatNumber(count, page.data.locale)}</span>
   {/if}
 </div>

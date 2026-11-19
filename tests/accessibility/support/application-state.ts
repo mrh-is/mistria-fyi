@@ -134,10 +134,7 @@ export async function waitForRendering(page: Page): Promise<void> {
       const inViewport =
         box.bottom > 0 && box.top < innerHeight && box.right > 0 && box.left < innerWidth;
       return (
-        image.complete ||
-        box.width === 0 ||
-        box.height === 0 ||
-        (image.loading === "lazy" && !inViewport)
+        image.complete || !image.checkVisibility() || (image.loading === "lazy" && !inViewport)
       );
     }),
   );

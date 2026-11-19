@@ -115,27 +115,32 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(page).toHaveURL(/\/en$/);
   });
 
-  test("row removal moves focus and Undo is keyboard operable", critical, async ({ page }) => {
-    await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
-    const rows = page.getByRole("button", { name: /^Check (?!spoilered item)/ });
-    const nextName = await rows.nth(1).getAttribute("aria-label");
-    await rows.first().focus();
-    await page.keyboard.press("Space");
-    await expect(page.getByRole("button", { name: nextName ?? "" })).toBeFocused();
-    const undo = page.getByRole("button", { exact: true, name: "Undo" });
-    await undo.focus();
-    await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
-  });
+  test(
+    "checking a ledger row keeps focus and Undo is keyboard operable",
+    critical,
+    async ({ page }) => {
+      await gotoApplication(page, "/almanac");
+      const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+      const row = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+      const name = await row.getAttribute("aria-label");
+      await row.focus();
+      await page.keyboard.press("Space");
+      await expect(
+        artifacts.getByRole("button", { name: `Uncheck ${name?.slice(6) ?? ""}` }),
+      ).toBeFocused();
+      const undo = page.getByRole("button", { exact: true, name: "Undo" });
+      await undo.focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+    },
+  );
 
   test("the first check and the starter checks have separate Undo actions", async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
-    await page
-      .getByRole("button", { name: /^Check (?!spoilered item)/ })
-      .first()
-      .click();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    const row = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+    const name = await row.getAttribute("aria-label");
+    await row.click();
 
     const itemUndo = page.getByRole("button", { exact: true, name: "Undo" });
     const starterUndo = page.getByRole("button", { name: "Undo starter checks" });
@@ -145,12 +150,10 @@ test.describe("keyboard and focus accessibility", () => {
 
     await expect(starterUndo).toBeHidden();
     await expect(
-      page.getByRole("button", { name: /^Artifacts, 1 of \d+ completed/ }),
+      artifacts.getByRole("button", { name: `Uncheck ${name?.slice(6) ?? ""}` }),
     ).toBeVisible();
     await itemUndo.click();
-    await expect(
-      page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }),
-    ).toBeVisible();
+    await expect(artifacts.getByRole("button", { name: name ?? "" })).toBeVisible();
   });
 
   test("Villager alphabet and relationship progression preserve keyboard focus", async ({

@@ -430,21 +430,24 @@ The Everything page also offers a Source grouping. `controllers/source-checklist
 category projections into rows with their original completion identity, presentation, & reversible
 store action. `presentation/source-groups.ts` places each row under all of its source instances,
 merges stock facets within an instance, & classifies availability using only that instance’s
-sources. Source totals & To do, Not now, & Done rollups precede display filtering; unobtainable rows
-never hold a source open. `source-content.svelte` composes the source types & sections, placing Done
-sections inside the same page-wide Completed fold. In both lenses, outstanding groups start open &
-completed groups start closed on each page load; these choices aren't persisted. A source anchor
-opens its containing type group, including a completed one. `controllers/completion-scope.svelte.ts`
-partitions category sections by the same completion their headers show; compact records & masked
-top-level spoiler sections register individually, & a masked section always counts as outstanding. A
-section changes lists once a completed row has had time to leave, the source lens holds its sections
-the same way, & focus inside a section that leaves moves to the nearest visible section trigger. The
-Completed fold starts closed and renders its copy only once opened, because that copy is every
-category a second time. Collapsed groups keep their content mounted so progress edits & filters can
-update which groups have content. Category pages have no completion scope & keep their existing
-grouping. The `group=category|source` query overrides the device’s `everythingGrouping` preference
-without rewriting it; choosing the control updates both the preference & URL. Progress serialization
-is unchanged.
+sources. The `group=category|source` query overrides the device’s `everythingGrouping` preference.
+Choosing the control updates the preference & URL.
+
+In the Source grouping and on the Almanac page, the ledger captures its sections, shelves, & columns
+after local progress loads. A check-off updates the mark at each placement of that fact. Placements
+& shelf counts hold until the page remounts or the reader refreshes the shelves. A date change or
+applied save offers that refresh. The source filter can narrow availability using the captured day.
+Search counts matching placements in each shelf while the page total counts each fact once. A column
+heading highlights matching rows within its section.
+
+A place link opens its containing source group & focuses the place heading after scrolling to it.
+The Completed fold starts closed. A place link into it opens the fold, and search can count the
+closed fold’s rows. The desktop section index follows document scroll.
+
+In Everything’s Category grouping, `controllers/completion-scope.svelte.ts` partitions sections by
+the completion their headers show. Compact records & masked top-level spoiler sections register
+individually, and masked sections count as outstanding. A finished row leaves its list after its
+animation, and focus moves to the nearest visible section trigger.
 
 ### Component conventions
 

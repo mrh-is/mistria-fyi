@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import * as celebration from "#lib/effects/celebrate.js";
 import { factKey } from "#lib/engine/provenance.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
@@ -128,12 +129,12 @@ const openFishing = async (view: ReturnType<typeof renderWithFeedback>) => {
   return view.getByRole("button", { name: "Check Anchovy" });
 };
 
-describe("while a source section changes lists", () => {
+describe("while source shelves hold", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   });
 
-  it("holds a finished source section, then keeps focus on a visible trigger", async () => {
+  it("keeps a finished row and its focus in the same shelf", async () => {
     mockChecklist();
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
     await tick();
@@ -145,12 +146,13 @@ describe("while a source section changes lists", () => {
     await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
     await tick();
     await tick();
-    expect(view.queryByRole("button", { name: "Fishing" })).not.toBeInTheDocument();
-    expect(document.activeElement?.matches("button[data-section-trigger]")).toBe(true);
-    expect(document.activeElement?.closest("[hidden]")).toBeNull();
+    expect(view.getByRole("button", { name: "Fishing" })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Uncheck Anchovy" })).toBe(row);
+    expect(row).toHaveFocus();
+    expect(view.getByText("To do · 1")).toBeVisible();
   });
 
-  it("moves a finished source section to the completed list only after the hold", async () => {
+  it("moves a finished source section to Completed after refreshing the shelves", async () => {
     mockChecklist();
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
     await tick();
@@ -160,13 +162,90 @@ describe("while a source section changes lists", () => {
     await fireEvent.click(row);
     await tick();
     expect(within(completed).queryByRole("button", { name: "Fishing" })).toBeNull();
-    await vi.advanceTimersByTimeAsync(ROW_LEAVE_MS);
+    userState.setSeason("winter");
     await tick();
+    expect(view.getByRole("button", { name: "Uncheck Anchovy" })).toBe(row);
+    await fireEvent.click(view.getByRole("button", { name: "Refresh shelves" }));
     await tick();
     await fireEvent.click(within(completed).getByRole("button", { name: "Completed" }));
     expect(within(completed).getByRole("button", { name: "Fishing" })).toBeInTheDocument();
-    expect(document.activeElement?.matches("button[data-section-trigger]")).toBe(true);
-    expect(document.activeElement?.closest("[hidden]")).toBeNull();
+  });
+
+  it("finds a row on a closed Not now shelf and shows its match count", async () => {
+    const source: Source = {
+      type: "fish",
+      availability: { type: "season", seasons: ["winter"] },
+      waterTypes: ["ocean" as WaterType],
+    };
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Anchovy", false, [source]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+    toolbarState.setSearchQuery("Anchovy");
+    await tick();
+    const summary = view.getByText(/1 match/u);
+    expect(summary.closest("details")).not.toHaveAttribute("open");
+    await fireEvent.click(summary);
+    expect(summary.closest("details")).toHaveAttribute("open");
+    expect(view.getByRole("button", { name: "Check Anchovy" })).toBeVisible();
+  });
+
+  it("counts matches in finished places without opening the Completed fold", async () => {
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Anchovy", true, [{ type: "fish", waterTypes: ["ocean" as WaterType] }]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+    toolbarState.setSearchQuery("Anchovy");
+    await tick();
+    const completed = within(view.getByTestId("everything-completed"));
+    expect(completed.getAllByText("1 match")[0]).toBeVisible();
+    expect(completed.getByRole("button", { name: "Completed" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  it("updates spoiler masks without replacing the current shelf", async () => {
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      {
+        ...checklistRow("Anchovy", false, [{ type: "fish", waterTypes: ["ocean" as WaterType] }]),
+        spoilered: true,
+      },
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "fish-ocean", locale: "en" });
+    await tick();
+    const checkbox = view.getByRole("button", { name: "Check spoilered item" });
+    userState.toggleShowSpoilers();
+    await tick();
+    expect(view.getByRole("button", { name: "Check Anchovy" })).toBe(checkbox);
+    expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
+    userState.toggleShowSpoilers();
+    await tick();
+    expect(view.getByRole("button", { name: "Check spoilered item" })).toBe(checkbox);
+  });
+
+  it("names the season for this place when a row also has a seasonal source elsewhere", async () => {
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Anchovy", false, [
+        {
+          type: "fish",
+          availability: { type: "season", seasons: ["winter"] },
+          waterTypes: ["ocean" as WaterType],
+        },
+        {
+          type: "fish",
+          availability: { type: "season", seasons: ["summer"] },
+          waterTypes: ["river" as WaterType],
+        },
+      ]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "fish-ocean", locale: "en" });
+    const place = view.container.querySelector<HTMLElement>("#fish-ocean");
+    if (!place) throw new Error("Expected the Ocean section");
+    const ocean = within(place);
+    await fireEvent.click(ocean.getByText(/^Not now ·/u));
+    await fireEvent.click(ocean.getByRole("button", { name: /Anchovy Almanac/u }));
+    expect(ocean.getByText("Comes back by waiting, in Winter.")).toBeVisible();
   });
 
   it("celebrates a source the toggle finishes, but not unticking it again", async () => {

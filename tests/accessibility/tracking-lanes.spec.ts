@@ -34,8 +34,8 @@ for (const [theme, width] of [
     await waitForRendering(page);
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) });
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of/ }).click();
-    const first = page.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    const first = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     const name = await first.getAttribute("aria-label");
     expect(name).toBeTruthy();
     await first.click();
@@ -64,6 +64,7 @@ for (const [theme, width] of [
     expect(downloaded.suggestedFilename()).toMatch(/^mistria-field-guide-backup-/);
     await install.getByRole("button", { name: "I’ve installed it" }).click();
     await expect(install).toBeHidden();
+    await page.getByRole("button", { name: "Undo starter checks" }).click();
     await expect
       .poll(() =>
         page.evaluate((key) => {

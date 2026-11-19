@@ -1,5 +1,7 @@
 import { expect } from "@playwright/test";
 
+import { gotoRenderedApplication } from "./application-state.js";
+
 import type { Locator, Page } from "@playwright/test";
 
 export async function openFeedbackValidation(page: Page): Promise<void> {
@@ -29,6 +31,12 @@ export async function openSettingsCard(page: Page, name: string): Promise<void> 
 /** Opens the first closed fold of `shelf`, where a locked or finished row waits. */
 export async function openShelf(page: Page, shelf: string): Promise<void> {
   await page.getByRole("button", { expanded: false, name: shelf }).first().click();
+}
+
+/** The category lens still uses the stacked paper cards during the ledger rollout. */
+export async function openLegacyArtifacts(page: Page): Promise<void> {
+  await gotoRenderedApplication(page, "/everything?group=category");
+  await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
 }
 
 export async function openVisibilityPanel(page: Page): Promise<void> {

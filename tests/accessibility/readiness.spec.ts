@@ -80,9 +80,9 @@ test.describe("@readiness application readiness", () => {
     await initializeApplication(page, "dark", createStoredState({ showSpoilers: true }));
     await gotoApplication(page, "/almanac");
     await expectResolvedTheme(page, "dark");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
-    await page.getByRole("button", { expanded: false, name: "Not now" }).first().click();
-    await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    await artifacts.getByText(/^Not now ·/).click();
+    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
   });
 });

@@ -78,6 +78,6 @@ it("offers both grouping lenses and renders source anchors from the device prefe
 it("lets the URL override the device preference without replacing it", () => {
   pageStub.navigate("/en/everything?group=source#store-balor");
   const sourceView = renderToFragmentWithFeedback(AllPage, { props });
-  expect(sourceView.container.querySelector("#store-balor [data-tracker-row-list]")).not.toBeNull();
+  expect(sourceView.container.querySelector("#store-balor [data-ledger-row]")).not.toBeNull();
   expect(userState.state.everythingGrouping).toBe("category");
 });

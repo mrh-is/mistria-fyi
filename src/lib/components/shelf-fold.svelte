@@ -14,7 +14,9 @@
     count,
     explains = false,
     forceOpen = false,
+    keepMounted = false,
     level = 4,
+    matchCount,
     shelf,
   }: {
     children: Snippet;
@@ -22,7 +24,10 @@
     explains?: boolean;
     /** Opens the fold for as long as it holds, as a search does. */
     forceOpen?: boolean;
+    /** Lets search count the closed content without expanding the fold. */
+    keepMounted?: boolean;
     level?: 2 | 3 | 4;
+    matchCount?: number;
     shelf: Shelf;
   } = $props();
 
@@ -35,11 +40,15 @@
   expanded={isOpen}
   {explains}
   {level}
+  {matchCount}
   onToggle={() => (open = !open)}
   {shelf}
 />
-{#if isOpen}
-  <div transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}>
+{#if isOpen || keepMounted}
+  <div
+    hidden={!isOpen && keepMounted}
+    transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
+  >
     {@render children()}
   </div>
 {/if}

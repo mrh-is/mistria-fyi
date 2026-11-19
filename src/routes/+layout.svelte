@@ -120,7 +120,7 @@
     {/snippet}
     <!-- Until each screen's redesign lands, its content keeps the phone-width column it was built for. -->
     <div
-      class="mx-auto flex w-full max-w-lg flex-1 flex-col px-safe landscape-phone:max-w-none {hasToolbar
+      class="mx-auto flex w-full max-w-lg flex-1 flex-col px-safe has-[[data-ledger-layout]]:max-w-6xl landscape-phone:max-w-none {hasToolbar
         ? 'pb-safe-offset-18'
         : ''}"
     >

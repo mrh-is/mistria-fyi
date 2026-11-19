@@ -44,12 +44,14 @@
 <section aria-labelledby={id} hidden={!visible}>
   <h2
     {id}
-    class="sticky z-[var(--z-section-header)] -mx-4 scroll-mt-32 bg-background"
-    style="top: var(--section-header-sticky-top, 0px)"
+    tabindex="-1"
+    data-ledger-index-heading
+    class="sticky z-[var(--z-section-header)] scroll-mt-[var(--ledger-anchor-offset,8rem)] bg-background"
+    style="top: calc(var(--ledger-sticky-top, 0px) + var(--section-header-sticky-top, 0px))"
   >
     <button
       type="button"
-      class="flex min-h-11 w-full items-center gap-2 px-6 py-2 text-left text-sm font-semibold tracking-wide focus-visible:outline-2 focus-visible:outline-ring"
+      class="flex min-h-11 w-full items-center gap-2 px-2 py-2 text-left text-sm font-semibold tracking-wide focus-visible:outline-2 focus-visible:outline-ring"
       data-section-trigger
       aria-label={name}
       aria-describedby={description ? `${contentId}-description` : undefined}

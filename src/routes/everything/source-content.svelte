@@ -1,30 +1,29 @@
 <script lang="ts">
-  import { untrack } from "svelte";
-
   import { Icon } from "#lib/components/icon/index.js";
+  import LedgerIndex from "#lib/components/ledger/ledger-index.svelte";
+  import LedgerNotice from "#lib/components/ledger/ledger-notice.svelte";
+  import LedgerRow from "#lib/components/ledger/ledger-row.svelte";
+  import LedgerSection from "#lib/components/ledger/ledger-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import ShelfFold from "#lib/components/shelf-fold.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
-  import TrackerRowSection from "#lib/components/tracker-row-section.svelte";
-  import TrackerRow from "#lib/components/tracker-row.svelte";
   import { createRowCheckOff } from "#lib/controllers/check-off.svelte.js";
+  import { createLedgerSnapshot } from "#lib/controllers/ledger-snapshot.svelte.js";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
-  import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { buildSourceChecklist } from "#lib/controllers/source-checklist.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
-  import { getSourceDisclosure } from "#lib/engine/availability.js";
   import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
-  import { emptyProgress, filteredCounts } from "#lib/engine/shelves.js";
+  import { filteredCounts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import { shelfLabel } from "#lib/presentation/shelves.js";
+  import { ledgerPlacement, ledgerShelf } from "#lib/presentation/ledger.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
   import {
     compareSourceSections,
@@ -37,15 +36,12 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
-  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import CategorySection from "./category-section.svelte";
   import GroupSection from "./group-section.svelte";
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
   import type { AllProgress } from "#lib/engine/categories.js";
-  import type { CategoryProgress } from "#lib/engine/progress.js";
-  import type { Shelf } from "#lib/engine/shelves.js";
   import type { SourceSection } from "#lib/presentation/source-groups.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { QuestId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
@@ -61,7 +57,7 @@
     progress: AllProgress;
   } = $props();
 
-  const checkOff = createRowCheckOff<string>();
+  const checkOff = createRowCheckOff<string>({ animateLeaving: false });
   const { guard } = checkOff;
 
   function requestFloor(floor: number): void {
@@ -85,11 +81,9 @@
   function progressCategoryShown(completed: boolean): boolean {
     return UNSOURCED_CATEGORY_KEYS.some((category) => progressShown[`${completed}:${category}`]);
   }
-  const sectionGrouping = createSectionGrouping<string>();
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
-  let entries = $derived(
-    buildSourceChecklist(userState.progressContext, locale, userState.state.showSpoilers),
-  );
+  let entries = $derived(buildSourceChecklist(userState.progressContext, locale));
+  let liveEntries = $derived(new Map(entries.map((entry) => [entry.key, entry])));
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
@@ -105,38 +99,52 @@
       isVillagerComplete(id as VillagerId, userState.state.progress),
     ),
   ]);
-  let sections = $derived(
-    projectSourceGroups(
-      entries,
-      userState.progressContext,
-      (sources) => toolbarState.matchesSourceFilters(sources),
-      userState.progressionState,
-    ),
-  );
+  const ledger = createLedgerSnapshot(() => {
+    const day = userState.progressContext;
+    const visibility = day.progressionState;
+    return projectSourceGroups(entries, day, undefined, visibility).map((section) => ({
+      section,
+      ...sourceSectionLabel(section, lookups, visibility),
+      rows: section.rows
+        .map(({ doable, entry, sources }) => ({
+          entry,
+          key: entry.key,
+          ...ledgerPlacement(
+            sources,
+            day,
+            visibility,
+            {
+              completed: entry.completed,
+              doable: doable && entry.obtainable,
+              spoilered: Boolean(
+                entry.spoilered || !isConditionVisible(entry.visibility, visibility),
+              ),
+            },
+            entry.sources,
+          ),
+        }))
+        .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
+    }));
+  });
+
+  type Placement = (typeof ledger.value)[number]["rows"][number];
+  function visibleRow(row: Placement): boolean {
+    if (!row.entry.obtainable && !toolbarState.showUnobtainable) return false;
+    return (
+      !toolbarState.searchQuery ||
+      ((!row.spoilered || userState.state.showSpoilers) && matchesSearch(row.entry))
+    );
+  }
+
   let groups = $derived(
     SOURCE_TYPE_ORDER.map((group) => ({
       group,
-      sections: sections
-        .filter((section) => section.group === group)
-        .map((section) => ({
-          section,
-          ...sourceSectionLabel(section, lookups, userState.progressionState),
-          held: sectionGrouping.heldShelf(section.id),
-          visibleRows: section.rows
-            .filter(({ entry }) => {
-              const spoilered =
-                entry.spoilered ||
-                !isConditionVisible(entry.visibility, userState.progressionState);
-              if (toolbarState.searchQuery && (spoilered || !matchesSearch(entry))) {
-                return false;
-              }
-              return entry.obtainable || toolbarState.showUnobtainable;
-            })
-            .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
-        }))
+      sections: ledger.value
         .filter(
-          ({ spoilered, visibleRows }) =>
-            !toolbarState.searchQuery || (!spoilered && visibleRows.length > 0),
+          ({ rows, section, spoilered }) =>
+            section.group === group &&
+            (!toolbarState.searchQuery || !spoilered || userState.state.showSpoilers) &&
+            rows.some((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)),
         )
         .toSorted((a, b) => compareSourceSections(a, b, locale)),
     })).filter(
@@ -150,6 +158,17 @@
         groupSections.some((entry) => isInCompletedList(entry)),
       ),
   );
+  let completedMatches = $derived.by(() => {
+    if (!toolbarState.searchQuery) return undefined;
+    const matches = groups.flatMap(({ sections: groupSections }) =>
+      groupSections
+        .filter((entry) => isInCompletedList(entry))
+        .flatMap(({ rows }) =>
+          rows.filter((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)),
+        ),
+    );
+    return matches.length > 0 ? matches.length : undefined;
+  });
 
   // A link to a finished source has to reach it through the closed fold.
   let anchorInCompleted = $derived(
@@ -164,14 +183,6 @@
       ),
     ),
   );
-
-  // The hold starts from the section's current shelf, which the grouping needs to know.
-  $effect(() => {
-    const reports = sections.map(({ id, state }) => [id, stateShelf(state)] as const);
-    untrack(() => {
-      for (const [id, shelf] of reports) sectionGrouping.report(id, shelf);
-    });
-  });
 
   // Moving or removing a section blurs whatever it contains.
   let restoreFocus: (() => Promise<void>) | undefined;
@@ -189,43 +200,13 @@
   });
 
   function isInCompletedList({
-    held,
     section,
     spoilered,
   }: {
-    held: Shelf | undefined;
     section: { state: SourceSection<SourceChecklistRow>["state"] };
     spoilered: boolean;
   }): boolean {
-    return !spoilered && (held ?? stateShelf(section.state)) === "completed";
-  }
-
-  function rowShelfOf({ doable, entry }: { doable: boolean; entry: SourceChecklistRow }): Shelf {
-    if (entry.completed) return "completed";
-    return doable && entry.obtainable ? "todo" : "notNow";
-  }
-
-  /** A source's fraction, with the rest of the shelf counts its header reads. */
-  function sectionProgress(
-    section: SourceSection<SourceChecklistRow>,
-  ): CategoryProgress | undefined {
-    // Only revealed unobtainable rows: nothing to count, but the section stays for them.
-    if (section.total === 0) return undefined;
-    const remaining = section.rows.filter(({ entry }) => entry.obtainable && !entry.completed);
-    const todo = remaining.filter(({ doable }) => doable).length;
-    return {
-      ...emptyProgress(),
-      completed: section.completed,
-      completedShown: section.completed,
-      todo,
-      total: section.total,
-      waiting: remaining.length - todo,
-    };
-  }
-
-  function stateShelf(state: SourceSection<SourceChecklistRow>["state"]): Shelf {
-    if (state === /* @wc-ignore */ "done") return "completed";
-    return state === "now" ? "todo" : "notNow";
+    return !spoilered && section.state === /* @wc-ignore */ "done";
   }
 
   function matchesSearch(entry: SourceChecklistRow): boolean {
@@ -239,43 +220,30 @@
 
   // A row can sit under several sources, but it's still one match.
   registerPageSearch(() => {
-    const matches = projectSourceGroups(
-      entries,
-      userState.progressContext,
-      () => true,
-      userState.progressionState,
-    )
-      .filter(
-        (section) => !sourceSectionLabel(section, lookups, userState.progressionState).spoilered,
-      )
+    const matches = ledger.value
+      .filter(({ spoilered }) => !spoilered || userState.state.showSpoilers)
       .flatMap(({ rows }) => rows)
-      .filter(
-        ({ entry }) =>
-          !entry.spoilered &&
-          isConditionVisible(entry.visibility, userState.progressionState) &&
-          (entry.obtainable || toolbarState.showUnobtainable) &&
-          matchesSearch(entry),
-      );
-    const visible = groups.flatMap((group) =>
-      group.sections.flatMap(({ visibleRows }) => visibleRows),
-    );
+      .filter((row) => (!row.spoilered || userState.state.showSpoilers) && visibleRow(row));
+    const visible = matches.filter(({ sources }) => toolbarState.matchesSourceFilters(sources));
     const visibleKeys = new Set(visible.map(({ entry }) => entry.key));
     // A row is doable anywhere through any source, & doable here through a source still shown.
     const shownDoable = new Set(
-      visible.filter(({ doable }) => doable).map(({ entry }) => entry.key),
+      visible
+        .filter((row) => ledgerShelf(row, toolbarState.showsSource) === "todo")
+        .map(({ entry }) => entry.key),
     );
     const doableAnywhere = new Set(
       matches.filter(({ doable }) => doable).map(({ entry }) => entry.key),
     );
     const rows = new Map(
-      matches.map(({ entry }) => [
+      matches.map(({ entry, hiddenCount, visibleSources }) => [
         entry.key,
         {
           completed: entry.completed,
           doable: shownDoable.has(entry.key),
           doableAnywhere: doableAnywhere.has(entry.key),
           shown: visibleKeys.has(entry.key),
-          sourceDisclosure: getSourceDisclosure(entry.sources, userState.progressionState),
+          sourceDisclosure: { hiddenCount, visibleSources },
         },
       ]),
     );
@@ -306,11 +274,14 @@
       },
       hold: () => {
         const sectionChecks: (() => boolean)[] = [];
-        for (const { id, rows } of sections) {
+        for (const {
+          section: { rows },
+        } of ledger.value) {
           if (!rows.some(({ entry: row }) => row.key === entry.key)) continue;
-          sectionGrouping.hold(id);
-          sectionChecks.push(
-            () => sections.find((section) => section.id === id)?.state === /* @wc-ignore */ "done",
+          sectionChecks.push(() =>
+            rows.every(
+              ({ entry: row }) => !row.obtainable || liveEntries.get(row.key)?.completed === true,
+            ),
           );
         }
         return sectionChecks;
@@ -319,7 +290,8 @@
       name: entry.name,
       needsGuard:
         !entry.completed &&
-        (entry.spoilered || !isConditionVisible(entry.visibility, userState.progressionState)),
+        ((entry.spoilered && !userState.state.showSpoilers) ||
+          !isConditionVisible(entry.visibility, userState.progressionState)),
       toggle: () => {
         const beforeRecipes = new Set(userState.state.progress.almanacRecipes);
         return { beforeRecipes, undo: entry.toggle() };
@@ -330,6 +302,7 @@
 </script>
 
 <SpoilerGuardDialog {guard} />
+<LedgerNotice changed={ledger.needsRefresh} onRefresh={ledger.refresh} />
 
 {#snippet sourceGroups(completed: boolean)}
   {#each groups as { group, sections: allGroupSections } (group)}
@@ -365,61 +338,48 @@
           />
         {/snippet}
 
-        {#each groupSections as { section, name, spoilered, visibleRows } (section.id)}
+        {#each groupSections as { section, name, spoilered, rows } (section.id)}
           <div
             id={section.id === "progress" ? "source-progress" : section.id}
-            class="scroll-mt-32"
+            class="scroll-mt-[var(--ledger-anchor-offset,8rem)]"
             data-source-section
             data-source-status={spoilered ? undefined : section.state}
           >
-            <SpoilerSection {name} {spoilered}>
-              <TrackerRowSection
+            <SpoilerSection {name} spoilered={spoilered && !userState.state.showSpoilers}>
+              <LedgerSection
+                collapsible
                 {locale}
-                depth={1}
-                progress={sectionProgress(section)}
+                {name}
+                {rows}
+                visible={visibleRow}
                 forceOpen={anchor === section.id ||
-                  (section.id === "progress" && anchor === "source-progress") ||
-                  !!toolbarState.searchQuery}
-                name={/* @wc-include */ `${name} · ${
-                  section.state === /* @wc-ignore */ "done"
-                    ? "Done"
-                    : shelfLabel(stateShelf(section.state))
-                }`}
-                forceShelvesOpen={!!toolbarState.searchQuery}
-                getKey={({ entry }) => entry.key}
-                getShelf={rowShelfOf}
-                isLeaving={({ entry }) => checkOff.isLeaving(entry.key)}
-                items={visibleRows}
+                  (section.id === "progress" && anchor === "source-progress")}
               >
-                {#snippet row({ entry, sources })}
-                  {@const spoileredRow =
-                    entry.spoilered ||
-                    !isConditionVisible(entry.visibility, userState.progressionState)}
-                  <TrackerRow
+                {#snippet row(placement, shelf, columns, discovery, highlighted)}
+                  {@const entry = liveEntries.get(placement.key) ?? placement.entry}
+                  <LedgerRow
+                    {placement}
+                    {columns}
+                    {shelf}
+                    {discovery}
+                    {highlighted}
                     category={entry.category}
                     fact={entry.fact}
-                    display={entry.questState === "obtained" && !spoileredRow
-                      ? { mode: "obtained" }
-                      : trackerRowDisplay({
-                          completed: entry.completed,
-                          spoilered: spoileredRow,
-                          leaving: checkOff.isLeaving(entry.key),
-                        })}
+                    id={entry.id}
+                    completed={entry.completed}
+                    obtained={entry.questState === "obtained" && !placement.spoilered}
                     name={entry.name}
                     variant={entry.category === "almanac" ? entry.subtitle : undefined}
                     subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
                       .filter(Boolean)
                       .join(" · ")}
                     reportCategory={entry.reportCategory}
-                    reportEntityId={entry.id}
                     sprite={entry.sprite}
-                    spriteClass="text-primary"
-                    {sources}
-                    segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
+                    lookups={{ ...lookups, entityVisibility: entry.visibility }}
                     onToggle={(covered) => toggle(entry, covered)}
                   />
                 {/snippet}
-              </TrackerRowSection>
+              </LedgerSection>
             </SpoilerSection>
           </div>
         {/each}
@@ -451,19 +411,27 @@
   {/each}
 {/snippet}
 
-<div class="flex flex-col gap-6">
-  {@render sourceGroups(false)}
-</div>
+<LedgerIndex
+  sections={groups
+    .filter(({ sections }) => sections.some((entry) => !isInCompletedList(entry)))
+    .map(({ group }) => ({ id: `sources-${group}`, name: sourceTypeLabel(group, locale) }))}
+>
+  <div class="flex flex-col gap-6">
+    {@render sourceGroups(false)}
+  </div>
 
-<div class="flex flex-col gap-6" data-testid="everything-completed" hidden={!hasCompletedContent}>
-  <ShelfFold
-    explains
-    forceOpen={!!toolbarState.searchQuery || anchorInCompleted}
-    level={2}
-    shelf="completed"
-  >
-    <div class="flex flex-col gap-6">
-      {@render sourceGroups(true)}
-    </div>
-  </ShelfFold>
-</div>
+  <div class="flex flex-col gap-6" data-testid="everything-completed" hidden={!hasCompletedContent}>
+    <ShelfFold
+      explains
+      forceOpen={anchorInCompleted}
+      keepMounted={Boolean(toolbarState.searchQuery)}
+      level={2}
+      matchCount={completedMatches}
+      shelf="completed"
+    >
+      <div class="flex flex-col gap-6">
+        {@render sourceGroups(true)}
+      </div>
+    </ShelfFold>
+  </div>
+</LedgerIndex>
