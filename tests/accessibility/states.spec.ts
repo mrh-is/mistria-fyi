@@ -103,6 +103,8 @@ test.describe("stateful accessibility", () => {
   });
 
   test("spoiler-hidden and revealed rows pass axe", critical, async ({ page }, testInfo) => {
+    // Allow for both ledger scans and the interactions between them in Linux CI (#694).
+    test.setTimeout(60_000);
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
     await artifacts.getByText(/^Not now ·/).click();
