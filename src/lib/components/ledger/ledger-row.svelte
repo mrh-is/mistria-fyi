@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ledgerSpriteMask } from "#lib/attachments/ledger-sprite-mask.js";
   import { Icon } from "#lib/components/icon/index.js";
   import SourceCard from "#lib/components/source-card.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
@@ -123,7 +124,9 @@
       <span
         class="sprite"
         data-sprite-treatment={treatment}
-        style:--sprite-url={`url("${spriteUrl}")`}
+        {@attach treatment === "todo" || treatment === "spoiler"
+          ? ledgerSpriteMask(spriteUrl)
+          : undefined}
       >
         <img src={spriteUrl} alt="" crossorigin="anonymous" loading="lazy" width="30" height="30" />
       </span>
@@ -200,6 +203,8 @@
 
 <style>
   [data-ledger-row] {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 48px;
     border-block-end: 1px solid var(--color-ink-hairline);
     border-inline-start: 2px solid transparent;
   }

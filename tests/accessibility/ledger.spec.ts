@@ -62,7 +62,17 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   const rows = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ });
-  await rows.nth(50).scrollIntoViewIfNeeded();
+  const distantRow = rows.nth(50);
+  const spriteMask = () =>
+    distantRow.evaluate((button) =>
+      button
+        .closest("[data-ledger-row]")
+        ?.querySelector<HTMLElement>("[data-sprite-treatment]")
+        ?.style.getPropertyValue("--sprite-url"),
+    );
+  expect(await spriteMask()).toBe("");
+  await distantRow.scrollIntoViewIfNeeded();
+  await expect.poll(spriteMask).toMatch(/^url\(/u);
   const contents = page.getByRole("navigation", { name: "Page sections" });
   await expect(contents.getByRole("link", { exact: true, name: "Furniture" })).toHaveAttribute(
     "aria-current",
