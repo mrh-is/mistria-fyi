@@ -71,6 +71,30 @@ The mockup reads three of Dewey’s saves from `pipeline/input/`:
 | Mid game  | `archive/Save file/game-1315159680-autosave.sav` | Spring 14, Year 2 |
 | Late game | `v1.0.8/save/game-1315159680-autosave.sav`       | Fall 2, Year 2    |
 
+## Preview with progress
+
+Run the preview command with `day-one`, `mid-game`, or `late-game` and the URL of the page you want
+to check. Start your dev server first for a local URL. For a deployed branch, use the PR’s
+`*.mistria-fyi.pages.dev` URL or `https://next.mistria.fyi`.
+
+```sh
+pnpm exec tsx scripts/field-guide-preview.ts mid-game http://localhost:5173/en/museum
+pnpm exec tsx scripts/field-guide-preview.ts late-game https://next.mistria.fyi/en/museum
+```
+
+The command opens a fresh Chromium session with the selected progress already loaded. Close the tab
+when you’re done. Add `--screenshot /tmp/museum-mid-game.png` to capture the first rendered view at
+1280 × 900 in headless Chromium. Install the workspace browser with
+`pnpm exec playwright install chromium` if it’s missing.
+
+The command uses [tracker progress exports](../../../scripts/fixtures/field-guide-progress.json)
+from the three saves above. A checkout can load them without game files, and the deployed app has no
+fixture loader. To regenerate the exports from the original saves under `pipeline/input/`:
+
+```sh
+FIELD_GUIDE_REFRESH=1 pnpm exec vitest run --project app src/lib/field-guide-progress.test.ts
+```
+
 ## Refreshing the data
 
 Run these from the repository root. The export reads the three saves above from `pipeline/input/`,
