@@ -117,7 +117,9 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   ).toBeVisible();
 });
 
-test("native reveal opens a closed source place and preserves the item title", async ({ page }) => {
+test("closed source names are findable and native reveal opens the matching row", async ({
+  page,
+}) => {
   // The browser first builds the searchable titles for the whole source ledger.
   test.slow();
   await initializeApplication(page, "light", createStoredState());
@@ -131,6 +133,14 @@ test("native reveal opens a closed source place and preserves the item title", a
   const hiddenMatch = page.locator(`[id="${contentId}"]`).getByText("Barrel Hat", { exact: true });
   await expect(hiddenMatch).toBeAttached();
   await expect(hiddenMatch).toBeHidden();
+  // The closed titles mount after the ledger's headings, so wait for Find to reach them.
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (globalThis as typeof globalThis & { find: (query: string) => boolean }).find("Barrel Hat"),
+      ),
+    )
+    .toBe(true);
   await hiddenMatch.evaluate((match) => {
     match.id = "test-browser-find-target";
     location.hash = match.id;
