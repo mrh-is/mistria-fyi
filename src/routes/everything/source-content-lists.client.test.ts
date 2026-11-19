@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import * as celebration from "#lib/effects/celebrate.js";
+import * as undoToast from "#lib/effects/undo-toast.js";
 import { factKey } from "#lib/engine/provenance.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -309,6 +310,55 @@ describe("while source shelves hold", () => {
     userState.toggleShowSpoilers();
     await tick();
     expect(view.getByRole("button", { name: "Check spoilered item" })).toBe(checkbox);
+  });
+
+  it("keeps a covered row's name out of the undo toast when unchecking it", async () => {
+    const showUndoToast = vi.spyOn(undoToast, "showUndoToast");
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      {
+        ...checklistRow("Anchovy", true, [{ type: "fish", waterTypes: ["ocean" as WaterType] }]),
+        spoilered: true,
+      },
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "fish-ocean", locale: "en" });
+    await tick();
+    await fireEvent.click(view.getByRole("button", { name: "Uncheck spoilered item" }));
+    // The spread copy keeps the mock's own completion, so only the cover is asserted here.
+    expect(showUndoToast).toHaveBeenCalledWith(
+      "Anchovy",
+      expect.any(Boolean),
+      expect.any(Function),
+      true,
+    );
+  });
+
+  it("keeps a Find-revealed shelf open after a later match reopens the place", async () => {
+    const ocean: Source = {
+      type: "fish",
+      availability: { type: "season", seasons: ["winter"] },
+      waterTypes: ["ocean" as WaterType],
+    };
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Anchovy", false, [ocean]),
+      checklistRow("Bream", true, [ocean]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+    await tick();
+    const reveal = async (name: string) => {
+      // A closed place's rows are title-only and wait for Find under `hidden="until-found"`.
+      const row = view.getByText(name, { exact: true }).closest("[hidden='until-found']");
+      if (!row) throw new Error(`Expected the ${name} row`);
+      row.dispatchEvent(new Event("beforematch"));
+      await tick();
+      return row.closest("details");
+    };
+    const notNow = await reveal("Anchovy");
+    // Closing the place returns its rows to Find, so the next match reveals through it again.
+    await fireEvent.click(view.getByRole("button", { name: /^Ocean/ }));
+    const completed = await reveal("Bream");
+    expect(notNow).not.toBe(completed);
+    expect(notNow).toHaveAttribute("open");
+    expect(completed).toHaveAttribute("open");
   });
 
   it("names the season for this place when a row also has a seasonal source elsewhere", async () => {

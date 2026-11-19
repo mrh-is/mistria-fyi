@@ -49,7 +49,8 @@
   const shelves: readonly Shelf[] = ["todo", "notNow", "completed"];
   const instance = $props.id();
   let open = $state(untrack(() => !collapsible));
-  let matchedShelf = $state<Shelf>();
+  // Every shelf a Find match revealed stays open, so a later match elsewhere doesn't close it.
+  const revealedShelves = $state<Partial<Record<Shelf, true>>>({});
   const highlights = $state<Partial<Record<Shelf, SourceFilterId>>>({});
   let groups = $derived.by(() => {
     const grouped: Record<Shelf, T[]> = { completed: [], notNow: [], todo: [] };
@@ -75,7 +76,7 @@
   async function revealFindMatch(event: Event, shelf: Shelf): Promise<void> {
     const target = event.currentTarget;
     open = true;
-    matchedShelf = shelf;
+    revealedShelves[shelf] = true;
     await tick();
     if (target instanceof HTMLElement) target.scrollIntoView({ block: "center" });
   }
@@ -161,7 +162,7 @@
             />{/if}
           {@render shelfRows(entries, shelf)}
         {:else}
-          <details open={matchedShelf === shelf || (forceOpen && shelf === "completed")}>
+          <details open={revealedShelves[shelf] === true || (forceOpen && shelf === "completed")}>
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
               {#if expanded}
                 <Icon.UI type="disclosure" class="shelf-chevron size-3.5 shrink-0" />

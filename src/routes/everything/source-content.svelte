@@ -220,9 +220,10 @@
             added,
             locale,
             undo,
+            covered,
           );
         } else {
-          showUndoToast(entry.name, completed, undo);
+          showUndoToast(entry.name, completed, undo, covered);
         }
         return completed;
       },

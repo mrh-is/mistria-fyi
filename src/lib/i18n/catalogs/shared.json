@@ -5,9 +5,15 @@
         "+{0} to discover",
         "+{0} to discover"
       ],
-      "ja": ["あと{0}件を発見"],
-      "zh-Hans": ["还有 {0} 个来源待发现"],
-      "zh-Hant": ["還有 {0} 個來源待發現"],
+      "ja": [
+        "あと{0}件を発見"
+      ],
+      "zh-Hans": [
+        "还有 {0} 个来源待发现"
+      ],
+      "zh-Hant": [
+        "還有 {0} 個來源待發現"
+      ],
       "es": [
         "+{0} por descubrir",
         "+{0} por descubrir",
@@ -18,7 +24,9 @@
         "+{0} à découvrir",
         "+{0} à découvrir"
       ],
-      "ko": ["발견할 곳 {0}개 더"],
+      "ko": [
+        "발견할 곳 {0}개 더"
+      ],
       "ru": [
         "+{0} источник предстоит открыть",
         "+{0} источника предстоит открыть",
@@ -1556,6 +1564,50 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Checked off a spoilered item",
+      "ja": "ネタバレ項目をチェックしました",
+      "zh-Hans": "已勾选剧透物品",
+      "zh-Hant": "已勾選隱藏的項目",
+      "es": "Has marcado un elemento con spoiler",
+      "fr": "Élément masqué coché",
+      "ko": "스포일러 항목을 체크했어요",
+      "ru": "Отмечено: скрытый предмет"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Checked off a spoilered quest",
+      "ja": "ネタバレのクエストをチェックしました",
+      "zh-Hans": "已勾选剧透任务",
+      "zh-Hant": "已勾選隱藏的任務",
+      "es": "Has marcado una misión con spoiler",
+      "fr": "Quête masquée cochée",
+      "ko": "스포일러 퀘스트를 체크했어요",
+      "ru": "Отмечено: скрытое задание"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
         ]
       }
     ],
@@ -6724,6 +6776,28 @@
   },
   {
     "translations": {
+      "en": "Reset a spoilered quest",
+      "ja": "ネタバレのクエストをリセットしました",
+      "zh-Hans": "已重置剧透任务",
+      "zh-Hant": "已重設隱藏的任務",
+      "es": "Has restablecido una misión con spoiler",
+      "fr": "Quête masquée réinitialisée",
+      "ko": "스포일러 퀘스트를 초기화했어요",
+      "ru": "Сброшено: скрытое задание"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reset “{0}”",
       "ja": "「{0}」をリセットしました",
       "zh-Hans": "已重置“{0}”",
@@ -7829,6 +7903,28 @@
   },
   {
     "translations": {
+      "en": "Started a spoilered quest",
+      "ja": "ネタバレのクエストを開始しました",
+      "zh-Hans": "已开始剧透任务",
+      "zh-Hant": "已開始隱藏的任務",
+      "es": "Misión con spoiler comenzada",
+      "fr": "Quête masquée commencée",
+      "ko": "스포일러 퀘스트를 시작했어요",
+      "ru": "Задание начато: скрытое задание"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Started “{0}”",
       "ja": "クエスト「{0}」を開始しました",
       "zh-Hans": "已开始任务“{0}”",
@@ -8656,12 +8752,12 @@
   {
     "translations": {
       "en": "Uncheck spoilered item",
-      "ja": "未公開の項目のチェックを外す",
-      "zh-Hans": "取消勾选隐藏条目",
-      "zh-Hant": "取消勾選隱藏項目",
-      "es": "Desmarcar elemento oculto",
+      "ja": "ネタバレ項目のチェックを外す",
+      "zh-Hans": "取消勾选剧透物品",
+      "zh-Hant": "取消勾選隱藏的項目",
+      "es": "Desmarcar elemento con spoiler",
       "fr": "Décocher l’élément masqué",
-      "ko": "숨겨진 항목 체크 해제",
+      "ko": "스포일러 항목 체크 해제",
       "ru": "Снять отметку со скрытого предмета"
     },
     "references": [
@@ -8724,6 +8820,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unchecked a spoilered item",
+      "ja": "ネタバレ項目のチェックを外しました",
+      "zh-Hans": "已取消勾选剧透物品",
+      "zh-Hant": "已取消勾選隱藏的項目",
+      "es": "Has desmarcado un elemento con spoiler",
+      "fr": "Élément masqué décoché",
+      "ko": "스포일러 항목 체크를 해제했어요",
+      "ru": "Отметка снята: скрытый предмет"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
         ]
       }
     ],
@@ -12006,9 +12124,15 @@
         "{0} to do",
         "{0} to do"
       ],
-      "ja": ["今日できること：{0}件"],
-      "zh-Hans": ["今日可做 {0} 项"],
-      "zh-Hant": ["今日可做 {0} 項"],
+      "ja": [
+        "今日できること：{0}件"
+      ],
+      "zh-Hans": [
+        "今日可做 {0} 项"
+      ],
+      "zh-Hant": [
+        "今日可做 {0} 項"
+      ],
       "es": [
         "{0} por hacer",
         "{0} por hacer",
@@ -12019,7 +12143,9 @@
         "{0} à faire",
         "{0} à faire"
       ],
-      "ko": ["오늘 할 수 있는 일 {0}개"],
+      "ko": [
+        "오늘 할 수 있는 일 {0}개"
+      ],
       "ru": [
         "{0} дело на сегодня",
         "{0} дела на сегодня",

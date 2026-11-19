@@ -68,6 +68,13 @@ describe("showUndoToast", () => {
     expect(onUndo).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a covered row's name out of its toast", () => {
+    showUndoToast("Copper Sword", false, vi.fn(), true);
+    expect(lastToast()[0]).toBe("Unchecked a spoilered item");
+    showUndoToast("Copper Sword", true, vi.fn(), true);
+    expect(lastToast()[0]).toBe("Checked off a spoilered item");
+  });
+
   it("stacks undo toasts for different items", () => {
     showUndoToast("Copper Sword", true, vi.fn());
     showUndoToast("Chub", true, vi.fn());
@@ -127,6 +134,16 @@ describe("questToastMessage", () => {
     expect(questToastMessage("Fishing", "obtained", [], "en")).toBe("Started “Fishing”");
     expect(questToastMessage("Fishing", "completed", [], "en")).toBe("Checked off “Fishing”");
     expect(questToastMessage("Fishing", "none", [], "en")).toBe("Reset “Fishing”");
+  });
+
+  it("keeps a covered quest's name & rewards out of its toast", () => {
+    expect(questToastMessage("Fishing", "obtained", [], "en", true)).toBe(
+      "Started a spoilered quest",
+    );
+    expect(questToastMessage("Fishing", "completed", [firstRecipe], "en", true)).toBe(
+      "Checked off a spoilered quest",
+    );
+    expect(questToastMessage("Fishing", "none", [], "en", true)).toBe("Reset a spoilered quest");
   });
 
   it("names a single unlocked recipe", () => {

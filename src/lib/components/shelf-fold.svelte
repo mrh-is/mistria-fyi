@@ -15,7 +15,6 @@
     explains = false,
     findable = false,
     forceOpen = false,
-    keepMounted = false,
     level = 4,
     matchCount,
     shelf,
@@ -27,8 +26,6 @@
     findable?: boolean;
     /** Opens the fold for as long as it holds, as a search does. */
     forceOpen?: boolean;
-    /** Lets search count the closed content without expanding the fold. */
-    keepMounted?: boolean;
     level?: 2 | 3 | 4;
     matchCount?: number;
     shelf: Shelf;
@@ -47,9 +44,9 @@
   onToggle={() => (open = !open)}
   {shelf}
 />
-{#if isOpen || keepMounted || findable}
+{#if isOpen || findable}
   <div
-    hidden={isOpen ? undefined : findable ? "until-found" : true}
+    hidden={isOpen ? undefined : "until-found"}
     onbeforematch={() => (open = true)}
     transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
   >

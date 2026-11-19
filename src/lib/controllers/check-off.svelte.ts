@@ -123,9 +123,14 @@ export function createCheckOff<Id, SectionKey>(
         covered,
         finish: () => {
           const completed = options.isCompleted(id);
-          showUndoToast(name, completed, () => {
-            options.toggle(id);
-          });
+          showUndoToast(
+            name,
+            completed,
+            () => {
+              options.toggle(id);
+            },
+            covered,
+          );
           return completed;
         },
         hold: () => {

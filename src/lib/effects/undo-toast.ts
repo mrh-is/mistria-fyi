@@ -25,8 +25,9 @@ export function questToastMessage(
   state: QuestState,
   newlyAdded: readonly RecipeId[],
   locale: LocaleCode,
+  covered = false,
 ): string {
-  return inLocale(locale, () => formatQuestToast(name, state, newlyAdded, locale));
+  return inLocale(locale, () => formatQuestToast(name, state, newlyAdded, locale, covered));
 }
 
 function formatQuestToast(
@@ -34,7 +35,14 @@ function formatQuestToast(
   state: QuestState,
   newlyAdded: readonly RecipeId[],
   locale: LocaleCode,
+  covered: boolean,
 ): string {
+  // A covered row's name & rewards stay hidden, so its toast names neither.
+  if (covered) {
+    if (state === "obtained") return "Started a spoilered quest";
+    if (state === "none") return "Reset a spoilered quest";
+    return "Checked off a spoilered quest";
+  }
   if (state === "obtained") return `Started “${name}”`;
   if (state === "none") return `Reset “${name}”`;
   if (newlyAdded.length === 1) {
@@ -60,11 +68,12 @@ export function showQuestToast(
   newlyAdded: readonly RecipeId[],
   locale: LocaleCode,
   onUndo: () => void,
+  covered = false,
 ): void {
   inLocale(locale, () => {
     showStackedUndoToast(
       `quest:${name}`,
-      formatQuestToast(name, state, newlyAdded, locale),
+      formatQuestToast(name, state, newlyAdded, locale, covered),
       onUndo,
     );
   });
@@ -74,9 +83,19 @@ export function showQuestToast(
  * Show a toast with an "Undo" action for check-off state changes. Toasts for different items
  * stack; a second toast for the same item replaces its first.
  */
-export function showUndoToast(itemName: string, completed: boolean, onUndo: () => void): void {
-  const message = completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
-  showStackedUndoToast(`item:${itemName}`, message, onUndo);
+export function showUndoToast(
+  itemName: string,
+  completed: boolean,
+  onUndo: () => void,
+  /** The row's name is still behind its spoiler cover, so the toast mustn't reveal it. */
+  covered = false,
+): void {
+  showStackedUndoToast(`item:${itemName}`, undoMessage(itemName, completed, covered), onUndo);
+}
+
+function undoMessage(itemName: string, completed: boolean, covered: boolean): string {
+  if (covered) return completed ? "Checked off a spoilered item" : "Unchecked a spoilered item";
+  return completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
 }
 
 /** The starter batch keeps its own Undo while the player continues checking things off. */
