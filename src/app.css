@@ -83,34 +83,51 @@
   --font-controls: "Fragment Mono", "Courier New", monospace;
   --font-annotation: "Satoshi", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", "Courier New", monospace;
+  /* The player's hand: digits & their separators only, so every locale shares this one stack. The
+   * face is undecided (#677); until it loads, counts fall back to the data face. */
+  --font-hand: "Field Guide Hand", "IBM Plex Mono", "Courier New", monospace;
 
-  /* ── Field Guide palette: light ──────────────────────── */
-  /* Colors are --color-<domain>-<role>; see docs/styling.md. */
-  --color-paper: #f7f5f0;
-  --color-paper-raised: #fdfcf9;
-  --color-paper-sunken: #eeedea;
-  --color-ink: #2e2a22;
-  --color-ink-muted: #6a6460;
-  --color-ink-hairline: #948a7c;
-  --color-ribbon-foreground: #fdfcf9;
-  --color-sprite-slot-outline: #e0dcd4;
-  --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
-  --shadow-medium: 0 3px 10px rgb(46 42 34 / 15%);
-  --shadow-large: 0 6px 16px rgb(46 42 34 / 18%);
-  --shadow-overlay: 0 9px 24px rgb(46 42 34 / 18%);
+  /* ── Field Guide palette: light ("slate paper") ──────── */
+  /* Colors are --color-<domain>-<role>; see docs/styling.md. The paper is a cool slate white, the
+   * ink a blue-black, and the cover a petrol cloth. */
+  --color-paper: #f2f4f3;
+  --color-paper-raised: #fbfcfc;
+  --color-paper-sunken: #e3e8e7;
+  --color-ink: #1b2128;
+  --color-ink-muted: #56626c;
+  --color-ink-hairline: #7a8892;
+  /* The two rule weights drawn from the hairline: a ledger rule, & the faint line between rows. */
+  --color-rule: color-mix(in srgb, var(--color-ink-hairline) 58%, transparent);
+  --color-rule-faint: color-mix(in srgb, var(--color-ink-hairline) 30%, transparent);
+  --color-ribbon-foreground: #fbfcfc;
+  --color-sprite-slot-outline: #d3dbdb;
+  --shadow-small: 0 1px 1px rgb(18 28 34 / 14%);
+  --shadow-medium: 0 3px 10px rgb(18 28 34 / 18%);
+  --shadow-large: 0 6px 16px rgb(18 28 34 / 20%);
+  --shadow-overlay: 0 9px 24px rgb(18 28 34 / 22%);
   /* For filter: drop-shadow(), which follows a shape's outline rather than its box */
-  --shadow-ribbon: 0 3px 2px rgb(46 42 34 / 30%);
-  --shadow-sticker: 0.8px 1.2px 0.7px rgb(46 42 34 / 35%);
+  --shadow-ribbon: 0 3px 2px rgb(18 28 34 / 30%);
+  --shadow-sticker: 0.8px 1.2px 0.7px rgb(18 28 34 / 35%);
 
   /* Hues: the raw ink colors. Components read a role below, never a hue directly. */
-  --color-hue-green: #1a7a3a;
-  --color-hue-amber: #a85a0e;
+  /* Green & amber are the category palette's green & gold text shades, so provenance marks &
+   * statuses add no colors of their own. */
+  --color-hue-green: #207f40;
+  --color-hue-amber: #8f6800;
   --color-hue-rose: #b83060;
   --color-hue-blue: #1860a8;
   --color-hue-brown: #7a5a3a;
+  --color-hue-cobalt: #2b5f8e;
+  --color-hue-wax: #b23a2e;
+  --color-hue-graphite: #48535d;
 
   /* Roles: what each hue means where it's used. They resolve against the theme's hues. */
-  --color-brand-accent: var(--color-hue-green);
+  /* The book's grammar: print is the guide's voice, hand marks are the player's, & tape marks
+   * what's time-sensitive. */
+  --color-guide-voice: var(--color-hue-cobalt);
+  --color-hand-pencil: var(--color-hue-graphite);
+  --color-tape-urgent: var(--color-hue-wax);
+  --color-brand-accent: var(--color-hue-cobalt);
   --color-brand-mark: var(--color-hue-amber);
   --color-status-success: var(--color-hue-green);
   --color-status-warning: var(--color-hue-amber);
@@ -119,7 +136,7 @@
   --color-tracker-obtained: var(--color-hue-amber);
   --color-tracker-active: var(--color-hue-amber);
   --color-progress-complete: var(--color-hue-amber);
-  --color-toolbar-filtered: var(--color-hue-amber);
+  --color-toolbar-filtered: var(--color-hue-cobalt);
   --color-season-spring: var(--color-hue-green);
   --color-season-summer: var(--color-hue-amber);
   --color-season-fall: var(--color-hue-brown);
@@ -130,14 +147,37 @@
   --color-feedback-outline-boolean: var(--color-hue-green);
   --color-feedback-outline-redacted: var(--color-hue-rose);
 
-  --color-home-accent: #8a642e;
+  --color-home-accent: var(--color-hue-cobalt);
   --color-home-accent-foreground: var(--color-ribbon-foreground);
   /* Gilt edge on the ribbon of a completed category */
   --color-ribbon-fill: #d4a72c;
 
+  /* The taped note: a slip of pale paper held by a strip of translucent tape. */
+  --color-tape-paper: #e1ecf3;
+  --color-tape-strip: rgb(214 226 232 / 70%);
+
   /*
-   * The book shell: the cloth cover the page lies on, & the wire that binds it. Placeholder values
-   * from round ten's mockup until the styling-token pass (#477) settles the cooler palette.
+   * Sprite treatments, applied at runtime by the `[data-sprite-treatment]` rules below. To do
+   * prints the sprite in one ink, Completed keeps the game's colors, & Not now washes it out. The
+   * spoiler silhouette is a flat shape, so "out of season" never looks like "never discovered".
+   */
+  --filter-sprite-todo: grayscale(1) contrast(1.15);
+  --blend-sprite-tint: screen;
+  --filter-sprite-completed: drop-shadow(var(--shadow-sticker));
+  --filter-sprite-not-now: grayscale(1) contrast(0.36) brightness(1.5);
+  --color-sprite-silhouette: color-mix(in srgb, var(--color-ink-hairline) 55%, var(--color-paper));
+
+  /* Meters: the one ruler style Skills, Mines, & Renown share. Each page sets its own direction. */
+  --color-meter-rule: var(--color-ink-hairline);
+  --color-meter-tick: var(--color-rule);
+  --color-meter-mark: var(--color-hand-pencil);
+  --size-meter-rule: 0.125rem;
+  --size-meter-tick: 0.5625rem;
+  --size-meter-tick-major: 1.375rem;
+  --size-meter-mark: 0.375rem;
+
+  /*
+   * The book shell: the cloth cover the page lies on, & the wire that binds it.
    */
   --color-cover: #2b4550;
   --color-cover-deep: #1d313a;
@@ -155,10 +195,18 @@
   --size-book-rail-width: 3.5rem;
   --size-book-wire-width: 2.5rem;
 
+  /* Page spacing: the insets & rhythm every screen shares. Finer spacing is Tailwind's scale. */
+  --size-page-inset: 1.5rem;
+  --size-page-inset-compact: 1rem;
+  --size-section-gap: 2rem;
+  --size-ledger-row: 3rem;
+  --size-ledger-gutter: 0.625rem;
+  --size-sprite: 2rem;
+
   /* shadcn semantic tokens mapped to Field Guide */
   --background: var(--color-paper);
   --foreground: var(--color-ink);
-  --card: #f2efe8;
+  --card: #e6ebea;
   --card-foreground: var(--color-ink);
   --popover: var(--card);
   --popover-foreground: var(--color-ink);
@@ -166,25 +214,42 @@
   --primary-foreground: var(--color-paper);
   --secondary: var(--color-hue-rose);
   --secondary-foreground: var(--color-paper);
-  --muted: #ece8e0;
+  --muted: #e3e8e7;
   --muted-foreground: var(--color-ink-muted);
-  --accent: #eae6dc;
+  --accent: #dde5e6;
   --accent-foreground: var(--color-ink);
-  --destructive: #c03030;
+  --destructive: #b8322e;
+  /* Text on a filled destructive action, like the reset confirmation */
+  --destructive-foreground: var(--color-ribbon-foreground);
   --border: var(--color-ink-hairline);
   --input: var(--color-ink-hairline);
   --ring: var(--color-brand-accent);
-  /* Category colors — jewel tones */
-  --color-category-museum: #2e8a30;
-  --color-category-almanac: #5848c0;
-  --color-category-recipes: #b87028;
-  --color-category-animals: #c03838;
-  --color-category-villagers: #c03060;
-  --color-category-cosmetics: #9838a8;
-  --color-category-skills: #1a8878;
-  --color-category-renown: #a48018;
-  --color-category-quests: #1878b8;
-  --color-category-mines: #7a5a3a;
+  /*
+   * Category colors: ten everyday color names, one hue each, taken from the game where it has one
+   * (docs/styling.md has the key). The plain token fills tabs, ribbons, & meters, and holds the
+   * ribbon foreground at 4.5:1; the -text token is the same hue, darkened only where the paper
+   * needs it, for category-colored words.
+   */
+  --color-category-villagers: #a30017; /* red */
+  --color-category-quests: #a34704; /* orange */
+  --color-category-renown: #956e00; /* gold */
+  --color-category-museum: #288546; /* green */
+  --color-category-skills: #008084; /* teal */
+  --color-category-cosmetics: #376dca; /* blue */
+  --color-category-almanac: #8148a9; /* purple */
+  --color-category-animals: #a02665; /* pink */
+  --color-category-recipes: #6f5d48; /* tan */
+  --color-category-mines: #51453c; /* stone */
+  --color-category-villagers-text: var(--color-category-villagers);
+  --color-category-quests-text: var(--color-category-quests);
+  --color-category-renown-text: #8f6800;
+  --color-category-museum-text: #207f40;
+  --color-category-skills-text: #007b7f;
+  --color-category-cosmetics-text: var(--color-category-cosmetics);
+  --color-category-almanac-text: var(--color-category-almanac);
+  --color-category-animals-text: var(--color-category-animals);
+  --color-category-recipes-text: var(--color-category-recipes);
+  --color-category-mines-text: var(--color-category-mines);
 
   /* Heart level marks (villager-record.svelte), the town rank ladder (renown), & confetti
    * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. Heart
@@ -240,62 +305,93 @@
 }
 
 .dark {
-  /* ── Field Guide palette: dark ("oil lamp") ────────── */
-  --color-paper: #222226;
-  --color-paper-raised: #28282c;
-  --color-paper-sunken: #2e2e32;
-  --color-ink: #e4dfd8;
-  --color-ink-muted: #a8a098;
-  --color-ink-hairline: #746c64;
-  --color-ribbon-foreground: #f7f5f0;
-  --color-sprite-slot-outline: #48464b;
-  --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
-  --shadow-medium: 0 3px 10px rgb(0 0 0 / 15%);
-  --shadow-large: 0 6px 16px rgb(0 0 0 / 18%);
-  --shadow-overlay: 0 9px 24px rgb(0 0 0 / 18%);
+  /* ── Field Guide palette: dark ("faded cyanotype") ─── */
+  /* Pencil doesn't read on dark paper, so dark mode changes the material, not only the colors: a
+   * cyanotype left in a sunny window, faded blue paper where every mark prints white. See
+   * docs/styling.md. */
+  --color-paper: #182c40;
+  --color-paper-raised: #1f3348;
+  --color-paper-sunken: #122539;
+  --color-ink: #eaf1f8;
+  --color-ink-muted: #aabdd1;
+  --color-ink-hairline: #6e8398;
+  /* Dark letters on the pale category tabs & ribbons */
+  --color-ribbon-foreground: #0f1820;
+  --color-sprite-slot-outline: #2e4358;
+  --shadow-small: 0 1px 1px rgb(2 10 20 / 40%);
+  --shadow-medium: 0 3px 10px rgb(2 10 20 / 30%);
+  --shadow-large: 0 6px 16px rgb(2 10 20 / 34%);
+  --shadow-overlay: 0 9px 24px rgb(2 10 20 / 38%);
+  --shadow-ribbon: 0 3px 2px rgb(2 10 20 / 45%);
+  --shadow-sticker: 0.8px 1.2px 0.7px rgb(2 10 20 / 55%);
 
-  --color-hue-green: #38984e;
-  --color-hue-amber: #c88030;
-  --color-hue-rose: #c04070;
-  --color-hue-blue: #3878b8;
-  --color-hue-brown: #9a7848;
-  --color-home-accent: #a87838;
-  --color-home-accent-foreground: #101014;
+  /* Green & amber are the category palette's pale green & gold. */
+  --color-hue-green: #5ac576;
+  --color-hue-amber: #e5b23f;
+  --color-hue-rose: #f590b0;
+  --color-hue-blue: #9ccaf4;
+  --color-hue-brown: #d4ae80;
+  --color-hue-cobalt: #9fd1f8;
+  --color-hue-wax: #f79a88;
+  /* The hand marks in white on a cyanotype. */
+  --color-hue-graphite: #f1f6fa;
+  --color-home-accent-foreground: #0f1820;
 
-  --color-cover: #16232a;
-  --color-cover-deep: #0e171c;
+  --color-tape-paper: #283f57;
+  --color-tape-strip: rgb(190 214 232 / 22%);
+
+  --filter-sprite-todo: grayscale(1) contrast(1.1) brightness(1.5);
+  --blend-sprite-tint: multiply;
+  /* A gray a little lighter than the paper, matched to light mode on real sprites: about 2.2:1
+   * against the paper & 3.6:1 between the sprite's light & dark tones (light: 2.3:1 & 3.5:1). */
+  --filter-sprite-not-now: grayscale(1) contrast(0.5) brightness(0.86);
+
+  --color-cover: #0f1820;
+  --color-cover-deep: #0a1216;
   --color-cover-ink: #dfe8ea;
   --color-cover-ink-muted: #8ea2a8;
   --color-cover-vignette: rgb(0 0 0 / 45%);
   --color-wire: #7d858c;
   --color-wire-highlight: #b9c0c6;
-  --color-wire-hole: #0b0d10;
-  --color-page-under: #1c1c20;
+  --color-wire-hole: #06090b;
+  --color-page-under: #122539;
   --color-page-gutter: rgb(0 0 0 / 28%);
-  --shadow-page: 2px 2px 0 #1a1a1e, 4px 4px 0 #141417, 0 10px 30px rgb(0 0 0 / 55%);
+  --shadow-page: 2px 2px 0 #15283b, 4px 4px 0 #112232, 0 10px 30px rgb(0 0 0 / 55%);
 
-  --card: #2a2a2e;
+  --card: #1f3348;
   --card-foreground: var(--color-ink);
   --popover: var(--card);
   --popover-foreground: var(--color-ink);
-  --primary-foreground: #1a1a1e;
-  --secondary-foreground: #1a1a1e;
-  --muted: #2c2c2a;
-  --accent: #32322c;
+  --primary-foreground: #0f1820;
+  --secondary-foreground: #0f1820;
+  --muted: #1c3044;
+  --accent: #24394f;
   --accent-foreground: var(--color-ink);
-  --destructive: #e85858;
+  --destructive: #ff9a8c;
 
-  /* Category colors — adjusted for dark ground */
-  --color-category-animals: #b84040;
-  --color-category-recipes: #b87830;
-  --color-category-renown: #a88820;
-  --color-category-museum: #38902e;
-  --color-category-skills: #2e8878;
-  --color-category-quests: #2e82b8;
-  --color-category-almanac: #7868c8;
-  --color-category-cosmetics: #8838a0;
-  --color-category-villagers: #b83060;
-  --color-category-mines: #886838;
+  /* Category colors: the same hues, pale, so tabs hold dark letters & words read on the paper.
+   * Only Mines' tab sits darker than its text, to match the other tabs' weight. */
+  --color-category-villagers: #e86963;
+  --color-category-quests: #f68f59;
+  --color-category-renown: #e5b23f;
+  --color-category-museum: #5ac576;
+  --color-category-skills: #51b5b8;
+  --color-category-cosmetics: #86abe8;
+  --color-category-almanac: #ad7dd2;
+  --color-category-animals: #ef84b2;
+  --color-category-recipes: #cdb59b;
+  --color-category-mines: #958a80;
+  /* Lighter than its tab, so the 10px alphabet index letter still reads on its red wash */
+  --color-category-villagers-text: #fa7972;
+  --color-category-quests-text: var(--color-category-quests);
+  --color-category-renown-text: var(--color-category-renown);
+  --color-category-museum-text: var(--color-category-museum);
+  --color-category-skills-text: var(--color-category-skills);
+  --color-category-cosmetics-text: var(--color-category-cosmetics);
+  --color-category-almanac-text: var(--color-category-almanac);
+  --color-category-animals-text: var(--color-category-animals);
+  --color-category-recipes-text: var(--color-category-recipes);
+  --color-category-mines-text: #9c9187;
 
   --color-tag-accent: #c36d5a;
   --color-tag-action-accent: color-mix(
@@ -423,6 +519,7 @@ html:lang(ru) {
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -528,6 +625,13 @@ html:lang(ru) {
   font-family: var(--font-data);
 }
 
+/* Digits only: see --font-hand. Tabular figures keep the slashes in a column of counts aligned. */
+@utility font-hand {
+  font-family: var(--font-hand);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-hand-pencil);
+}
+
 @utility panel-segment-outline {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
@@ -581,6 +685,55 @@ html:lang(ru) {
     --tracker-row-min-size: 48px;
     --tracker-sprite-size: 40px;
     --tracker-source-inset: calc(var(--tracker-target-size) + var(--tracker-row-gap));
+  }
+
+  /*
+   * Sprite treatments. The wrapper carries `data-sprite-treatment` and, for the two masked
+   * treatments, `--sprite-url` (the same image as its `<img>`); `--sprite-tint` picks the ink.
+   * Nothing is baked: a palette or theme change is a CSS change.
+   */
+  [data-sprite-treatment] {
+    position: relative;
+    display: inline-block;
+    isolation: isolate;
+  }
+
+  [data-sprite-treatment] > img {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  [data-sprite-treatment="todo"] > img {
+    filter: var(--filter-sprite-todo);
+  }
+
+  [data-sprite-treatment="todo"]::after,
+  [data-sprite-treatment="spoiler"]::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    mask: var(--sprite-url) center / contain no-repeat;
+  }
+
+  [data-sprite-treatment="todo"]::after {
+    background: var(--sprite-tint, var(--color-guide-voice));
+    mix-blend-mode: var(--blend-sprite-tint);
+  }
+
+  [data-sprite-treatment="completed"] > img {
+    filter: var(--filter-sprite-completed);
+  }
+
+  [data-sprite-treatment="not-now"] > img {
+    filter: var(--filter-sprite-not-now);
+  }
+
+  [data-sprite-treatment="spoiler"] > img {
+    visibility: hidden;
+  }
+
+  [data-sprite-treatment="spoiler"]::after {
+    background: var(--color-sprite-silhouette);
   }
 
   @media (pointer: fine) and (hover: hover) {

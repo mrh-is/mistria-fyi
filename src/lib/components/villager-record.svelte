@@ -301,7 +301,7 @@
       color-mix(in srgb, var(--color-category-villagers) 25%, var(--color-ink-hairline));
     border-radius: var(--radius);
     background: color-mix(in srgb, var(--color-category-villagers) 11%, var(--color-paper));
-    color: var(--color-category-villagers);
+    color: var(--color-category-villagers-text);
     font-family: var(--font-display);
     font-size: var(--text-2xl);
     font-style: var(--font-display-style);

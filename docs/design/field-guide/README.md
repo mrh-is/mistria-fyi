@@ -10,11 +10,37 @@ in the
 [round-ten write-up on #477](https://github.com/mrh-is/mistria-fyi/issues/477#issuecomment-6775306384).
 Earlier rounds are summarized in the same issue.
 
+## Superseded since round ten
+
+Later decisions replaced these parts of `round-ten.html`. Don’t rebuild them from the mockup; the
+decisions are in the comments on #477, and the tokens & grammar are in
+[`docs/styling.md`](../../styling.md).
+
+| In the mockup                                         | Now                                                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| A column head filters its section                     | A column head highlights its rows; the source filter is the only thing that filters |
+| “Not now shows every source”                          | Not now names only visible sources, with a count such as “+2 later”                 |
+| The “things you could do today” headline              | Home leads with places; the count is worded as what isn’t known to be blocked       |
+| Silhouettes on the whole Not now shelf                | The silhouette is for spoilers only; Not now has its own washed-out treatment       |
+| Sprite tints baked into images (`generator/bake.mjs`) | CSS filters & masks at runtime; the app ships no derivative images                  |
+| Recipe sources in timetable cells                     | The recipe source moves to the expanded row (#650)                                  |
+| Dots in empty timetable cells                         | An empty cell is blank or shows a dash (#650)                                       |
+| Half-pixel type sizes (15.5px, 11.5px, …)             | The type scale; `docs/styling.md` has the mapping                                   |
+| A light theme only                                    | Dark is a faded cyanotype (#646)                                                    |
+| Earth-toned category colors & Source Serif 4          | Ten named category colors; Petrona stays the body face (#646)                       |
+| Pencil-only checkmarks                                | Four provenance tools in the palette’s green & gold (#646)                          |
+| A ruler for every meter                               | Mines is a shaft; Renown is a climbing star (#646)                                  |
+
+`token-options.html` is the options sheet that settled #646: the dark paper, the category colors,
+the Not now sprite, the provenance inks, the meters, & the body face. A strip at its top switches
+the whole sheet between light & dark. Its sprites are stand-ins drawn in the file.
+
 ## What’s here
 
 | Path                        | What it is                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------- |
 | `round-ten.html`            | The mockup: every page at desktop, half-screen, & phone widths, on three saves  |
+| `token-options.html`        | The options sheet for the styling tokens (#646)                                 |
 | `sheets/`                   | Screenshots of the mockup, rendered by `generator/shots.mjs`                    |
 | `generator/export.test.mjs` | Exports the mockup’s data from three saves, through the app’s own projections   |
 | `generator/bake.mjs`        | Bakes each sprite in full color, a category tint, & a silhouette                |

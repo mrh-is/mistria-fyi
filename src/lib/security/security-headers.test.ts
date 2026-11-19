@@ -24,7 +24,7 @@ const PRODUCTION_CSP = [
   "img-src 'self' data: blob: https://assets.mistria.fyi",
   "manifest-src 'self'",
   "object-src 'none'",
-  "script-src 'self' 'sha256-XIQPz/EHVHtaNDpPlKdP9QmbA8sA6JI+HC1FdpuSf5U=' 'sha256-skEiY6WdeTf4zpIoOxmWHD8LMMXXVPqpMaKmtDlLHHI=' https://challenges.cloudflare.com",
+  "script-src 'self' 'sha256-XIQPz/EHVHtaNDpPlKdP9QmbA8sA6JI+HC1FdpuSf5U=' 'sha256-tMQh5kdq3h/KstsPhgISmzL2evS/eTGd+GaVuDPT1Y4=' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "worker-src 'self' blob:",
 ].join("; ");

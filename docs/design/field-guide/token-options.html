@@ -1,0 +1,1446 @@
+<!doctype html>
+<title>Field guide token options</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=IBM+Plex+Mono&family=Instrument+Serif:ital@0;1&family=Nanum+Pen+Script&family=Petrona:ital,wght@0,400;0,600;1,400&display=swap"
+/>
+<style>
+  /* Layout: a specimen sheet. Each open decision is one numbered section; each option is a small
+   page of the book drawn in its own material. The strip at the top reprints the whole sheet on any
+   material, so a dark paper can be read at length, not only as a swatch. The sprites are original
+   stand-ins drawn in this file, not game art. */
+  @font-face {
+    font-family: "Satoshi";
+    font-weight: 400;
+    font-display: swap;
+    src:
+      local("Satoshi Regular"),
+      local("Satoshi"),
+      url("https://assets.mistria.fyi/fonts/satoshi-regular.woff2") format("woff2");
+  }
+
+  /* Static tokens: the light material, and 1D for a dark viewer. The script below writes every
+   material as a class (.m-cyan, .m-slate, …), plus the page & .m-dark overrides for the strip. */
+  :root,
+  .m-light {
+    --paper: #f2f4f3;
+    --raised: #fbfcfc;
+    --sunken: #e3e8e7;
+    --ink: #1b2128;
+    --muted: #56626c;
+    --hair: #7a8892;
+    --voice: #2b5f8e;
+    --pencil: #48535d;
+    --wax: #b23a2e;
+    --done: #207f40;
+    --obtained: #8f6800;
+    --tape: #e1ecf3;
+    --strip: rgb(214 226 232 / 70%);
+    --cover: #2b4550;
+    --on-cover: #e9f1f3;
+    --shadow: 0 1px 1px rgb(18 28 34 / 14%);
+    --sticker: 0.8px 1.2px 0.7px rgb(18 28 34 / 35%);
+    --f-todo: grayscale(1) contrast(1.15);
+    --blend: screen;
+    --f-notnow: grayscale(1) contrast(0.5) brightness(1.32);
+    --f-notnow2: grayscale(1) contrast(0.36) brightness(1.5);
+    --c-museum: #288546;
+    --c-animals: #a02665;
+    --c-skills: #008084;
+    --c-almanac: #8148a9;
+    --c-cosmetics: #376dca;
+    --c-villagers: #a30017;
+    --c-quests: #a34704;
+    --c-renown: #956e00;
+    --c-recipes: #6f5d48;
+    --c-mines: #51453c;
+    --f-disp: "Instrument Serif", Georgia, serif;
+    --f-body: Petrona, Georgia, serif;
+    --f-ctl: "Fragment Mono", "Courier New", monospace;
+    --f-ann: "Satoshi", system-ui, sans-serif;
+    --f-data: "IBM Plex Mono", "Courier New", monospace;
+    --f-hand: "Nanum Pen Script", "Bradley Hand", cursive;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #182c40;
+      --raised: #1f3348;
+      --sunken: #122539;
+      --ink: #eaf1f8;
+      --muted: #aabdd1;
+      --hair: #6e8398;
+      --voice: #9fd1f8;
+      --pencil: #f1f6fa;
+      --wax: #f79a88;
+      --done: #5ac576;
+      --obtained: #e5b23f;
+      --tape: #283f57;
+      --strip: rgb(190 214 232 / 22%);
+      --cover: #0f1820;
+      --on-cover: #dfe8ea;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #182c40;
+    --raised: #1f3348;
+    --sunken: #122539;
+    --ink: #eaf1f8;
+    --muted: #aabdd1;
+    --hair: #6e8398;
+    --voice: #9fd1f8;
+    --pencil: #f1f6fa;
+    --wax: #f79a88;
+    --done: #5ac576;
+    --obtained: #e5b23f;
+    --tape: #283f57;
+    --strip: rgb(190 214 232 / 22%);
+    --cover: #0f1820;
+    --on-cover: #dfe8ea;
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.55 var(--f-body);
+    transition: background-color 0.2s;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--paper);
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+  h1 {
+    font: italic 400 44px/1.05 var(--f-disp);
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  h2 {
+    font: 600 24px/1.2 var(--f-body);
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2 .n {
+    font: 20px var(--f-data);
+    color: var(--voice);
+    margin-right: 10px;
+  }
+  h3 {
+    font: 12px var(--f-data);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--muted);
+  }
+  p {
+    margin: 0;
+    max-width: 68ch;
+  }
+  .lede {
+    color: var(--muted);
+  }
+  .note {
+    font: 14px/1.5 var(--f-ann);
+    color: var(--muted);
+    max-width: 72ch;
+  }
+  .note b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scroll-margin-top: 80px;
+  }
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 2px solid var(--ink);
+    padding-top: 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 20px;
+  }
+  .opt {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .opt > h3 b {
+    color: var(--voice);
+    font-weight: 400;
+  }
+  .opt > .note {
+    font-size: 13px;
+  }
+  .opt.lead > h3::after {
+    content: " · approved";
+    color: var(--wax);
+  }
+  ol.asks {
+    margin: 0;
+    padding-left: 22px;
+    font: 14px/1.6 var(--f-ann);
+    color: var(--muted);
+    max-width: 72ch;
+  }
+
+  /* The material strip: a printer's swatch card, pinned under the top edge. */
+  .strip-bar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--paper);
+    border-bottom: 1px solid color-mix(in srgb, var(--hair) 50%, transparent);
+    transition: background-color 0.2s;
+  }
+  .strip-in {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 6px;
+  }
+  .strip-in > span {
+    font: 10px var(--f-data);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 6px;
+  }
+  .swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px 4px 4px;
+    border: 1px solid color-mix(in srgb, var(--hair) 55%, transparent);
+    border-radius: 2px;
+    background: var(--raised);
+    color: var(--ink);
+    font: 12px var(--f-ctl);
+    cursor: pointer;
+  }
+  .swatch i {
+    width: 18px;
+    height: 18px;
+    background: var(--sw);
+    border: 1px solid rgb(127 127 127 / 40%);
+  }
+  .swatch[aria-pressed="true"] {
+    border-color: var(--voice);
+    box-shadow: inset 0 0 0 1px var(--voice);
+  }
+  .swatch:focus-visible {
+    outline: 2px solid var(--voice);
+    outline-offset: 2px;
+  }
+
+  /* A page of the book, in whichever material its class names. */
+  .page {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid color-mix(in srgb, var(--hair) 45%, transparent);
+    box-shadow: var(--shadow);
+    padding: 14px 14px 16px;
+    min-width: 0;
+  }
+  .onpaper {
+    outline: 10px solid var(--cover);
+    outline-offset: 0;
+    margin: 10px;
+  }
+  .sec {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .sec b {
+    font: 600 18px/1.2 var(--f-body);
+  }
+  .sec .lbl {
+    margin-left: auto;
+    font: 10px var(--f-data);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .hand {
+    font-family: var(--f-hand);
+    color: var(--pencil);
+    font-size: 22px;
+    line-height: 1;
+    filter: url(#graphite);
+    font-variant-numeric: tabular-nums;
+  }
+  .of {
+    font: 12px var(--f-data);
+    color: var(--muted);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    border-bottom: 1px solid color-mix(in srgb, var(--hair) 30%, transparent);
+  }
+  .row .nm {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.25;
+  }
+  .row .nm small {
+    font: 12px/1.3 var(--f-ann);
+    color: var(--muted);
+  }
+  .row.done .nm {
+    color: var(--muted);
+  }
+  .row .src {
+    margin-left: auto;
+    font: 12px var(--f-ann);
+    color: var(--muted);
+    text-align: right;
+  }
+  .box {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--hair);
+    background: var(--raised);
+    flex: none;
+    display: grid;
+    place-items: center;
+  }
+  .box svg {
+    width: 22px;
+    height: 22px;
+    overflow: visible;
+  }
+  .hatch {
+    display: inline-block;
+    height: 20px;
+    padding: 0 7px;
+    border: 1px solid color-mix(in srgb, var(--hair) 58%, transparent);
+    border-radius: 2px;
+    font: 10px/19px var(--f-data);
+    color: var(--muted);
+    background: var(--raised)
+      repeating-linear-gradient(
+        135deg,
+        transparent 0 3px,
+        color-mix(in srgb, var(--pencil) 30%, transparent) 3px 4px
+      );
+  }
+  .slip {
+    position: relative;
+    margin: 18px 0 2px;
+    background: var(--tape);
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+    transform: rotate(-0.6deg);
+    max-width: 230px;
+  }
+  .slip::after {
+    content: "";
+    position: absolute;
+    left: 34%;
+    top: -8px;
+    width: 64px;
+    height: 16px;
+    background: var(--strip);
+    transform: rotate(-3deg);
+  }
+  .slip h3 {
+    color: var(--wax);
+  }
+  .slip i {
+    font: italic 20px/1.1 var(--f-disp);
+    display: block;
+  }
+  .slip span {
+    font: 12px var(--f-ann);
+    color: var(--muted);
+  }
+  .marks {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+
+  /* Sprite treatments, as src/app.css applies them. */
+  .spr {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    isolation: isolate;
+  }
+  .spr > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+  .spr.todo > img {
+    filter: var(--f-todo);
+  }
+  .spr.todo::after,
+  .spr.spoiler::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    -webkit-mask: var(--u) center / contain no-repeat;
+    mask: var(--u) center / contain no-repeat;
+  }
+  .spr.todo::after {
+    background: var(--tint, var(--voice));
+    mix-blend-mode: var(--blend);
+  }
+  .spr.completed > img {
+    filter: drop-shadow(var(--sticker));
+    transform: rotate(2.5deg);
+  }
+  .spr.notnow > img {
+    filter: var(--f-notnow);
+  }
+  .spr.notnow2 > img {
+    filter: var(--f-notnow2);
+  }
+  .spr.spoiler > img {
+    visibility: hidden;
+  }
+  .spr.spoiler::after {
+    background: color-mix(in srgb, var(--hair) 55%, var(--paper));
+  }
+  .spr.big {
+    width: 48px;
+    height: 48px;
+  }
+  .treat {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 12px 8px;
+  }
+  .treat figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    font: 11px/1.3 var(--f-ann);
+    color: var(--muted);
+  }
+  .treat figure b {
+    font: 10px var(--f-data);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    font-weight: 400;
+    display: block;
+  }
+  .treat figure.pick b {
+    color: var(--voice);
+  }
+
+  /* Thumb tabs on the cover. */
+  .coverstrip {
+    background: var(--cover);
+    padding: 14px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background-image:
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 3%) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgb(0 0 0 / 6%) 0 1px, transparent 1px 3px);
+  }
+  .tab {
+    width: 42px;
+    height: 30px;
+    border-radius: 0 6px 6px 0;
+    background: var(--c);
+    color: var(--ti);
+    display: grid;
+    place-items: center;
+    font: italic 18px/1 var(--f-disp);
+    box-shadow:
+      inset 0 -2px 0 rgb(0 0 0 / 14%),
+      1px 1px 2px rgb(0 0 0 / 25%);
+  }
+  .inkrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    padding-top: 10px;
+    font: 600 14px var(--f-body);
+  }
+  .dist {
+    font: 12px/1.5 var(--f-data);
+    color: var(--muted);
+  }
+
+  /* Provenance. */
+  .prov {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 10px 10px;
+    align-items: center;
+    font: 13px/1.35 var(--f-ann);
+  }
+  .prov small {
+    color: var(--muted);
+    display: block;
+  }
+  .tw {
+    font:
+      600 17px/1 "Courier New",
+      var(--f-ctl);
+  }
+
+  /* Meters. */
+  .meters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 22px;
+    align-items: flex-end;
+  }
+  .meters figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font: 12px var(--f-ann);
+    color: var(--muted);
+  }
+  .meters figure.wide {
+    flex-basis: 100%;
+  }
+  .meters svg {
+    display: block;
+    overflow: visible;
+    max-width: 100%;
+  }
+  .meters text {
+    font: 10px var(--f-data);
+    fill: var(--muted);
+  }
+  .meters .v {
+    font-family: var(--f-hand);
+    font-size: 24px;
+    fill: var(--pencil);
+  }
+  .meters .w {
+    font: italic 13px var(--f-disp);
+    fill: var(--muted);
+  }
+
+  table {
+    border-collapse: collapse;
+    font: 13px/1.4 var(--f-ann);
+    width: 100%;
+    min-width: 560px;
+  }
+  .scroll {
+    overflow-x: auto;
+  }
+  th {
+    text-align: left;
+    font: 10px var(--f-data);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    padding: 6px 12px 6px 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  td {
+    padding: 9px 12px 9px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--hair) 30%, transparent);
+    vertical-align: baseline;
+  }
+  td.sm {
+    color: var(--muted);
+  }
+  .chip {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    vertical-align: -2px;
+    margin-right: 6px;
+    background: var(--c);
+    border: 1px solid rgb(127 127 127 / 35%);
+  }
+</style>
+<style id="mats"></style>
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <filter id="graphite" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" result="n" />
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" />
+  </filter>
+  <filter id="stamp" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="9" result="n" />
+    <feComposite
+      in="SourceGraphic"
+      in2="n"
+      operator="arithmetic"
+      k1="0"
+      k2="1.25"
+      k3="-0.35"
+      k4="0"
+    />
+  </filter>
+</svg>
+
+<div class="strip-bar">
+  <div class="strip-in" id="strip" role="group" aria-label="Paper for this sheet">
+    <span>Print this sheet on</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Token options</h1>
+    <p class="lede">
+      The redesign’s styling tokens (#646), as approved after eight rounds & applied to the app.
+      Every section shows the settled choice; 2K stays beside 2M as design history. The strip above
+      switches the whole sheet between light & 1D. The sprites are stand-ins drawn for this sheet.
+    </p>
+  </header>
+
+  <section id="dark">
+    <div class="head">
+      <h2><span class="n">1</span>What dark mode is made of</h2>
+      <p class="note">Settled: <b>1D</b>, the faded cyanotype.</p>
+    </div>
+    <div class="grid" id="materials"></div>
+  </section>
+
+  <section id="tabs-sec">
+    <div class="head">
+      <h2><span class="n">2</span>Thumb tab colors</h2>
+      <p class="note">
+        Ten tabs, ten everyday color names, white letters on every light tab, and a text token per
+        category, with Mines in stone gray-brown. <b>2M</b> tunes round six’s 2K: a quieter Recipes
+        in the light theme, and a darker Mines tab in dark mode. The figures under each set are the
+        closest pair’s distance (OKLab ΔE), for normal vision & the two common color-vision
+        deficiencies; bigger means easier to tell apart.
+      </p>
+    </div>
+    <div class="grid" id="tabs"></div>
+    <div class="scroll">
+      <table id="gamekey"></table>
+    </div>
+  </section>
+
+  <section id="notnow">
+    <div class="head">
+      <h2><span class="n">3</span>The Not now sprite</h2>
+      <p class="note">Settled: <b>3A+</b>.</p>
+    </div>
+    <div class="grid" id="sprites"></div>
+  </section>
+
+  <section id="prov-sec">
+    <div class="head">
+      <h2><span class="n">4</span>Who made the mark</h2>
+      <p class="note">
+        Settled: four tools, in two of the palette’s own colors. Done is the green and obtained is
+        the gold, so the marks add no colors of their own.
+      </p>
+    </div>
+    <div class="grid" id="prov"></div>
+  </section>
+
+  <section id="meters-sec">
+    <div class="head">
+      <h2><span class="n">5</span>One meter, three directions</h2>
+      <p class="note">
+        Renown is a climbing gold star (<b>5F</b>): it rides the top of a gold bar and names your
+        town rank. The star is our own plump drawing, after the game’s rank stars.
+      </p>
+    </div>
+    <div class="grid" id="meters"></div>
+  </section>
+
+  <section id="type">
+    <div class="head">
+      <h2><span class="n">6</span>Type roles, snapped to the scale</h2>
+      <p class="note">
+        The mockup’s half-pixel sizes round to the nearest step, favoring the larger. The body face
+        is Petrona, as today. The hand face is a stand-in until #677 picks one.
+      </p>
+    </div>
+    <div class="scroll">
+      <table>
+        <tr>
+          <th>Role</th>
+          <th>Face</th>
+          <th>Mockup</th>
+          <th>Token</th>
+          <th>Specimen</th>
+        </tr>
+        <tr>
+          <td>Page title</td>
+          <td class="sm">Display</td>
+          <td class="sm">30</td>
+          <td class="sm">text-3xl</td>
+          <td style="font: italic 30px/1 var(--f-disp)">Almanac</td>
+        </tr>
+        <tr>
+          <td>Section head</td>
+          <td class="sm">Body 600</td>
+          <td class="sm">19</td>
+          <td class="sm">text-xl (20)</td>
+          <td style="font: 600 20px/1.2 var(--f-body)">Artifacts</td>
+        </tr>
+        <tr>
+          <td>Row name</td>
+          <td class="sm">Body</td>
+          <td class="sm">15.5</td>
+          <td class="sm">text-base (16)</td>
+          <td style="font: 16px/1.25 var(--f-body)">Dragon-Forged Bracelet</td>
+        </tr>
+        <tr>
+          <td>Source & note</td>
+          <td class="sm">Annotation</td>
+          <td class="sm">11.5–12.5</td>
+          <td class="sm">text-xs (12)</td>
+          <td style="font: 12px/1.3 var(--f-ann); color: var(--muted)">at an artifact dig site</td>
+        </tr>
+        <tr>
+          <td>Column label</td>
+          <td class="sm">Data, caps</td>
+          <td class="sm">9.5–10.5</td>
+          <td class="sm">text-3xs (10)</td>
+          <td
+            style="
+              font: 10px var(--f-data);
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: var(--muted);
+            "
+          >
+            Next festival
+          </td>
+        </tr>
+        <tr>
+          <td>Control</td>
+          <td class="sm">Controls</td>
+          <td class="sm">12</td>
+          <td class="sm">text-xs (12)</td>
+          <td style="font: 12px var(--f-ctl)">Spring 14</td>
+        </tr>
+        <tr>
+          <td>Player’s count</td>
+          <td class="sm">Hand, digits only</td>
+          <td class="sm">22–28</td>
+          <td class="sm">text-2xl (24)</td>
+          <td>
+            <span class="hand" style="font-size: 24px">1,760</span> <span class="of">/ 1,879</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><h2>Approved</h2></div>
+    <ol class="asks">
+      <li>Dark mode: 1D, the faded cyanotype.</li>
+      <li>Category colors: 2M, ten named colors with stone Mines.</li>
+      <li>Not now: 3A+. Provenance: four tools in the palette’s green & gold.</li>
+      <li>Meters: the Skills ruler, the Mines shaft, & the climbing gold star (5F).</li>
+      <li>Body face: Petrona.</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+  // Materials. One token table per paper; the script writes each as a class, as a page override for
+  // the strip, and as the .m-dark override that the comparison panels use.
+  const DARK_CATS = {
+    "c-museum": "#5ac576",
+    "c-animals": "#ef84b2",
+    "c-skills": "#51b5b8",
+    "c-almanac": "#ad7dd2",
+    "c-cosmetics": "#86abe8",
+    "c-villagers": "#e86963",
+    "c-quests": "#f68f59",
+    "c-renown": "#e5b23f",
+    "c-recipes": "#cdb59b",
+    "c-mines": "#958a80",
+    done: "#5ac576",
+    obtained: "#e5b23f",
+    wax: "#f79a88",
+    "f-todo": "grayscale(1) contrast(1.1) brightness(1.5)",
+    blend: "multiply",
+    "f-notnow": "grayscale(1) contrast(0.55) brightness(0.9) opacity(0.6)",
+    "f-notnow2": "grayscale(1) contrast(0.5) brightness(0.86)",
+    "on-cover": "#dfe8ea",
+  };
+  const dark = (t) => ({ ...DARK_CATS, ...t, scheme: "dark" });
+  const MATS = {
+    light: {
+      code: "L",
+      name: "Slate paper",
+      scheme: "light",
+      paper: "#f2f4f3",
+      raised: "#fbfcfc",
+      sunken: "#e3e8e7",
+      ink: "#1b2128",
+      muted: "#56626c",
+      hair: "#7a8892",
+      voice: "#2b5f8e",
+      pencil: "#48535d",
+      wax: "#b23a2e",
+      done: "#207f40",
+      obtained: "#8f6800",
+      tape: "#e1ecf3",
+      strip: "rgb(214 226 232 / 70%)",
+      cover: "#2b4550",
+      "on-cover": "#e9f1f3",
+      shadow: "0 1px 1px rgb(18 28 34 / 14%)",
+      sticker: "0.8px 1.2px 0.7px rgb(18 28 34 / 35%)",
+      "f-todo": "grayscale(1) contrast(1.15)",
+      blend: "screen",
+      "f-notnow": "grayscale(1) contrast(0.5) brightness(1.32)",
+      "f-notnow2": "grayscale(1) contrast(0.36) brightness(1.5)",
+      "c-museum": "#288546",
+      "c-animals": "#a02665",
+      "c-skills": "#008084",
+      "c-almanac": "#8148a9",
+      "c-cosmetics": "#376dca",
+      "c-villagers": "#a30017",
+      "c-quests": "#a34704",
+      "c-renown": "#956e00",
+      "c-recipes": "#6f5d48",
+      "c-mines": "#51453c",
+    },
+    faded: dark({
+      code: "1D",
+      name: "Faded cyanotype",
+      short: "Faded",
+      paper: "#182c40",
+      raised: "#1f3348",
+      sunken: "#122539",
+      ink: "#eaf1f8",
+      muted: "#aabdd1",
+      hair: "#6e8398",
+      voice: "#9fd1f8",
+      pencil: "#f1f6fa",
+      tape: "#283f57",
+      strip: "rgb(190 214 232 / 22%)",
+      cover: "#0f1820",
+      shadow: "0 1px 1px rgb(2 10 20 / 40%)",
+      sticker: "0.8px 1.2px 0.7px rgb(2 10 20 / 55%)",
+    }),
+  };
+  const decl = (t) =>
+    Object.entries(t)
+      .filter(([k]) => !["code", "name", "scheme"].includes(k))
+      .map(([k, v]) => `--${k}:${v};`)
+      .join("") + `color-scheme:${t.scheme};`;
+  document.getElementById("mats").textContent = Object.entries(MATS)
+    .map(
+      ([k, t]) =>
+        `.m-${k}{${decl(t)}}:root[data-mat="${k}"]{${decl(t)}}:root[data-dark="${k}"] .m-dark{${decl(t)}}`,
+    )
+    .join("\n");
+
+  // The strip. The choice is a per-viewer convenience, so storage failures only lose the memory.
+  const root = document.documentElement;
+  const store = {
+    get(k) {
+      try {
+        return localStorage.getItem(k);
+      } catch {
+        return null;
+      }
+    },
+    set(k, v) {
+      try {
+        localStorage.setItem(k, v);
+      } catch {}
+    },
+  };
+  const ORDER = ["system", "light", "faded"];
+  const stripEl = document.getElementById("strip");
+  stripEl.insertAdjacentHTML(
+    "beforeend",
+    ORDER.map((k) => {
+      const t = MATS[k];
+      const sw = t
+        ? t.paper
+        : `linear-gradient(135deg, ${MATS.light.paper} 50%, ${MATS.faded.paper} 50%)`;
+      return `<button type="button" class="swatch" data-k="${k}" aria-pressed="false" title="${t ? t.name : "Follow your theme"}"><i style="--sw:${sw}"></i>${t ? (t.code === "L" ? "Light" : `${t.code} ${t.short}`) : "Your theme"}</button>`;
+    }).join(""),
+  );
+  function choose(k) {
+    if (k === "system") root.removeAttribute("data-mat");
+    else root.setAttribute("data-mat", k);
+    if (k !== "system" && k !== "light") {
+      root.setAttribute("data-dark", k);
+      store.set("tok-dark", k);
+    }
+    store.set("tok-mat", k);
+    stripEl
+      .querySelectorAll(".swatch")
+      .forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
+    const d = MATS[root.getAttribute("data-dark")];
+    document.querySelectorAll("[data-darkname]").forEach((el) => {
+      el.textContent = `Dark · ${d.code} ${d.name}`;
+    });
+  }
+  stripEl.addEventListener("click", (e) => {
+    const b = e.target.closest(".swatch");
+    if (b) choose(b.dataset.k);
+  });
+  root.setAttribute("data-dark", MATS[store.get("tok-dark")] ? store.get("tok-dark") : "faded");
+
+  // Stand-in sprites: original 16×16 pixel drawings, built as SVG data URIs so one URL serves the
+  // <img> & the CSS mask.
+  const PAL = {
+    k: "#2a1a2e",
+    r: "#c8443c",
+    R: "#8e2a34",
+    w: "#f6ead8",
+    s: "#e2c9a0",
+    S: "#b89468",
+    g: "#4c9a4a",
+    G: "#2c6a3c",
+    b: "#4a8ad0",
+    B: "#2c5a9c",
+    y: "#f0c848",
+    c: "#9adcf0",
+  };
+  const ART = {
+    mushroom: [
+      "................",
+      ".....kkkkkk.....",
+      "...kkrrrrrrkk...",
+      "..krrwwrrrrrrk..",
+      ".krrrwwrrrwwrrk.",
+      ".krrrrrrrrwwrrk.",
+      "krrwrrrrrrrrrrRk",
+      "krrrrrrwwrrrrRRk",
+      "kRrrrrrwwrrrRRRk",
+      ".kkkkkkkkkkkkkk.",
+      "....kwwwwssk....",
+      "....kwwwwssk....",
+      "....kwwwsssk....",
+      "...kwwwwsssSk...",
+      "...kkkkkkkkkk...",
+      "................",
+    ],
+    fish: [
+      "................",
+      "................",
+      "......kkkkk.....",
+      "....kkbbbbbkk..k",
+      "...kbbbbbbbbbkkk",
+      "..kbbcbbbbbbbbBk",
+      ".kbkwbbbbbbbbBBk",
+      ".kbbbbbbcbbbbBk.",
+      ".kbbbbbbbbbbBBBk",
+      "..kBbbbbbbbBBkkk",
+      "...kkBBBBBBkk..k",
+      ".....kkkkkk.....",
+      "................",
+      "................",
+      "................",
+      "................",
+    ],
+    gem: [
+      "................",
+      "................",
+      "....kkkkkkkk....",
+      "...kccccccyyk...",
+      "..kcwwccccyyyk..",
+      ".kccwccccccyyyk.",
+      ".kkkkkkkkkkkkkk.",
+      ".kgggggkGGGGGGk.",
+      "..kggggkGGGGGk..",
+      "...kgggkGGGGk...",
+      "....kggkGGGk....",
+      ".....kgkGGk.....",
+      "......kkGk......",
+      ".......kk.......",
+      "................",
+      "................",
+    ],
+  };
+  const sprite = (name) => {
+    let r = "";
+    ART[name].forEach((line, y) =>
+      [...line].forEach((ch, x) => {
+        if (ch !== ".")
+          r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${PAL[ch]}"/>`;
+      }),
+    );
+    return (
+      "data:image/svg+xml," +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">${r}</svg>`,
+      )
+    );
+  };
+  const URLS = Object.fromEntries(Object.keys(ART).map((k) => [k, sprite(k)]));
+  const spr = (name, cls, tint, big) =>
+    `<span class="spr ${cls}${big ? " big" : ""}" style="--u:url(&quot;${URLS[name]}&quot;)${tint ? `;--tint:var(${tint})` : ""}"><img alt="" src="${URLS[name]}"></span>`;
+
+  // Marks. Each tool draws the same X (done) or slash (obtained); only the making differs.
+  const X = "M4 5 Q 11 10 18.5 18 M18 3.5 Q 10 11 3.5 18.5";
+  const SL = "M17.5 3.5 Q 10.5 11 4 18.5";
+  const pencil = (c, d = X, o = 0.8) =>
+    `<svg viewBox="0 0 22 22" filter="url(#graphite)" opacity="${o}"><path d="${d}" fill="none" stroke="${c}" stroke-width="2.1" stroke-linecap="round"/></svg>`;
+  const pen = (c, d = X) =>
+    `<svg viewBox="0 0 22 22"><path d="${d === X ? "M3 4 Q 11 10.5 19.5 19 M18.5 2.5 Q 10 11 2.5 19.5" : "M18.5 2.5 Q 10.5 11 3 19.5"}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round"/><circle cx="${d === X ? 19.4 : 3.1}" cy="19.2" r="1.3" fill="${c}"/></svg>`;
+  const stamp = (c, d = X) =>
+    `<svg viewBox="0 0 22 22" filter="url(#stamp)" style="transform:rotate(-6deg)"><path d="${d === X ? "M5 5 L17 17 M17 5 L5 17" : "M17 5 L5 17"}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="square"/></svg>`;
+  const type = (c, d = X) => `<span class="tw" style="color:${c}">${d === X ? "x" : "/"}</span>`;
+  const box = (inner = "") => `<span class="box">${inner}</span>`;
+  const heart = (on) =>
+    `<svg viewBox="0 0 24 24" width="20" height="20" ${on ? 'filter="url(#graphite)"' : ""}><path d="M12 20 C 4 14 3 9 6.5 6.5 C 9 4.8 11 6 12 8 C 13 6 15 4.8 17.5 6.5 C 21 9 20 14 12 20 Z" fill="${on ? "color-mix(in srgb, var(--c-villagers) 55%, transparent)" : "none"}" stroke="${on ? "var(--c-villagers)" : "var(--hair)"}" stroke-width="1.4"/></svg>`;
+
+  // 1. Materials.
+  const page = () => `
+  <div class="sec"><b>Forageables</b><span><span class="hand">82</span> <span class="of">/ 88</span></span><span class="lbl">To do 6</span></div>
+  <div class="row">${box()}${spr("mushroom", "todo", "--c-almanac")}<span class="nm">Morel<small>in the Eastern Road</small></span><span class="src"><span class="hatch">+2 later</span></span></div>
+  <div class="row done">${box(pencil("var(--pencil)"))}${spr("fish", "completed")}<span class="nm">Minnow<small>recorded</small></span><span class="src marks">${heart(1)}${heart(1)}${heart(0)}</span></div>
+  <div class="row">${box()}${spr("gem", "notnow2")}<span class="nm">Frost Lily<small>comes back in winter</small></span><span class="src">Not now</span></div>
+  <div class="slip"><h3>Next festival</h3><i>Fall 10.</i><span>34 prizes you haven’t won</span></div>`;
+  const materials = [
+    ["light", "For reference: the light theme, from round ten."],
+    [
+      "faded",
+      "Settled. A cyanotype left in a sunny window: the blue is the first thing you notice, then it settles back.",
+    ],
+  ];
+  document.getElementById("materials").innerHTML = materials
+    .map(([m, why]) => {
+      const t = MATS[m];
+      return `<div class="opt"><h3><b>${t.code === "L" ? "Light" : t.code}</b> · ${t.name}</h3><div class="m-${m}"><div class="page onpaper">${page()}</div></div><p class="note">${why}</p></div>`;
+    })
+    .join("");
+
+  // 2. Tabs.
+  const CATS = [
+    "museum",
+    "animals",
+    "skills",
+    "almanac",
+    "cosmetics",
+    "villagers",
+    "quests",
+    "renown",
+    "recipes",
+    "mines",
+  ];
+  // Ten everyday color names, one hue each, fitted in three strengths: deep tabs (white letters at
+  // 4.5:1, light theme), text on light paper (the deep hue, darkened only where it needs to be), and
+  // pale tabs (dark letters, which also read as text on 1D). Each name was held to a hue & lightness
+  // range that keeps it that name.
+  const NAMED = {
+    deep: {
+      red: "#9c1a23",
+      orange: "#a44804",
+      gold: "#956d00",
+      green: "#35843d",
+      teal: "#005f63",
+      blue: "#3e73c6",
+      purple: "#7249b3",
+      pink: "#b44c80",
+      tan: "#785d45",
+      brown: "#602e02",
+    },
+    text: {
+      red: "#9c1a23",
+      orange: "#a44804",
+      gold: "#916800",
+      green: "#307f39",
+      teal: "#005f63",
+      blue: "#3a6ec1",
+      purple: "#7249b3",
+      pink: "#b34a7e",
+      tan: "#785d45",
+      brown: "#602e02",
+    },
+    pale: {
+      red: "#ee6562",
+      orange: "#f98d53",
+      gold: "#e5b23f",
+      green: "#75c079",
+      teal: "#5dbcc0",
+      blue: "#7aa9f3",
+      purple: "#a482e6",
+      pink: "#d287a9",
+      tan: "#cbb098",
+      brown: "#b28b72",
+    },
+  };
+  // Animals takes the cow's pink; Skills keeps the teal of its book.
+  const MAP_G = {
+    villagers: "red",
+    quests: "orange",
+    renown: "gold",
+    museum: "green",
+    skills: "teal",
+    cosmetics: "blue",
+    almanac: "purple",
+    animals: "pink",
+    recipes: "tan",
+    mines: "brown",
+  };
+  const paint = (map, strength) =>
+    Object.fromEntries(CATS.map((c) => [c, NAMED[strength][map[c]]]));
+  // Two refits with Mines in gray, so the warm colors could spread out. Same order as MAP_G, with
+  // Mines last: villagers, quests, renown, museum, skills, cosmetics, almanac, animals, recipes, mines.
+  const ORDER_G = Object.keys(MAP_G);
+  const set = (deep, text, pale) => {
+    const m = (list) => Object.fromEntries(ORDER_G.map((c, i) => [c, list[i]]));
+    return { light: m(deep), lightText: m(text), dark: m(pale) };
+  };
+  const GRAY = {
+    stone: set(
+      [
+        "#a30017",
+        "#a34704",
+        "#956e00",
+        "#288546",
+        "#008084",
+        "#376dca",
+        "#8148a9",
+        "#a02665",
+        "#735c41",
+        "#51453c",
+      ],
+      [
+        "#a30017",
+        "#a34704",
+        "#8f6800",
+        "#207f40",
+        "#007b7f",
+        "#376dca",
+        "#8148a9",
+        "#a02665",
+        "#735c41",
+        "#51453c",
+      ],
+      [
+        "#e86963",
+        "#f68f59",
+        "#e5b23f",
+        "#5ac576",
+        "#51b5b8",
+        "#86abe8",
+        "#ad7dd2",
+        "#ef84b2",
+        "#cdb59b",
+        "#9c9187",
+      ],
+    ),
+  };
+  // 2M: 2K with a quieter Recipes in the light theme & a darker Mines tab in dark. The darker Mines
+  // tab reads at 4.2:1 on 1D, so dark-mode Mines text keeps 2K's lighter shade.
+  const S2M = {
+    light: { ...GRAY.stone.light, recipes: "#6f5d48" },
+    lightText: { ...GRAY.stone.lightText, recipes: "#6f5d48" },
+    dark: { ...GRAY.stone.dark, mines: "#958a80" },
+    // Review fix: dark Villagers text is lighter, so it reads on its own 12% wash.
+    darkText: { ...GRAY.stone.dark, villagers: "#fa7972" },
+  };
+  const SETS = {
+    "2M": {
+      name: "Stone mines, tuned",
+      why: "Recipes drops from chroma 0.05 to 0.04 in the light theme, and the dark Mines tab drops a step toward Villagers’ weight. Mines keeps a separate, lighter text shade in dark mode.",
+      dist: "Light: ΔE 0.092 · deutan 0.043 · protan 0.052<br>Dark: ΔE 0.097 · deutan 0.049 · protan 0.044",
+      ...S2M,
+      lead: true,
+    },
+    "2K": {
+      name: "Stone mines (round six)",
+      why: "For comparison.",
+      dist: "Light: ΔE 0.095 · deutan 0.049 · protan 0.052<br>Dark: ΔE 0.097 · deutan 0.049 · protan 0.051",
+      ...GRAY.stone,
+    },
+  };
+  const lum = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  // A letter takes whichever ink contrasts more; the requirement is that a strip never mixes them.
+  const contrast = (a, b) => {
+    const [x, y] = [lum(a), lum(b)];
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+  const tabInk = (hex) =>
+    contrast(hex, "#1b2128") > contrast(hex, "#fbfcfc") ? "#1b2128" : "#fbfcfc";
+  const cap = (c) => c[0].toUpperCase() + c.slice(1);
+  const strip = (m, map, text = map) =>
+    `<div class="${m}"><div class="coverstrip">${CATS.map((c) => `<span class="tab" style="--c:${map[c]};--ti:${tabInk(map[c])}" title="${cap(c)}">${c[0].toUpperCase()}</span>`).join("")}</div><div class="page"><div class="inkrow">${CATS.map((c) => `<span style="color:${text[c]}">${cap(c)}</span>`).join("")}</div></div></div>`;
+  document.getElementById("tabs").innerHTML = Object.entries(SETS)
+    .map(
+      ([k, s]) =>
+        `<div class="opt${s.lead ? " lead" : ""}"><h3><b>${k}</b> · ${s.name}</h3>${strip("m-light", s.light, s.lightText)}<h3 data-darkname></h3>${strip("m-dark", s.dark, s.darkText)}<p class="dist">${s.dist}</p><p class="note">${s.why}</p></div>`,
+    )
+    .join("");
+  // Sources, checked against the wiki’s Journal page & the menu itself, top to bottom: backpack,
+  // wardrobe (white), envelope, heart, cow, sparkles (magic), map, book (almanac), gear.
+  const KEY = [
+    ["villagers", "red", "The heart on the relationships tab"],
+    ["quests", "orange", "The envelope tab’s coral, pushed to orange"],
+    ["renown", "gold", "Medal gold (no tab in the menu)"],
+    ["museum", "green", "The museum’s green roof"],
+    ["skills", "teal", "The skills book’s mint base"],
+    ["cosmetics", "blue", "The outfit in the wardrobe icon (the tab is white)"],
+    ["almanac", "purple", "The orchid tab with the book, pushed to purple"],
+    ["animals", "pink", "The cow’s pink nose"],
+    ["recipes", "tan", "Aged recipe scrolls"],
+    ["mines", "stone", "Underground, as cut stone"],
+  ];
+  document.getElementById("gamekey").innerHTML =
+    `<tr><th>Category</th><th>Name in 2M</th><th>Borrowed from</th></tr>` +
+    KEY.map(
+      ([c, n, src]) =>
+        `<tr><td>${cap(c)}</td><td><span class="chip" style="--c:${SETS["2M"].light[c]}"></span><span class="chip" style="--c:${SETS["2M"].dark[c]}"></span>${n}</td><td class="sm">${src}</td></tr>`,
+    ).join("");
+
+  // 3. Sprites.
+  const fig = (label, sub, html, pick) =>
+    `<figure class="${pick ? "pick" : ""}">${html}<span><b>${label}</b>${sub}</span></figure>`;
+  const treat = (m) => `<div class="${m}"><div class="page"><div class="treat">
+  ${fig("To do", "one ink", spr("mushroom", "todo", "--c-almanac", 1) + spr("fish", "todo", "--c-museum", 1))}
+  ${fig("Completed", "full color", spr("mushroom", "completed", "", 1) + spr("fish", "completed", "", 1))}
+  ${fig("3A+", "Not now", spr("mushroom", "notnow2", "", 1) + spr("fish", "notnow2", "", 1), 1)}
+  ${fig("Spoiler", "silhouette", spr("mushroom", "spoiler", "", 1) + spr("fish", "spoiler", "", 1))}
+</div></div></div>`;
+  document.getElementById("sprites").innerHTML = [
+    ["m-light", "<h3>Light</h3>"],
+    ["m-dark", "<h3 data-darkname></h3>"],
+  ]
+    .map(([m, h]) => `<div class="opt" style="grid-column:1/-1">${h}${treat(m)}</div>`)
+    .join("");
+
+  // 4. Provenance.
+  const provs = [
+    [
+      "4",
+      "Green & gold",
+      { done: "var(--done)", obtained: "var(--obtained)" },
+      "Done borrows the palette’s green and obtained its gold, at text strength in light and pale in dark, so the marks add no colors of their own.",
+    ],
+  ];
+  // A long, nearly finished section: mostly stamped from the save, with a few of each other tool.
+  const TOOL = {
+    pen: [pen, "you"],
+    stamp: [stamp, "your save"],
+    pencil: [(c, d) => pencil(c, d, 0.75), "inferred"],
+    type: [type, "unknown"],
+  };
+  const FISH = [
+    ["Minnow", X, "stamp"],
+    ["Perch", X, "stamp"],
+    ["Carp", X, "pen"],
+    ["Bluegill", SL, "stamp"],
+    ["Catfish", X, "stamp"],
+    ["Trout", X, "pencil"],
+    ["Eel", null],
+    ["Pike", X, "stamp"],
+    ["Sunfish", SL, "pen"],
+    ["Bass", X, "type"],
+    ["Sturgeon", X, "stamp"],
+    ["Koi", null],
+    ["Salmon", X, "pencil"],
+    ["Tuna", SL, "stamp"],
+  ];
+  const ARTS = ["fish", "mushroom", "gem"];
+  const longList = (ink) =>
+    `<div class="sec"><b>Fish</b><span><span class="hand">12</span> <span class="of">/ 14</span></span><span class="lbl">To do 2</span></div>` +
+    FISH.map(([nm, d, tool], i) => {
+      const [draw, who] = tool ? TOOL[tool] : [];
+      const mark = d ? draw(d === X ? ink.done : ink.obtained, d) : "";
+      const sprite = d ? spr(ARTS[i % 3], "completed") : spr(ARTS[i % 3], "todo", "--c-cosmetics");
+      return `<div class="row${d ? " done" : ""}">${box(mark)}${sprite}<span class="nm">${nm}<small>${d ? (d === X ? "recorded" : "caught, not donated") + ` · ${who}` : "in the river"}</small></span><span class="src"></span></div>`;
+    }).join("");
+  document.getElementById("prov").innerHTML = provs
+    .map(
+      ([k, name, ink, why]) =>
+        `<div class="opt"><h3><b>${k}</b> · ${name}</h3><div class="m-light"><div class="page onpaper">${longList(ink)}</div></div><h3 data-darkname></h3><div class="m-dark"><div class="page onpaper">${longList(ink)}</div></div><p class="note">${why}</p></div>`,
+    )
+    .join("");
+
+  // 5. Meters. The fill carries the ink; the frame only says where it starts & which way it runs.
+  // Ground: a printed line with a few uneven tufts of grass. Both come with the book, so they’re
+  // ink, not pencil; only the fill is the player’s.
+  const LEN = 130;
+  const CX = 46;
+  const tuft = (x, g, s = 1) =>
+    `M${x} ${g} q ${-1.2 * s} ${-3 * s} ${-3.4 * s} ${-5 * s} M${x + 1.6} ${g} q ${0.2 * s} ${-4.5 * s} ${0.8 * s} ${-7.5 * s} M${x + 3.2} ${g} q ${1.2 * s} ${-2.4 * s} ${3.2 * s} ${-4 * s}`;
+  const ground = (g, gap, grass = true) => {
+    const line = gap ? `M0 ${g} H${CX - gap} M${CX + gap} ${g} H100` : `M0 ${g} H100`;
+    if (!grass) return `<path d="${line}" stroke="var(--ink)" stroke-width="1.6"/>`;
+    const tufts = [
+      [6, 1],
+      [27, 0.8],
+      [66, 1.1],
+      [86, 0.9],
+    ]
+      .map(([x, s]) => tuft(x, g, s))
+      .join(" ");
+    return `<path d="${line}" stroke="var(--ink)" stroke-width="1.6"/><path d="${tufts}" stroke="var(--ink)" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+  };
+  // A rect, not a stroked line: a straight line has a zero-height box, which hides it under a filter.
+  const fill = (x1, y1, x2, y2, color, w = 10) =>
+    x1 === x2
+      ? `<rect x="${x1 - w / 2}" y="${Math.min(y1, y2)}" width="${w}" height="${Math.abs(y2 - y1)}" fill="${color}" filter="url(#graphite)" opacity=".92"/>`
+      : `<rect x="${Math.min(x1, x2)}" y="${y1 - w / 2}" width="${Math.abs(x2 - x1)}" height="${w}" fill="${color}" filter="url(#graphite)" opacity=".92"/>`;
+  // Skills: a quiet horizontal ruler with a heavy start stop and an arrow at the open end.
+  function ruler({ max, value, major, color }) {
+    const len = 300;
+    const pos = (v) => 22 + (v / max) * len;
+    const [a, b, z] = [pos(0), pos(value), pos(max)];
+    let s = `<line y1="30" y2="30" x1="${a}" x2="${z}" stroke="var(--hair)" stroke-width="1" opacity=".55"/>`;
+    for (let v = major; v < max; v += major)
+      s += `<line y1="36" y2="40" x1="${pos(v)}" x2="${pos(v)}" stroke="var(--hair)" opacity=".6"/>`;
+    s += `<line y1="20" y2="40" x1="${a}" x2="${a}" stroke="var(--ink)" stroke-width="2.5"/><text x="${a}" y="54" text-anchor="middle">0</text>`;
+    s += `<path d="M${z - 6} 25 L${z} 30 L${z - 6} 35" fill="none" stroke="var(--hair)" stroke-width="1.3"/><text x="${z}" y="54" text-anchor="end">${max}</text>`;
+    if (value)
+      s +=
+        fill(a, 30, b, 30, color) +
+        `<text class="v" x="${b}" y="16" text-anchor="middle" filter="url(#graphite)">${value}</text>`;
+    return `<svg width="${len + 44}" height="60" viewBox="0 0 ${len + 44} 60" role="img" aria-label="${value} of ${max}">${s}</svg>`;
+  }
+  // 5B: a drawn diagram. Mines is a shaft cut below its ground, with a rung every 20 floors;
+  // Renown is a pole above its ground, with a pennant flying clear of the top rank. Both are LEN
+  // long, and both put the count to the right of the fill.
+  const meter = (label, h, s) =>
+    `<svg width="130" height="${h}" viewBox="0 0 130 ${h}" role="img" aria-label="${label}">${s}</svg>`;
+  // Each shaft defines its own hatch, so var(--pencil) resolves in the panel's paper, not the page's.
+  let shafts = 0;
+  function shaft(value, max) {
+    const G = 14;
+    const y = (v) => G + (v / max) * LEN;
+    const id = `earth${shafts++}`;
+    let s = `<defs><pattern id="${id}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--pencil)" stroke-width="1" opacity="0.3"/></pattern></defs>`;
+    s += `<rect x="${CX - 22}" y="${G}" width="14" height="${LEN}" fill="url(#${id})"/><rect x="${CX + 8}" y="${G}" width="14" height="${LEN}" fill="url(#${id})"/>`;
+    s += `<path d="M${CX - 8} ${G} V${G + LEN} H${CX + 8} V${G}" fill="none" stroke="var(--hair)" stroke-width="1.2"/>`;
+    for (let v = 20; v < max; v += 20)
+      s += `<line x1="${CX - 6}" x2="${CX + 6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--hair)" opacity=".5"/>`;
+    if (value)
+      s +=
+        fill(CX, G, CX, y(value), "var(--c-mines)", 12) +
+        `<text class="v" x="${CX + 28}" y="${y(value) + 7}" filter="url(#graphite)">${value}</text>`;
+    s += ground(G, 8) + `<text x="${CX + 28}" y="${G + LEN + 4}">${max}</text>`;
+    return meter(`Floor ${value} of ${max}`, G + LEN + 12, s);
+  }
+  // Town ranks change every 10 renown levels, Wood at 0 through Mistril at 100.
+  const RANKS = [
+    "Wood",
+    "Stone",
+    "Copper",
+    "Ruby",
+    "Iron",
+    "Sapphire",
+    "Silver",
+    "Emerald",
+    "Gold",
+    "Diamond",
+    "Mistril",
+  ];
+  const rankOf = (v) => Math.min(10, Math.floor(v / 10));
+  // A plump five-point star of our own drawing, after the game's rank stars; its lower notch sits
+  // NOTCH below its center, so a bar that ends there flows straight into it.
+  const NOTCH = 6.9;
+  const starAt = (cy, color) => {
+    const pts = Array.from({ length: 10 }, (_, i) => {
+      const r = i % 2 ? NOTCH : 11;
+      const a = (Math.PI / 5) * i - Math.PI / 2;
+      return `${(CX + r * Math.cos(a)).toFixed(1)} ${(cy + r * Math.sin(a)).toFixed(1)}`;
+    });
+    return `<path d="M${pts.join(" L")} Z" fill="${color}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`;
+  };
+  // Renown: a gold star rides the top of a gold bar and names the current town rank, with a tick
+  // at every rank boundary. Drawing order: frame, floor, bar, then the star over all of them.
+  function pole(value, max) {
+    const top = 14;
+    const G = top + NOTCH + LEN;
+    const y = (v) => G - (v / max) * LEN;
+    const rank = rankOf(value);
+    let s = `<line x1="${CX}" x2="${CX}" y1="${G}" y2="${top}" stroke="var(--hair)" stroke-width="1.2"/>`;
+    for (let v = 10; v < max; v += 10)
+      s += `<line x1="${CX - 5}" x2="${CX + 5}" y1="${y(v)}" y2="${y(v)}" stroke="var(--hair)" opacity=".5"/>`;
+    s += ground(G, 0, false);
+    const starY = y(value) - NOTCH;
+    // The bar ends at the star's lower notch, so it flows straight into the star.
+    if (value) s += fill(CX, G, CX, y(value), "var(--c-renown)", 12);
+    s += starAt(starY, "var(--c-renown)");
+    s += `<text x="${CX + 15}" y="${starY + 2}"><tspan class="v" filter="url(#graphite)">${value}</tspan><tspan class="w" dx="5">${RANKS[rank]}</tspan></text>`;
+    return meter(`Renown ${value} of ${max}, ${RANKS[rank]} rank`, G + 4, s);
+  }
+  const f = (svg, label, wide) => `<figure${wide ? ' class="wide"' : ""}>${svg}${label}</figure>`;
+  const OPTS = {
+    "5F": [
+      "Climbing gold star",
+      () =>
+        [0, 7, 42, 77, 100]
+          .map((v) =>
+            f(pole(v, 100), v === 0 ? "Renown, new" : v === 100 ? "Renown, top" : "Renown"),
+          )
+          .join(""),
+      "Star & bar are both Renown’s gold, like every other meter’s category color. The star climbs the bar and names your town rank, with a tick at each rank boundary every 10 levels. It sits in front of the floor, so a new player’s star stands on the ground.",
+    ],
+    Settled: [
+      "Skills & Mines",
+      () =>
+        `${f(ruler({ max: 60, value: 37, major: 15, color: "var(--c-skills)" }), "Skills", 1)}${f(shaft(0, 100), "Mines, new")}${f(shaft(64, 100), "Mines")}`,
+      "Unchanged. Mines keeps its grass, which marks the surface the shaft is cut from.",
+    ],
+  };
+  document.getElementById("meters").innerHTML = Object.entries(OPTS)
+    .map(
+      ([k, [name, draw, why]]) =>
+        `<div class="opt" style="grid-column:1/-1"><h3><b>${k}</b> · ${name}</h3><div class="m-light"><div class="page"><div class="meters">${draw()}</div></div></div><h3 data-darkname></h3><div class="m-dark"><div class="page"><div class="meters">${draw()}</div></div></div><p class="note">${why}</p></div>`,
+    )
+    .join("");
+
+  choose(ORDER.includes(store.get("tok-mat")) ? store.get("tok-mat") : "system");
+</script>

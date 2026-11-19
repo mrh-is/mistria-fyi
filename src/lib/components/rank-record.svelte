@@ -164,7 +164,7 @@
   .rank-state :global(.rank-completion) {
     width: 17px;
     height: 17px;
-    color: var(--color-category-renown);
+    color: var(--color-category-renown-text);
   }
 
   .rank-record[data-rank-state="completed"] .rank-copy strong {

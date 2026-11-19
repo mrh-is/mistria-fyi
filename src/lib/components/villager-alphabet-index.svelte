@@ -168,7 +168,7 @@
 
   .villager-index button:is(:focus-visible, [data-scrub-target="true"]) {
     background: color-mix(in srgb, var(--color-category-villagers) 12%, transparent);
-    color: var(--color-category-villagers);
+    color: var(--color-category-villagers-text);
     outline: 2px solid var(--color-category-villagers);
     outline-offset: 0;
   }
@@ -176,7 +176,7 @@
   @media (hover: hover) {
     .villager-index:not([data-scrubbing="true"]) button:hover {
       background: color-mix(in srgb, var(--color-category-villagers) 12%, transparent);
-      color: var(--color-category-villagers);
+      color: var(--color-category-villagers-text);
       outline: 2px solid var(--color-category-villagers);
       outline-offset: 0;
     }
