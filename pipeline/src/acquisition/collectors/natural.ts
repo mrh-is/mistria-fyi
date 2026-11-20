@@ -4,7 +4,7 @@ import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
 import { forEachItem, minesBiomeId } from "../../extractor-helpers.js";
-import { GOLDEN_PRODUCT_TO_ANIMAL, MINE_SUBCAT_TO_BIOME } from "../../overrides/game-facts.js";
+import { ANIMAL_REWARD_TO_ANIMAL, MINE_SUBCAT_TO_BIOME } from "../../overrides/game-facts.js";
 
 import type {
   ActivityId,
@@ -50,7 +50,6 @@ export function collectNaturalSources(
   collectTreeSources(fiddle, accumulator);
   collectMonsterDropSources(fiddle, accumulator, cosmeticAccumulator, petCosmeticAccumulator);
   collectAnimalProductSources(fiddle, accumulator);
-  collectGoldenAnimalProductSources(fiddle, accumulator);
   collectEarthlyEssenceCosmeticSources(fiddle, cosmeticAccumulator);
   collectMistSightSources(fiddle, accumulator, cosmeticAccumulator);
   collectPumpkinPatchSources(fiddle, accumulator);
@@ -83,21 +82,37 @@ function collectAnimalProductSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
 ): void {
+  const itemIds = new Set<string>();
   forEachItem(fiddle, (itemId, item) => {
-    const tags = Array.isArray(item.tags)
-      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
-      : [];
+    itemIds.add(itemId);
+    const animalId = ANIMAL_REWARD_TO_ANIMAL[itemId];
+    if (animalId && Array.isArray(item.tags) && item.tags.includes("animal_product")) {
+      accumulator.add(itemId as ItemId, { type: "animal_product", animalId });
+    }
+  });
 
-    if (tags.includes("animal_product")) {
-      const animalId = item.animal_product as AnimalId | undefined;
-      if (animalId) {
+  const ranching = fiddle.ranching as Record<string, unknown> | undefined;
+  const animals = ranching?.animals as Record<string, Record<string, unknown>> | undefined;
+  for (const [animalId, animal] of Object.entries(animals ?? {})) {
+    if (animalId === "default") continue;
+
+    const production = animal.production as Record<string, Record<string, unknown>> | undefined;
+    for (const [group, products] of Object.entries(production ?? {})) {
+      for (const field of ["normal_product", "golden_product"]) {
+        const itemId = products[field];
+        if (itemId === undefined) continue;
+        if (typeof itemId !== "string" || !itemIds.has(itemId)) {
+          throw new Error(
+            `ranching.animals.${animalId}.production.${group}.${field} references unknown item ${JSON.stringify(itemId)}`,
+          );
+        }
         accumulator.add(itemId as ItemId, {
           type: "animal_product",
-          animalId,
+          animalId: animalId as AnimalId,
         });
       }
     }
-  });
+  }
 }
 
 function collectBugSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
@@ -428,26 +443,6 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
       }
     }
   }
-}
-
-function collectGoldenAnimalProductSources(
-  fiddle: ParsedGameData,
-  accumulator: ItemSourceAccumulator,
-): void {
-  forEachItem(fiddle, (itemId, item) => {
-    const animalType = GOLDEN_PRODUCT_TO_ANIMAL[itemId];
-    if (!animalType) return;
-
-    const tags = Array.isArray(item.tags)
-      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
-      : [];
-    if (!tags.includes("animal_product")) return;
-
-    accumulator.add(itemId as ItemId, {
-      type: "animal_product",
-      animalId: animalType as AnimalId,
-    });
-  });
 }
 
 function collectMineForageableSources(

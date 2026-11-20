@@ -646,18 +646,28 @@ describe("collectNaturalSources", () => {
   });
 
   describe("animal products", () => {
-    it("adds an animal_product source with the animal ID", () => {
+    it("collects normal and golden products from each production table", () => {
       const fiddle = makeFiddle({
         items: {
           other: {
             ranching: {
               default: {},
-              egg: {
-                animal_product: "chicken",
-                name: "Egg",
-                tags: ["animal_product"],
+              egg: {},
+              feather: {},
+              golden_egg: {},
+              golden_feather: {},
+            },
+          },
+        },
+        ranching: {
+          animals: {
+            chicken: {
+              production: {
+                female: { golden_product: "golden_egg", normal_product: "egg" },
+                male: { golden_product: "golden_feather", normal_product: "feather" },
               },
             },
+            default: { production: { female: { normal_product: "<n/a>" } } },
           },
         },
       });
@@ -665,7 +675,27 @@ describe("collectNaturalSources", () => {
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
 
-      expect(acc.get("egg" as ItemId)).toEqual([{ type: "animal_product", animalId: "chicken" }]);
+      for (const itemId of ["egg", "golden_egg", "feather", "golden_feather"]) {
+        expect(acc.get(itemId as ItemId)).toEqual([
+          { type: "animal_product", animalId: "chicken" },
+        ]);
+      }
+    });
+
+    it("fails with the production field when a product references an unknown item", () => {
+      const fiddle = makeFiddle({
+        ranching: {
+          animals: {
+            cow: { production: { male: { golden_product: "unknown_horn" } } },
+          },
+        },
+      });
+
+      expect(() => {
+        collectNaturalSources(fiddle, new ItemSourceAccumulator());
+      }).toThrow(
+        'ranching.animals.cow.production.male.golden_product references unknown item "unknown_horn"',
+      );
     });
   });
 });

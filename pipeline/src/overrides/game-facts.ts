@@ -2,6 +2,7 @@ import { entriesFromRecord, entriesToRecord } from "./entry.js";
 
 import type { LocationId, Source } from "#lib/types/acquisition.js";
 import type {
+  AnimalId,
   MinesBiomeId,
   QuestId,
   Season,
@@ -140,25 +141,12 @@ export const MINE_SEAL_FLOORS = entriesToRecord(MINE_SEAL_FLOORS_ENTRIES);
 /** The Void Seal is a side room behind the Ruins Seal's portal, so no floor waits on it directly. */
 export const SEALS_OFF_THE_FLOORS: ReadonlySet<string> = new Set(["void"]);
 
-export const GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES = entriesFromRecord(
-  {
-    animal_currency: "chicken",
-    bull_horn: "cow",
-    golden_alpaca_wool: "alpaca",
-    golden_bristle: "horse",
-    golden_cow_milk: "cow",
-    golden_duck_egg: "duck",
-    golden_duck_feather: "duck",
-    golden_egg: "chicken",
-    golden_feather: "chicken",
-    golden_horse_hair: "horse",
-    golden_rabbit_wool: "rabbit",
-    golden_sheep_wool: "sheep",
-  },
-  "items/other/animal_products.toml descriptions and animals.toml produce families",
-  "Golden products lack the native animal_product owner field",
+export const ANIMAL_REWARD_TO_ANIMAL_ENTRIES = entriesFromRecord<AnimalId>(
+  { animal_currency: "chicken" as AnimalId },
+  "Shiny Bead description in items/other/ranching.toml; currency reward in AnimalFsm.gml",
+  "Keep Chicken as an example source for Shiny Beads, which animals gift outside production",
 );
-export const GOLDEN_PRODUCT_TO_ANIMAL = entriesToRecord(GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES);
+export const ANIMAL_REWARD_TO_ANIMAL = entriesToRecord(ANIMAL_REWARD_TO_ANIMAL_ENTRIES);
 
 export const PERK_BY_SUBCATEGORY_ENTRIES = entriesFromRecord(
   {
