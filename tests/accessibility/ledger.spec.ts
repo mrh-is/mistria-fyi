@@ -371,3 +371,41 @@ test("column heads stick below the section head's measured height at book widths
     )
     .toBeGreaterThanOrEqual(0);
 });
+
+test("Back returns opened lines as they were left, and a fresh visit starts closed", async ({
+  page,
+}) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: lateGameAlmanac() } }),
+  );
+  await gotoApplication(page, "/almanac");
+  const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
+  const bugsHead = bugs.getByRole("button", { exact: true, name: "Bugs" });
+  const ant = bugs.getByRole("button", { exact: true, name: "Uncheck Ant" });
+  const thumbIndex = page.getByRole("navigation", { name: "Thumb index" });
+  const contents = page.getByRole("navigation", { name: "Page sections" });
+
+  await bugsHead.click();
+  await expect(ant).toBeVisible();
+  // A hash link starts a new history entry; the opened line stays open across it.
+  await contents.getByRole("link", { exact: true, name: "Furniture" }).click();
+  await expect(page).toHaveURL(/#furniture$/u);
+  await expect(bugsHead).toHaveAttribute("aria-expanded", "true");
+
+  await thumbIndex.getByRole("link", { name: "Museum" }).click();
+  await expect(page).toHaveURL(/\/museum/u);
+  await page.goBack();
+  await expect(bugsHead).toHaveAttribute("aria-expanded", "true");
+  // The finished section's rows come back too, not a closed Completed fold.
+  await expect(ant).toBeAttached();
+  await ant.scrollIntoViewIfNeeded();
+  await expect(ant).toBeVisible();
+
+  await thumbIndex.getByRole("link", { name: "Museum" }).click();
+  await expect(page).toHaveURL(/\/museum/u);
+  await thumbIndex.getByRole("link", { name: "Almanac" }).click();
+  await expect(page).toHaveURL(/\/almanac$/u);
+  await expect(bugsHead).toHaveAttribute("aria-expanded", "false");
+});

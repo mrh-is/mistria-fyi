@@ -1,21 +1,6 @@
-<script lang="ts" module>
-  import { SvelteSet } from "svelte/reactivity";
-
-  /*
-   * The sections the reader opened from their one-line entries. A fresh visit starts with none,
-   * and Back returns to the page as it was left, so the set survives only a history traversal.
-   */
-  const opened = new SvelteSet<string>();
-  let traversing = false;
-  if (typeof globalThis.addEventListener === "function") {
-    globalThis.addEventListener("popstate", () => {
-      traversing = true;
-    });
-  }
-</script>
-
 <script lang="ts">
-  import { MediaQuery, SvelteURL } from "svelte/reactivity";
+  import { untrack } from "svelte";
+  import { MediaQuery, SvelteSet, SvelteURL } from "svelte/reactivity";
 
   import AllCompleted from "#lib/components/all-completed.svelte";
   import LedgerIndex from "#lib/components/ledger/ledger-index.svelte";
@@ -42,6 +27,7 @@
   import { formatNumber } from "#lib/utils/format.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { building } from "$app/env";
+  import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -49,8 +35,11 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  if (!traversing) opened.clear();
-  traversing = false;
+  /*
+   * The sections the reader opened from their one-line entries. They're kept in the history
+   * entry's state, so Back returns to the page as it was left and a fresh visit starts with none.
+   */
+  const opened = new SvelteSet<string>(untrack(() => page.state.almanacOpened ?? []));
   // Phones open on the list of sections, as production & round 10 do; a tap opens one in place.
   const phone = new MediaQuery("max-width: 47.99rem", false);
 
@@ -114,6 +103,17 @@
   // A link or the jump list opens its section, and it stays open after the link moves on.
   $effect(() => {
     if (hash && ledger.value.some(({ id }) => id === hash)) opened.add(hash);
+  });
+
+  // A hash link starts a new history entry, so the set is written again whenever the hash moves.
+  $effect(() => {
+    const ids = [...opened].toSorted();
+    void hash;
+    untrack(() => {
+      const saved = (page.state.almanacOpened ?? []).toSorted();
+      if (ids.join("\n") === saved.join("\n")) return;
+      replaceState("", { ...page.state, almanacOpened: ids });
+    });
   });
 
   type Section = (typeof ledger.value)[number];

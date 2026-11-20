@@ -102,12 +102,18 @@
   let line = $derived(soleClosedShelf !== undefined || (folded && !expanded));
   let headHeight = $state(0);
 
+  /*
+   * A finished section has nothing on To do, so once it's opened, the shelf holding its rows opens
+   * too. It's derived from `open`, so a section restored open by Back shows its rows as well.
+   */
+  let openedShelf = $derived(
+    folded && open && matches.todo.length === 0
+      ? shelves.find((shelf) => matches[shelf].length > 0)
+      : undefined,
+  );
+
   async function openFromLine(): Promise<void> {
-    // A finished section has nothing on To do, so opening it opens the shelf that holds its rows.
-    const shelf = soleClosedShelf ?? shelves.find((each) => matches[each].length > 0);
-    if (shelf && shelf !== "todo" && (soleClosedShelf || matches.todo.length === 0)) {
-      revealedShelves[shelf] = true;
-    }
+    if (soleClosedShelf) revealedShelves[soleClosedShelf] = true;
     open = true;
     await tick();
     head?.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
@@ -385,7 +391,9 @@
           <details
             class="shelf"
             data-shelf={shelf}
-            open={revealedShelves[shelf] === true || (forceOpen && shelf === "completed")}
+            open={revealedShelves[shelf] === true ||
+              openedShelf === shelf ||
+              (forceOpen && shelf === "completed")}
             ontoggle={scheduleShelfRead}
           >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
