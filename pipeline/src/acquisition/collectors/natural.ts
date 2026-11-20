@@ -4,7 +4,7 @@ import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
 import { forEachItem, minesBiomeId } from "../../extractor-helpers.js";
-import { ANIMAL_REWARD_TO_ANIMAL, MINE_SUBCAT_TO_BIOME } from "../../overrides/game-facts.js";
+import { ANIMAL_FEEDING_REWARDS, MINE_SUBCAT_TO_BIOME } from "../../overrides/game-facts.js";
 
 import type {
   ActivityId,
@@ -85,9 +85,12 @@ function collectAnimalProductSources(
   const itemIds = new Set<string>();
   forEachItem(fiddle, (itemId, item) => {
     itemIds.add(itemId);
-    const animalId = ANIMAL_REWARD_TO_ANIMAL[itemId];
-    if (animalId && Array.isArray(item.tags) && item.tags.includes("animal_product")) {
-      accumulator.add(itemId as ItemId, { type: "animal_product", animalId });
+    if (
+      Object.hasOwn(ANIMAL_FEEDING_REWARDS, itemId) &&
+      Array.isArray(item.tags) &&
+      item.tags.includes("animal_product")
+    ) {
+      accumulator.add(itemId as ItemId, { type: "animal_product" });
     }
   });
 

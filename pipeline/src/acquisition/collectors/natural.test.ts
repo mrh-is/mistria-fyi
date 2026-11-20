@@ -646,6 +646,15 @@ describe("collectNaturalSources", () => {
   });
 
   describe("animal products", () => {
+    it("adds one Shiny Bead source without a species", () => {
+      const fiddle = makeFiddle({
+        items: { other: { ranching: { animal_currency: { tags: ["animal_product"] } } } },
+      });
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+      expect(acc.get("animal_currency" as ItemId)).toEqual([{ type: "animal_product" }]);
+    });
+
     it("collects normal and golden products from each production table", () => {
       const fiddle = makeFiddle({
         items: {

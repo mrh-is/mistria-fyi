@@ -70441,8 +70441,7 @@
       "category": "ranching",
       "sources": [
         {
-          "type": "animal_product",
-          "animalId": "chicken"
+          "type": "animal_product"
         }
       ]
     },

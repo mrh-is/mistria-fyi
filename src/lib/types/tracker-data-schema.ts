@@ -106,7 +106,7 @@ const source = <const Type extends string, const Entries extends v.ObjectEntries
   entries: Entries,
 ) => v.strictObject({ ...SourceDetailsSchema.entries, ...entries, type: v.literal(type) });
 export const SourceSchema = v.variant("type", [
-  source("animal_product", { animalId: id("AnimalId") }),
+  source("animal_product", { animalId: v.optional(id("AnimalId")) }),
   source("artifact_dig", { locationIds: v.optional(nonEmpty(id("LocationId"))) }),
   source("artifact_replicator", { originalItemId: id("ItemId") }),
   source("bait_fish", { baitItemIds: nonEmpty(id("ItemId")) }),

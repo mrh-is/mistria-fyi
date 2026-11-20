@@ -2,7 +2,6 @@ import { entriesFromRecord, entriesToRecord } from "./entry.js";
 
 import type { LocationId, Source } from "#lib/types/acquisition.js";
 import type {
-  AnimalId,
   MinesBiomeId,
   QuestId,
   Season,
@@ -141,12 +140,12 @@ export const MINE_SEAL_FLOORS = entriesToRecord(MINE_SEAL_FLOORS_ENTRIES);
 /** The Void Seal is a side room behind the Ruins Seal's portal, so no floor waits on it directly. */
 export const SEALS_OFF_THE_FLOORS: ReadonlySet<string> = new Set(["void"]);
 
-export const ANIMAL_REWARD_TO_ANIMAL_ENTRIES = entriesFromRecord<AnimalId>(
-  { animal_currency: "chicken" as AnimalId },
-  "Shiny Bead description in items/other/ranching.toml; currency reward in AnimalFsm.gml",
-  "Keep Chicken as an example source for Shiny Beads, which animals gift outside production",
+export const ANIMAL_FEEDING_REWARD_ENTRIES = entriesFromRecord(
+  { animal_currency: true },
+  "Shiny Bead description in items/other/ranching.toml; feeding in obj_player_animal.gml and obj_pet.gml",
+  "Farm animals and pets give Shiny Beads when fed, outside their production tables",
 );
-export const ANIMAL_REWARD_TO_ANIMAL = entriesToRecord(ANIMAL_REWARD_TO_ANIMAL_ENTRIES);
+export const ANIMAL_FEEDING_REWARDS = entriesToRecord(ANIMAL_FEEDING_REWARD_ENTRIES);
 
 export const PERK_BY_SUBCATEGORY_ENTRIES = entriesFromRecord(
   {
