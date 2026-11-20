@@ -1,9 +1,18 @@
+<script lang="ts" module>
+  import { MediaQuery } from "svelte/reactivity";
+
+  /** Whether the timetable's source cells show; one query shared by every row. */
+  const wideTable = new MediaQuery("min-width: 60rem", true);
+</script>
+
 <script lang="ts">
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
+  import { getLedgerSectionContext } from "#lib/components/ledger/ledger-context.js";
   import LedgerSprite from "#lib/components/ledger/ledger-sprite.svelte";
   import SourceCard from "#lib/components/source-card.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
+  import { sourceFilterLabel } from "#lib/data/source-filters.js";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -24,6 +33,7 @@
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { LedgerPlacement } from "#lib/presentation/ledger.js";
   import type { SegmentLookups } from "#lib/sources/source-segments.js";
+  import type { Source } from "#lib/types/acquisition.js";
   import type { Season } from "#lib/types/tracker-data.js";
 
   let {
@@ -69,6 +79,7 @@
   } = $props();
 
   const feedback = getFeedbackContext();
+  const section = getLedgerSectionContext();
   const instance = $props.id();
   const detailsId = `sources-${instance}`;
   let expanded = $state(false);
@@ -120,14 +131,56 @@
         (candidate) =>
           toolbarState.showsSource(candidate) && ledgerSourceFamily(candidate) === family,
       );
-      if (!source) return { family, present: false, text: undefined };
-      const text = ledgerCellText(buildSourceSegments(source, lookups), (condition) =>
-        isConditionVisible(condition, userState.progressionState),
-      );
-      return { family, present: true, text };
+      if (!source) return { family, present: false, source, text: undefined };
+      return { family, present: true, source, text: cellText(source) };
     }),
   );
-  let opensSources = $derived(active && !covered && placement.allSources.length > 0);
+
+  function cellText(source: Source): string | undefined {
+    return ledgerCellText(buildSourceSegments(source, lookups), (condition) =>
+      isConditionVisible(condition, userState.progressionState),
+    );
+  }
+
+  /*
+   * No row goes without a source in view. Where the timetable shows, a row whose cells are all
+   * blank names its first source's family beside the name; where it doesn't, the first source sits
+   * under the name. A place's own family is skipped, since its heading already says it.
+   */
+  let firstSource = $derived(
+    placement.visibleSources.find(
+      (source) =>
+        toolbarState.showsSource(source) &&
+        ledgerSourceFamily(source) !== section?.contextualFamily,
+    ),
+  );
+  let tableShown = $derived(wideTable.current && columns.length > 0);
+  let blank = $derived(cells.every(({ present }) => !present));
+  let firstFamily = $derived(firstSource ? ledgerSourceFamily(firstSource) : undefined);
+
+  /*
+   * The opened sheet holds what the cells can't: sources without a column, ones with seasons or
+   * other badges, & sources still to discover. A source its cell already prints isn't repeated.
+   */
+  let inCells = $derived(
+    new Set(tableShown ? cells.flatMap(({ source }) => (source ? [source] : [])) : []),
+  );
+  function badgesOf(source: Source) {
+    return "availability" in source && source.availability
+      ? extractDisplayBadges(source.availability)
+      : {};
+  }
+  let sheetSources = $derived(
+    sources.filter(
+      (source) => !inCells.has(source) || Object.values(badgesOf(source)).some(Boolean),
+    ),
+  );
+  let waits = $derived(shelf === "notNow" && waitingSeasons.length > 0);
+  // Sources still to discover open from their own “+N to discover” button.
+  let sheetHasContent = $derived(sheetSources.length > 0 || waits);
+  let opensSources = $derived(
+    active && !covered && placement.allSources.length > 0 && sheetHasContent,
+  );
 
   /** A click anywhere on the line opens the sources, except on its own controls. */
   function openFromLine(event: MouseEvent): void {
@@ -185,7 +238,7 @@
             : `Check ${nameWithVariant}`}
         onclick={() => onToggle(covered)}
       />
-      {#if spriteUrl}
+      {#if spriteUrl && !covered}
         <LedgerSprite name={nameWithVariant} url={spriteUrl} {treatment} />
       {:else}
         <span class="sprite" aria-hidden="true"></span>
@@ -193,6 +246,7 @@
     {/if}
     <div class="item">
       {#snippet label()}
+        <!-- The variant follows the name on its line, and wraps as a unit only when it must. -->
         <span>
           <span class:checked={completed}>{name}</span>
           {#if subtitle}<small>{subtitle}</small>{/if}
@@ -200,7 +254,7 @@
       {/snippet}
       {#if covered}
         {#if active}<Spoiler onReveal={() => (revealed = true)}>{@render label()}</Spoiler>{/if}
-      {:else if placement.allSources.length > 0}
+      {:else if opensSources || (!active && placement.allSources.length > 0)}
         <button
           class="item-name"
           type="button"
@@ -211,11 +265,29 @@
           {@render label()}
           {#if active}<Icon.UI
               type="disclosure"
-              class="size-3 {expanded ? 'rotate-90' : ''}"
+              class="item-chevron size-3 {expanded ? 'rotate-90' : ''}"
             />{/if}
         </button>
       {:else}
         {@render label()}
+      {/if}
+      {#if !covered && firstSource}
+        {@const text = cellText(firstSource)}
+        {#if !tableShown && (text || firstFamily)}
+          <span class="where"
+            >{text ?? (firstFamily ? sourceFilterLabel(firstFamily, lookups.locale) : "")}</span
+          >
+        {:else if tableShown && blank && firstFamily}
+          {@const FamilyIcon = SOURCE_FILTER_ICON[firstFamily]}
+          <span class="also"
+            ><FamilyIcon class="size-3.5 shrink-0" />{sourceFilterLabel(
+              firstFamily,
+              lookups.locale,
+            )}</span
+          >
+        {:else if tableShown && blank && text}
+          <span class="where">{text}</span>
+        {/if}
       {/if}
     </div>
     {#each cells as { family, text, present }, column (family)}
@@ -248,21 +320,19 @@
       <div class="sheet-clip">
         <div id={detailsId} class="details" inert={!expanded} aria-hidden={!expanded}>
           {#if expanded || opened}
-            {#if shelf === "notNow" && waitingSeasons.length > 0}
+            {#if waits}
               {@const seasons = new Intl.ListFormat(lookups.locale).format(
                 waitingSeasons.map((season) => waitingSeasonPhrase(season)),
               )}
               <p>Comes back by waiting, {seasons}.</p>
             {/if}
-            <SourceCard
-              {sources}
-              sourceSegments={sources.map((source) => buildSourceSegments(source, lookups))}
-              sourceBadges={sources.map((source) =>
-                "availability" in source && source.availability
-                  ? extractDisplayBadges(source.availability)
-                  : {},
-              )}
-            />
+            {#if sheetSources.length > 0}
+              <SourceCard
+                sources={sheetSources}
+                sourceSegments={sheetSources.map((source) => buildSourceSegments(source, lookups))}
+                sourceBadges={sheetSources.map((source) => badgesOf(source))}
+              />
+            {/if}
           {/if}
         </div>
       </div>
@@ -307,7 +377,47 @@
   }
 
   .line.opens {
+    position: relative;
     cursor: pointer;
+  }
+
+  /*
+   * On a phone, a folded corner at the row's end says a tap opens it, as production's rows did; the
+   * small arrow stays for wider screens. It unfolds as the sheet slides out.
+   */
+  @media (max-width: 47.99rem) {
+    .line.opens::after {
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-end: 0;
+      inline-size: 0.75rem;
+      block-size: 0.75rem;
+      background: linear-gradient(
+        to bottom left,
+        var(--color-paper) 50%,
+        color-mix(in srgb, var(--color-rule) 70%, var(--color-paper-sunken)) 50%
+      );
+      filter: drop-shadow(var(--shadow-small));
+      content: "";
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+
+    :global(:dir(rtl)) .line.opens::after {
+      background: linear-gradient(
+        to bottom right,
+        var(--color-paper) 50%,
+        color-mix(in srgb, var(--color-rule) 70%, var(--color-paper-sunken)) 50%
+      );
+    }
+
+    [data-source-state="open"] > .line.opens::after {
+      opacity: 0;
+    }
+
+    .item-name :global(.item-chevron) {
+      display: none;
+    }
   }
 
   .sprite {
@@ -341,10 +451,65 @@
     text-underline-offset: 0.2em;
   }
 
+  /* An inline-block wraps whole: it drops below the name only when the line has no room. */
   small {
-    display: block;
+    display: inline-block;
+    margin-inline-start: 0.4em;
     color: var(--color-ink-muted);
     font-size: var(--text-xs);
+  }
+
+  /* Where to get it, for a row whose source cells are hidden or blank. */
+  .where {
+    display: block;
+    padding-block-end: 0.3rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-annotation);
+    font-size: var(--text-xs);
+    line-height: 1.25;
+  }
+
+  .also {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-inline-start: 0.6rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-controls);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  /*
+   * A spoilered row is an unlogged entry: a ruled blank where the name goes, the same length for
+   * every row, so neither a grey bar nor its width hints at the name.
+   */
+  .item :global(.spoiler-cover__mask) {
+    display: inline-block;
+    inline-size: 7rem;
+    block-size: 1.1em;
+    border-block-end: 1px solid var(--color-rule);
+    border-radius: 0;
+    background: none;
+    vertical-align: middle;
+  }
+
+  .item :global(.spoiler-cover__content) {
+    display: none;
+  }
+
+  .item :global(.spoiler-cover:is(:hover, :focus-visible) .spoiler-cover__mask) {
+    border-block-end-color: var(--color-ink-muted);
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
+  }
+
+  /* The row's most used control takes the page's own focus ring, like every other control. */
+  .line :global(.tracker-checkbox:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+    box-shadow: none;
   }
 
   .checked {

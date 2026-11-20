@@ -2,13 +2,17 @@
   import { tick, untrack } from "svelte";
 
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
-  import { getLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
+  import {
+    getLedgerIndexContext,
+    setLedgerSectionContext,
+  } from "#lib/components/ledger/ledger-context.js";
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { sourceFilterLabel } from "#lib/data/source-filters.js";
   import plural from "#lib/i18n/catalogs/plural.js";
   import { ledgerShelf, ledgerSourceFamily } from "#lib/presentation/ledger.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { afterIdle } from "#lib/utils/idle.js";
 
@@ -63,6 +67,11 @@
   const shelves: readonly Shelf[] = ["todo", "notNow", "completed"];
   const instance = $props.id();
   const index = getLedgerIndexContext();
+  setLedgerSectionContext({
+    get contextualFamily() {
+      return contextualFamily;
+    },
+  });
   const SPRIG_COUNT = 6;
   // Every shelf a Find match revealed stays open, so a later match elsewhere doesn't close it.
   const revealedShelves = $state<Partial<Record<Shelf, true>>>({});
@@ -75,6 +84,15 @@
         toolbarState.matchesSourceFilters(entry.sources)
       ) {
         grouped[ledgerShelf(entry, toolbarState.showsSource)].push(entry);
+      }
+    }
+    // Spoilered rows gather at their shelf's foot, so an alphabetical slot can't hint at a name.
+    if (!userState.state.showSpoilers) {
+      for (const shelf of shelves) {
+        grouped[shelf] = [
+          ...grouped[shelf].filter((entry) => !entry.spoilered),
+          ...grouped[shelf].filter((entry) => entry.spoilered),
+        ];
       }
     }
     return grouped;
@@ -228,11 +246,33 @@
       .map(([family]) => family);
   }
 
-  /** The wide table's tracks: checkbox, sprite, name, each source, discovery, & the slack. */
+  /**
+   * Whether a family's column head can highlight anything: only when it picks out some of the
+   * shelf's rows, not none or all of them.
+   */
+  function picksOut(entries: readonly T[], family: SourceFilterId): boolean {
+    let count = 0;
+    for (const entry of entries) {
+      if (
+        entry.visibleSources.some(
+          (source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === family,
+        )
+      ) {
+        count += 1;
+      }
+    }
+    return count > 0 && count < entries.length;
+  }
+
+  /**
+   * The wide table's tracks: checkbox, sprite, name, each source, discovery, & the slack. Source
+   * columns grow toward 20rem before the slack takes any width, so cells wrap only when the page
+   * runs out of room.
+   */
   function gridTracks(columns: number, discovery: boolean): string {
     return [
       "var(--ledger-check-size, 44px) 30px minmax(12rem, 20rem)",
-      ...Array.from({ length: columns }, () => "minmax(7rem, 12rem)"),
+      ...Array.from({ length: columns }, () => "minmax(7rem, 20rem)"),
       discovery ? "6rem" : "",
       "minmax(0, 1fr)",
     ]
@@ -438,16 +478,25 @@
         {#each columns as family, column (family)}
           {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
           {@const label = sourceFilterLabel(family, locale)}
-          <button
-            type="button"
-            class:first={column === 0}
-            aria-label={`Highlight rows from ${label}`}
-            aria-pressed={highlight === family}
-            onclick={() => (highlights[shelf] = highlight === family ? undefined : family)}
-          >
-            <FamilyIcon class="size-3.5 shrink-0" />
-            <span>{label}</span>
-          </button>
+          {#if picksOut(groups[shelf], family)}
+            <button
+              type="button"
+              class="column-head"
+              class:first={column === 0}
+              aria-label={`Highlight rows from ${label}`}
+              aria-pressed={highlight === family}
+              onclick={() => (highlights[shelf] = highlight === family ? undefined : family)}
+            >
+              <FamilyIcon class="size-3.5 shrink-0" />
+              <span>{label}</span>
+            </button>
+          {:else}
+            <!-- Every row (or none) shares this family, so there's nothing to pick out. -->
+            <span class="column-head" class:first={column === 0}>
+              <FamilyIcon class="size-3.5 shrink-0" />
+              <span>{label}</span>
+            </span>
+          {/if}
         {/each}
       </div>
     {/if}
@@ -748,7 +797,7 @@
     display: none;
   }
 
-  .timetable button {
+  .timetable .column-head {
     display: inline-flex;
     min-block-size: 44px;
     align-items: center;
@@ -760,12 +809,22 @@
     text-transform: inherit;
   }
 
-  .timetable button:hover span {
+  /* A plain label on narrow screens, so it doesn't pose as a button. */
+  .timetable span.column-head {
+    border-color: transparent;
+  }
+
+  .timetable button.column-head:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+
+  .timetable button.column-head:hover span {
     text-decoration: underline dotted;
     text-underline-offset: 0.3em;
   }
 
-  .timetable button[aria-pressed="true"] {
+  .timetable .column-head[aria-pressed="true"] {
     color: var(--primary);
     background: color-mix(in srgb, var(--primary) 10%, var(--color-paper));
   }
@@ -796,7 +855,7 @@
       grid-column: 3;
     }
 
-    .timetable button {
+    .timetable .column-head {
       min-block-size: 2rem;
       justify-content: flex-start;
       padding-inline: 0.5rem;
@@ -805,11 +864,11 @@
     }
 
     /* The one vertical rule: between the name and the sources it came from. */
-    .timetable button.first {
+    .timetable .column-head.first {
       border-inline-start: 1px solid var(--color-rule-faint);
     }
 
-    .timetable button span {
+    .timetable .column-head span {
       min-inline-size: 0;
       overflow-wrap: anywhere;
       hyphens: auto;

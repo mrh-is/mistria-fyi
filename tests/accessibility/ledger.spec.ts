@@ -134,9 +134,11 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await expect(page).toHaveURL(/#song_crystal$/u);
   await expect(songCrystals).toHaveAttribute("aria-current", "location");
   const crystals = page.getByRole("region", { exact: false, name: /^Song Crystals/ });
+  // Every Song Crystal comes from a chest, so the column head names it but highlights nothing.
+  await expect(crystals.getByText("Chests", { exact: true }).first()).toBeVisible();
   await expect(
     crystals.getByRole("button", { exact: true, name: "Highlight rows from Chests" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
 });
 
 test("Back and clearing a zero-match search restore the Furniture row", async ({ page }) => {
@@ -408,4 +410,99 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
   await thumbIndex.getByRole("link", { name: "Almanac" }).click();
   await expect(page).toHaveURL(/\/almanac$/u);
   await expect(bugsHead).toHaveAttribute("aria-expanded", "false");
+});
+
+/** A field guide fixture's checked Almanac items. */
+function fixtureAlmanac(preset: "day-one" | "late-game" | "mid-game"): string[] {
+  const fixtures = JSON.parse(
+    readFileSync(
+      new URL("../../scripts/fixtures/field-guide-progress.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Record<typeof preset, { progress: { almanac: string[] } }>;
+  return fixtures[preset].progress.almanac;
+}
+
+test("a row whose source cells are blank still says where to get it", async ({ page }) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: fixtureAlmanac("mid-game") } }),
+  );
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // Wait for the idle chunks, so every To do row is on the page.
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count mounted rows across shelves.
+  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
+  const audit = await furniture.evaluate((section) => {
+    const rows = [...section.querySelectorAll('[data-shelf="todo"] [data-ledger-row]')];
+    const blankCells = rows.filter((row) =>
+      [...row.querySelectorAll(".cell")].every(
+        (cell) => !cell.textContent.trim() && !cell.querySelector("svg"),
+      ),
+    );
+    const silent = blankCells.filter((row) => !row.querySelector(".also, .where"));
+    // A variant shares its name's line when there's room.
+    const small = rows.map((row) => row.querySelector(".item small")).find(Boolean);
+    small?.scrollIntoView({ block: "center" });
+    const nameTop = small?.previousElementSibling?.getBoundingClientRect().top ?? 0;
+    const variantTop = small?.getBoundingClientRect().top ?? 100;
+    return {
+      blank: blankCells.length,
+      silent: silent.map((row) => row.textContent.trim()),
+      variantOffset: Math.abs(nameTop - variantTop),
+    };
+  });
+  expect(audit.blank).toBeGreaterThan(0);
+  expect(audit.silent).toEqual([]);
+  expect(audit.variantOffset).toBeLessThan(8);
+
+  // A single source its cell already prints leaves nothing for the sheet, so the row doesn't open.
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  // oxlint-disable-next-line playwright/no-raw-locators -- rows are layout boxes keyed by fact
+  const amphora = artifacts.locator('[data-ledger-fact="almanac/clay_amphora"]');
+  await expect(amphora).toContainText("Dig up at an artifact dig site");
+  await expect(amphora.getByRole("button", { exact: true, name: "Clay Amphora" })).toHaveCount(0);
+
+  // The checkbox takes the page's 2 px focus ring.
+  await amphora.getByRole("button", { name: "Check Clay Amphora" }).focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect
+    .poll(() =>
+      amphora
+        .getByRole("button", { name: "Check Clay Amphora" })
+        .evaluate((button) => getComputedStyle(button).outlineWidth),
+    )
+    .toBe("2px");
+});
+
+test.describe("Almanac rows on a phone", () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { height: 844, width: 390 } });
+
+  test("rows name their first source, and spoilered rows gather at the shelf's foot", async ({
+    page,
+  }) => {
+    await initializeApplication(
+      page,
+      "light",
+      createStoredState({ progress: { almanac: fixtureAlmanac("day-one") } }),
+    );
+    await gotoApplication(page, "/almanac#artifacts");
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    // oxlint-disable-next-line playwright/no-raw-locators -- rows are layout boxes keyed by fact
+    const amphora = artifacts.locator('[data-ledger-fact="almanac/clay_amphora"]');
+    await expect(amphora).toContainText("Dig up at an artifact dig site");
+
+    await gotoApplication(page, "/almanac#furniture");
+    const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+    await furniture.getByText("Not now", { exact: true }).click();
+    const order = await furniture.evaluate((section) =>
+      [...section.querySelectorAll('[data-shelf="notNow"] [data-ledger-row]')].map((row) =>
+        row.querySelector(".spoiler-cover") ? "covered" : "plain",
+      ),
+    );
+    expect(order).toContain("covered");
+    expect(order.indexOf("covered")).toBeGreaterThan(order.lastIndexOf("plain"));
+  });
 });

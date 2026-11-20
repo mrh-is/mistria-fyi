@@ -344,7 +344,11 @@
   --color-tape-paper: #283f57;
   --color-tape-strip: rgb(190 214 232 / 22%);
 
-  --filter-sprite-todo: grayscale(1) contrast(1.1) brightness(1.5);
+  /*
+   * A negative, as a cyanotype prints: inverting puts the sprite's darkest pixels in the pale ink,
+   * so dark sprites don't sit on night paper as near-black blobs.
+   */
+  --filter-sprite-todo: grayscale(1) invert(1) contrast(1.1);
   --blend-sprite-tint: multiply;
   /* Amber glows on night paper, so the Completed label steps back toward the muted ink. */
   --color-shelf-completed: color-mix(

@@ -129,6 +129,7 @@ it("uses each shelf's sources for its columns and omits the place’s own family
   const store: Source = { type: "store", storeId: "balor" as StoreId };
   vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
     checklistRow("Anchovy", false, [store, { type: "fish", waterTypes: ["ocean" as WaterType] }]),
+    checklistRow("Apple", false, [store]),
     checklistRow("Acorn", true, [store, { type: "forage" }]),
   ]);
   const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
@@ -136,11 +137,14 @@ it("uses each shelf's sources for its columns and omits the place’s own family
   await fireEvent.click(place.getByRole("button", { name: "Balor's Wagon" }));
   const completed = place.getByText("Completed", { exact: true }).closest("details");
   expect(completed).not.toHaveAttribute("open");
+  // Fishing picks out one of the two To do rows, so its head can highlight them.
   const fishing = place.getByRole("button", { name: "Highlight rows from Fishing" });
-  const gathering = place.getByRole("button", { name: "Highlight rows from Gathering" });
+  // Every Completed row is a Gathering row, so its head is only a label.
+  const gathering = place.getByText("Gathering", { exact: true });
   expect(fishing).toBeVisible();
   expect(fishing.closest("details")).toBeNull();
   expect(gathering.closest("details")).toBe(completed);
+  expect(place.queryByRole("button", { name: "Highlight rows from Gathering" })).toBeNull();
   expect(place.queryByRole("button", { name: "Highlight rows from Stores" })).toBeNull();
   await fireEvent.click(fishing);
   expect(fishing).toHaveAttribute("aria-pressed", "true");
