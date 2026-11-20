@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ledgerSpriteMask } from "#lib/attachments/ledger-sprite-mask.js";
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
+  import LedgerSprite from "#lib/components/ledger/ledger-sprite.svelte";
   import SourceCard from "#lib/components/source-card.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
@@ -16,6 +16,7 @@
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
+  import type { LedgerSpriteTreatment } from "#lib/components/ledger/ledger-sprite.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
   import type { SourceFilterId } from "#lib/data/source-filters.js";
   import type { CategoryKey } from "#lib/engine/categories.js";
@@ -71,6 +72,11 @@
   const instance = $props.id();
   const detailsId = `sources-${instance}`;
   let expanded = $state(false);
+  // Once opened, the sheet keeps its sources, so it can slide shut over them.
+  let opened = $state(false);
+  $effect.pre(() => {
+    if (expanded) opened = true;
+  });
   let revealed = $state(false);
   let revealSources = $state(false);
 
@@ -84,7 +90,7 @@
   );
   let nameWithVariant = $derived(variant ? /* @wc-include */ `${name}, ${variant}` : name);
   let spriteUrl = $derived(sprite ? itemSpriteUrl(sprite) : undefined);
-  let treatment = $derived.by(() => {
+  let treatment = $derived.by((): LedgerSpriteTreatment => {
     if (covered) return "spoiler";
     if (completed) return "completed";
     return shelf === "todo" ? "todo" : "not-now";
@@ -180,22 +186,7 @@
         onclick={() => onToggle(covered)}
       />
       {#if spriteUrl}
-        <span
-          class="sprite"
-          data-sprite-treatment={treatment}
-          {@attach treatment === "todo" || treatment === "spoiler"
-            ? ledgerSpriteMask(spriteUrl)
-            : undefined}
-        >
-          <img
-            src={spriteUrl}
-            alt=""
-            crossorigin="anonymous"
-            loading="lazy"
-            width="30"
-            height="30"
-          />
-        </span>
+        <LedgerSprite name={nameWithVariant} url={spriteUrl} {treatment} />
       {:else}
         <span class="sprite" aria-hidden="true"></span>
       {/if}
@@ -251,25 +242,32 @@
       </span>
     {/if}
   </div>
-  {#if active}<div id={detailsId} hidden={!expanded} class="details">
-      {#if expanded}
-        {#if shelf === "notNow" && waitingSeasons.length > 0}
-          {@const seasons = new Intl.ListFormat(lookups.locale).format(
-            waitingSeasons.map((season) => waitingSeasonPhrase(season)),
-          )}
-          <p>Comes back by waiting, {seasons}.</p>
-        {/if}
-        <SourceCard
-          {sources}
-          sourceSegments={sources.map((source) => buildSourceSegments(source, lookups))}
-          sourceBadges={sources.map((source) =>
-            "availability" in source && source.availability
-              ? extractDisplayBadges(source.availability)
-              : {},
-          )}
-        />
-      {/if}
-    </div>{/if}
+  {#if active}
+    <!-- The sources are a second sheet under the row's, sliding out as the row opens. -->
+    <div class="sheet" class:open={expanded}>
+      <div class="sheet-clip">
+        <div id={detailsId} class="details" inert={!expanded} aria-hidden={!expanded}>
+          {#if expanded || opened}
+            {#if shelf === "notNow" && waitingSeasons.length > 0}
+              {@const seasons = new Intl.ListFormat(lookups.locale).format(
+                waitingSeasons.map((season) => waitingSeasonPhrase(season)),
+              )}
+              <p>Comes back by waiting, {seasons}.</p>
+            {/if}
+            <SourceCard
+              {sources}
+              sourceSegments={sources.map((source) => buildSourceSegments(source, lookups))}
+              sourceBadges={sources.map((source) =>
+                "availability" in source && source.availability
+                  ? extractDisplayBadges(source.availability)
+                  : {},
+              )}
+            />
+          {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -358,15 +356,66 @@
     display: none;
   }
 
+  /*
+   * An open row is a sheet of the guide's raised paper, and its sources a sunken sheet beneath it,
+   * inset under the name and rounded at the split, as the tracker rows had it.
+   */
+  [data-source-state="open"] > .line {
+    position: relative;
+    z-index: 1;
+    border: 1px solid var(--color-rule);
+    border-start-end-radius: var(--radius);
+    border-end-end-radius: var(--radius);
+    background: var(--color-paper-raised);
+    filter: drop-shadow(var(--shadow-small));
+  }
+
+  [data-source-state="open"] {
+    border-block-end-color: transparent;
+  }
+
+  .sheet {
+    display: grid;
+    grid-template-rows: 0fr;
+    margin-inline-start: calc(var(--tracker-target-size) + 30px + 0.7rem);
+    transition: grid-template-rows 260ms ease;
+  }
+
+  .sheet.open {
+    grid-template-rows: 1fr;
+  }
+
+  .sheet-clip {
+    min-block-size: 0;
+    overflow: hidden;
+  }
+
   .details {
-    padding: 0.5rem 0.75rem 0.75rem 2.75rem;
-    background: var(--color-paper-sunken);
+    margin-block-end: 0.5rem;
+    padding: 0.6rem 0.75rem 0.7rem;
+    border: 1px solid var(--color-rule);
+    border-block-start: 0;
+    border-end-start-radius: var(--radius);
+    border-end-end-radius: var(--radius);
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-ink) 7%, transparent),
+        transparent 0.4rem
+      ),
+      var(--color-paper-sunken);
   }
 
   .details p {
     padding-block-end: 0.4rem;
     color: var(--color-ink-muted);
     font-size: var(--text-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet {
+      transition: none;
+    }
   }
 
   @media (min-width: 60rem) {

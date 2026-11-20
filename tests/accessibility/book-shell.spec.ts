@@ -60,8 +60,8 @@ test.describe("book shell", () => {
 
     const links = tabs(page).getByRole("link");
     await expect(links).toHaveCount(12);
-    const names = await settledBox(tabs(page).getByRole("button", { name: "Show tab names" }));
-    const first = await settledBox(links.first());
+    // A mouse names a tab on hover, so the names toggle is only for touch screens.
+    await expect(tabs(page).getByRole("button", { name: "Show tab names" })).toBeHidden();
     const last = await settledBox(links.last());
     const feedback = await settledBox(
       page.getByRole("button", { exact: true, name: "Send feedback" }),
@@ -70,7 +70,6 @@ test.describe("book shell", () => {
       page.getByRole("button", { exact: true, name: "Quick settings" }),
     );
 
-    expect(overlaps(names, first), "names toggle & Home").toBe(false);
     expect(overlaps(last, feedback), "Everything & Send feedback").toBe(false);
     expect(overlaps(feedback, settings), "Send feedback & Quick settings").toBe(false);
     expect(settings.y + settings.height).toBeLessThanOrEqual(BOOK_MINIMUM.height);
@@ -166,26 +165,26 @@ test.describe("book shell", () => {
     await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0);
   });
 
-  test("tab names can be toggled with the keyboard", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await gotoApplication(page, "/almanac");
-    const toggle = tabs(page).getByRole("button", { name: "Show tab names" });
-    const museum = tabs(page).getByRole("link", { name: "Museum" });
-    const label = museum.getByText("Museum", { exact: true });
-
-    await toggle.focus();
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await expect(label).toHaveCSS("opacity", "0");
-    await page.keyboard.press("Space");
-    await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    await expect(label).toHaveCSS("opacity", "1");
-    await page.keyboard.press("Escape");
-    await expect(toggle).toBeFocused();
-    await expect(label).toHaveCSS("opacity", "0");
-  });
-
   test.describe("touch at book widths", () => {
     test.use({ hasTouch: true });
+
+    test("tab names can be toggled with the keyboard", async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await gotoApplication(page, "/almanac");
+      const toggle = tabs(page).getByRole("button", { name: "Show tab names" });
+      const museum = tabs(page).getByRole("link", { name: "Museum" });
+      const label = museum.getByText("Museum", { exact: true });
+
+      await toggle.focus();
+      await expect(toggle).toHaveAttribute("aria-pressed", "false");
+      await expect(label).toHaveCSS("opacity", "0");
+      await page.keyboard.press("Space");
+      await expect(toggle).toHaveAttribute("aria-pressed", "true");
+      await expect(label).toHaveCSS("opacity", "1");
+      await page.keyboard.press("Escape");
+      await expect(toggle).toBeFocused();
+      await expect(label).toHaveCSS("opacity", "0");
+    });
 
     test("the visible Russian tab name can be tapped in a short dark window", async ({ page }) => {
       await page.setViewportSize(BOOK_MINIMUM);

@@ -7599,6 +7599,19 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-sprite.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
+        ]
+      },
+      {
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [
           {

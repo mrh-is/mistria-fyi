@@ -115,24 +115,28 @@
         inert={isCollapsed("sources")}
       >
         <div class="collapsible__inner">
-          <div class="chip-row">
+          <!-- Each source type is a switch, like Show's, so the list reads as things to turn on & off. -->
+          <ul class="source-switches">
             {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
               {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
-              {@const selected = toolbarState.enabledSourceFilterIds.has(filter.id)}
-              <button
-                class="filter-chip"
-                class:filter-chip--active={selected}
-                type="button"
-                aria-pressed={selected}
-                onclick={() => {
-                  toolbarState.toggleSourceFilter(filter);
-                  onFilterChange?.();
-                }}
-              >
-                <SourceIcon class="size-3" />{sourceFilterLabel(filter.id, page.data.locale)}
-              </button>
+              <li class="toggle">
+                <BlockySwitch
+                  checked={toolbarState.enabledSourceFilterIds.has(filter.id)}
+                  onCheckedChange={() => {
+                    toolbarState.toggleSourceFilter(filter);
+                    onFilterChange?.();
+                  }}
+                >
+                  <span class="toggle__label"
+                    ><SourceIcon class="size-3.5 shrink-0" />{sourceFilterLabel(
+                      filter.id,
+                      page.data.locale,
+                    )}</span
+                  >
+                </BlockySwitch>
+              </li>
             {/each}
-          </div>
+          </ul>
         </div>
       </div>
     </section>
@@ -323,71 +327,21 @@
     transition: opacity 90ms ease-out;
   }
 
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
+  .source-switches {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 5px;
-    margin-top: 7px;
+    margin: 7px 0 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .filter-chip {
-    display: inline-flex;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 5px 10px;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
-    color: var(--color-ink-muted);
-    background: var(--color-paper-sunken);
-    font-family: var(--font-controls);
-    font-size: var(--text-3xs);
-  }
-
-  /*
-   * With a mouse the sources read as a two-column checklist in print, not a pile of buttons: a
-   * shown source in ink with a mark in the page's color, a hidden one muted & struck through.
-   */
-  @media (hover: hover) and (pointer: fine) {
-    .chip-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 8px;
-    }
-
-    .chip-row .filter-chip {
-      min-height: 32px;
-      justify-content: flex-start;
-      padding: 4px 8px;
-      border: 0;
-      border-inline-start: 2px solid transparent;
-      background: none;
-      font-size: var(--text-2xs);
-      text-decoration: line-through;
-      text-decoration-color: var(--color-rule);
-    }
-
-    .chip-row .filter-chip--active {
-      border-inline-start-color: var(--primary);
-      background: none;
-      text-decoration: none;
-    }
-
-    .chip-row .filter-chip:hover {
-      background: var(--color-paper-sunken);
-      outline: none;
+  @media (max-width: 22rem) {
+    .source-switches {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
-  /* The border & tint carry the category color; the label stays ink, since a category color misses
-   * 4.5:1 on its own tint. */
-  .filter-chip--active {
-    border-color: var(--primary);
-    color: var(--color-ink);
-    background: color-mix(in srgb, var(--primary) 14%, var(--color-paper-raised));
-  }
-
-  .filter-chip:is(:hover, :focus-visible),
   .info-button:is(:hover, :focus-visible) {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
@@ -429,7 +383,7 @@
     gap: 6px;
     color: var(--color-ink-muted);
     font-family: var(--font-controls);
-    font-size: var(--text-3xs);
+    font-size: var(--text-2xs);
   }
 
   @media (prefers-reduced-motion: reduce) {

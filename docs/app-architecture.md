@@ -455,6 +455,12 @@ scroll during search. The first keystroke remembers the row at the reading line,
 new query starts at the top of the ledger, and clearing the search scrolls that row back to where it
 was. Navigating away forgets it.
 
+A ledger section mounts its first 16 rows at once and the rest in idle-time chunks of 60, To do
+first. A page turn waits for the new page's first render, and mounting all of Furniture's 1,017 rows
+in that frame froze the turn. Find & search reach the later rows a moment after the page appears.
+`components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its image, and its mask
+for the masked treatments, has loaded.
+
 Ledger rows can't share a CSS subgrid, because `content-visibility` contains their layout. Each row
 lays out the same deterministic tracks instead, which its shelf passes as `--ledger-tracks`.
 

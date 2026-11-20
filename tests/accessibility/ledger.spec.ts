@@ -60,7 +60,7 @@ for (const { theme, touch, width } of [
       await openVisibilityPanel(page);
       const filters = page.getByRole("dialog", { name: "Filters" });
       if (width < 701) await filters.getByRole("button", { name: /^Source types/ }).click();
-      await filters.getByRole("button", { exact: true, name: "Stores" }).click();
+      await filters.getByRole("switch", { exact: true, name: "Stores" }).click();
       await page.keyboard.press("Escape");
       await expect(place).toBeHidden();
     });

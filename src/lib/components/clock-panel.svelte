@@ -6,7 +6,7 @@
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
   import { weathersForSeason } from "#lib/engine/world-state.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { seasonLabel, seasonLabelAbbr, weatherLabel } from "#lib/utils/format.js";
+  import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
@@ -78,7 +78,7 @@
         onSelect={(season) => userState.setSeason(season)}
       >
         {#snippet content(season)}
-          <Icon.Season {season} class="size-3" />{seasonLabelAbbr(season)}
+          <Icon.Season {season} class="size-3" />{seasonLabel(season, page.data.locale)}
         {/snippet}
       </SegmentedPicker>
     </div>
@@ -135,6 +135,46 @@
     font-size: var(--text-2xs);
     letter-spacing: 0.14em;
     text-transform: uppercase;
+  }
+
+  /*
+   * The choices are cards in a tray: the tray is sunken, and the chosen card sits up on it in the
+   * page's raised paper with a strip of the page's color along its foot, like a pulled index card.
+   */
+  .world-state-grid :global(.strip) {
+    gap: 3px;
+    padding: 3px;
+    border-radius: var(--radius);
+    background: var(--color-paper-sunken);
+  }
+
+  .world-state-grid :global(.segment) {
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    font-size: var(--text-2xs);
+  }
+
+  .world-state-grid :global(.segment[aria-checked="true"]) {
+    border-color: var(--color-rule);
+    border-block-end: 2px solid var(--primary);
+    background: var(--color-paper-raised);
+    box-shadow: var(--shadow-small);
+  }
+
+  .world-state-grid :global(.segment:not([aria-checked="true"]):hover) {
+    color: var(--color-ink);
+  }
+
+  /* Four whole season names don't fit a narrow phone in a row, so they make a 2 × 2. */
+  @media (max-width: 22rem) {
+    .world-state-grid :global(.strip:not(.slotted)) {
+      flex-wrap: wrap;
+    }
+
+    .world-state-grid :global(.strip:not(.slotted) .segment) {
+      flex: 1 1 40%;
+    }
   }
 
   .weather-content {

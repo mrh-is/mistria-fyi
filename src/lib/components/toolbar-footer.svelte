@@ -423,26 +423,17 @@
   }
 
   /*
-   * On phones the tools sit on a strip of the cover's cloth along the screen's foot, running under
-   * the home indicator, as the mockups in #477 draw it.
+   * On phones the tools sit on a strip of the page header's paper along the screen's foot, running
+   * under the home indicator. It's the same stock as the header & the panels the tools open, so a
+   * panel reads as coming out of the strip. The cloth belongs to the cover, behind the book.
    */
   .toolbar {
     /* No end padding: the clock's season tab runs off the screen's edge. */
     padding: 0.5rem 0 max(0.5rem, env(safe-area-inset-bottom)) 0.75rem;
-    border-block-start: 1px solid var(--color-cover-deep);
-    background-color: var(--color-cover);
-    background-image:
-      repeating-linear-gradient(
-        0deg,
-        color-mix(in srgb, var(--color-cover-ink) 3%, transparent) 0 1px,
-        transparent 1px 3px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--color-cover-deep) 40%, transparent) 0 1px,
-        transparent 1px 3px
-      );
-    color: var(--color-cover-ink);
+    border-block-start: 1px solid var(--color-rule);
+    background: var(--color-paper-raised);
+    box-shadow: var(--shadow-small);
+    color: var(--color-ink-muted);
   }
 
   .toolbar__row {
@@ -457,6 +448,7 @@
     flex: 1;
   }
 
+  /* The field is a ruled line to write on, not a box. */
   .search-field {
     position: relative;
     display: flex;
@@ -467,8 +459,8 @@
 
   .search-field :global(.search-field__icon) {
     position: absolute;
-    inset-inline-start: 0.6rem;
-    color: var(--color-cover-ink-muted);
+    inset-inline-start: 0.25rem;
+    color: var(--color-ink-muted);
     pointer-events: none;
   }
 
@@ -476,17 +468,18 @@
     min-inline-size: 0;
     min-block-size: 44px;
     flex: 1;
-    padding-inline: 2rem 2.5rem;
-    border: 1px solid color-mix(in srgb, var(--color-cover-ink) 28%, transparent);
-    border-radius: var(--radius);
-    background: color-mix(in srgb, var(--color-cover-deep) 55%, transparent);
-    color: var(--color-cover-ink);
+    padding-inline: 1.75rem 2.5rem;
+    border: 0;
+    border-block-end: 1px solid var(--color-ink-hairline);
+    border-radius: 0;
+    background: none;
+    color: var(--color-ink);
     font-family: var(--font-body);
     font-style: italic;
   }
 
   .search-field__input::placeholder {
-    color: var(--color-cover-ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .search-field__input:focus-visible {
@@ -501,17 +494,11 @@
     inline-size: 44px;
     block-size: 44px;
     place-items: center;
-    color: var(--color-cover-ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .search-field__clear:hover {
-    color: var(--color-cover-ink);
-  }
-
-  .floating-tool {
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    background: transparent;
+    color: var(--color-ink);
   }
 
   .floating-tool :global(svg) {
@@ -519,17 +506,19 @@
   }
 
   .floating-tool {
+    position: relative;
     display: flex;
     min-width: 44px;
     min-height: 44px;
     align-items: center;
     justify-content: center;
-    position: relative;
-    color: var(--color-cover-ink);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    border-radius: var(--radius-md);
+    background: var(--color-paper-raised);
+    color: var(--color-ink-muted);
     transition:
-      box-shadow 150ms ease-out,
-      color 150ms ease-out,
-      transform 150ms ease-out;
+      border-color 150ms ease-out,
+      color 150ms ease-out;
   }
 
   .floating-tool--tabbed {
@@ -558,38 +547,48 @@
 
   .floating-tool:is(:hover, :focus-visible),
   .floating-tool--active {
-    border-color: color-mix(in srgb, var(--color-cover-ink) 40%, transparent);
+    border-color: var(--primary);
+    color: var(--primary);
     outline: none;
   }
 
   .floating-tool:focus-visible {
     outline: 2px solid var(--primary);
-    outline-offset: 1px;
+    outline-offset: 2px;
   }
 
   .sync-tool {
     position: relative;
-    pointer-events: auto;
   }
 
-  .sync-tool__dot {
+  .sync-tool__dot,
+  .clock-tool__dot,
+  .filter-tool__dot {
     position: absolute;
     top: 5px;
-    right: 5px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
+  }
+
+  .sync-tool__dot {
+    right: 5px;
     background: var(--color-status-warning);
   }
 
   /* Top left, away from the season tab on the button's right edge. */
   .clock-tool__dot {
-    position: absolute;
-    top: 5px;
     left: 5px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    background: var(--primary);
+  }
+
+  /* Filters that hide something take the page's color, with a dot, like the sync tool's. */
+  .floating-tool--filtered {
+    color: var(--primary);
+  }
+
+  .filter-tool__dot {
+    right: 5px;
     background: var(--primary);
   }
 
@@ -610,21 +609,6 @@
     transform: translateX(-50%) rotate(-1deg);
   }
 
-  /* Filters that hide something take the page's color, with a dot, like the sync tool's. */
-  .floating-tool--filtered {
-    color: var(--primary);
-  }
-
-  .filter-tool__dot {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--primary);
-  }
-
   .floating-tool:is(:hover, :focus-visible) :global(svg) {
     transform: rotate(-7deg);
   }
@@ -641,8 +625,7 @@
   }
 
   /* At book widths (the media query matches the `book` variant in app.css), the page tools sit in
-     the book shell's header row across the top of the page, under the wire & left of the thumb
-     tabs, and scroll away with it. The shell's row sizes itself to them. */
+     the page header's row, so the strip itself disappears into the header's paper. */
   @media (min-width: 48rem) and (min-height: 34rem) {
     .floating-tool--phone {
       display: none;
@@ -654,7 +637,7 @@
       padding: 0;
       border: 0;
       background: none;
-      color: var(--color-ink-muted);
+      box-shadow: none;
     }
 
     .toolbar__row {
@@ -664,47 +647,6 @@
 
     .search-field {
       max-inline-size: 22rem;
-    }
-
-    /* On the page's paper the field is a ruled line to write on, not a box. */
-    .search-field :global(.search-field__icon) {
-      color: var(--color-ink-muted);
-    }
-
-    .search-field__input {
-      padding-inline-start: 1.75rem;
-      border: 0;
-      border-block-end: 1px solid var(--color-ink-hairline);
-      border-radius: 0;
-      background: none;
-      color: var(--color-ink);
-    }
-
-    .search-field :global(.search-field__icon) {
-      inset-inline-start: 0.25rem;
-    }
-
-    .search-field__input::placeholder,
-    .search-field__clear {
-      color: var(--color-ink-muted);
-    }
-
-    .search-field__clear:hover {
-      color: var(--color-ink);
-    }
-
-    .floating-tool {
-      color: var(--color-ink-muted);
-    }
-
-    .floating-tool:is(:hover, :focus-visible),
-    .floating-tool--active {
-      border-color: var(--color-rule);
-      color: var(--primary);
-    }
-
-    .floating-tool--filtered {
-      color: var(--primary);
     }
 
     .sync-tool__slip {

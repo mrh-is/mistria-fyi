@@ -10,6 +10,7 @@
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
+  import { afterIdle } from "#lib/utils/idle.js";
 
   import type { Snippet } from "svelte";
 
@@ -78,6 +79,36 @@
   let isSearching = $derived(Boolean(toolbarState.searchQuery));
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
+
+  /*
+   * Rows mount a screenful at a time. A page turn waits for the new page's first render, and
+   * mounting every row of a long section at once (Furniture has 1,017) froze the turn. The first
+   * rows mount at once; the rest follow in idle time, shelf by shelf, so Find & Search reach them
+   * a moment later.
+   */
+  const FIRST_ROWS = 16;
+  const ROWS_PER_IDLE = 60;
+  let mountedRows = $state(FIRST_ROWS);
+  let rowCount = $derived(matches.todo.length + matches.notNow.length + matches.completed.length);
+  $effect(() => {
+    if (mountedRows >= rowCount) return;
+    const handle = afterIdle(() => {
+      mountedRows += ROWS_PER_IDLE;
+    });
+    return () => {
+      handle.cancel();
+    };
+  });
+
+  /** How many of a shelf's rows are mounted so far, after the shelves before it. */
+  function mountedIn(shelf: Shelf): number {
+    let before = 0;
+    for (const earlier of shelves) {
+      if (earlier === shelf) break;
+      before += matches[earlier].length;
+    }
+    return Math.max(0, mountedRows - before);
+  }
 
   // The stuck head names the shelf passing under it, as in “Furniture · Completed 159”.
   let head = $state<HTMLElement>();
@@ -312,7 +343,7 @@
         {/each}
       </div>
     {/if}
-    {#each entries as entry (entry.key)}
+    {#each entries.slice(0, mountedIn(shelf)) as entry (entry.key)}
       {@const highlighted =
         highlight !== undefined &&
         columns.includes(highlight) &&
@@ -423,10 +454,18 @@
     padding-block-end: 0.25rem;
   }
 
-  section:not(.collapsible) .head {
+  /*
+   * Heads stick under the page header, and in Everything under the group's own sticky head too,
+   * so a long place still says which place it is. The column heads stick right under them.
+   */
+  section.collapsible {
+    --ledger-group-head: 2.75rem;
+  }
+
+  .head {
     position: sticky;
     z-index: 2;
-    top: var(--ledger-sticky-top, 0px);
+    top: calc(var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px));
     min-block-size: var(--ledger-head-size);
     background: var(--color-paper);
   }
@@ -566,7 +605,9 @@
     .timetable {
       position: sticky;
       z-index: 1;
-      top: calc(var(--ledger-sticky-top, 0px) + var(--ledger-head-size));
+      top: calc(
+        var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px) + var(--ledger-head-size)
+      );
       display: grid;
       column-gap: 0.35rem;
       grid-template-columns: var(--ledger-row-tracks);
@@ -627,7 +668,7 @@
   }
 
   summary.completed {
-    color: var(--color-progress-complete);
+    color: var(--color-shelf-completed);
   }
 
   details[open] summary :global(.shelf-chevron) {

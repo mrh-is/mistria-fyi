@@ -268,6 +268,8 @@
       display: block;
       align-self: end;
       margin-bottom: calc(var(--book-rail-inset) - var(--size-book-margin));
+      /* Free-standing tools, not tabs: they stand off the page's edge instead of touching it. */
+      padding-inline-start: 0.625rem;
       grid-area: 1 / 3 / 3 / 4;
       view-transition-name: book-rail-tools;
     }

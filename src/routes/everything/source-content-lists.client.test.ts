@@ -290,7 +290,11 @@ describe("while source shelves hold", () => {
     expect(view.getByTestId("source-card")).toBeVisible();
     await fireEvent.click(chip);
     expect(chip).toHaveAttribute("aria-expanded", "false");
-    expect(view.queryByTestId("source-card")).toBeNull();
+    // The sheet keeps its sources so it can slide shut over them; it's hidden & inert once closed.
+    expect(view.getByTestId("source-card").closest("[aria-hidden]")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
   });
 
   it("updates spoiler masks without replacing the current shelf", async () => {

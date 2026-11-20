@@ -104,7 +104,7 @@
   }
 
   .shelf-heading--completed {
-    color: var(--color-progress-complete);
+    color: var(--color-shelf-completed);
   }
 
   .shelf-heading__title {

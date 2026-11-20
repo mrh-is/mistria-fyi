@@ -37,6 +37,7 @@
   inert={inert || undefined}
 >
   <RailTool
+    class="thumb-tabs__names"
     aria-label="Show tab names"
     aria-pressed={labeled}
     onclick={() => {
@@ -194,6 +195,13 @@
     .thumb-tab__face,
     .thumb-tab__name {
       transition: none;
+    }
+  }
+
+  /* With a mouse, hovering a tab names it, so only touch screens need the toggle. */
+  @media (hover: hover) and (pointer: fine) {
+    .thumb-tabs :global(.thumb-tabs__names) {
+      display: none;
     }
   }
 </style>

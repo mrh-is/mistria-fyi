@@ -6,6 +6,7 @@
   import LedgerNotice from "#lib/components/ledger/ledger-notice.svelte";
   import LedgerRow from "#lib/components/ledger/ledger-row.svelte";
   import LedgerSection from "#lib/components/ledger/ledger-section.svelte";
+  import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import { createCheckOff } from "#lib/controllers/check-off.svelte.js";
   import { createLedgerPage, useLedgerArrival } from "#lib/controllers/ledger-page.svelte.js";
@@ -87,10 +88,19 @@
   let hash = $derived(building ? "" : new SvelteURL(page.url.href).hash.slice(1));
   useLedgerArrival(() => (ledger.ready ? hash : ""));
 
-  let sections = $derived(
-    ledger.value.filter(({ rows }) =>
+  // Finished sections follow the rest under their own heading, as the index lists them.
+  let sections = $derived.by(() => {
+    const shown = ledger.value.filter(({ rows }) =>
       rows.some((row) => visible(row) && toolbarState.matchesSourceFilters(row.sources)),
-    ),
+    );
+    const finished = ({ progress }: (typeof shown)[number]) => progress.completed >= progress.total;
+    return [
+      ...shown.filter((section) => !finished(section)),
+      ...shown.filter((section) => finished(section)),
+    ];
+  });
+  let firstFinished = $derived(
+    sections.findIndex(({ progress }) => progress.completed >= progress.total),
   );
 </script>
 
@@ -98,6 +108,9 @@
 <LedgerNotice changed={ledger.needsRefresh} onRefresh={ledger.refresh} />
 <LedgerIndex {sections}>
   {#each sections as { id, name, rows, canonicalIds, progress }, index (id)}
+    {#if index === firstFinished}
+      <ShelfHeading class="finished-sections" shelf="completed" explains={false} level={2} />
+    {/if}
     <LedgerSection
       {id}
       {locale}
@@ -106,7 +119,7 @@
       {rows}
       {visible}
       explains={index === 0}
-      divider={index > 0}
+      divider={index > 0 && index !== firstFinished}
       forceOpen={hash === id}
     >
       {#snippet row(placement, shelf, columns, discovery, highlighted)}
@@ -145,3 +158,12 @@
   {/each}
 </LedgerIndex>
 <AllCompleted isAllCompleted={isCategoryComplete("almanac", userState.progressContext)} />
+
+<style>
+  /* Set apart from the last open section by the same gap a sprig divider takes. */
+  :global(.finished-sections) {
+    margin-block: 3rem 0.5rem;
+    padding-block-start: 0.75rem;
+    border-block-start: 1px dashed var(--color-rule);
+  }
+</style>
