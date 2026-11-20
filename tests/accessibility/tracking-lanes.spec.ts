@@ -1,7 +1,11 @@
 import { PROGRESS_STORAGE_KEY } from "../../src/lib/stores/storage-keys.js";
 import { THEME_STORAGE_KEY } from "../../src/lib/theme.js";
 import { expect, test } from "../browser/test.js";
-import { gotoApplication, waitForRendering } from "./support/application-state.js";
+import {
+  gotoApplication,
+  HYDRATED_SELECTOR,
+  waitForRendering,
+} from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
 
 for (const [theme, width] of [
@@ -94,6 +98,8 @@ for (const [theme, width] of [
       )
       .toMatchObject({ dismissed: true, lane: "manual", manualChecks: 1 });
     await page.reload({ waitUntil: "domcontentloaded" });
+    // A click before hydration is dropped (#330), so wait for the client like gotoApplication does.
+    await page.locator(HYDRATED_SELECTOR).waitFor({ state: "attached" });
     await openArtifacts();
     await artifacts.getByText("Completed", { exact: true }).click();
     await expect(

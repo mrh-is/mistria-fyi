@@ -121,6 +121,21 @@
   let headHeight = $state(0);
 
   /*
+   * The head's height from the observer's own measurement. `bind:offsetHeight` reads layout in each
+   * callback, which forces a layout per section on a page with hundreds of them.
+   */
+  function measureHead(element: HTMLElement): () => void {
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry?.borderBoxSize[0]?.blockSize;
+      if (height !== undefined) headHeight = height;
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }
+
+  /*
    * A finished section has nothing on To do, so once it's opened, the shelf holding its rows opens
    * too. It's derived from `open`, so a section restored open by Back shows its rows as well.
    */
@@ -294,7 +309,7 @@
   aria-labelledby={`${instance}-name`}
   style:--ledger-head-measured={headHeight ? `${headHeight}px` : undefined}
 >
-  <div class="head" data-ledger-head bind:this={head} bind:offsetHeight={headHeight}>
+  <div class="head" data-ledger-head bind:this={head} {@attach measureHead}>
     <h3 id={`${instance}-heading`} tabindex="-1">
       {#if line}
         <button

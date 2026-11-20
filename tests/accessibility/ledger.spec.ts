@@ -8,6 +8,18 @@ import {
 } from "./support/application-state.js";
 import { closeSearch, openSearch, openVisibilityPanel } from "./support/scenarios.js";
 
+/*
+ * Everything's source ledger keeps about 50,000 elements, and a trace's DOM snapshot after each
+ * action took tens of seconds there, timing these tests out locally & on CI's traced retry. Keep
+ * the trace's actions & screenshots (same modes as playwright.config.ts) without DOM snapshots.
+ */
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
+
 for (const { theme, touch, width } of [
   { theme: "light", touch: false, width: 1440 },
   { theme: "dark", touch: true, width: 820 },
@@ -53,7 +65,11 @@ for (const { theme, touch, width } of [
       await expect(uncheckItem).toBeVisible();
       await expect(shelfCount).toBeVisible();
       if (!touch) await expect(uncheckItem).toBeFocused();
-      const undo = page.getByRole("button", { exact: true, name: "Undo" });
+      // Scoped to the toasts: a page-wide button query checks visibility on every row's buttons,
+      // and Everything's source ledger keeps about 50,000 elements, which took Playwright 27 s.
+      const undo = page
+        .getByRole("region", { name: /^Notifications/u })
+        .getByRole("button", { exact: true, name: "Undo" });
       await (touch ? undo.tap() : undo.press("Enter"));
       await expect(checkItem).toBeVisible();
       if (!touch) await expect(checkItem).toBeFocused();
@@ -497,12 +513,15 @@ test.describe("Almanac rows on a phone", () => {
     await gotoApplication(page, "/almanac#furniture");
     const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
     await furniture.getByText("Not now", { exact: true }).click();
-    const order = await furniture.evaluate((section) =>
-      [...section.querySelectorAll('[data-shelf="notNow"] [data-ledger-row]')].map((row) =>
-        row.querySelector(".spoiler-cover") ? "covered" : "plain",
-      ),
-    );
-    expect(order).toContain("covered");
+    const readOrder = () =>
+      furniture.evaluate((section) =>
+        [...section.querySelectorAll('[data-shelf="notNow"] [data-ledger-row]')].map((row) =>
+          row.querySelector(".spoiler-cover") ? "covered" : "plain",
+        ),
+      );
+    // The shelf's rows mount in idle chunks, so wait for the covered ones to arrive.
+    await expect.poll(readOrder).toContain("covered");
+    const order = await readOrder();
     expect(order.indexOf("covered")).toBeGreaterThan(order.lastIndexOf("plain"));
   });
 });

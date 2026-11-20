@@ -46,7 +46,11 @@ export async function openLegacyArtifacts(page: Page): Promise<void> {
 }
 
 export async function openVisibilityPanel(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Visibility filters" }).click();
+  // Scoped to the toolbar, since a page-wide button query is slow on Everything's large ledger.
+  await page
+    .getByRole("navigation", { name: "Field guide tools" })
+    .getByRole("button", { name: "Visibility filters" })
+    .click();
   await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
 }
 

@@ -198,8 +198,17 @@
   function measurePlaceHead(place: HTMLElement): (() => void) | undefined {
     const head = place.querySelector<HTMLElement>("[data-ledger-head]");
     if (!head) return undefined;
-    const observer = new ResizeObserver(() => {
-      place.style.setProperty("--everything-place-head-height", `${head.offsetHeight}px`);
+    /*
+     * Read the size the observer already measured. Reading `offsetHeight` here forced a layout per
+     * place after the previous place's write, which froze a search clear for seconds on Everything.
+     */
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry?.borderBoxSize[0]?.blockSize;
+      if (height === undefined) return;
+      const value = `${height}px`;
+      if (place.style.getPropertyValue("--everything-place-head-height") !== value) {
+        place.style.setProperty("--everything-place-head-height", value);
+      }
     });
     observer.observe(head);
     return () => observer.disconnect();

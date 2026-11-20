@@ -11,6 +11,8 @@ interface ReadingPosition {
 }
 
 const SECTION = "[data-ledger-section][id], [data-source-section][id]";
+/** How long a restored row stays pinned while the rows around it settle. */
+const ALIGNMENT_HOLD_MS = 1500;
 const SCROLL_KEYS = new Set(["ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp", " "]);
 
 function ledgerContent(): HTMLElement | null {
@@ -39,6 +41,29 @@ function readPosition(): ReadingPosition | undefined {
     fallback ??= position;
   }
   return fallback;
+}
+
+/**
+ * Rows above the target keep settling for a while (late layout of rows that render as they near
+ * the viewport), which pushed a restored row 14 px down. Re-align on every change in the
+ * ledger's height until it holds still, the reader scrolls (which aborts `signal`), or presses.
+ */
+function holdAlignment(align: () => void, signal: AbortSignal): void {
+  const content = ledgerContent();
+  if (!content || signal.aborted) return;
+  const observer = new ResizeObserver(() => {
+    align();
+  });
+  const stop = (): void => {
+    observer.disconnect();
+    clearTimeout(timer);
+    globalThis.removeEventListener("pointerdown", stop, { capture: true });
+  };
+  const timer = setTimeout(stop, ALIGNMENT_HOLD_MS);
+  signal.addEventListener("abort", stop, { once: true });
+  // A press is the reader acting, such as opening a fold above the row, so stop pinning it.
+  globalThis.addEventListener("pointerdown", stop, { capture: true, once: true });
+  observer.observe(content);
 }
 
 export function nextFrame(): Promise<void> {
@@ -174,6 +199,7 @@ export function useLedgerScroll(id: string): void {
     await nextFrame();
     await nextFrame();
     align();
+    holdAlignment(align, signal);
   }
 
   function returnTo(position: ReadingPosition | undefined): void {
