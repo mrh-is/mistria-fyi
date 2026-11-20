@@ -2235,28 +2235,6 @@
   {
     "translations": {
       "en": "Completed",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
-    },
-    "references": [
-      {
-        "file": "src/lib/components/ledger/ledger-index.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Completed",
       "ja": "完了済み",
       "zh-Hans": "已完成",
       "zh-Hant": "已完成",
@@ -2958,28 +2936,6 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Escape",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
-    },
-    "references": [
-      {
-        "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
           null
         ]
@@ -4332,17 +4288,23 @@
   {
     "translations": {
       "en": "Jump to a section",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
+      "ja": "セクションへ移動",
+      "zh-Hans": "跳转到分区",
+      "zh-Hant": "跳至分區",
+      "es": "Ir a una sección",
+      "fr": "Aller à une section",
+      "ko": "섹션으로 이동",
+      "ru": "Перейти к разделу"
     },
     "references": [
       {
         "file": "src/lib/components/ledger/ledger-index.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -5295,13 +5257,13 @@
   {
     "translations": {
       "en": "Name",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
+      "ja": "名前",
+      "zh-Hans": "名称",
+      "zh-Hant": "名稱",
+      "es": "Nombre",
+      "fr": "Nom",
+      "ko": "이름",
+      "ru": "Название"
     },
     "references": [
       {
@@ -7164,28 +7126,6 @@
   },
   {
     "translations": {
-      "en": "Search",
-      "ja": "検索",
-      "zh-Hans": "搜索",
-      "zh-Hant": "搜尋",
-      "es": "Buscar",
-      "fr": "Rechercher",
-      "ko": "검색",
-      "ru": "Поиск"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/toolbar-footer.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Search items",
       "ja": "アイテムを検索",
       "zh-Hans": "搜索物品",
@@ -7593,28 +7533,6 @@
     "references": [
       {
         "file": "src/lib/components/filter-panel.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Show anyway",
-      "ja": "それでも表示",
-      "zh-Hans": "仍然显示",
-      "zh-Hant": "仍然顯示",
-      "es": "Mostrar igualmente",
-      "fr": "Afficher quand même",
-      "ko": "그래도 표시",
-      "ru": "Всё равно показать"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/page-search-status.svelte",
         "refs": [
           null
         ]
@@ -8967,28 +8885,6 @@
   },
   {
     "translations": {
-      "en": "Undiscovered sources",
-      "ja": "未発見の入手先",
-      "zh-Hans": "未发现的来源",
-      "zh-Hant": "未發現的入手途徑",
-      "es": "Fuentes por descubrir",
-      "fr": "Sources à découvrir",
-      "ko": "아직 발견하지 못한 획득처",
-      "ru": "Неоткрытые источники"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/ledger/ledger-section.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Undo",
       "ja": "元に戻す",
       "zh-Hans": "撤销",
@@ -9304,28 +9200,6 @@
       "fr": "Filtres de visibilité",
       "ko": "표시 필터",
       "ru": "Фильтры видимости"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/toolbar-footer.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Visibility filters, some hidden",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
     },
     "references": [
       {
@@ -10507,28 +10381,6 @@
   },
   {
     "translations": {
-      "en": "Your filters are off for this search. <0>Turn them back on</0>",
-      "ja": "この検索ではフィルターがオフです。 <0>フィルターをオンに戻す</0>",
-      "zh-Hans": "本次搜索已关闭筛选条件。 <0>恢复筛选条件</0>",
-      "zh-Hant": "本次搜尋已關閉篩選條件。 <0>恢復篩選條件</0>",
-      "es": "Tus filtros están desactivados para esta búsqueda. <0>Volver a activarlos</0>",
-      "fr": "Vos filtres sont désactivés pour cette recherche. <0>Les réactiver</0>",
-      "ko": "이 검색에서는 필터가 꺼져 있어요. <0>필터 다시 켜기</0>",
-      "ru": "Фильтры отключены для этого поиска. <0>Вернуть фильтры</0>"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/page-search-status.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Your filters leave nothing on this page.",
       "ja": "フィルターにより、このページには何も表示されません。",
       "zh-Hans": "筛选后，此页面没有内容了。",
@@ -11536,39 +11388,6 @@
   },
   {
     "translations": {
-      "en": "{0} left: auto; right: {1}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
-    },
-    "references": [
-      {
-        "file": "src/lib/components/toolbar-footer.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "vertical"
-              ],
-              [
-                "1",
-                "right"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "{0} level",
       "ja": "{0}レベル",
       "zh-Hans": "{0}等级",
@@ -12393,26 +12212,6 @@
                 "shelfLabel(note.shelf)"
               ]
             ]
-          },
-          {
-            "placeholders": [
-              [
-                "0",
-                "note.count"
-              ],
-              [
-                "1",
-                "slot(\"shelf\")"
-              ],
-              [
-                "0",
-                "note.count"
-              ],
-              [
-                "1",
-                "slot(\"shelf\")"
-              ]
-            ]
           }
         ]
       }
@@ -12644,35 +12443,6 @@
               [
                 "2",
                 "48"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0}. Jump to a section",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
-    },
-    "references": [
-      {
-        "file": "src/lib/components/ledger/ledger-section.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
               ]
             ]
           }

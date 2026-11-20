@@ -76,7 +76,6 @@ test("runs bilingual search and hydrates an unopened route offline", async ({ co
     .toEqual(["/es/about"]);
 
   await goOffline(context);
-  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
   await page.getByRole("textbox", { name: "Buscar elementos" }).fill("Request for a Turnip");
   await expect(page.getByRole("button", { name: "Marcar Encargo de nabo" })).toBeVisible();
 

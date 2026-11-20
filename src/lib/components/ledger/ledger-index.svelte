@@ -9,6 +9,7 @@
   import { MediaQuery } from "svelte/reactivity";
 
   import { setLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
+  import { shelfLabel } from "#lib/presentation/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
@@ -61,8 +62,8 @@
       ({ progress }) => progress && progress.completed >= progress.total,
     );
     return [
-      { label: "To do", sections: todo },
-      { label: "Completed", sections: done },
+      { label: shelfLabel("todo"), sections: todo },
+      { label: shelfLabel("completed"), sections: done },
     ].filter((group) => group.sections.length > 0);
   });
 

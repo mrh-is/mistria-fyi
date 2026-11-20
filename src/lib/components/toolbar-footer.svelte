@@ -85,9 +85,9 @@
     const right = Math.max(8, globalThis.innerWidth - rect.right);
     const below = rect.top < globalThis.innerHeight / 2;
     const vertical = below
-      ? `top: ${rect.bottom + 8}px; bottom: auto;`
-      : `top: auto; bottom: ${globalThis.innerHeight - rect.top + 8}px;`;
-    return `${vertical} left: auto; right: ${right}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;`;
+      ? /* @wc-ignore */ `top: ${rect.bottom + 8}px; bottom: auto;`
+      : /* @wc-ignore */ `top: auto; bottom: ${globalThis.innerHeight - rect.top + 8}px;`;
+    return /* @wc-ignore */ `${vertical} left: auto; right: ${right}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;`;
   });
 
   function focusedElement(): HTMLElement | null {
@@ -196,7 +196,7 @@
   }
 
   function handleSearchKey(event: KeyboardEvent): void {
-    if (event.key !== "Escape") return;
+    if (event.key !== /* @wc-ignore */ "Escape") return;
     clearSearch();
     searchInput?.blur();
   }

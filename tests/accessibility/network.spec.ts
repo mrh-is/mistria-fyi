@@ -87,7 +87,6 @@ test("Home defers acquisition copy until bilingual search needs it", async ({ pa
   await gotoApplication(page, "/es");
   await expect(page.getByRole("region", { name: "Lugares para visitar hoy" })).toBeVisible();
   expect(requested.size).toBe(0);
-  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
   await page.getByRole("textbox", { name: "Buscar elementos" }).fill("turnip");
   await expect.poll(() => requested).toEqual(new Set([spanish, english]));
   await expect(page.getByRole("status").filter({ hasText: /^\d+ resultados?$/u })).toBeVisible();

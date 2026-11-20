@@ -167,7 +167,7 @@
   data-sprig={sprig}
   class:collapsible
   hidden={!hasRows}
-  aria-labelledby={`${instance}-heading`}
+  aria-labelledby={`${instance}-name`}
 >
   <div class="head" data-ledger-head bind:this={head}>
     <h3 id={`${instance}-heading`} tabindex="-1">
@@ -199,15 +199,17 @@
           type="button"
           class="jump"
           popovertarget={index.jumpList}
-          aria-label={`${name}. Jump to a section`}
+          aria-describedby={`${instance}-jump`}
         >
-          <span>{name}</span>
+          <span id={`${instance}-name`}>{name}</span>
           <Icon.UI type="disclosure" class="size-3.5 rotate-90" />
         </button>
       {:else}
-        {name}
+        <span id={`${instance}-name`}>{name}</span>
       {/if}
     </h3>
+    <!-- Describes the head's button without becoming part of the section's name. -->
+    <span id={`${instance}-jump`} hidden>Jump to a section</span>
     {#if progress}
       {@const completed = formatNumber(progress.completed, locale)}
       {@const total = formatNumber(progress.total, locale)}

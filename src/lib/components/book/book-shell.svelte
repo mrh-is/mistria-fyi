@@ -206,9 +206,14 @@
       pointer-events: none;
     }
 
+    /* pointer-events inherits, so every child takes clicks again: the toolbar, panels, & scrims. */
     .book--tools:has(:global([data-ledger-layout])) .book__tools > :global(*) {
-      inline-size: var(--ledger-tools-width);
       pointer-events: auto;
+    }
+
+    /* Only the toolbar takes the tools' width; the panels & scrims are fixed at their own sizes. */
+    .book--tools:has(:global([data-ledger-layout])) .book__tools > :global(nav) {
+      inline-size: var(--ledger-tools-width);
     }
 
     /* The warning can occupy the first line when saved progress is unavailable. */

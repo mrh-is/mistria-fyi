@@ -47,13 +47,13 @@
   {
     "translations": {
       "en": "Jump to a section",
-      "ja": "",
-      "zh-Hans": "",
-      "zh-Hant": "",
-      "es": "",
-      "fr": "",
-      "ko": "",
-      "ru": ""
+      "ja": "セクションへ移動",
+      "zh-Hans": "跳转到分区",
+      "zh-Hant": "跳至分區",
+      "es": "Ir a una sección",
+      "fr": "Aller à une section",
+      "ko": "섹션으로 이동",
+      "ru": "Перейти к разделу"
     },
     "references": [
       {
