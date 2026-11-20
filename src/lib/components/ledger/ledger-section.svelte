@@ -504,6 +504,8 @@
       {@const highlighted =
         highlight !== undefined &&
         columns.includes(highlight) &&
+        // A head that turned into a label can't be pressed off, so its highlight lapses.
+        picksOut(groups[shelf], highlight) &&
         entry.visibleSources.some(
           (source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === highlight,
         )}

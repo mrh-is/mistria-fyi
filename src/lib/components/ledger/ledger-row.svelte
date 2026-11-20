@@ -162,25 +162,42 @@
    * The opened sheet holds what the cells can't: sources without a column, ones with seasons or
    * other badges, & sources still to discover. A source its cell already prints isn't repeated.
    */
-  let inCells = $derived(
-    new Set(tableShown ? cells.flatMap(({ source }) => (source ? [source] : [])) : []),
-  );
+  let inCells = $derived.by(() => {
+    // A cell whose words are behind a spoiler prints only an icon, so its source stays in the sheet.
+    if (tableShown) {
+      return new Set(cells.flatMap(({ source, text }) => (source && text ? [source] : [])));
+    }
+    // Without the table, the line under the name prints the first source.
+    // A source whose words are still behind a spoiler shows only its family there, so it stays.
+    return new Set(firstSource && cellText(firstSource) ? [firstSource] : []);
+  });
   function badgesOf(source: Source) {
     return "availability" in source && source.availability
       ? extractDisplayBadges(source.availability)
       : {};
   }
-  let sheetSources = $derived(
-    sources.filter(
-      (source) => !inCells.has(source) || Object.values(badgesOf(source)).some(Boolean),
-    ),
-  );
+  function sheetHolds(source: Source): boolean {
+    return !inCells.has(source) || Object.values(badgesOf(source)).some(Boolean);
+  }
+  let sheetSources = $derived(sources.filter((source) => sheetHolds(source)));
   let waits = $derived(shelf === "notNow" && waitingSeasons.length > 0);
-  // Sources still to discover open from their own “+N to discover” button.
-  let sheetHasContent = $derived(sheetSources.length > 0 || waits);
+  /*
+   * Whether the row opens is decided by what's in view, not by sources a “+N to discover” press
+   * revealed; those open & close from that button.
+   */
+  let sheetHasContent = $derived(
+    placement.visibleSources.some(
+      (source) => toolbarState.showsSource(source) && sheetHolds(source),
+    ) || waits,
+  );
   let opensSources = $derived(
     active && !covered && placement.allSources.length > 0 && sheetHasContent,
   );
+
+  // A row that stops having anything to open (a wider window, a filter) closes, so it can't stick.
+  $effect(() => {
+    if (expanded && !revealSources && !opensSources) expanded = false;
+  });
 
   /** A click anywhere on the line opens the sources, except on its own controls. */
   function openFromLine(event: MouseEvent): void {
