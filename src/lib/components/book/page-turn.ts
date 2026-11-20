@@ -8,6 +8,12 @@ type OnNavigate = Parameters<Parameters<typeof onNavigate>[0]>[0];
 export const TURNING_CLASS = "book-turning";
 
 let latestTurn = 0;
+let activeTurn: Promise<void> | undefined;
+
+/** Resolves when the outgoing snapshot can be released and the new page can paint. */
+export function pageTurnFinished(): Promise<void> | undefined {
+  return activeTurn;
+}
 
 /**
  * Turns the page for a client-side navigation: the old page slides off the desk while the next one
@@ -39,7 +45,7 @@ export function turnPage(
       shift = globalThis.scrollY - scrollBefore;
     });
     void animateWhenReady(transition, root, () => shift);
-    void finishTurn(transition, root, turn);
+    activeTurn = finishTurn(transition, root, turn);
   });
 }
 
@@ -68,7 +74,10 @@ async function finishTurn(
     // A navigation that fails reports itself; the turn only needs its styles gone.
   }
   // A newer turn has started, and its styles must outlast this one.
-  if (turn === latestTurn) root.classList.remove(TURNING_CLASS);
+  if (turn === latestTurn) {
+    root.classList.remove(TURNING_CLASS);
+    activeTurn = undefined;
+  }
 }
 
 function animateTurn(root: HTMLElement, shift: number): void {
@@ -78,7 +87,7 @@ function animateTurn(root: HTMLElement, shift: number): void {
       { transform: `translate(-104%, ${shift}px) rotate(-0.6deg)` },
     ],
     {
-      duration: 420,
+      duration: 180,
       easing: "cubic-bezier(0.55, 0, 0.75, 0.3)",
       fill: "both",
       pseudoElement: "::view-transition-old(book-page)",
@@ -91,7 +100,7 @@ function animateTurn(root: HTMLElement, shift: number): void {
       { transform: "none" },
     ],
     {
-      duration: 520,
+      duration: 220,
       easing: "cubic-bezier(0.45, 0.05, 0.25, 1)",
       fill: "both",
       pseudoElement: "::view-transition-new(book-page)",

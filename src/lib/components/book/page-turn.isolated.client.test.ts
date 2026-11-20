@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TURNING_CLASS, turnPage } from "#lib/components/book/page-turn.js";
+import { pageTurnFinished, TURNING_CLASS, turnPage } from "#lib/components/book/page-turn.js";
 
 const motion = vi.hoisted(() => ({ prefersReducedMotion: { current: false } }));
 vi.mock("svelte/motion", () => motion);
@@ -65,9 +65,20 @@ describe("turnPage", () => {
 
   it("scopes its styles to the turn, dropping them once it finishes", async () => {
     await turnPage(navigation("/en/almanac", "/en/museum"));
-    transitions[0]?.finish();
-    await transitions[0]?.finished;
+    const finished = pageTurnFinished();
+    expect(finished).toBeInstanceOf(Promise);
+    const released = vi.fn();
+    async function release(): Promise<void> {
+      await finished;
+      released();
+    }
+    void release();
     await Promise.resolve();
+    expect(released).not.toHaveBeenCalled();
+    transitions[0]?.finish();
+    await finished;
+    expect(released).toHaveBeenCalledTimes(1);
+    expect(pageTurnFinished()).toBeUndefined();
     expect(document.documentElement.classList).not.toContain(TURNING_CLASS);
   });
 
