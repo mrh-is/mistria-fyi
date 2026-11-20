@@ -1,3 +1,4 @@
+import { tick } from "svelte";
 import { toast } from "svelte-sonner";
 
 import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
@@ -69,12 +70,14 @@ export function showQuestToast(
   locale: LocaleCode,
   onUndo: () => void,
   covered = false,
+  focus = captureUndoFocus(),
 ): void {
   inLocale(locale, () => {
     showStackedUndoToast(
       `quest:${name}`,
       formatQuestToast(name, state, newlyAdded, locale, covered),
       onUndo,
+      focus,
     );
   });
 }
@@ -89,8 +92,14 @@ export function showUndoToast(
   onUndo: () => void,
   /** The row's name is still behind its spoiler cover, so the toast mustn't reveal it. */
   covered = false,
+  focus = captureUndoFocus(),
 ): void {
-  showStackedUndoToast(`item:${itemName}`, undoMessage(itemName, completed, covered), onUndo);
+  showStackedUndoToast(
+    `item:${itemName}`,
+    undoMessage(itemName, completed, covered),
+    onUndo,
+    focus,
+  );
 }
 
 function undoMessage(itemName: string, completed: boolean, covered: boolean): string {
@@ -119,7 +128,41 @@ export function clearUndoToasts(): void {
   undoToasts.clear();
 }
 
-function showStackedUndoToast(key: string, message: string, onUndo: () => void): void {
+interface UndoFocus {
+  element: HTMLElement;
+  fact?: string;
+}
+
+/** Capture before a spoiler prompt takes focus away from the row. */
+export function captureUndoFocus(): undefined | UndoFocus {
+  const element = typeof document === "undefined" ? null : document.activeElement;
+  if (!(element && element instanceof HTMLElement) || element === document.body) return undefined;
+  return { element, fact: element.closest<HTMLElement>("[data-ledger-fact]")?.dataset.ledgerFact };
+}
+
+async function focusAfterUndo({ element, fact }: UndoFocus, action: Element): Promise<void> {
+  await tick();
+  if (document.activeElement !== action && document.activeElement !== document.body) return;
+  if (element.isConnected && element.checkVisibility()) {
+    element.focus({ preventScroll: true });
+    return;
+  }
+  const checkbox = fact
+    ? [
+        ...document.querySelectorAll<HTMLElement>(
+          `[data-ledger-fact="${CSS.escape(fact)}"] .tracker-checkbox`,
+        ),
+      ].find((candidate) => candidate.checkVisibility())
+    : undefined;
+  checkbox?.focus({ preventScroll: true });
+}
+
+function showStackedUndoToast(
+  key: string,
+  message: string,
+  onUndo: () => void,
+  focus: undefined | UndoFocus,
+): void {
   // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
   if (userState.trackingLaneNeeded) return;
   const previous = undoToasts.get(key);
@@ -144,8 +187,12 @@ function showStackedUndoToast(key: string, message: string, onUndo: () => void):
     cancel: {
       label: "Undo",
       onClick: () => {
+        const action = typeof document === "undefined" ? null : document.activeElement;
         forget();
         onUndo();
+        if (focus && action?.closest("[data-sonner-toast]")) {
+          void focusAfterUndo(focus, action);
+        }
       },
     },
     duration: 30_000,

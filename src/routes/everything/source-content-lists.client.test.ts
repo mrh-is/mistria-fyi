@@ -333,6 +333,7 @@ describe("while source shelves hold", () => {
       expect.any(Boolean),
       expect.any(Function),
       true,
+      undefined,
     );
   });
 

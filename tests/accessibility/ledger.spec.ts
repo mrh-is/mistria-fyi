@@ -51,8 +51,10 @@ for (const { theme, touch, width } of [
       await expect(uncheckItem).toBeVisible();
       await expect(shelfCount).toBeVisible();
       if (!touch) await expect(uncheckItem).toBeFocused();
-      await page.getByRole("button", { exact: true, name: "Undo" }).click();
+      const undo = page.getByRole("button", { exact: true, name: "Undo" });
+      await (touch ? undo.tap() : undo.press("Enter"));
       await expect(checkItem).toBeVisible();
+      if (!touch) await expect(checkItem).toBeFocused();
 
       await openSearch(page, name);
       await expect(checkItem).toBeVisible();
@@ -106,6 +108,10 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await materials.click();
   await expect(page).toHaveURL(/#materials$/u);
   await expect(materials).toHaveAttribute("aria-current", "location");
+  const materialsHeading = page.getByRole("heading", { exact: true, name: "Materials" });
+  await expect(materialsHeading).toBeFocused();
+  await materials.press("Enter");
+  await expect(materialsHeading).toBeFocused();
 
   const songCrystals = contents.getByRole("link", { exact: true, name: "Song Crystals" });
   await songCrystals.click();
@@ -115,6 +121,46 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await expect(
     crystals.getByRole("button", { exact: true, name: "Highlight rows from Chests" }),
   ).toBeVisible();
+});
+
+test("Back and clearing a zero-match search restore the Furniture row", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const check = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
+  const label = (await check.getAttribute("aria-label")) ?? "";
+  const row = furniture.getByRole("button", { exact: true, name: label });
+  const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
+  await row.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+  const top = await position();
+
+  await page.getByRole("link", { name: "Back to home" }).click();
+  await expect(page).toHaveURL(/\/en\/?$/u);
+  await page.goBack();
+  await expect(row).toBeInViewport();
+  await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
+
+  await openSearch(page, "zzq-no-matching-furniture");
+  await expect(page.getByRole("status").filter({ hasText: "No items found" })).toHaveCount(1);
+  await closeSearch(page);
+  await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
+  await expect(page.getByRole("textbox", { name: "Search items" })).toBeFocused();
+});
+
+test("a fresh Song Crystals link stays aligned after the ledger fills", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#song_crystal");
+  const heading = page.getByRole("heading", { exact: true, name: "Song Crystals" });
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // The last idle chunks include the titles that Browser Find can reveal in Furniture.
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count mounted rows across closed shelves.
+  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
+  await expect(heading).toBeInViewport();
+  await expect(heading).toBeFocused();
 });
 
 test("closed source names are findable and native reveal opens the matching row", async ({

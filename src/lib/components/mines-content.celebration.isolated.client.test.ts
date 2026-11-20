@@ -13,7 +13,10 @@ import { recordKeys } from "#lib/utils/record.js";
 
 // Confetti needs a canvas happy-dom doesn't provide, and the toast's undo is called directly.
 vi.mock("#lib/effects/celebrate.js", () => ({ celebrate: vi.fn(), celebrateCategory: vi.fn() }));
-vi.mock("#lib/effects/undo-toast.js", () => ({ showUndoToast: vi.fn() }));
+vi.mock("#lib/effects/undo-toast.js", () => ({
+  captureUndoFocus: vi.fn(),
+  showUndoToast: vi.fn(),
+}));
 
 const spellIds = recordKeys(trackerData.mines.spells);
 const lastSpell = spellIds[0];

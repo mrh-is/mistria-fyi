@@ -1,11 +1,18 @@
 import { tick } from "svelte";
 
+import {
+  cancelOnReaderScroll,
+  ledgerJump,
+  nextFrame,
+  useLedgerScroll,
+} from "#lib/controllers/ledger-scroll.svelte.js";
 import { createLedgerSnapshot } from "#lib/controllers/ledger-snapshot.svelte.js";
 import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
 import { filteredCounts } from "#lib/engine/shelves.js";
 import { ledgerShelf } from "#lib/presentation/ledger.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { whenIdleWorkFinishes } from "#lib/utils/idle.js";
 
 import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { LedgerPlacement } from "#lib/presentation/ledger.js";
@@ -20,12 +27,16 @@ export function createLedgerPage<Section extends { rows: readonly PageRow[]; spo
   readLocale: () => LocaleCode,
   build: () => readonly Section[],
   matches: (row: Section["rows"][number]) => boolean,
-  { excludeCoveredFromFilterCounts = false }: { excludeCoveredFromFilterCounts?: boolean } = {},
+  {
+    excludeCoveredFromFilterCounts = false,
+    scrollKey = "almanac",
+  }: { excludeCoveredFromFilterCounts?: boolean; scrollKey?: string } = {},
 ): {
   snapshot: ReturnType<typeof createLedgerSnapshot<Section>>;
   visible: (row: Section["rows"][number]) => boolean;
 } {
   const snapshot = createLedgerSnapshot(readLocale, build);
+  useLedgerScroll(`ledger-scroll:${scrollKey}`);
 
   function visible(row: Section["rows"][number]): boolean {
     return (
@@ -64,25 +75,59 @@ export function createLedgerPage<Section extends { rows: readonly PageRow[]; spo
   return { snapshot, visible };
 }
 
+function focusHeading(section: HTMLElement): void {
+  const heading = section.matches("[data-ledger-index-heading]")
+    ? section
+    : section.querySelector<HTMLElement>("h3");
+  heading?.focus({ preventScroll: true });
+}
+
 /** Align after the target's containing groups and shelves have opened. */
 export function useLedgerArrival(readTarget: () => string): void {
   $effect(() => {
     const target = readTarget();
     if (!target) return;
-    let cancelled = false;
+    const arrival = new AbortController();
+    const listeners = new AbortController();
+    const stop = cancelOnReaderScroll(() => {
+      arrival.abort();
+    });
+    globalThis.addEventListener(
+      "click",
+      (event) => {
+        const link = ledgerJump(event);
+        // The router scrolls on a repeat click without changing the reactive URL.
+        if (link?.hash !== globalThis.location.hash) return;
+        requestAnimationFrame(() => {
+          const section = document.getElementById(target);
+          if (!listeners.signal.aborted && section) focusHeading(section);
+        });
+      },
+      { capture: true, signal: listeners.signal },
+    );
     async function align(): Promise<void> {
       await tick();
-      if (cancelled) return;
+      // The browser handles the anchor click after the router updates its reactive URL.
+      await nextFrame();
+      if (arrival.signal.aborted) return;
       const section = document.getElementById(target);
-      section?.scrollIntoView({ block: "start" });
-      const heading = section?.matches("[data-ledger-index-heading]")
-        ? section
-        : section?.querySelector<HTMLElement>("h3");
-      heading?.focus({ preventScroll: true });
+      if (!section) return;
+      const realign = (): void => {
+        if (!arrival.signal.aborted && section.isConnected) {
+          section.scrollIntoView({ behavior: "instant", block: "start" });
+        }
+      };
+      realign();
+      focusHeading(section);
+      await whenIdleWorkFinishes();
+      realign();
+      stop();
     }
     void align();
     return () => {
-      cancelled = true;
+      listeners.abort();
+      arrival.abort();
+      stop();
     };
   });
 }

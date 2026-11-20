@@ -15,7 +15,7 @@
   import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { nameCollator } from "#lib/data/names.js";
-  import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
+  import { captureUndoFocus, showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
   import { sealsBefore } from "#lib/engine/projections/mines.js";
@@ -116,7 +116,7 @@
       }));
     },
     (row) => matchesSearch(row.entry),
-    { excludeCoveredFromFilterCounts: true },
+    { excludeCoveredFromFilterCounts: true, scrollKey: "everything-source" },
   );
 
   useLedgerArrival(() => (ledger.ready ? anchor : ""));
@@ -195,6 +195,16 @@
     return !spoilered && section.state === /* @wc-ignore */ "done";
   }
 
+  function measurePlaceHead(place: HTMLElement): (() => void) | undefined {
+    const head = place.querySelector<HTMLElement>("[data-ledger-head]");
+    if (!head) return undefined;
+    const observer = new ResizeObserver(() => {
+      place.style.setProperty("--everything-place-head-height", `${head.offsetHeight}px`);
+    });
+    observer.observe(head);
+    return () => observer.disconnect();
+  }
+
   function matchesSearch(entry: SourceChecklistRow): boolean {
     const names = [entry.name, ...(entry.searchNames ?? [])];
     const query = toolbarState.searchQuery;
@@ -205,6 +215,7 @@
   }
 
   function toggle(entry: SourceChecklistRow, covered: boolean): void {
+    const focus = captureUndoFocus();
     checkOff.run({
       category: entry.category,
       covered,
@@ -221,9 +232,10 @@
             locale,
             undo,
             covered,
+            focus,
           );
         } else {
-          showUndoToast(entry.name, completed, undo, covered);
+          showUndoToast(entry.name, completed, undo, covered, focus);
         }
         return completed;
       },
@@ -300,6 +312,7 @@
             class="scroll-mt-[var(--ledger-anchor-offset,8rem)]"
             data-source-section
             data-source-status={spoilered ? undefined : section.state}
+            {@attach measurePlaceHead}
           >
             <SpoilerSection {name} spoilered={spoilered && !userState.state.showSpoilers}>
               <LedgerSection
@@ -397,3 +410,14 @@
     </ShelfFold>
   </div>
 </LedgerIndex>
+
+<style>
+  @media (min-width: 60rem) {
+    [data-source-section] :global(.timetable) {
+      top: calc(
+        var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px) +
+          var(--everything-place-head-height, var(--ledger-head-size))
+      );
+    }
+  }
+</style>
