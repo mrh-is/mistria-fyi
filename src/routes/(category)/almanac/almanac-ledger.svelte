@@ -1,5 +1,21 @@
+<script lang="ts" module>
+  import { SvelteSet } from "svelte/reactivity";
+
+  /*
+   * The sections the reader opened from their one-line entries. A fresh visit starts with none,
+   * and Back returns to the page as it was left, so the set survives only a history traversal.
+   */
+  const opened = new SvelteSet<string>();
+  let traversing = false;
+  if (typeof globalThis.addEventListener === "function") {
+    globalThis.addEventListener("popstate", () => {
+      traversing = true;
+    });
+  }
+</script>
+
 <script lang="ts">
-  import { SvelteURL } from "svelte/reactivity";
+  import { MediaQuery, SvelteURL } from "svelte/reactivity";
 
   import AllCompleted from "#lib/components/all-completed.svelte";
   import LedgerIndex from "#lib/components/ledger/ledger-index.svelte";
@@ -17,11 +33,13 @@
   import { isCategoryComplete } from "#lib/engine/categories.js";
   import { projectAlmanac } from "#lib/engine/projections/almanac.js";
   import { factKey } from "#lib/engine/provenance.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { ledgerPlacement } from "#lib/presentation/ledger.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { building } from "$app/env";
   import { page } from "$app/state";
@@ -30,6 +48,11 @@
   import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
 
   let { locale }: { locale: LocaleCode } = $props();
+
+  if (!traversing) opened.clear();
+  traversing = false;
+  // Phones open on the list of sections, as production & round 10 do; a tap opens one in place.
+  const phone = new MediaQuery("max-width: 47.99rem", false);
 
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
 
@@ -88,28 +111,50 @@
   let hash = $derived(building ? "" : new SvelteURL(page.url.href).hash.slice(1));
   useLedgerArrival(() => (ledger.ready ? hash : ""));
 
-  // Finished sections follow the rest under their own heading, as the index lists them.
-  let sections = $derived.by(() => {
-    const shown = ledger.value.filter(({ rows }) =>
-      rows.some((row) => visible(row) && toolbarState.matchesSourceFilters(row.sources)),
-    );
-    const finished = ({ progress }: (typeof shown)[number]) => progress.completed >= progress.total;
-    return [
-      ...shown.filter((section) => !finished(section)),
-      ...shown.filter((section) => finished(section)),
-    ];
+  // A link or the jump list opens its section, and it stays open after the link moves on.
+  $effect(() => {
+    if (hash && ledger.value.some(({ id }) => id === hash)) opened.add(hash);
   });
-  let firstFinished = $derived(
-    sections.findIndex(({ progress }) => progress.completed >= progress.total),
-  );
+
+  type Section = (typeof ledger.value)[number];
+  const finished = ({ progress }: Section) => progress.completed >= progress.total;
+  const shows = ({ rows }: Section) =>
+    rows.some((row) => visible(row) && toolbarState.matchesSourceFilters(row.sources));
+
+  // The page's own shelves: To do above, & finished sections on a Completed shelf below.
+  let ordered = $derived([
+    ...ledger.value.filter((section) => !finished(section)),
+    ...ledger.value.filter((section) => finished(section)),
+  ]);
+  let sections = $derived(ordered.filter((section) => shows(section)));
+  // The rail keeps every section, so a search or filter that empties one leaves the page's shape.
+  let indexSections = $derived(ordered.map((section) => ({ ...section, muted: !shows(section) })));
+  let firstFinished = $derived(sections.findIndex((section) => finished(section)));
+  let todoCount = $derived(firstFinished === -1 ? sections.length : firstFinished);
+  let finishedCount = $derived(sections.length - todoCount);
+
+  function sectionCount(count: number): string {
+    const label = formatNumber(count, locale);
+    return plural(count, [`${label} section`, `${label} sections`]);
+  }
 </script>
 
 <SpoilerGuardDialog guard={checkOff.guard} />
 <LedgerNotice changed={ledger.needsRefresh} onRefresh={ledger.refresh} />
-<LedgerIndex {sections}>
-  {#each sections as { id, name, rows, canonicalIds, progress }, index (id)}
+<LedgerIndex sections={indexSections}>
+  {#each sections as section, index (section.id)}
+    {@const { id, name, rows, canonicalIds, progress } = section}
+    {#if index === 0 && todoCount > 0}
+      <ShelfHeading class="running-head" shelf="todo" note={sectionCount(todoCount)} level={2} />
+    {/if}
     {#if index === firstFinished}
-      <ShelfHeading class="finished-sections" shelf="completed" explains={false} level={2} />
+      <ShelfHeading
+        class="running-head finished-sections"
+        shelf="completed"
+        note={sectionCount(finishedCount)}
+        explains={false}
+        level={2}
+      />
     {/if}
     <LedgerSection
       {id}
@@ -118,9 +163,16 @@
       {progress}
       {rows}
       {visible}
-      explains={index === 0}
       divider={index > 0 && index !== firstFinished}
+      folded={finished(section) || phone.current}
       forceOpen={hash === id}
+      bind:open={
+        () => opened.has(id) || !(finished(section) || phone.current),
+        (value) => {
+          if (value) opened.add(id);
+          else opened.delete(id);
+        }
+      }
     >
       {#snippet row(placement, shelf, columns, discovery, highlighted)}
         {@const { key, name: itemName, variant, visibility } = placement}
@@ -160,6 +212,20 @@
 <AllCompleted isAllCompleted={isCategoryComplete("almanac", userState.progressContext)} />
 
 <style>
+  /* A running head, “To do · 11 sections”, over each of the page's shelves of sections. */
+  :global(.running-head) {
+    margin-block-end: 0.25rem;
+  }
+
+  :global(.running-head .shelf-heading__note) {
+    margin-inline-start: 0;
+  }
+
+  :global(.running-head .shelf-heading__note)::before {
+    margin-inline: 0.5ch;
+    content: "·";
+  }
+
   /* Set apart from the last open section by the same gap a sprig divider takes. */
   :global(.finished-sections) {
     margin-block: 3rem 0.5rem;

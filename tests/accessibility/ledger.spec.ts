@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test } from "../browser/test.js";
 import {
   createStoredState,
@@ -98,6 +100,20 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await page.getByRole("radio", { exact: true, name: "Winter" }).click();
   await page.keyboard.press("Escape");
   await expect(page.getByText("Your progress or the day changed.")).toBeInViewport();
+  // The notice pushes the stuck heads & the rail down rather than covering them.
+  const noticeBottom = await page
+    .getByText("Your progress or the day changed.")
+    .evaluate((text) => text.parentElement?.getBoundingClientRect().bottom ?? 0);
+  await expect
+    .poll(() => contents.evaluate((nav) => nav.getBoundingClientRect().top))
+    .toBeGreaterThanOrEqual(noticeBottom);
+  await expect
+    .poll(() =>
+      furniture.evaluate(
+        (section) => section.querySelector("[data-ledger-head]")?.getBoundingClientRect().top ?? 0,
+      ),
+    )
+    .toBeGreaterThanOrEqual(noticeBottom - 1);
   await page.getByRole("button", { name: "Refresh shelves" }).click();
   await expect(page.getByText("Your progress or the day changed.")).toHaveCount(0);
 
@@ -205,8 +221,16 @@ test("a section's stuck head names the shelf scrolling under it", async ({ page 
   // oxlint-disable-next-line playwright/no-raw-locators -- the head is a layout box with no role
   const head = furniture.locator("[data-ledger-head]");
   await expect(head).toContainText("To do");
+  // A closed fold names itself, so the head keeps the To do count while it passes under.
+  const notNowFold = furniture.getByText("Not now", { exact: true });
+  await notNowFold.evaluate((fold) => {
+    fold.scrollIntoView({ block: "start" });
+    globalThis.scrollBy(0, 40);
+  });
+  await expect(head).toContainText("To do");
+  await expect(head).not.toContainText("Not now");
 
-  await furniture.getByText("Not now", { exact: true }).click();
+  await notNowFold.click();
   const notNowRow = furniture
     .getByRole("group")
     .getByRole("button", { name: /^Check / })
@@ -215,4 +239,135 @@ test("a section's stuck head names the shelf scrolling under it", async ({ page 
     row.scrollIntoView({ block: "center" });
   });
   await expect(head).toContainText("Not now");
+});
+
+/** The late-game save's checked Almanac items, which finish ten of the twelve sections. */
+function lateGameAlmanac(): string[] {
+  const fixtures = JSON.parse(
+    readFileSync(
+      new URL("../../scripts/fixtures/field-guide-progress.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Record<"late-game", { progress: { almanac: string[] } }>;
+  return fixtures["late-game"].progress.almanac;
+}
+
+test("finished sections sit on the Completed shelf as one line each, and open in place", async ({
+  page,
+}) => {
+  const almanac = lateGameAlmanac();
+  expect(almanac.length).toBeGreaterThan(1000);
+  await initializeApplication(page, "light", createStoredState({ progress: { almanac } }));
+  await gotoApplication(page, "/almanac");
+  // The page's running heads, over its To do & Completed shelves of sections.
+  await expect(page.getByText("2 sections", { exact: true })).toBeVisible();
+  await expect(page.getByText("10 sections", { exact: true })).toBeVisible();
+
+  const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
+  const line = bugs.getByRole("button", { exact: true, name: "Bugs" });
+  await expect(line).toHaveAttribute("aria-expanded", "false");
+  // One line: no section-level Completed fold, so “Completed” isn't printed twice.
+  await expect(bugs.getByText("Completed", { exact: true })).toBeHidden();
+  await expect(bugs.getByRole("button", { name: /^Uncheck / })).toHaveCount(0);
+
+  await line.click();
+  await expect(bugs.getByRole("button", { exact: true, name: "Uncheck Ant" })).toBeVisible();
+  await bugs.getByRole("button", { exact: true, name: "Bugs" }).click();
+  await expect(bugs.getByRole("button", { exact: true, name: "Bugs" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+});
+
+test("a search matching one closed shelf in a section prints one line that opens it", async ({
+  page,
+}) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: lateGameAlmanac() } }),
+  );
+  await gotoApplication(page, "/almanac");
+  await openSearch(page, "copper");
+  const blacksmithing = page.getByRole("region", { exact: true, name: "Blacksmithing" });
+  const line = blacksmithing.getByRole("button", { exact: true, name: "Blacksmithing" });
+  await expect(line).toHaveAttribute("aria-expanded", "false");
+  await expect(line).toContainText("Completed");
+  await line.click();
+  await expect(
+    blacksmithing.getByRole("button", { name: /^Uncheck Copper/u }).first(),
+  ).toBeVisible();
+});
+
+test.describe("Almanac on a phone", () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { height: 844, width: 390 } });
+
+  test("a fresh visit opens on the section list, and a tap opens one in place", async ({
+    page,
+  }) => {
+    await initializeApplication(page, "light", createStoredState());
+    await gotoApplication(page, "/almanac");
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    const line = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
+    await expect(line).toHaveAttribute("aria-expanded", "false");
+    await expect(
+      page.getByRole("region", { exact: true, name: "Song Crystals" }).getByRole("button", {
+        exact: true,
+        name: "Song Crystals",
+      }),
+    ).toBeInViewport();
+
+    await line.tap();
+    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+    await artifacts.getByRole("button", { exact: true, name: "Artifacts" }).tap();
+    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeHidden();
+  });
+
+  test("a link still goes straight to its section", async ({ page }) => {
+    await initializeApplication(page, "light", createStoredState());
+    await gotoApplication(page, "/almanac#furniture");
+    const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+    await expect(furniture.getByRole("button", { name: /^Check / }).first()).toBeInViewport();
+  });
+});
+
+test("the rail and the sticky head agree on the current section", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac");
+  const contents = page.getByRole("navigation", { name: "Page sections" });
+  const blacksmithing = page.getByRole("region", { exact: true, name: "Blacksmithing" });
+  await expect(blacksmithing.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+  // Blacksmithing's head sits above the old 30% reading line but hasn't reached the sticky line,
+  // so Artifacts' head is the one still stuck at the top.
+  await blacksmithing.evaluate((section) => {
+    const header = document.querySelector<HTMLElement>("[data-page-header]");
+    const target = (header?.offsetHeight ?? 0) + 150;
+    globalThis.scrollBy(0, section.getBoundingClientRect().top - target);
+  });
+  await expect(contents.getByRole("link", { exact: true, name: "Artifacts" })).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
+});
+
+test("column heads stick below the section head's measured height at book widths", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 800, width: 1100 });
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const row = furniture.getByRole("button", { name: /^Check / }).nth(40);
+  await row.evaluate((button) => {
+    button.scrollIntoView({ block: "center" });
+  });
+  await expect
+    .poll(() =>
+      furniture.evaluate((section) => {
+        const head = section.querySelector("[data-ledger-head]")?.getBoundingClientRect();
+        const table = section.querySelector(".timetable")?.getBoundingClientRect();
+        return head && table ? Math.round(table.top - head.bottom) : undefined;
+      }),
+    )
+    .toBeGreaterThanOrEqual(0);
 });

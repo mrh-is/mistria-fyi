@@ -2,7 +2,8 @@
   let { changed, onRefresh }: { changed: boolean; onRefresh: () => void } = $props();
 </script>
 
-<div class="ledger-notice" aria-live="polite">
+<!-- The ledger index measures this, so sticky heads & the rail sit below it while it shows. -->
+<div class="ledger-notice" data-ledger-notice aria-live="polite">
   {#if changed}
     <span>Your progress or the day changed.</span>
     <button type="button" onclick={onRefresh}>Refresh shelves</button>

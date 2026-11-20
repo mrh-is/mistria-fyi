@@ -36,6 +36,13 @@ for (const [theme, width] of [
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) });
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    // A phone opens the Almanac on its list of sections; a tap opens one in place.
+    const openArtifacts = async () => {
+      if (width < 768) {
+        await artifacts.getByRole("button", { exact: true, name: "Artifacts" }).click();
+      }
+    };
+    await openArtifacts();
     const first = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     const name = await first.getAttribute("aria-label");
     expect(name).toBeTruthy();
@@ -87,6 +94,7 @@ for (const [theme, width] of [
       )
       .toMatchObject({ dismissed: true, lane: "manual", manualChecks: 1 });
     await page.reload({ waitUntil: "domcontentloaded" });
+    await openArtifacts();
     await artifacts.getByText("Completed", { exact: true }).click();
     await expect(
       artifacts.getByRole("button", { exact: true, name: `Uncheck ${name?.slice(6) ?? ""}` }),

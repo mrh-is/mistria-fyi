@@ -24,10 +24,12 @@
     contextualFamily,
     divider = false,
     explains = false,
+    folded = false,
     forceOpen = false,
     id,
     locale,
     name,
+    open = $bindable(untrack(() => !collapsible && !folded)),
     progress,
     row,
     rows,
@@ -38,10 +40,17 @@
     /** Draws the sprig divider above this section; the parent passes `index > 0`. */
     divider?: boolean;
     explains?: boolean;
+    /**
+     * Prints the section as one index-style line (name, leader, & count) until the reader opens it,
+     * as finished sections & every section on a phone do.
+     */
+    folded?: boolean;
     forceOpen?: boolean;
     id?: string;
     locale: LocaleCode;
     name: string;
+    /** Whether the reader opened the section. Bind it to keep the choice across a Back visit. */
+    open?: boolean;
     progress?: { completed: number; total: number };
     row: Snippet<
       [T, Shelf, readonly SourceFilterId[], boolean, boolean, boolean, (event: Event) => void]
@@ -55,7 +64,6 @@
   const instance = $props.id();
   const index = getLedgerIndexContext();
   const SPRIG_COUNT = 6;
-  let open = $state(untrack(() => !collapsible));
   // Every shelf a Find match revealed stays open, so a later match elsewhere doesn't close it.
   const revealedShelves = $state<Partial<Record<Shelf, true>>>({});
   const highlights = $state<Partial<Record<Shelf, SourceFilterId>>>({});
@@ -79,6 +87,40 @@
   let isSearching = $derived(Boolean(toolbarState.searchQuery));
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
+  /**
+   * A search that matches only one closed shelf here (Not now or Completed) prints as one line
+   * that opens it, so a phone doesn't spend a screen on heads, folds, & dividers.
+   */
+  let soleClosedShelf = $derived.by((): Shelf | undefined => {
+    if (!isSearching || collapsible) return undefined;
+    const found = shelves.filter((shelf) => matches[shelf].length > 0);
+    const [shelf] = found;
+    if (found.length !== 1 || shelf === undefined || shelf === "todo") return undefined;
+    if (revealedShelves[shelf] || (forceOpen && shelf === "completed")) return undefined;
+    return shelf;
+  });
+  let line = $derived(soleClosedShelf !== undefined || (folded && !expanded));
+  let headHeight = $state(0);
+
+  async function openFromLine(): Promise<void> {
+    // A finished section has nothing on To do, so opening it opens the shelf that holds its rows.
+    const shelf = soleClosedShelf ?? shelves.find((each) => matches[each].length > 0);
+    if (shelf && shelf !== "todo" && (soleClosedShelf || matches.todo.length === 0)) {
+      revealedShelves[shelf] = true;
+    }
+    open = true;
+    await tick();
+    head?.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
+  }
+
+  async function fold(): Promise<void> {
+    open = false;
+    await tick();
+    const heading = head?.querySelector<HTMLElement>("h3");
+    // Folding from deep in a long section leaves its line above the screen, so bring it back.
+    if (head && head.getBoundingClientRect().top < 0) head.scrollIntoView({ block: "center" });
+    heading?.focus({ preventScroll: true });
+  }
 
   /*
    * Rows mount a screenful at a time. A page turn waits for the new page's first render, and
@@ -110,7 +152,10 @@
     return Math.max(0, mountedRows - before);
   }
 
-  // The stuck head names the shelf passing under it, as in “Furniture · Completed 159”.
+  /*
+   * The stuck head names the shelf passing under it, as in “Furniture · Completed 159”, but only
+   * while that shelf is open: a closed fold names itself, so the head keeps the To do count.
+   */
   let head = $state<HTMLElement>();
   let shelvesElement = $state<HTMLElement>();
   let shelfInView = $state<Shelf>("todo");
@@ -120,10 +165,11 @@
   function readShelfInView(): void {
     frame = undefined;
     if (!head || !shelvesElement) return;
-    const line = head.getBoundingClientRect().bottom + 1;
+    const stuckLine = head.getBoundingClientRect().bottom + 1;
     let next: Shelf = "todo";
     for (const element of shelvesElement.querySelectorAll<HTMLElement>("[data-shelf]")) {
-      if (element.getBoundingClientRect().top <= line) next = element.dataset.shelf as Shelf;
+      if (element instanceof HTMLDetailsElement && !element.open) continue;
+      if (element.getBoundingClientRect().top <= stuckLine) next = element.dataset.shelf as Shelf;
     }
     shelfInView = next;
   }
@@ -194,15 +240,52 @@
 <section
   {id}
   data-ledger-section
-  data-divider={divider || undefined}
+  data-divider={(divider && !line) || undefined}
   data-sprig={sprig}
   class:collapsible
+  class:line
   hidden={!hasRows}
   aria-labelledby={`${instance}-name`}
+  style:--ledger-head-measured={headHeight ? `${headHeight}px` : undefined}
 >
-  <div class="head" data-ledger-head bind:this={head}>
+  <div class="head" data-ledger-head bind:this={head} bind:offsetHeight={headHeight}>
     <h3 id={`${instance}-heading`} tabindex="-1">
-      {#if collapsible}
+      {#if line}
+        <button
+          type="button"
+          class="line-button"
+          data-section-trigger
+          aria-expanded="false"
+          aria-labelledby={`${instance}-name`}
+          aria-describedby={`${instance}-line-count`}
+          aria-controls={`${instance}-rows`}
+          onclick={() => void openFromLine()}
+        >
+          <span class="line-name" id={`${instance}-name`}>{name}</span>
+          {#if soleClosedShelf}
+            <span class="line-shelf">
+              {#if soleClosedShelf === "completed"}<Icon.Category
+                  category="complete"
+                  class="size-3.5"
+                />{/if}
+              {shelfLabel(soleClosedShelf)}
+            </span>
+          {/if}
+          <span class="leader" aria-hidden="true"></span>
+          <span class="line-count" id={`${instance}-line-count`}>
+            {#if soleClosedShelf}
+              {@const found = matches[soleClosedShelf].length}
+              {@const count = formatNumber(found, locale)}
+              {plural(found, [`${count} match`, `${count} matches`])}
+            {:else if progress}
+              {@const completed = formatNumber(progress.completed, locale)}
+              {@const total = formatNumber(progress.total, locale)}
+              <span class="sr-only">{`${completed} of ${total} completed`}</span>
+              <span aria-hidden="true"><span class="hand">{completed}</span> / {total}</span>
+            {/if}
+          </span>
+        </button>
+      {:else if collapsible}
         <button
           type="button"
           data-section-trigger
@@ -224,6 +307,19 @@
             >
           {/if}
         </button>
+      {:else if folded && open && !forceOpen && !isSearching}
+        <!-- An opened line folds back to itself, so a phone returns to the list in place. -->
+        <button
+          type="button"
+          data-section-trigger
+          aria-expanded="true"
+          aria-labelledby={`${instance}-name`}
+          aria-controls={`${instance}-rows`}
+          onclick={() => void fold()}
+        >
+          <span id={`${instance}-name`}>{name}</span>
+          <Icon.UI type="disclosure" class="size-3.5 rotate-90" />
+        </button>
       {:else if index?.jumpList}
         <!-- On phones the section's own head opens the jump list, since there's no index rail. -->
         <button
@@ -241,7 +337,7 @@
     </h3>
     <!-- Describes the head's button without becoming part of the section's name. -->
     <span id={`${instance}-jump`} hidden>Jump to a section</span>
-    {#if progress}
+    {#if progress && !line}
       {@const completed = formatNumber(progress.completed, locale)}
       {@const total = formatNumber(progress.total, locale)}
       <p class="section-progress" id={`${instance}-progress`}>
@@ -249,7 +345,7 @@
         <span aria-hidden="true"><span class="hand">{completed}</span> / {total}</span>
       </p>
     {/if}
-    {#if !collapsible && matches[headShelf].length > 0}
+    {#if !collapsible && !line && matches[headShelf].length > 0}
       {#key headShelf}
         <ShelfHeading
           class="head-shelf"
@@ -266,8 +362,11 @@
     id={`${instance}-rows`}
     class="shelves"
     bind:this={shelvesElement}
-    hidden={expanded ? undefined : "until-found"}
-    onbeforematch={() => (open = true)}
+    hidden={expanded && !line ? undefined : "until-found"}
+    onbeforematch={() => {
+      if (soleClosedShelf) revealedShelves[soleClosedShelf] = true;
+      open = true;
+    }}
   >
     {#each shelves as shelf (shelf)}
       {@const entries = matches[shelf]}
@@ -287,6 +386,7 @@
             class="shelf"
             data-shelf={shelf}
             open={revealedShelves[shelf] === true || (forceOpen && shelf === "completed")}
+            ontoggle={scheduleShelfRead}
           >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
               {#if expanded}
@@ -503,6 +603,71 @@
     color: var(--color-ink-muted);
   }
 
+  /*
+   * A folded section prints like a line of the index: name, dotted leader, & count. Lines stack
+   * without sprigs, and an open section before one keeps the usual gap.
+   */
+  section.line .head {
+    position: static;
+    min-block-size: 0;
+    padding-block-end: 0;
+  }
+
+  section.line h3 {
+    flex: 1 1 auto;
+    padding-block: 0;
+    font-size: var(--text-lg);
+  }
+
+  :global(section[data-ledger-section]:not(.line, [hidden])) + section.line {
+    margin-block-start: var(--ledger-section-gap);
+  }
+
+  .line-button {
+    display: flex;
+    inline-size: 100%;
+    flex-wrap: nowrap;
+    align-items: last baseline;
+    gap: 0.5rem;
+  }
+
+  .line-name {
+    min-inline-size: 0;
+  }
+
+  .line-shelf {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-controls);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .leader {
+    min-inline-size: 1.5rem;
+    flex: 1;
+    border-block-end: 1px dotted var(--color-rule);
+    translate: 0 -0.3em;
+  }
+
+  .line-count {
+    flex: none;
+    color: var(--color-ink-muted);
+    font-family: var(--font-data);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .line-button:hover .line-name {
+    text-decoration: underline dotted;
+    text-decoration-color: var(--primary);
+    text-underline-offset: 0.25em;
+  }
+
   .head :global(.head-shelf) {
     gap: 0.5rem;
   }
@@ -605,8 +770,10 @@
     .timetable {
       position: sticky;
       z-index: 1;
+      /* The head's measured height, since its jump control wraps it to two lines at book widths. */
       top: calc(
-        var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px) + var(--ledger-head-size)
+        var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px) +
+          var(--ledger-head-measured, var(--ledger-head-size))
       );
       display: grid;
       column-gap: 0.35rem;

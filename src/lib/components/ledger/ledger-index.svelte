@@ -9,6 +9,7 @@
   import { MediaQuery } from "svelte/reactivity";
 
   import { setLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
+  import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
@@ -18,6 +19,8 @@
 
   interface IndexSection {
     id: string;
+    /** Nothing in it matches the search or filters, so the entry stays as muted text. */
+    muted?: boolean;
     name: string;
     progress?: { completed: number; total: number };
   }
@@ -30,7 +33,7 @@
     sections: readonly IndexSection[];
   } = $props();
 
-  /** Where a reader's eye rests: a section is current once its head passes this line. */
+  /** Where a reader's eye rests, for the row a search returns to. */
   const READING_LINE = 0.3;
   const instance = $props.id();
   const jumpListId = `${instance}-jump`;
@@ -77,7 +80,6 @@
   function readPosition(): void {
     const scrollingElement = document.scrollingElement;
     const scrollTop = scrollingElement?.scrollTop ?? 0;
-    const line = globalThis.innerHeight * READING_LINE;
     let next = "";
     let last = "";
     const atBottom = Boolean(
@@ -96,11 +98,18 @@
       const target = heading.matches("[data-ledger-index-heading]")
         ? heading.parentElement
         : heading;
-      // A link lands a section at its scroll margin, which can sit below the reading line.
-      const anchorOffset = Number(
-        getComputedStyle(heading).scrollMarginBlockStart.replace("px", ""),
-      );
-      const reached = Math.max(line, anchorOffset + 1);
+      /*
+       * One line decides the current section for the rail, the jump list, & the sticky head: a
+       * section is current once its head sticks. A link lands a section at its scroll margin,
+       * which can sit just below that line while the head above it has already scrolled away.
+       */
+      const sectionHead = heading.querySelector<HTMLElement>("[data-ledger-head]");
+      const stuckAt = sectionHead
+        ? Number(getComputedStyle(sectionHead).top.replace("px", "")) || stickyTop
+        : stickyTop;
+      const anchorOffset =
+        Number(getComputedStyle(heading).scrollMarginBlockStart.replace("px", "")) || 0;
+      const reached = Math.max(stuckAt, anchorOffset) + 1;
       if (!next || (target && target.getBoundingClientRect().top <= reached)) {
         next = id;
       }
@@ -159,14 +168,23 @@
     }
   });
 
-  // Sticky section heads sit just under the page header, whatever its height at this width.
+  /*
+   * Sticky section heads sit just under the page header, whatever its height at this width, and
+   * under the “Refresh shelves” notice while it shows, so the notice never covers them or the rail.
+   */
   $effect(() => {
     const header = document.querySelector<HTMLElement>("[data-page-header]");
     if (!header) return;
+    const notice = document.querySelector<HTMLElement>("[data-ledger-notice]");
     const observer = new ResizeObserver(() => {
-      stickyTop = header.offsetHeight;
+      const noticeBottom =
+        notice && notice.offsetHeight > 0
+          ? (Number(getComputedStyle(notice).top.replace("px", "")) || 0) + notice.offsetHeight
+          : 0;
+      stickyTop = Math.max(header.offsetHeight, noticeBottom);
     });
     observer.observe(header);
+    if (notice) observer.observe(notice);
     return () => {
       observer.disconnect();
     };
@@ -255,21 +273,30 @@
 />
 
 {#snippet entries(list: readonly IndexSection[], onPick?: () => void)}
-  {#each list as { id, name, progress } (id)}
-    <a
-      href={`#${id}`}
-      aria-current={id === current ? "location" : undefined}
-      onclick={() => onPick?.()}
-    >
+  {#each list as { id, muted, name, progress } (id)}
+    {#snippet entry()}
       <span class="entry-name">{name}</span>
-      {#if progress}
+      {#if progress && !muted}
         <span class="leader" aria-hidden="true"></span>
         <!-- The section's own head reads its count; the index stays a list of names. -->
         <span class="entry-count" aria-hidden="true"
           ><span class="hand">{count(progress.completed)}</span> / {count(progress.total)}</span
         >
       {/if}
-    </a>
+    {/snippet}
+    <!-- A section the search or filters empty stays listed, so the rail keeps the page's shape. -->
+    {#if muted}
+      <span class="entry muted">{@render entry()}</span>
+    {:else}
+      <a
+        class="entry"
+        href={`#${id}`}
+        aria-current={id === current ? "location" : undefined}
+        onclick={() => onPick?.()}
+      >
+        {@render entry()}
+      </a>
+    {/if}
   {/each}
 {/snippet}
 
@@ -294,6 +321,7 @@
     {/each}
   </nav>
   <div class="min-w-0" data-ledger-content onfocusin={markArrival}>
+    <PageSearchStatus placement="ledger" />
     {@render children()}
   </div>
   {#if !wide.current}
@@ -326,10 +354,11 @@
     padding-block-start: 0;
   }
 
-  a {
+  /* A wrapped name sets its leader & count on its last line, as a printed contents page does. */
+  .entry {
     display: flex;
     min-block-size: 36px;
-    align-items: baseline;
+    align-items: last baseline;
     gap: 0.35rem;
     padding: 0.4rem 0.75rem;
     color: var(--color-ink-muted);
@@ -365,6 +394,11 @@
     color: var(--primary);
   }
 
+  /* Set back without losing contrast: italic, with no leader or count to read. */
+  .entry.muted {
+    font-style: italic;
+  }
+
   .jump-list {
     inline-size: auto;
     block-size: auto;
@@ -378,12 +412,8 @@
     box-shadow: var(--shadow-large);
   }
 
-  .jump-list a {
+  .jump-list .entry {
     min-block-size: 44px;
-    align-items: center;
-  }
-
-  .jump-list a {
     border-inline-start: 2px solid transparent;
   }
 
@@ -430,14 +460,14 @@
         block-size 180ms ease-out;
     }
 
-    .ledger-layout > nav a {
+    .ledger-layout > nav .entry {
       position: relative;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .marker,
-    a {
+    .entry {
       transition: none;
     }
   }

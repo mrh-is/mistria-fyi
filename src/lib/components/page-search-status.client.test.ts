@@ -93,6 +93,31 @@ describe("PageSearchStatus", () => {
     toolbarState.unregisterSourceFilters("test");
   });
 
+  it("moves the empty note into the ledger, which offers to clear the filters", async () => {
+    report(0);
+    toolbarState.registerSourceFilters("test", [SOURCE_FILTERS[0], SOURCE_FILTERS[1]]);
+    toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
+    const page = renderWithFeedback(PageSearchStatus);
+    const ledger = renderWithFeedback(PageSearchStatus, { placement: "ledger" });
+    await tick();
+
+    // One visible note, in the ledger, & one live region, on the page.
+    expect(page.container.querySelector("[data-page-search-status]")).toBeNull();
+    expect(ledger.container.querySelector("[data-page-search-status]")).not.toBeNull();
+    expect(ledger.container.querySelector("[role=status]")).toBeNull();
+    expect(page.getByRole("status")).toHaveTextContent("Your filters leave nothing on this page.");
+
+    await fireEvent.click(ledger.getByRole("button", { name: "Clear filters" }));
+    expect(toolbarState.isSourceFilterNarrowing).toBe(false);
+
+    // Without a ledger on the page, the page-level note shows again.
+    ledger.unmount();
+    toolbarState.toggleSourceFilter(SOURCE_FILTERS[0]);
+    await tick();
+    expect(page.container.querySelector("[data-page-search-status]")).not.toBeNull();
+    toolbarState.unregisterSourceFilters("test");
+  });
+
   it("announces a changed query", async () => {
     report(2);
     const view = await search("bass");
