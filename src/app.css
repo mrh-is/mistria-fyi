@@ -830,3 +830,11 @@ html:lang(ru) {
 [data-sonner-toaster] {
   view-transition-name: book-toasts;
 }
+
+/*
+ * The backup reminder waits out an open panel. Beside a panel it read as part of it, so “Export
+ * backup” seemed to belong to the filters, then the weather, then Contents (F22).
+ */
+:root:has(.book[data-panel-open]) [data-sonner-toast].backup-reminder {
+  visibility: hidden;
+}

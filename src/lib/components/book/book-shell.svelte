@@ -45,7 +45,12 @@
   onNavigate(turnPage);
 </script>
 
-<div class="book" class:book--tools={hasToolbar} bind:this={book}>
+<div
+  class="book"
+  class:book--tools={hasToolbar}
+  data-panel-open={panels.active ?? undefined}
+  bind:this={book}
+>
   <div class="book__page" inert={inert || undefined}>
     <div class="book__body">
       <WriteBlockedNotice />
@@ -154,23 +159,31 @@
       margin-top: 0;
       background-image: linear-gradient(to right, var(--color-page-gutter), transparent 1.25rem);
       grid-area: 1 / 2 / 3 / 3;
+      /*
+       * An explicit shrinkable column: the implicit one is `auto`, which never sizes below its
+       * content's min-content, so a ledger laid out wide kept the page wide after the window
+       * narrowed (F2).
+       */
+      grid-template-columns: minmax(0, 1fr);
       grid-template-rows: subgrid;
     }
 
+    /*
+     * A size container, so the page header can span the page from inside a narrower column. Its
+     * width comes from the page, never its content, which is the other half of F2's fix.
+     */
     .book__body {
       min-height: 0;
+      container-type: inline-size;
       grid-row: 2;
     }
 
-    .book--tools .book__tools {
-      position: relative;
-      min-width: 0;
-      padding: 0.75rem 1.25rem;
-      grid-area: 1 / 2;
-    }
-
-    .book--tools:has(:global([data-ledger-layout])) {
-      --ledger-anchor-offset: 8rem;
+    /*
+     * Every page with tools carries them in its own header row, Home included, so a page turn
+     * doesn't move them between a row of their own & the header (F9, F30). The variables keep their
+     * ledger names, which the ledger's sticky parts already read.
+     */
+    .book--tools {
       --ledger-header-height: 4.5rem;
       --ledger-tools-width: 15rem;
       --ledger-tools-edge: 1rem;
@@ -178,12 +191,19 @@
       grid-template-rows: 0 1fr;
     }
 
-    .book--tools:has(:global([data-ledger-layout])):has(:global(#tracker-search)) {
+    .book--tools:has(:global([data-ledger-layout])) {
+      --ledger-anchor-offset: 8rem;
+    }
+
+    .book--tools:has(:global(#tracker-search)) {
       --ledger-tools-width: clamp(15rem, 34vw, 24rem);
     }
 
-    .book--tools:has(:global([data-ledger-layout])):has(:global([data-page-header="category"])) {
-      --ledger-tools-edge: calc(var(--size-ribbon-width) + 1rem);
+    /* page-header.svelte drops the ribbon at half-screen widths (F38), so the tools close up. */
+    @media (min-width: 68.75rem) {
+      .book--tools:has(:global([data-page-header="category"])) {
+        --ledger-tools-edge: calc(var(--size-ribbon-width) + 1rem);
+      }
     }
 
     /*
@@ -191,7 +211,7 @@
      * just inside the header's ribbon at any width. The row itself lets clicks through to the
      * header's back link & title; only the tools take them.
      */
-    .book--tools:has(:global([data-ledger-layout])) .book__tools {
+    .book--tools .book__tools {
       position: sticky;
       top: 0;
       z-index: var(--z-toolbar);
@@ -207,21 +227,21 @@
     }
 
     /* pointer-events inherits, so every child takes clicks again: the toolbar, panels, & scrims. */
-    .book--tools:has(:global([data-ledger-layout])) .book__tools > :global(*) {
+    .book--tools .book__tools > :global(*) {
       pointer-events: auto;
     }
 
     /* Only the toolbar takes the tools' width; the panels & scrims are fixed at their own sizes. */
-    .book--tools:has(:global([data-ledger-layout])) .book__tools > :global(nav) {
+    .book--tools .book__tools > :global(nav) {
       inline-size: var(--ledger-tools-width);
     }
 
     /* The warning can occupy the first line when saved progress is unavailable. */
-    .book--tools:has(:global([data-ledger-layout])):has(:global(.write-blocked)) {
+    .book--tools:has(:global(.write-blocked)) {
       grid-template-rows: auto 1fr;
     }
 
-    .book--tools:has(:global([data-ledger-layout])):has(:global(.write-blocked)) .book__tools {
+    .book--tools:has(:global(.write-blocked)) .book__tools {
       position: relative;
       inline-size: auto;
       justify-self: stretch;
@@ -249,6 +269,18 @@
       padding-block: var(--book-rail-inset);
       grid-area: 1 / 3 / 3 / 4;
       view-transition-name: book-rail;
+    }
+
+    /*
+     * Tab names, turned on from a touch screen, lie over the page's edge: above the page tools, &
+     * in place of the header's ribbon, so neither covers the other (F14).
+     */
+    .book__rail:has(:global(.thumb-tabs--labeled)) {
+      z-index: calc(var(--z-toolbar) + 1);
+    }
+
+    .book:has(:global(.thumb-tabs--labeled)) :global(.page-header__ribbon) {
+      visibility: hidden;
     }
 
     /* Room at the rail's foot for Send a note & Settings, two 2rem tools & their gaps. */

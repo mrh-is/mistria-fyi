@@ -90,6 +90,14 @@
     return /* @wc-ignore */ `${vertical} left: auto; right: ${right}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;`;
   });
 
+  /** Room for two stacked toasts & their margins, in pixels. */
+  const TOAST_STACK_ROOM = 160;
+
+  /** Whether an open panel hangs from the header row, clear of the toasts at the screen's foot. */
+  function panelFromHeader(panel: HTMLElement): boolean {
+    return bookWidth.current && panel.offsetTop < globalThis.innerHeight / 2;
+  }
+
   function focusedElement(): HTMLElement | null {
     return document.activeElement instanceof HTMLElement ? document.activeElement : null;
   }
@@ -122,11 +130,18 @@
 
   // Keeps toasts (an Undo, say) from covering the open panel's controls. The fixed panel's
   // `offsetTop` is viewport-relative and ignores its fly-in transform, unlike the bounding box.
+  // Toasts stay at the foot instead when a panel opens down from the header at book widths, which
+  // leaves the foot free (F22), or when a panel leaves too little room above it for a stack of two
+  // toasts, as Contents does on a landscape phone: there they'd climb off the screen (F32).
   $effect(() => {
     const panel = panelElement;
     if (!panel) return;
     const measure = (): void => {
-      toolbarState.panelClearance = Math.max(0, globalThis.innerHeight - panel.offsetTop);
+      const clearance = Math.max(0, globalThis.innerHeight - panel.offsetTop);
+      toolbarState.panelClearance =
+        panelFromHeader(panel) || clearance > globalThis.innerHeight - TOAST_STACK_ROOM
+          ? 0
+          : clearance;
     };
     const observer = new ResizeObserver(measure);
     observer.observe(panel);
@@ -330,7 +345,7 @@
       {/if}
       {#if toolbar.clock}
         <button
-          class="floating-tool floating-tool--tabbed {panels.active === 'clock'
+          class="floating-tool floating-tool--clock {panels.active === 'clock'
             ? 'floating-tool--active'
             : ''}"
           type="button"
@@ -353,7 +368,7 @@
           {#if trackingReminders.clockHint}
             <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
           {/if}
-          <!-- Sits behind the button's edge, at the screen's edge. -->
+          <!-- Today's season & weather, printed small inside the button after a hairline (F36). -->
           <span class="clock-tab" data-clock-tab aria-hidden="true">
             <Icon.Season season={userState.state.worldState.season} class="size-3" />
             <Icon.Weather
@@ -428,12 +443,18 @@
    * panel reads as coming out of the strip. The cloth belongs to the cover, behind the book.
    */
   .toolbar {
-    /* No end padding: the clock's season tab runs off the screen's edge. */
-    padding: 0.5rem 0 max(0.5rem, env(safe-area-inset-bottom)) 0.75rem;
+    padding: 0.5rem 0.75rem max(0.5rem, env(safe-area-inset-bottom));
     border-block-start: 1px solid var(--color-rule);
     background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
     color: var(--color-ink-muted);
+  }
+
+  /* A short window pins more at once, so the strip keeps only its buttons' own height (F5). */
+  @media (max-height: 31.25rem) {
+    .toolbar {
+      padding-block: 0.25rem max(0.25rem, env(safe-area-inset-bottom));
+    }
   }
 
   .toolbar__row {
@@ -521,28 +542,20 @@
       color 150ms ease-out;
   }
 
-  .floating-tool--tabbed {
-    position: relative;
-    margin-right: 20px;
+  .floating-tool--clock {
+    gap: 0.375rem;
+    padding-inline: 0.5rem 0.375rem;
   }
 
   .clock-tab {
-    position: absolute;
-    /* Offsets start inside the button's 1px border, so these sit 2px in from its outer edge. */
-    top: 1px;
-    bottom: 1px;
-    left: 100%;
-    z-index: -1;
     display: grid;
-    width: 20px;
+    align-self: stretch;
     place-items: center;
     align-content: center;
     gap: 2px;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
-    border-left: 0;
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
-    background: var(--color-paper-sunken);
-    color: var(--color-ink-muted);
+    padding-inline-start: 0.375rem;
+    border-inline-start: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    margin-block: 0.5rem;
   }
 
   .floating-tool:is(:hover, :focus-visible),

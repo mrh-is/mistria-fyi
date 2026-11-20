@@ -412,7 +412,7 @@ function clockButton() {
 }
 
 describe("ToolbarFooter clock", () => {
-  it("puts search, filter, & clock in that order, so the tab sits at the screen edge", () => {
+  it("puts search, filter, & clock in that order, with today’s season & weather inside the clock", () => {
     renderToolbar({ clock: true, filter: true, search: true });
 
     const controls = [...toolbarNav().querySelectorAll("button, input")];

@@ -268,6 +268,20 @@
     }
   }
 
+  /*
+   * A short window (a phone held sideways, or 200% zoom) pins the header, a section head, & the
+   * toolbar at once, so the header gives up its top & bottom margins (F5).
+   */
+  @media (max-height: 31.25rem) {
+    .page-header {
+      padding-block: max(4px, env(safe-area-inset-top)) 4px;
+    }
+
+    .page-header--category {
+      min-height: 52px;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .page-header__progress i,
     .page-header__progress b {
@@ -275,23 +289,33 @@
     }
   }
 
+  /*
+   * At book widths the header is the page's running head, with the tools in its row (book-shell).
+   * It spans the page's centered column even where the page's content keeps the narrower column it
+   * was built for: the margins reach from the content's column out to the page's (`cqi` is the
+   * book body's width).
+   */
   @media (min-width: 48rem) and (min-height: 34rem) {
-    :global(.book:has([data-ledger-layout]):not(:has(.write-blocked))) .page-header {
+    :global(.book--tools) .page-header {
+      margin-inline: calc((100% - min(100cqi, 72rem)) / 2);
+    }
+
+    :global(.book--tools:not(:has(.write-blocked))) .page-header {
       min-block-size: var(--ledger-header-height);
       padding-block: 0.5rem;
       padding-inline-end: calc(var(--ledger-tools-width) + var(--ledger-tools-edge) + 0.75rem);
     }
 
-    :global(.book:has([data-ledger-layout])) .page-header__ribbon {
+    :global(.book--tools) .page-header__ribbon {
       right: 0;
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
     }
 
-    :global(.book:has([data-ledger-layout])) .page-header__edge-mask {
+    :global(.book--tools) .page-header__edge-mask {
       display: none;
     }
 
-    :global(.book:has([data-ledger-layout])) .page-header--complete .page-header__ribbon::after {
+    :global(.book--tools) .page-header--complete .page-header__ribbon::after {
       right: auto;
       left: 0;
       background:
@@ -309,6 +333,16 @@
             transparent 59%
           )
           bottom / 9px 50% no-repeat;
+    }
+  }
+
+  /*
+   * At half-screen widths (960 to 1,080 px on common displays) the ribbon crowds the tools & the
+   * thumb tabs, and the active thumb tab already marks the page (F38).
+   */
+  @media (min-width: 48rem) and (max-width: 68.74rem) and (min-height: 34rem) {
+    :global(.book--tools) .page-header__ribbon {
+      display: none;
     }
   }
 </style>

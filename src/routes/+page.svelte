@@ -178,6 +178,36 @@
     }
   }
 
+  /*
+   * At book widths (the `book` variant in app.css) Home's header is the page's running head, like
+   * every page's, and the tools sit at its end (book-shell). It spans the page from inside Home's
+   * narrower column; `cqi` is the book body's width. The keyboard lift is for phones only.
+   */
+  @media (min-width: 48rem) and (min-height: 34rem) {
+    :global(.book--tools) .home-header {
+      min-block-size: var(--ledger-header-height);
+      margin-inline: calc((100% - min(100cqi, 72rem)) / 2);
+      padding-block: 0.5rem;
+      padding-inline: 22px calc(var(--ledger-tools-width) + var(--ledger-tools-edge) + 0.75rem);
+      background: var(--color-paper-raised);
+      backdrop-filter: none;
+      box-shadow: var(--shadow-small);
+    }
+
+    .home-page--searching {
+      position: static;
+      max-width: none;
+      height: auto;
+      margin-inline: 0;
+      background: none;
+    }
+
+    .home-page--searching .home-content {
+      overflow-y: visible;
+      padding-bottom: 1rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .overall-progress-rule i,
     .overall-progress-rule b {

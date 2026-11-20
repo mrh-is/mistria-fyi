@@ -327,11 +327,15 @@
     transition: opacity 90ms ease-out;
   }
 
+  /*
+   * A ruled list on the panel's paper, two columns of label & switch, ruled like the index rail,
+   * not a grid of tiles: the panel stays quieter than the page it filters (F31).
+   */
   .source-switches {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 5px;
-    margin: 7px 0 0;
+    column-gap: 1.25rem;
+    margin: 4px 0 0;
     padding: 0;
     list-style: none;
   }
@@ -357,8 +361,7 @@
 
   .toggle-row {
     align-items: stretch;
-    gap: 5px;
-    margin-top: 7px;
+    margin-top: 4px;
   }
 
   .toggle {
@@ -366,8 +369,7 @@
     min-width: 0;
     min-height: 44px;
     flex: 1;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
-    background: var(--color-paper-sunken);
+    border-block-end: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
   }
 
   .toggle :global(label) {
@@ -375,15 +377,18 @@
     flex-direction: row-reverse;
     justify-content: space-between;
     gap: 8px;
-    padding: 0 10px;
   }
 
   .toggle__label {
     min-width: 0;
     gap: 6px;
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+  }
+
+  .toggle__label :global(svg) {
     color: var(--color-ink-muted);
-    font-family: var(--font-controls);
-    font-size: var(--text-2xs);
   }
 
   @media (prefers-reduced-motion: reduce) {

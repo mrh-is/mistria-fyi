@@ -227,6 +227,113 @@ test.describe("book shell", () => {
   });
 });
 
+function search(page: Page) {
+  return page.getByRole("textbox", { name: "Search items" });
+}
+
+function undo(page: Page) {
+  return page.getByRole("button", { exact: true, name: "Undo" });
+}
+
+/** A layout box the test measures: the page header, its count, or its ribbon. */
+function headerPart(page: Page, selector: string) {
+  // oxlint-disable-next-line playwright/no-raw-locators -- header geometry boxes have no role; Home's header isn't a landmark
+  return page.locator(selector);
+}
+
+async function checkOffFirstArtifact(page: Page): Promise<void> {
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  await artifacts
+    .getByRole("button", { name: /^Check (?!spoilered item)/ })
+    .first()
+    .click();
+  await expect(undo(page)).toBeVisible();
+}
+
+test.describe("page header & tools", () => {
+  test.beforeEach(async ({ page }) => {
+    await initializeApplication(page, "system", createStoredState());
+    await page.emulateMedia({ reducedMotion: "reduce" });
+  });
+
+  for (const [path, header] of [
+    ["/", ".home-header"],
+    ["/animals", "[data-page-header]"],
+    ["/almanac", "[data-page-header]"],
+  ] as const) {
+    test(`${path} carries its tools in its own header row`, async ({ page }) => {
+      await gotoApplication(page, path);
+      const row = await settledBox(headerPart(page, header));
+      const field = await settledBox(search(page));
+      expect(field.y, "search below the header's top").toBeGreaterThanOrEqual(row.y);
+      expect(field.y + field.height, "search above its foot").toBeLessThanOrEqual(
+        row.y + row.height,
+      );
+      expect(field.x, "search at the header's end").toBeGreaterThan(row.x + row.width / 2);
+    });
+  }
+
+  test("the header follows the window as it narrows", async ({ page }) => {
+    await page.setViewportSize({ height: 800, width: 1440 });
+    await gotoApplication(page, "/almanac");
+    await settledBox(page.getByRole("region", { exact: true, name: "Artifacts" }));
+    await page.setViewportSize({ height: 800, width: 1000 });
+
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(1000);
+    const header = await settledBox(headerPart(page, "[data-page-header]"));
+    // The thumb index starts where the page ends.
+    const index = await settledBox(tabs(page));
+    expect(header.x + header.width).toBeLessThanOrEqual(index.x + 0.5);
+    const count = await settledBox(headerPart(page, ".page-header__count"));
+    const field = await settledBox(search(page));
+    expect(overlaps(count, field), "the count & the search field").toBe(false);
+  });
+
+  test("the header's ribbon steps aside at half-screen widths", async ({ page }) => {
+    const ribbon = headerPart(page, "[data-page-header-ribbon]");
+    await page.setViewportSize({ height: 800, width: 960 });
+    await gotoApplication(page, "/almanac");
+    await expect(ribbon).toBeHidden();
+    await page.setViewportSize(DESKTOP);
+    await expect(ribbon).toBeVisible();
+  });
+
+  test("the current tab doesn't name itself under a resting pointer", async ({ page }) => {
+    await gotoApplication(page, "/almanac");
+    const current = tabs(page).getByRole("link", { name: "Almanac" });
+    const museum = tabs(page).getByRole("link", { name: "Museum" });
+
+    await museum.hover();
+    await expect(museum.getByText("Museum", { exact: true })).toHaveCSS("opacity", "1");
+    await current.hover();
+    await expect(current.getByText("Almanac", { exact: true })).toHaveCSS("opacity", "0");
+  });
+
+  test("Undo stays at the screen's foot while a panel hangs from the header", async ({ page }) => {
+    await gotoApplication(page, "/almanac");
+    await checkOffFirstArtifact(page);
+    const before = await settledBox(undo(page));
+
+    await page.getByRole("button", { name: "Visibility filters" }).click();
+    await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
+    const after = await settledBox(undo(page));
+    expect(after.y).toBeCloseTo(before.y, 0);
+  });
+
+  test("Undo stays on screen over Contents on a landscape phone", async ({ page }) => {
+    await gotoApplication(page, "/almanac");
+    await checkOffFirstArtifact(page);
+    await page.setViewportSize(PHONE);
+    await page.getByRole("button", { exact: true, name: "Contents" }).click();
+    await expect(page.getByRole("dialog", { name: "Contents" })).toBeVisible();
+    await page.setViewportSize({ height: PHONE.width, width: PHONE.height });
+
+    await expect(undo(page)).toBeInViewport({ ratio: 1 });
+  });
+});
+
 for (const viewport of [DESKTOP, PHONE]) {
   test(`newer progress shows recovery at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
