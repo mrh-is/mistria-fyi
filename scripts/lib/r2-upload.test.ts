@@ -8,7 +8,7 @@ import {
   findPendingUploads,
   IMMUTABLE_CACHE_CONTROL,
   listFiles,
-  loadR2UploadEnvFile,
+  loadR2UploadSecrets,
   r2UploadOptionsFromEnv,
   r2UploadTree,
   wranglerEnv,
@@ -114,14 +114,14 @@ describe("wranglerEnv", () => {
   });
 });
 
-describe("loadR2UploadEnvFile", () => {
+describe("loadR2UploadSecrets", () => {
   it("fills the token & account ID from 1Password", async () => {
     const env: NodeJS.ProcessEnv = {};
     const read = vi.fn<(reference: string) => Promise<string>>((reference) =>
       Promise.resolve(reference.includes("credential") ? "r2-admin" : "account-id"),
     );
 
-    await loadR2UploadEnvFile(env, read);
+    await loadR2UploadSecrets(env, read);
 
     expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
   });
@@ -132,7 +132,7 @@ describe("loadR2UploadEnvFile", () => {
       Promise.resolve(reference.includes("credential") ? "r2-admin" : "account-id"),
     );
 
-    await loadR2UploadEnvFile(env, read);
+    await loadR2UploadSecrets(env, read);
 
     expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "from-shell" });
   });

@@ -2,6 +2,11 @@ import { spawn } from "node:child_process";
 
 export type OpAgentRead = (reference: string) => Promise<string>;
 
+export const R2_UPLOAD_REFERENCES = {
+  CLOUDFLARE_ACCOUNT_ID: "op://Agent secrets/Mistria R2 upload token/account id",
+  R2_UPLOAD_TOKEN: "op://Agent secrets/Mistria R2 upload token/credential",
+} as const;
+
 export async function readOpSecret(reference: string): Promise<string> {
   return await new Promise((resolve, reject) => {
     const child = spawn("op-agent", ["read", reference], {

@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 const NOT_ALLOWED: Record<string, string> = {
   "check:watch": "never exits",
   "cloudflare:logs": "reads production logs with stored Cloudflare credentials",
+  "dev:feedback": "reads local feedback secrets through 1Password",
   "fonts:build": "regenerates committed font subsets",
   "fonts:install": "installs a separate dependency tree",
   "fonts:upload": "publishes to production storage",

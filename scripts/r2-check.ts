@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { loadR2UploadEnvFile, r2UploadOptionsFromEnv, runWrangler } from "#scripts/lib/r2-upload";
+import { loadR2UploadSecrets, r2UploadOptionsFromEnv, runWrangler } from "#scripts/lib/r2-upload";
 
 import type { WranglerResult } from "#scripts/lib/r2-upload";
 
@@ -53,6 +53,6 @@ export async function checkR2Upload(
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-  await loadR2UploadEnvFile();
+  await loadR2UploadSecrets();
   process.exitCode = await checkR2Upload();
 }

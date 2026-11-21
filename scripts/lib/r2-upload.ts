@@ -5,7 +5,7 @@
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
 // everything), DRY_RUN=1 (print what would be uploaded without running Wrangler), & whether
 // R2_UPLOAD_TOKEN is set (a real upload refuses to start without it). The upload scripts first fill
-// R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID from 1Password (see `loadR2UploadEnvFile`).
+// R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID from 1Password (see `loadR2UploadSecrets`).
 // Wrangler itself gets R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -13,7 +13,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { loadOpSecrets } from "#scripts/lib/op-agent";
+import { loadOpSecrets, R2_UPLOAD_REFERENCES } from "#scripts/lib/op-agent";
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
 import type { OpAgentRead } from "#scripts/lib/op-agent";
@@ -93,13 +93,8 @@ export async function listFiles(dir: string): Promise<string[]> {
 /** The repository root, so `pnpm exec` finds the workspace's Wrangler from any working directory. */
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 
-export const R2_UPLOAD_REFERENCES = {
-  CLOUDFLARE_ACCOUNT_ID: "op://Agent secrets/Mistria R2 upload token/account id",
-  R2_UPLOAD_TOKEN: "op://Agent secrets/Mistria R2 upload token/credential",
-} as const;
-
 /** Fills upload credentials from 1Password. A nonempty shell value wins. */
-export async function loadR2UploadEnvFile(
+export async function loadR2UploadSecrets(
   env: NodeJS.ProcessEnv = process.env,
   read?: OpAgentRead,
 ): Promise<void> {

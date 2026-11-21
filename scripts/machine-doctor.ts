@@ -12,6 +12,7 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { R2_UPLOAD_REFERENCES } from "#scripts/lib/op-agent";
 import { isInside } from "#scripts/lib/paths";
 
 import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
@@ -492,11 +493,7 @@ export function checkOpAgent(machine: Environment): CheckResult {
  * only, never prints or validates secret values.
  */
 export function checkR2Token(machine: Environment): CheckResult {
-  const references = {
-    CLOUDFLARE_ACCOUNT_ID: "op://Agent secrets/Mistria R2 upload token/account id",
-    R2_UPLOAD_TOKEN: "op://Agent secrets/Mistria R2 upload token/credential",
-  } as const;
-  const missing = Object.entries(references).filter(([name]) => !machine.env[name]);
+  const missing = Object.entries(R2_UPLOAD_REFERENCES).filter(([name]) => !machine.env[name]);
   if (missing.length === 0) {
     return check(
       "r2-token",
@@ -538,7 +535,6 @@ export const SECTIONS = {
         checkNode(machine),
         checkPnpm(machine),
         checkDependencies(machine),
-        checkOpAgent(machine),
         ...checkGit(machine),
         ...checkGh(machine),
         checkShellcheck(machine),
@@ -552,7 +548,7 @@ export const SECTIONS = {
     title: "Pipeline (game files)",
   },
   release: {
-    checks: (machine: Environment): CheckResult[] => [checkR2Token(machine)],
+    checks: (machine: Environment): CheckResult[] => [checkOpAgent(machine), checkR2Token(machine)],
     title: "Release (R2 uploads)",
   },
 } as const;

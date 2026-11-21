@@ -602,7 +602,8 @@ describe("report", () => {
     const report = formatReport(runChecks(machine()));
     expect(report).toContain("Core (every contributor):\n[ok]      Node.js");
     expect(report).toContain("[missing] pnpm");
-    expect(report).toContain("Release (R2 uploads):\n[todo]    R2 upload token");
+    expect(report).toContain("Release (R2 uploads):");
+    expect(report).toContain("[todo]    R2 upload token");
     expect(report).toContain("fix: Install op-agent");
     expect(report).not.toContain("Skipped");
   });

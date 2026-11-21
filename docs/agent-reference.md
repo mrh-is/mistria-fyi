@@ -93,7 +93,7 @@ Wrangler comes into the workspace through `@sveltejs/adapter-cloudflare`. `allow
 `pnpm exec wrangler <command>`, including `pnpm exec wrangler login`. `pnpx wrangler` installs a
 separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 uploader
 (`scripts/lib/r2-upload.ts`, behind `sprites:upload` & `fonts:upload`) runs the workspace binary the
-same way. it loads `R2_UPLOAD_TOKEN` from 1Password or the shell, hands it to Wrangler as
+same way. It loads `R2_UPLOAD_TOKEN` from 1Password or the shell, hands it to Wrangler as
 `CLOUDFLARE_API_TOKEN`, and refuses a real upload without that token rather than falling back to a
 stored login.
 

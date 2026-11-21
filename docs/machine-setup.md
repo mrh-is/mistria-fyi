@@ -55,17 +55,14 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
    `winget install koalaman.shellcheck`).
 5. **GitHub CLI** (`brew install gh`, `winget install GitHub.cli`), then run `gh auth login` and
    choose HTTPS. The remote stays HTTPS; do not switch it to SSH.
-6. **1Password agent** (`op-agent`) for unattended local secret resolution. Store repo credentials
-   in the `Agent secrets` vault and keep secret values out of `.env`, `.env.*`, & `.dev.vars`.
-   `.env.op` is the checked-in reference template, so it contains `op://` paths, not secret values.
-7. **Dependencies**: `pnpm install --frozen-lockfile`, or `node scripts/setup-worktree.ts` inside a
+6. **Dependencies**: `pnpm install --frozen-lockfile`, or `node scripts/setup-worktree.ts` inside a
    worktree. Every other `pnpm run` or `pnpm exec` command fails with
    `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` until dependencies match the lockfile, rather than installing
    them implicitly. The install also links the pinned Node at `node_modules/.bin/node`, which the
    committed VS Code settings point the Vitest extension at; Windows needs a local override (see
    [test file placement](development-workflow.md#test-file-placement)). Configure
    [Git hooks](#git-hooks) once per clone to enable the pre-commit check.
-8. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
+7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
    lists this as a todo, never a failure, because cloud sandboxes legitimately skip it. If
    `tag.gpgsign` is on, every `git tag` becomes a signed annotated tag that needs a message, so
@@ -86,7 +83,13 @@ Each item names the doctor section that checks it.
 2. **Game assets** (`pipeline`) for pipeline work: place or link them at `pipeline/input/` (see
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
-3. **R2 upload token** (`release`) for `sprites:upload` & `fonts:upload`, which run Wrangler against
+3. **1Password agent** (`release`) for maintainer-only upload, feedback, & wiki credentials. Install
+   the dotfiles `op-agent` wrapper & store repo credentials in the `Agent secrets` vault.
+   `.dev.vars.op` & `.env.wiki.op` are checked-in reference templates; they contain `op://` paths,
+   not secret values. Delete `.env.r2-upload`, `.env.wiki`, & `.dev.vars` from the main checkout;
+   those are legacy plaintext files. `.dev.vars` is regenerated only while `pnpm run dev:feedback`
+   runs, then deleted when it exits.
+4. **R2 upload token** (`release`) for `sprites:upload` & `fonts:upload`, which run Wrangler against
    the `mistria-fyi-assets` bucket. The upload scripts hand `R2_UPLOAD_TOKEN` to Wrangler as its
    `CLOUDFLARE_API_TOKEN`, for that child process only, so no `wrangler login` is needed. The
    separate name keeps the R2 token from replacing the read-only Pages token that `cloudflare:logs`
@@ -104,10 +107,10 @@ Each item names the doctor section that checks it.
       from the R2 overview.
    4. Store the token & account ID in the 1Password vault `Agent secrets`, in the item
       `Mistria R2 upload token`. Use `credential` for the token & `account id` for the account ID.
-      The repository's `.env.op` template references both values; no plaintext env file is needed. A
-      nonempty shell variable of the same name wins. Agents can run the uploads in the
-      [game version update](game-version-update-protocol.md) without a dedicated shell; each upload
-      still asks for permission.
+      The upload scripts resolve both values directly through `R2_UPLOAD_REFERENCES`; no plaintext
+      env file is needed. A nonempty shell variable of the same name wins. Agents can run the
+      uploads in the [game version update](game-version-update-protocol.md) without a dedicated
+      shell; each upload still asks for permission.
 
    5. Run `pnpm run r2:check`. It puts & deletes a probe object in the bucket, which proves the
       token can write; a real upload doesn't, because it skips every object that is already current

@@ -18,7 +18,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { SAVE_OBSERVATIONS } from "#lib/engine/import-save.observations.ts";
-import { loadR2UploadEnvFile, runWrangler } from "#scripts/lib/r2-upload";
+import { loadR2UploadSecrets, runWrangler } from "#scripts/lib/r2-upload";
 
 export const SAVES_BUCKET = "mistria-fyi-private";
 const INPUT_DIR = path.join(import.meta.dirname, "../pipeline/input");
@@ -116,7 +116,7 @@ export async function fetchSaves(): Promise<number> {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const command = process.argv[2];
   if (command === "upload") {
-    await loadR2UploadEnvFile();
+    await loadR2UploadSecrets();
     process.exitCode = await uploadSaves();
   } else if (command === "fetch") {
     process.exitCode = await fetchSaves();

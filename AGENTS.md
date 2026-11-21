@@ -109,7 +109,7 @@ session limits) belong in each contributor’s user config.
 - Use pnpm only; the lockfile is pnpm’s. Don’t use `npm`, `npx`, `yarn`, `bun`, or `pnpx`.
 - Run Wrangler from the workspace: `pnpm exec wrangler <command>`, including `login`.
 - R2 uploads authenticate only with `R2_UPLOAD_TOKEN`, never a login. The upload scripts load it
-  from the main checkout's `.env.r2-upload`; run them, but never read the file or print the token.
+  from 1Password; run them, but never read or print the token.
 - Never read stored OAuth tokens, such as gh’s `hosts.yml` or Wrangler’s config, and never print the
   environment of a shell that may hold a token. Search with the Grep tool or plain `rg`, never
   `grep -r` or `rg -uu`, which read gitignored secrets.

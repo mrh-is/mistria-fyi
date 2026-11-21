@@ -11,7 +11,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { loadR2UploadEnvFile, r2UploadOptionsFromEnv, r2UploadTree } from "#scripts/lib/r2-upload";
+import { loadR2UploadSecrets, r2UploadOptionsFromEnv, r2UploadTree } from "#scripts/lib/r2-upload";
 
 export async function uploadLocaleFonts(distDir: string): Promise<number> {
   // Keys are the paths under the dist dir (fonts/...).
@@ -35,6 +35,8 @@ export async function uploadLocaleFonts(distDir: string): Promise<number> {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const defaultDir = path.join(import.meta.dirname, "../.locale-fonts-dist");
-  await loadR2UploadEnvFile();
+  if (process.env.DRY_RUN !== "1") {
+    await loadR2UploadSecrets();
+  }
   process.exitCode = await uploadLocaleFonts(process.argv[2] ?? defaultDir);
 }
