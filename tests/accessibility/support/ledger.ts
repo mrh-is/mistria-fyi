@@ -5,14 +5,16 @@ import type { Locator, Page } from "@playwright/test";
  * `getByRole("button")` query inside a ledger reads each candidate's computed style, which makes
  * Chromium style every skipped row first. On the Almanac the first such query took about 10 seconds
  * at 4× CPU throttling. Under CI's parallel workers it stalled the page long enough to time out
- * clicks & navigations (#708). These helpers find ledger buttons by
- * their labels, which reads no styles. Toolbar & dialog controls aren't in the ledger, so a role
- * query scoped to them stays fast.
+ * clicks & navigations (#708). These helpers find ledger buttons by their labels, which reads no
+ * styles. Toolbar & dialog controls aren't in the ledger, so a role query scoped to them stays fast.
  */
 
-/** A row the reader can see: not under a closed shelf, & not hidden by the current search. */
+/**
+ * A row the reader can see, matching what `getByRole` skips: rows under a `hidden` shelf or a closed
+ * fold, rows hidden from assistive tech, & rows the current search hides.
+ */
 const shownRow =
-  "[data-ledger-row]:not([hidden], [hidden] *, [data-ledger-searching] [data-ledger-search-miss])";
+  "[data-ledger-row]:not([hidden], [hidden] *, details:not([open]) *, [aria-hidden='true'] *, [data-ledger-searching] [data-ledger-search-miss])";
 
 /** The check buttons on shown rows, skipping covered spoilers. */
 export function ledgerChecks(scope: Locator | Page): Locator {
@@ -22,7 +24,10 @@ export function ledgerChecks(scope: Locator | Page): Locator {
   );
 }
 
-/** The button on shown rows with exactly this label, such as “Check Basic Doormat”. */
+/**
+ * The button on shown rows with exactly this label, such as “Check Basic Doormat”. Unlike a role
+ * query, it matches the raw `aria-label` without normalizing whitespace.
+ */
 export function ledgerButton(scope: Locator | Page, label: string): Locator {
   // oxlint-disable-next-line playwright/no-raw-locators -- a role query styles every skipped row
   return scope.locator(`${shownRow} button[aria-label=${JSON.stringify(label)}]`);

@@ -179,8 +179,9 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   const top = await position();
 
   await page.getByRole("link", { name: "Back to home" }).click();
-  // `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss, stalling the turn.
-  await page.waitForURL(/\/en\/?$/u);
+  // A pattern `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss; a
+  // predicate waits on navigation instead.
+  await expect(page).toHaveURL((url) => /\/en\/?$/u.test(url.href));
   await page.goBack();
   await expect(row).toBeInViewport();
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);

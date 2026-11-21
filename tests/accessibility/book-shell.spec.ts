@@ -171,8 +171,9 @@ test.describe("book shell", () => {
     await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBe(252);
 
     await tabs(page).getByRole("link", { name: "Museum" }).click();
-    // `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss, stalling the turn.
-    await page.waitForURL(/\/museum$/);
+    // A pattern `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss; a
+    // predicate waits on navigation instead.
+    await expect(page).toHaveURL((url) => url.href.endsWith("/museum"));
     await expect.poll(() => isTurning(page)).toBe(false);
 
     await page.goBack();

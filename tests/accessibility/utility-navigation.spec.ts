@@ -61,8 +61,9 @@ for (const route of ["about", "data", "sync"]) {
       observer.observe(routeContainer, { childList: true });
     }, `/en/${route}`);
     await page.getByRole("link", { name: "Utility navigation test" }).click();
-    // `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss, stalling the turn.
-    await page.waitForURL(new RegExp(`/en/${route}$`));
+    // A pattern `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss; a
+    // predicate waits on navigation instead.
+    await expect(page).toHaveURL((url) => new RegExp(`/en/${route}$`).test(url.href));
     await expect(page.getByRole("link", { name: "Utility navigation test" })).toHaveAttribute(
       "data-route-mount",
       "single",
