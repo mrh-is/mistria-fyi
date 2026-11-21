@@ -9,18 +9,6 @@ export const TURNING_CLASS = "book-turning";
 const SETTLE_MS = 220;
 
 let latestTurn = 0;
-let activeTurn: Promise<void> | undefined;
-
-/** Resolves when the outgoing snapshot can be released and the new page can paint. */
-export function pageTurnFinished(): Promise<void> | undefined {
-  return activeTurn;
-}
-
-/** Hold the outgoing ledger inert and out of layout while the new page takes its snapshot. */
-export function deferLedgerTeardown(_element: HTMLElement): { delay?: number; duration: number } {
-  if (!pageTurnFinished()) return { duration: 0 };
-  return { delay: SETTLE_MS * 2, duration: 0 };
-}
 
 /**
  * Turns the page for a client-side navigation: the old page slides off the desk while the next one
@@ -53,7 +41,7 @@ export function turnPage(
       shift = globalThis.scrollY - scrollBefore;
     });
     void animateWhenReady(transition, root, () => shift);
-    activeTurn = finishTurn(transition, root, turn);
+    void finishTurn(transition, root, turn);
   });
 }
 
@@ -82,10 +70,7 @@ async function finishTurn(
     // A navigation that fails reports itself; the turn only needs its styles gone.
   }
   // A newer turn has started, and its styles must outlast this one.
-  if (turn === latestTurn) {
-    root.classList.remove(TURNING_CLASS);
-    activeTurn = undefined;
-  }
+  if (turn === latestTurn) root.classList.remove(TURNING_CLASS);
 }
 
 function animateTurn(root: HTMLElement, shift: number): void {
