@@ -454,17 +454,16 @@ scroll during search. The first keystroke remembers the row at the reading line,
 new query starts at the top of the ledger, and clearing the search scrolls that row back to where it
 was. Navigating away forgets it.
 
-A ledger section mounts rows only on its open shelves, and only near the screen (#714). After a
-shelf's last mounted row, a placeholder holds the rest of the shelf's estimated height, so links &
-Back land where they would with every row mounted. As the placeholder comes within a screen below
-the viewport, it mounts enough rows to reach past it. It doesn't watch above the viewport, so
-mounting never moves the rows the reader is looking at. A search mounts its matches the same way.
-Back & search clear ask the row's section to mount through that row (`LEDGER_MOUNT_EVENT`) before
-restoring the reading position. Mounting every row (1,879 on the Almanac, 35,407 elements) made axe,
-Playwright, & screen readers walk the whole ledger, which stalled the accessibility CI (#708). The
-budget test in `tests/accessibility/ledger-budget.spec.ts` guards the first screen's size.
-`components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its image, and its mask
-for the masked treatments, has loaded.
+A ledger section mounts a window of rows on each open shelf near the screen (#714). Spacers hold the
+estimated height of earlier & later rows, so jumping into a long shelf mounts the rows at the
+landing point. “Previous rows” & “Next rows” move focus to an adjacent row even when it hasn’t
+mounted yet. Search uses the same window over its matches and retains the reading rows while the
+query is active. Back & search clear ask the section to mount a window around the saved row
+(`LEDGER_MOUNT_EVENT`) before restoring its offset. Mounting every row (1,879 on the Almanac, 35,407
+elements) made axe, Playwright, & screen readers walk the whole ledger, which stalled the
+accessibility CI (#708). `tests/accessibility/ledger-budget.spec.ts` checks the first screen, broad
+search, & long jumps. `components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its
+image, and its mask for the masked treatments, has loaded.
 
 Ledger rows can't share a CSS subgrid, because `content-visibility` contains their layout. Each row
 lays out the same deterministic tracks instead, which its shelf passes as `--ledger-tracks`.

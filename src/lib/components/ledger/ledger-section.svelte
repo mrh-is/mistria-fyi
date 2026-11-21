@@ -7,6 +7,11 @@
     LEDGER_MOUNT_EVENT,
     setLedgerSectionContext,
   } from "#lib/components/ledger/ledger-context.js";
+  import {
+    REVEAL_ROWS,
+    viewportWindow,
+    windowAround,
+  } from "#lib/components/ledger/ledger-row-window.js";
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { sourceFilterLabel } from "#lib/data/source-filters.js";
   import plural from "#lib/i18n/catalogs/plural.js";
@@ -19,6 +24,7 @@
   import type { Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
 
+  import type { RowWindow } from "#lib/components/ledger/ledger-row-window.js";
   import type { SourceFilterId } from "#lib/data/source-filters.js";
   import type { Shelf } from "#lib/engine/shelves.js";
   import type { LedgerPlacement } from "#lib/presentation/ledger.js";
@@ -117,13 +123,6 @@
         }
       : groups,
   );
-  let searchKeys = $state.raw<ReadonlySet<string>>();
-  $effect.pre(() => {
-    if (!isSearching) return;
-    // Retain the match markers on clear. Turning off the section's search flag reveals the
-    // mounted rows in one change instead of rewriting the hidden attribute on every row.
-    searchKeys = new Set(shelves.flatMap((shelf) => matches[shelf].map(({ key }) => key)));
-  });
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
   let showTable = $derived(open || forceOpen || (isSearching && hasRows));
@@ -183,34 +182,14 @@
     heading?.focus({ preventScroll: true });
   }
 
-  /*
-   * Rows mount only where the reader can reach them: in an open section, on an open shelf, & a
-   * screenful at a time as the reader scrolls toward a shelf's end (#714). Mounting every row
-   * (Furniture has 1,017) made every accessibility walk, from axe & Playwright to a screen reader,
-   * cover the whole ledger. The ledger's own search reaches rows that aren't mounted.
-   */
-  // Every shelf starts empty; its placeholder mounts what's near the screen.
-  const FIRST_ROWS = 0;
-  // A restored row keeps a screenful of rows below it.
-  const SCREEN_ROWS = 24;
-  const ROWS_PER_STEP = 60;
-  const budgets = $state<Record<Shelf, number>>({
-    completed: FIRST_ROWS,
-    notNow: FIRST_ROWS,
-    todo: FIRST_ROWS,
-  });
-  // A search mounts its own matches, counted afresh for each query.
-  const searchBudgets = $state<Record<Shelf, number>>({
-    completed: FIRST_ROWS,
-    notNow: FIRST_ROWS,
-    todo: FIRST_ROWS,
-  });
+  // Keep a bounded set of reading rows mounted while a search temporarily hides them.
+  const readingWindows = $state<Partial<Record<Shelf, RowWindow>>>({});
+  const searchWindows = $state<Partial<Record<Shelf, RowWindow>>>({});
   $effect.pre(() => {
     void toolbarState.searchQuery;
-    untrack(() => {
-      for (const shelf of shelves) searchBudgets[shelf] = FIRST_ROWS;
-    });
+    for (const shelf of shelves) searchWindows[shelf] = undefined;
   });
+
   /*
    * Whether the reader last opened or closed each shelf with its summary. It overrides the shelf's
    * default until something reveals the shelf, and it outlives the fold, so a search that prints
@@ -237,140 +216,162 @@
     );
   }
 
+  async function toggleShelf(event: Event, shelf: Shelf): Promise<void> {
+    const details = event.currentTarget;
+    if (!(details instanceof HTMLDetailsElement)) return;
+    const opened = details.open;
+    if (opened === shelfOpen(shelf)) return;
+    const focused = details.contains(document.activeElement);
+    toggledOpen[shelf] = opened;
+    if (!opened) revealedShelves[shelf] = false;
+    scheduleShelfRead();
+    if (!opened && focused && line) {
+      await tick();
+      const active = document.activeElement;
+      if (line && (active === document.body || details.contains(active))) {
+        head?.querySelector<HTMLElement>(".line-button")?.focus({ preventScroll: true });
+      }
+    }
+  }
+
   function shelfShown(shelf: Shelf): boolean {
     if (!expanded || line) return false;
     return shelf === "todo" || shelfOpen(shelf);
   }
 
-  /*
-   * A shelf that opens mounts its first screenful in the same update, so the rows are there when
-   * the reader looks, without waiting for the placeholder to measure. That includes a shelf an
-   * anchor or Back opens at first render. Only the To do shelves a section opens by default leave
-   * this to the placeholder, which mounts just those near the screen; the Almanac opens hundreds.
-   */
+  // Search can expand hundreds of places. Only explicit opens seed a window before layout.
   const wasShown = untrack((): Record<Shelf, boolean> => ({
     completed: false,
     notNow: false,
     todo: !collapsible && !folded,
   }));
   $effect.pre(() => {
+    const duringSearch = isSearching;
+    const opened = open || forceOpen;
     for (const shelf of shelves) {
       const shown = shelfShown(shelf);
-      if (shown && !wasShown[shelf]) {
+      if (shown && !wasShown[shelf] && (opened || shelf !== "todo")) {
         untrack(() => {
-          budgets[shelf] = Math.max(budgets[shelf], SCREEN_ROWS);
-          if (isSearching) searchBudgets[shelf] = Math.max(searchBudgets[shelf], SCREEN_ROWS);
+          if (duringSearch) {
+            searchWindows[shelf] ??= { start: 0, end: REVEAL_ROWS };
+          } else {
+            readingWindows[shelf] ??= { start: 0, end: REVEAL_ROWS };
+          }
         });
       }
       wasShown[shelf] = shown;
     }
   });
 
-  /** How many of the shelf's first rows stay mounted through a search. */
-  function keptRows(shelf: Shelf): number {
-    return open || forceOpen ? budgets[shelf] : 0;
+  function rowWindow(shelf: Shelf): RowWindow {
+    const window = (isSearching ? searchWindows : readingWindows)[shelf];
+    const count = matches[shelf].length;
+    return { start: Math.min(window?.start ?? 0, count), end: Math.min(window?.end ?? 0, count) };
   }
 
-  function mountedEntries(shelf: Shelf): T[] {
-    if (!shelfShown(shelf)) return [];
-    const entries = groups[shelf];
-    if (!isSearching) return entries.slice(0, budgets[shelf]);
-    const found = new Set(matches[shelf].slice(0, searchBudgets[shelf]).map(({ key }) => key));
-    // Rows the reader had open before the search stay mounted, so clearing it changes nothing else.
-    const kept = keptRows(shelf);
-    return entries.filter((entry, rowIndex) => rowIndex < kept || found.has(entry.key));
+  function mountedEntries(shelf: Shelf, onScreen: readonly T[]): T[] {
+    if (!isSearching) return [...onScreen];
+    const kept = readingWindows[shelf];
+    if (!kept) return [...onScreen];
+    const keys = new Set(onScreen.map(({ key }) => key));
+    return groups[shelf].filter(
+      (entry, rowIndex) => (rowIndex >= kept.start && rowIndex < kept.end) || keys.has(entry.key),
+    );
   }
 
-  /** How many of the shelf's rows wait to mount. */
-  function unmounted(shelf: Shelf): number {
-    if (!shelfShown(shelf)) return 0;
-    if (!isSearching) return Math.max(0, groups[shelf].length - budgets[shelf]);
-    // Matches among the kept rows are already mounted.
-    const kept = new Set(groups[shelf].slice(0, keptRows(shelf)).map(({ key }) => key));
-    return matches[shelf].slice(searchBudgets[shelf]).filter(({ key }) => !kept.has(key)).length;
-  }
+  /** Watch the entire shelf, so a jump can mount rows in the middle of either spacer. */
+  function watchRows(shelf: Shelf, count: number, query: string): Attachment<HTMLElement> {
+    return (element) => {
+      const windows = query ? searchWindows : readingWindows;
+      const before = element.querySelector<HTMLElement>("[data-rows-before]");
+      const after = element.querySelector<HTMLElement>("[data-rows-after]");
+      if (!before || !after) return;
+      const listeners = new AbortController();
+      let nearby = false;
+      let frame: number | undefined;
 
-  function mountMore(shelf: Shelf, count: number): void {
-    if (isSearching) searchBudgets[shelf] += count;
-    else budgets[shelf] += count;
-  }
+      function measure(): void {
+        frame = undefined;
+        if (!before || !after || !nearby) return;
+        const leading = before.getBoundingClientRect();
+        const trailing = after.getBoundingClientRect();
+        const estimate = Number(getComputedStyle(element).getPropertyValue("--ledger-row-pixels"));
+        if (!(estimate > 0)) return;
+        const current = untrack(() => rowWindow(shelf));
+        const next = viewportWindow(
+          count,
+          current,
+          leading.top,
+          leading.bottom,
+          trailing.top,
+          estimate,
+          globalThis.innerHeight,
+        );
+        if (!next && element.contains(document.activeElement)) return;
+        if (windows[shelf]?.start === next?.start && windows[shelf]?.end === next?.end) return;
+        windows[shelf] = next;
+      }
 
-  /*
-   * A placeholder after a shelf's last mounted row holds the unmounted rows' estimated height, so
-   * the page keeps its length and a link or Back lands where it would with every row mounted.
-   * When it appears, & whenever it nears the screen from below, it mounts enough rows to reach a
-   * screen past the bottom edge. The first check runs as the shelf opens, so its first screenful
-   * is there before the next frame.
-   */
-  function mountWhenNear(shelf: Shelf): Attachment<HTMLElement> {
-    return (marker) => {
-      let connected = true;
-      const rowsElement = marker.parentElement;
-      // Rows shorter than the range leave the marker inside it, which reports no change.
-      async function observeAgain(): Promise<void> {
-        await tick();
-        if (!connected) return;
-        observer.unobserve(marker);
-        observer.observe(marker);
+      function schedule(): void {
+        frame ??= requestAnimationFrame(measure);
       }
-      /*
-       * A reader who scrolls up into the placeholder sees what follows it, so rows mount above
-       * them a step at a time, & the page scrolls by what they add to keep that content still.
-       */
-      async function mountAbove(): Promise<void> {
-        const before = rowsElement?.getBoundingClientRect().bottom;
-        mountMore(shelf, ROWS_PER_STEP);
-        await tick();
-        if (!connected || !rowsElement || before === undefined) return;
-        const shift = rowsElement.getBoundingClientRect().bottom - before;
-        if (shift !== 0) globalThis.scrollBy({ behavior: "instant", top: shift });
-      }
-      async function mountNear({ bottom, height, top }: DOMRectReadOnly): Promise<void> {
-        const reach = globalThis.innerHeight * 2 - top;
-        if (bottom <= 0 || reach <= 0) return;
-        if (top < 0) {
-          await mountAbove();
-          return;
-        }
-        const estimate = height / Math.max(1, unmounted(shelf));
-        mountMore(shelf, Math.max(ROWS_PER_STEP, Math.ceil(reach / Math.max(1, estimate))));
-      }
-      async function mountThenObserve(rect: DOMRectReadOnly): Promise<void> {
-        await mountNear(rect);
-        await observeAgain();
-      }
+
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (!entry?.isIntersecting) return;
-          void mountThenObserve(entry.boundingClientRect);
+          if (!entry) return;
+          nearby = entry.isIntersecting;
+          if (nearby) {
+            globalThis.addEventListener("scroll", schedule, {
+              passive: true,
+              signal: listeners.signal,
+            });
+            globalThis.addEventListener("resize", schedule, { signal: listeners.signal });
+            schedule();
+          } else {
+            globalThis.removeEventListener("scroll", schedule);
+            globalThis.removeEventListener("resize", schedule);
+            if (!element.contains(document.activeElement)) windows[shelf] = undefined;
+          }
         },
-        { rootMargin: "0px 0px 100% 0px" },
+        { rootMargin: "100% 0px" },
       );
-      void mountNear(marker.getBoundingClientRect());
-      observer.observe(marker);
+      observer.observe(element);
       return () => {
-        connected = false;
         observer.disconnect();
+        listeners.abort();
+        if (frame !== undefined) cancelAnimationFrame(frame);
       };
     };
   }
 
-  /** Mounts the rows through `key`, opening its shelf, so a restored reading position finds it. */
+  /** Mount the window containing the restored row before the scroll controller measures it. */
   function mountThrough(key: string): void {
     for (const shelf of shelves) {
       const rowIndex = groups[shelf].findIndex((entry) => entry.key === key);
       if (rowIndex === -1) continue;
-      // Writing an unchanged `open` still runs the page's setter, whose history write ends the
-      // restore that asked for these rows.
+      // Writing an unchanged open value runs the page's history setter during its restore.
       if (!open) open = true;
       if (shelf !== "todo") revealShelf(shelf);
-      budgets[shelf] = Math.max(budgets[shelf], rowIndex + SCREEN_ROWS);
-      const matchIndex = matches[shelf].findIndex((entry) => entry.key === key);
-      if (matchIndex !== -1) {
-        searchBudgets[shelf] = Math.max(searchBudgets[shelf], matchIndex + SCREEN_ROWS);
+      const window = readingWindows[shelf];
+      if (!window || rowIndex < window.start || rowIndex >= window.end) {
+        readingWindows[shelf] = windowAround(rowIndex, groups[shelf].length);
       }
       return;
     }
+  }
+
+  async function focusPage(event: MouseEvent, shelf: Shelf, rowIndex: number): Promise<void> {
+    const trigger = event.currentTarget;
+    const entries = matches[shelf];
+    const entry = entries[rowIndex];
+    if (!(trigger instanceof HTMLElement) || !entry) return;
+    const list = trigger.closest(".row-window");
+    const windows = isSearching ? searchWindows : readingWindows;
+    windows[shelf] = windowAround(rowIndex, entries.length);
+    await tick();
+    const target = list?.querySelector(`[data-ledger-key="${CSS.escape(entry.key)}"]`);
+    target?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+    target?.scrollIntoView({ behavior: "instant", block: "center" });
   }
 
   function onMountRequest(event: Event): void {
@@ -645,13 +646,7 @@
             data-shelf={shelf}
             hidden={entries.length === 0}
             open={shelfOpen(shelf)}
-            ontoggle={(event) => {
-              const shelfOpen = event.currentTarget.open;
-              toggledOpen[shelf] = shelfOpen;
-              // A shelf the reader closes stays closed, & its rows unmount.
-              if (!shelfOpen) revealedShelves[shelf] = false;
-              scheduleShelfRead();
-            }}
+            ontoggle={(event) => void toggleShelf(event, shelf)}
           >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
               {#if expanded}
@@ -683,6 +678,10 @@
   {@const columns = showTable ? timetable(groups[shelf]) : []}
   {@const discovery = showTable && groups[shelf].some((entry) => entry.hiddenCount > 0)}
   {@const highlight = highlights[shelf]}
+  {@const entries = matches[shelf]}
+  {@const window = rowWindow(shelf)}
+  {@const onScreen = entries.slice(window.start, window.end)}
+  {@const visibleKeys = new Set(onScreen.map(({ key }) => key))}
   <div
     class="ledger-table"
     data-tracker-list
@@ -717,33 +716,55 @@
         {/each}
       </div>
     {/if}
-    {#each mountedEntries(shelf) as entry (entry.key)}
-      {@const highlighted =
-        highlight !== undefined &&
-        columns.includes(highlight) &&
-        // A head that turned into a label can't be pressed off, so its highlight lapses.
-        picksOut(groups[shelf], highlight) &&
-        entry.visibleSources.some(
-          (source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === highlight,
-        )}
-      {@render row(
-        entry,
-        shelf,
-        columns,
-        discovery,
-        highlighted,
-        open || forceOpen || (isSearching && visible(entry)),
-        (event) => void revealFindMatch(event, shelf),
-        searchKeys !== undefined && !searchKeys.has(entry.key),
-      )}
-    {/each}
-    {#if unmounted(shelf) > 0}
+    {#if shelfShown(shelf)}
       <div
-        class="mount-marker"
-        aria-hidden="true"
-        style:--unmounted={unmounted(shelf)}
-        {@attach mountWhenNear(shelf)}
-      ></div>
+        class="row-window"
+        data-has-more={window.end < entries.length || undefined}
+        {@attach entries.length > 0
+          ? watchRows(shelf, entries.length, toolbarState.searchQuery)
+          : undefined}
+      >
+        <div class="row-spacer" data-rows-before style:--unmounted={window.start}>
+          {#if window.start > 0}
+            <button
+              class="row-page previous"
+              type="button"
+              onclick={(event) => void focusPage(event, shelf, window.start - 1)}
+              >Previous rows</button
+            >
+          {/if}
+        </div>
+        {#each mountedEntries(shelf, onScreen) as entry (entry.key)}
+          {@const highlighted =
+            highlight !== undefined &&
+            columns.includes(highlight) &&
+            // A head that turned into a label can't be pressed off, so its highlight lapses.
+            picksOut(groups[shelf], highlight) &&
+            entry.visibleSources.some(
+              (source) =>
+                toolbarState.showsSource(source) && ledgerSourceFamily(source) === highlight,
+            )}
+          {@render row(
+            entry,
+            shelf,
+            columns,
+            discovery,
+            highlighted,
+            open || forceOpen || (isSearching && visible(entry)),
+            (event) => void revealFindMatch(event, shelf),
+            isSearching && !visibleKeys.has(entry.key),
+          )}
+        {/each}
+        <div class="row-spacer" data-rows-after style:--unmounted={entries.length - window.end}>
+          {#if window.end > 0 && window.end < entries.length}
+            <button
+              class="row-page next"
+              type="button"
+              onclick={(event) => void focusPage(event, shelf, window.end)}>Next rows</button
+            >
+          {/if}
+        </div>
+      </div>
     {/if}
   </div>
 {/snippet}
@@ -1002,23 +1023,39 @@
     --ledger-row-tracks: auto auto minmax(0, 1fr);
   }
 
-  /*
-   * The unmounted rows' estimated height: the size a row assumes before it renders, plus its rule.
-   * The queries match ledger-row.svelte's.
-   */
-  .mount-marker {
-    block-size: calc(var(--unmounted) * (var(--tracker-row-min-size) + 1px));
+  /* The intrinsic row size plus its rule, matching ledger-row.svelte. */
+  .row-window {
+    --ledger-row-pixels: 37;
   }
 
-  @media (pointer: fine) and (hover: hover) {
-    .mount-marker {
-      --tracker-row-min-size: 36px;
-    }
+  .row-spacer {
+    position: relative;
+    block-size: calc(var(--unmounted) * var(--ledger-row-pixels) * 1px);
+  }
+
+  .row-page {
+    position: absolute;
+    inset-inline-start: 0;
+    min-block-size: calc(var(--ledger-row-pixels) * 1px);
+    padding-inline: 0.5rem;
+    color: var(--color-guide-voice);
+    font-family: var(--font-controls);
+    font-size: var(--text-sm);
+    text-decoration: underline dotted;
+    text-underline-offset: 0.25em;
+  }
+
+  .previous {
+    inset-block-end: 0;
+  }
+
+  .next {
+    inset-block-start: 0;
   }
 
   @media (any-pointer: coarse), (hover: none) {
-    .mount-marker {
-      --tracker-row-min-size: 44px;
+    .row-window {
+      --ledger-row-pixels: 45;
     }
   }
 
@@ -1138,10 +1175,10 @@
 
   /* The final row hands off to the shelf fold's own dashed rule. */
   section:not([data-ledger-searching])
-    .ledger-table
+    .row-window:not([data-has-more])
     > :global(:nth-last-child(1 of [data-ledger-row]:not([hidden]))),
   section[data-ledger-searching]
-    .ledger-table
+    .row-window:not([data-has-more])
     > :global(:nth-last-child(1 of [data-ledger-row]:not([hidden], [data-ledger-search-miss]))) {
     border-block-end: 0;
   }

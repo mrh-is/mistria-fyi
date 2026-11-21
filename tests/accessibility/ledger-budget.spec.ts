@@ -6,7 +6,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
-import { settleLayout } from "./support/scenarios.js";
+import { openSearch, settleLayout } from "./support/scenarios.js";
 
 import type { Page } from "@playwright/test";
 
@@ -71,7 +71,9 @@ test("the source ledger mounts no rows until a place opens", async ({ page }) =>
   // measured about 52,000.
   // oxlint-disable-next-line playwright/no-raw-locators -- Place boxes have no role of their own.
   const places = page.locator("[data-source-section]");
-  await expect.poll(() => places.count()).toBeGreaterThan(800);
+  await expect
+    .poll(() => page.evaluate(() => document.querySelectorAll("[data-source-section]").length))
+    .toBeGreaterThan(800);
   // oxlint-disable-next-line playwright/no-raw-locators -- Count row boxes across the page.
   const rows = page.locator("[data-ledger-fact]");
   await settleLayout(page);
@@ -81,4 +83,84 @@ test("the source ledger mounts no rows until a place opens", async ({ page }) =>
   await place.getByRole("button", { expanded: false }).first().click();
   // oxlint-disable-next-line playwright/no-raw-locators -- Count the opened place's row boxes.
   await expect.poll(() => place.locator("[data-ledger-fact]").count()).toBeGreaterThan(0);
+});
+
+test("a broad source search keeps the row budget", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/everything?group=source");
+  await openSearch(page, "a");
+  await expect
+    .poll(() => page.evaluate(() => document.querySelectorAll("[data-ledger-fact]").length))
+    .toBeGreaterThan(0);
+  await settleLayout(page);
+  const rows = await page.evaluate(() => document.querySelectorAll("[data-ledger-fact]").length);
+  expect(rows).toBeLessThanOrEqual(200);
+});
+
+test("jumping into Furniture mounts rows near the landing point", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const rows = furniture.getByRole("button", { name: /^Check (?!spoilered item)/u });
+  const first = (await rows.first().getAttribute("aria-label")) ?? "";
+  expect(first).toMatch(/^Check /u);
+  await furniture.evaluate((section) => {
+    const shelf = section.querySelector('[data-shelf="todo"]');
+    if (!shelf) throw new Error("Furniture To do shelf is missing.");
+    const { height, top } = shelf.getBoundingClientRect();
+    globalThis.scrollBy({ behavior: "instant", top: top + height * 0.7 });
+  });
+  await expect
+    .poll(() =>
+      furniture.evaluate((section) =>
+        [...section.querySelectorAll("[data-ledger-row]")].some((row) => {
+          const { bottom, top } = row.getBoundingClientRect();
+          return bottom > 150 && top < globalThis.innerHeight;
+        }),
+      ),
+    )
+    .toBe(true);
+  await expect(furniture.getByRole("button", { exact: true, name: first })).toHaveCount(0);
+  expect(await rows.count()).toBeLessThanOrEqual(100);
+});
+
+test("the next row control moves focus to the next unmounted entry", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const next = furniture.getByRole("button", { exact: true, name: "Next rows" }).first();
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
+  await expect(next).toBeAttached();
+  await next.press("Enter");
+  await expect
+    .poll(() =>
+      furniture.evaluate((section) => {
+        const focused = document.activeElement;
+        if (!focused || !section.contains(focused)) return "";
+        const { bottom, top } = focused.getBoundingClientRect();
+        return top >= 0 && bottom <= globalThis.innerHeight
+          ? focused.getAttribute("aria-label")
+          : "";
+      }),
+    )
+    .toMatch(/^Check /u);
+});
+
+test("closing a search result shelf returns focus to its section button", async ({ page }) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: ["clay_amphora"] } }),
+  );
+  await gotoApplication(page, "/almanac");
+  await openSearch(page, "Clay Amphora");
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  const result = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
+  await expect(result).toHaveAttribute("aria-expanded", "false");
+  await result.press("Enter");
+  // oxlint-disable-next-line playwright/no-raw-locators -- Chromium reports an open summary as a disclosure, not a button.
+  const shelf = artifacts.locator("details[open] > summary").filter({ hasText: "Completed" });
+  await expect(shelf).toBeVisible();
+  await shelf.press("Space");
+  await expect(result).toBeFocused();
 });

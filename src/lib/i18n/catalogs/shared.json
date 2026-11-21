@@ -5441,6 +5441,28 @@
   },
   {
     "translations": {
+      "en": "Next rows",
+      "ja": "次の項目",
+      "zh-Hans": "后续条目",
+      "zh-Hant": "後續項目",
+      "es": "Entradas siguientes",
+      "fr": "Entrées suivantes",
+      "ko": "다음 항목",
+      "ru": "Следующие записи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "No items found",
       "ja": "アイテムが見つかりません",
       "zh-Hans": "未找到任何物品",
@@ -6220,6 +6242,28 @@
     "references": [
       {
         "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Previous rows",
+      "ja": "前の項目",
+      "zh-Hans": "前面的条目",
+      "zh-Hant": "前面的項目",
+      "es": "Entradas anteriores",
+      "fr": "Entrées précédentes",
+      "ko": "이전 항목",
+      "ru": "Предыдущие записи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]

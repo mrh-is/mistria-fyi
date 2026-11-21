@@ -8,11 +8,11 @@ import {
 } from "./support/application-state.js";
 import {
   closeSearch,
-  mountWholeShelf,
   openSearch,
   openVisibilityPanel,
   scrollToSection,
   settleLayout,
+  visitLedgerShelf,
 } from "./support/scenarios.js";
 
 /*
@@ -101,7 +101,8 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   const rows = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ });
-  const distantRow = rows.nth(50);
+  const label = (await rows.last().getAttribute("aria-label")) ?? "";
+  const distantRow = furniture.getByRole("button", { exact: true, name: label });
   const spriteMask = () =>
     distantRow.evaluate((button) =>
       button
@@ -172,6 +173,8 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await gotoApplication(page, "/almanac");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   await scrollToSection(furniture);
+  await page.mouse.wheel(0, 7000);
+  await expect(furniture.getByRole("button", { name: "Previous rows" }).first()).toBeAttached();
   const check = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
   const label = (await check.getAttribute("aria-label")) ?? "";
   const row = furniture.getByRole("button", { exact: true, name: label });
@@ -192,6 +195,7 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await page.goBack();
   await expect(row).toBeInViewport();
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
+  expect(await furniture.getByRole("button", { name: /^Check /u }).count()).toBeLessThan(100);
 });
 
 test("clearing a zero-match search restores the same Furniture row element", async ({ page }) => {
@@ -250,8 +254,8 @@ test("the Almanac section head scrolls away in a short window", async ({ page })
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const row = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
-  await row.scrollIntoViewIfNeeded();
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeAttached();
+  await page.mouse.wheel(0, 800);
   await expect(
     furniture.getByRole("heading", { exact: true, name: "Furniture" }),
   ).not.toBeInViewport();
@@ -402,10 +406,8 @@ test("column heads stick below the section head's measured height at book widths
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const row = furniture.getByRole("button", { name: /^Check / }).nth(40);
-  await row.evaluate((button) => {
-    button.scrollIntoView({ block: "center" });
-  });
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeAttached();
+  await page.mouse.wheel(0, 1500);
   await expect
     .poll(() =>
       furniture.evaluate((section) => {
@@ -516,22 +518,24 @@ test("a row whose source cells are blank still says where to get it", async ({ p
   );
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  await mountWholeShelf(furniture, "todo");
-  const audit = await furniture.evaluate((section) => {
-    const rows = [...section.querySelectorAll('[data-shelf="todo"] [data-ledger-row]')];
-    const blankCells = rows.filter((row) =>
-      [...row.querySelectorAll(".cell")].every(
-        (cell) => !cell.textContent.trim() && !cell.querySelector("svg"),
-      ),
+  const blank = new Map<string, boolean>();
+  await visitLedgerShelf(furniture, "todo", async (shelf) => {
+    const rows = await shelf.evaluate((element) =>
+      [...element.querySelectorAll<HTMLElement>("[data-ledger-row]")]
+        .filter((row) =>
+          [...row.querySelectorAll(".cell")].every(
+            (cell) => !cell.textContent.trim() && !cell.querySelector("svg"),
+          ),
+        )
+        .map(
+          (row) =>
+            [row.dataset.ledgerKey ?? "", Boolean(row.querySelector(".also, .where"))] as const,
+        ),
     );
-    const silent = blankCells.filter((row) => !row.querySelector(".also, .where"));
-    return {
-      blank: blankCells.length,
-      silent: silent.map((row) => row.textContent.trim()),
-    };
+    for (const [key, hasSource] of rows) blank.set(key, hasSource);
   });
-  expect(audit.blank).toBeGreaterThan(0);
-  expect(audit.silent).toEqual([]);
+  expect(blank.size).toBeGreaterThan(0);
+  expect([...blank.entries()].filter(([, hasSource]) => !hasSource)).toEqual([]);
 
   // A single source its cell already prints leaves nothing for the sheet, so the row doesn't open.
   const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
@@ -574,15 +578,22 @@ test.describe("Almanac rows on a phone", () => {
     await gotoApplication(page, "/almanac#furniture");
     const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
     await furniture.getByText("Not now", { exact: true }).click();
-    const readOrder = () =>
-      furniture.evaluate((section) =>
-        [...section.querySelectorAll('[data-shelf="notNow"] [data-ledger-row]')].map((row) =>
-          row.querySelector(".spoiler-cover") ? "covered" : "plain",
+    const visited = new Map<string, string>();
+    await visitLedgerShelf(furniture, "notNow", async (shelf) => {
+      const rows = await shelf.evaluate((element) =>
+        [...element.querySelectorAll<HTMLElement>("[data-ledger-row]")].map(
+          (row) =>
+            [
+              row.dataset.ledgerKey ?? "",
+              row.querySelector(".spoiler-cover") ? "covered" : "plain",
+            ] as const,
         ),
       );
-    await mountWholeShelf(furniture, "notNow");
-    await expect.poll(readOrder).toContain("covered");
-    const order = await readOrder();
+      for (const [key, kind] of rows) visited.set(key, kind);
+    });
+    const order = [...visited.values()];
+    expect(order).toContain("covered");
+    expect(order).toContain("plain");
     expect(order.indexOf("covered")).toBeGreaterThan(order.lastIndexOf("plain"));
   });
 });

@@ -64,27 +64,28 @@ export function focusedVillagerRecord(page: Page, prefix: string): Locator {
   return page.locator(`[id^="villager-${prefix}"]:focus`);
 }
 
-/**
- * Mounts every row of one ledger shelf the way a reader would: by scrolling its end into view
- * until no rows are left to mount. Ledger rows mount near the screen (#714), so a test that audits
- * a whole shelf calls this first.
- */
-export async function mountWholeShelf(section: Locator, shelf: "notNow" | "todo"): Promise<void> {
-  // oxlint-disable-next-line playwright/no-raw-locators -- The marker is a layout box with no role.
-  const marker = section.locator(`[data-shelf="${shelf}"] .mount-marker`);
-  // oxlint-disable-next-line playwright/no-raw-locators -- Count the shelf's mounted rows.
-  const rows = section.locator(`[data-shelf="${shelf}"] [data-ledger-fact]`);
-  await expect(rows.first()).toBeAttached();
-  // oxlint-disable-next-line no-await-in-loop, playwright/no-conditional-in-test -- Each step waits on the last.
-  while ((await marker.count()) > 0) {
-    // oxlint-disable-next-line no-await-in-loop -- Each step mounts the rows the next one scrolls past.
-    const before = await rows.count();
-    // oxlint-disable-next-line no-await-in-loop -- As above.
-    await marker.evaluate((element) => {
-      element.scrollIntoView({ block: "start" });
+/** Visit each screen of a shelf in order, including rows already mounted just outside the view. */
+export async function visitLedgerShelf(
+  section: Locator,
+  shelf: "notNow" | "todo",
+  visit: (shelf: Locator) => Promise<void>,
+): Promise<void> {
+  // oxlint-disable-next-line playwright/no-raw-locators -- The shelf itself can be a layout box.
+  const box = section.locator(`[data-shelf="${shelf}"]`);
+  const page = section.page();
+  await box.evaluate((element) => {
+    element.scrollIntoView({ block: "start" });
+  });
+  // oxlint-disable-next-line no-await-in-loop -- Read each mounted window before scrolling to the next.
+  for (;;) {
+    await settleLayout(page);
+    await visit(box);
+    // oxlint-disable-next-line no-await-in-loop -- Stop after reading the last screen of the shelf.
+    const bottom = await box.evaluate((element) => element.getBoundingClientRect().bottom);
+    if (bottom <= (await page.evaluate(() => globalThis.innerHeight))) return;
+    await page.evaluate(() => {
+      globalThis.scrollBy({ behavior: "instant", top: globalThis.innerHeight * 0.8 });
     });
-    // oxlint-disable-next-line no-await-in-loop -- As above.
-    await expect.poll(() => rows.count()).toBeGreaterThan(before);
   }
 }
 

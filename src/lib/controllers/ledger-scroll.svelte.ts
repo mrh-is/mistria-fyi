@@ -203,7 +203,7 @@ export function useLedgerScroll(id: string): () => boolean {
 
     const section = document.getElementById(position.section);
     if (!section || !ledgerContent()?.contains(section)) return;
-    // Rows mount near the screen, so ask the row's section to mount through it first.
+    // Rows mount near the screen, so ask the section to mount a window around the target first.
     if (position.key) {
       const sections = section.matches("[data-ledger-section]")
         ? [section]

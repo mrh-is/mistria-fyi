@@ -34,7 +34,7 @@ export function getLedgerSectionContext(): LedgerSectionContext | undefined {
 }
 
 /**
- * Asks a ledger section to mount the rows through the row whose key is the event's `detail`, as
+ * Asks a ledger section to mount the window around the row whose key is the event's `detail`, as
  * Back & search clear do before restoring the reading position on that row.
  */
 export const LEDGER_MOUNT_EVENT = "ledgermount";
