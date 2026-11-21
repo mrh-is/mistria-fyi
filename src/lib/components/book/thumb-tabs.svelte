@@ -37,6 +37,7 @@
   inert={inert || undefined}
 >
   <RailTool
+    class="thumb-tabs__names"
     aria-label="Show tab names"
     aria-pressed={labeled}
     onclick={() => {
@@ -169,6 +170,11 @@
     transform: translate(0, -50%);
   }
 
+  /*
+   * While names show, they're what you're reading: they sit over the page's edge, the only room
+   * beside the tabs, & the page header's ribbon steps aside for them (F14, book-shell).
+   */
+
   /* Labeled names share the tab's color down their edge, so a name reads as its tab's. */
   .thumb-tabs--labeled .thumb-tab__name {
     border-right: 3px solid var(--thumb-tab-color);
@@ -188,12 +194,28 @@
       opacity: 1;
       transform: translate(0, -50%);
     }
+
+    /*
+     * The page header already names the page you're on. Without this, the tab you just clicked
+     * named itself over the new page's header once the turn ended, under the resting pointer (F14).
+     */
+    .thumb-tab[aria-current="page"]:hover:not(:focus-visible) .thumb-tab__name {
+      opacity: 0;
+      transition: none;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .thumb-tab__face,
     .thumb-tab__name {
       transition: none;
+    }
+  }
+
+  /* With a mouse, hovering a tab names it, so only touch screens need the toggle. */
+  @media (hover: hover) and (pointer: fine) {
+    .thumb-tabs :global(.thumb-tabs__names) {
+      display: none;
     }
   }
 </style>

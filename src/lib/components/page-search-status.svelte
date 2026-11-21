@@ -1,11 +1,30 @@
+<script lang="ts" module>
+  // How many ledgers are showing the note in their own column, so the page-level copy stands down.
+  const ledgerHosts = $state({ count: 0 });
+</script>
+
 <script lang="ts">
+  import { untrack } from "svelte";
+
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import plural from "#lib/i18n/catalogs/plural.js";
   import { filterNote, shelfLabel } from "#lib/presentation/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-  import { messageParts } from "#lib/utils/message-parts.js";
 
-  import type { Shelf } from "#lib/engine/shelves.js";
+  /**
+   * `page` sits above the page's content & owns the live region. `ledger` sits on the ledger's
+   * left edge, beside its index rail, and offers to clear the filters.
+   */
+  let { placement = "page" }: { placement?: "ledger" | "page" } = $props();
+
+  if (untrack(() => placement) === "ledger") {
+    $effect(() => {
+      untrack(() => (ledgerHosts.count += 1));
+      return () => {
+        untrack(() => (ledgerHosts.count -= 1));
+      };
+    });
+  }
 
   let query = $derived(toolbarState.searchQuery.trim());
   // Reading the count walks the page's rows, so it waits until there's a note to give.
@@ -15,11 +34,9 @@
     count && !toolbarState.searchShowsAll ? filterNote(count.filtered) : undefined,
   );
   let nothingLeft = $derived(count?.visible === 0);
-
-  function showFilteredRows(): void {
-    if (query) toolbarState.searchShowsAll = true;
-    else toolbarState.resetSourceFilters();
-  }
+  let message = $derived(
+    note || !query ? "Your filters leave nothing on this page." : "No items found",
+  );
 
   let announcement = $derived.by(() => {
     if (!count) return "";
@@ -41,66 +58,50 @@
   });
 </script>
 
-{#snippet shelfName(shelf: Shelf)}<span class="page-search-status__shelf">{shelfLabel(shelf)}</span
-  >{/snippet}
+{#if placement === "page"}
+  <!-- Stays mounted, because a live region announces changes only once it's on the page. -->
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
+{/if}
 
-<!-- Stays mounted, because a live region announces changes only once it's on the page. -->
-<p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
-
-{#if count}
+<!--
+  Filters are the reader's own, set this visit, & the filter button shows they're on. So the page
+  only speaks up when nothing is left to show.
+-->
+{#if nothingLeft && placement === "ledger"}
+  <div class="ledger-empty" data-page-search-status>
+    <p>{message}</p>
+    {#if toolbarState.isSourceFilterNarrowing}
+      <button type="button" onclick={() => toolbarState.resetSourceFilters()}>Clear filters</button>
+    {/if}
+  </div>
+{:else if nothingLeft && ledgerHosts.count === 0}
   <div class="page-search-status" data-page-search-status>
-    {#if toolbarState.searchShowsAll}
-      <p>
-        Your filters are off for this search.
-        <button
-          type="button"
-          onclick={() => {
-            toolbarState.searchShowsAll = false;
-          }}>Turn them back on</button
-        >
-      </p>
-    {:else if note}
-      {@const shelf = note.shelf}
-      <p>
-        {#each messageParts( (slot) => plural( note.count, [`${note.count} ${slot("shelf")} item is being filtered out.`, `${note.count} ${slot("shelf")} items are being filtered out.`] ) ) as part, index (index)}
-          {#if typeof part === "string"}{part}{:else}{@render shelfName(shelf)}{/if}
-        {/each}
-        <button type="button" onclick={showFilteredRows}>Show anyway</button>
-      </p>
-    {/if}
-    {#if nothingLeft && !note}
-      <TrackerEmptyState
-        message={query ? "No items found" : "Your filters leave nothing on this page."}
-      />
-    {/if}
+    <TrackerEmptyState {message} />
   </div>
 {/if}
 
 <style>
   .page-search-status {
-    display: grid;
-    gap: 4px;
     padding-block: 4px;
     color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-xs);
   }
 
-  .page-search-status p {
-    margin: 0;
+  .ledger-empty {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding-block: 0.75rem;
+    color: var(--color-ink-muted);
+    font-family: var(--font-body);
   }
 
-  /* The shelf's heading typeface, in the note's own color. */
-  .page-search-status__shelf {
-    font-size: var(--text-2xs);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .page-search-status button {
-    min-height: 44px;
-    color: var(--color-ink);
+  .ledger-empty button {
+    min-block-size: 44px;
+    color: var(--color-guide-voice);
     text-decoration: underline;
-    text-underline-offset: 3px;
+    text-underline-offset: 0.2em;
   }
 </style>

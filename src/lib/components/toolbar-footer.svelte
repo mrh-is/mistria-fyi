@@ -5,8 +5,9 @@
   import IconPlugConnected from "@tabler/icons-svelte-runes/icons/plug-connected";
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconSearch from "@tabler/icons-svelte-runes/icons/search";
-  import { flushSync, onDestroy, tick, untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
+  import { MediaQuery } from "svelte/reactivity";
   import { fade } from "svelte/transition";
 
   import { getBookPanels } from "#lib/components/book/book-panels.svelte.js";
@@ -19,9 +20,7 @@
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
-  import { Input } from "#lib/components/ui/input/index.js";
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
-  import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { stripLocale } from "#lib/i18n/locale-path.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -42,6 +41,36 @@
   const panels = getBookPanels();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(stripLocale(page.url.pathname));
+  let searchPlaceholder = $derived.by(() => {
+    switch (pathname) {
+      case "/":
+        return "Search the field guide";
+      case "/almanac":
+        return "Search the almanac";
+      case "/animals":
+        return "Search animals";
+      case "/cosmetics":
+        return "Search cosmetics";
+      case "/everything":
+        return "Search everything";
+      case "/mines":
+        return "Search the mines";
+      case "/museum":
+        return "Search the museum";
+      case "/quests":
+        return "Search quests";
+      case "/recipes":
+        return "Search recipes";
+      case "/renown":
+        return "Search renown";
+      case "/skills":
+        return "Search skills";
+      case "/villagers":
+        return "Search villagers";
+      default:
+        return "Search items";
+    }
+  });
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
   let toolbarAccent = $derived(metadata.accent);
 
@@ -75,6 +104,30 @@
 
   let panelElement = $state<HTMLElement | null>(null);
 
+  // At book widths a panel opens from the control that opened it, not from the screen's foot.
+  const bookWidth = new MediaQuery("(min-width: 48rem) and (min-height: 34rem)", false);
+  let viewportTick = $state(0);
+  let panelAnchor = $derived.by(() => {
+    void viewportTick;
+    const opener = panels.active === null ? null : panels.opener;
+    if (!bookWidth.current || !opener?.isConnected) return "";
+    const rect = opener.getBoundingClientRect();
+    const right = Math.max(8, globalThis.innerWidth - rect.right);
+    const below = rect.top < globalThis.innerHeight / 2;
+    const vertical = below
+      ? /* @wc-ignore */ `top: ${rect.bottom + 8}px; bottom: auto;`
+      : /* @wc-ignore */ `top: auto; bottom: ${globalThis.innerHeight - rect.top + 8}px;`;
+    return /* @wc-ignore */ `${vertical} left: auto; right: ${right}px; inline-size: min(24rem, calc(100vw - 1rem)); max-inline-size: none; margin: 0; padding: 0;`;
+  });
+
+  /** Room for two stacked toasts & their margins, in pixels. */
+  const TOAST_STACK_ROOM = 160;
+
+  /** Whether an open panel hangs from the header row, clear of the toasts at the screen's foot. */
+  function panelFromHeader(panel: HTMLElement): boolean {
+    return bookWidth.current && panel.offsetTop < globalThis.innerHeight / 2;
+  }
+
   function focusedElement(): HTMLElement | null {
     return document.activeElement instanceof HTMLElement ? document.activeElement : null;
   }
@@ -107,11 +160,18 @@
 
   // Keeps toasts (an Undo, say) from covering the open panel's controls. The fixed panel's
   // `offsetTop` is viewport-relative and ignores its fly-in transform, unlike the bounding box.
+  // Toasts stay at the foot instead when a panel opens down from the header at book widths, which
+  // leaves the foot free (F22), or when a panel leaves too little room above it for a stack of two
+  // toasts, as Contents does on a landscape phone: there they'd climb off the screen (F32).
   $effect(() => {
     const panel = panelElement;
     if (!panel) return;
     const measure = (): void => {
-      toolbarState.panelClearance = Math.max(0, globalThis.innerHeight - panel.offsetTop);
+      const clearance = Math.max(0, globalThis.innerHeight - panel.offsetTop);
+      toolbarState.panelClearance =
+        panelFromHeader(panel) || clearance > globalThis.innerHeight - TOAST_STACK_ROOM
+          ? 0
+          : clearance;
     };
     const observer = new ResizeObserver(measure);
     observer.observe(panel);
@@ -136,11 +196,6 @@
     feedbackContext.reset();
   });
 
-  async function afterTick(run: () => void): Promise<void> {
-    await tick();
-    run();
-  }
-
   function closePanel(): void {
     panels.close();
   }
@@ -158,22 +213,8 @@
   });
 
   let searchInput = $state<HTMLInputElement | null>(null);
-  let searchOpener: HTMLElement | null = null;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(debounceTimer));
-
-  function closeSearch(): void {
-    clearTimeout(debounceTimer);
-    toolbarState.closeSearch();
-    const focusTarget = searchOpener;
-    searchOpener = null;
-    void afterTick(() => {
-      const restoredTarget = focusTarget?.isConnected
-        ? focusTarget
-        : document.querySelector<HTMLElement>("[data-toolbar-search-trigger]");
-      restoredTarget?.focus();
-    });
-  }
 
   function handleSearchInput(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -183,12 +224,27 @@
     }, 200);
   }
 
-  function openSearch(): void {
+  // The field is always there; focusing it is what opens a search (Home lifts its layout for it).
+  function focusSearch(): void {
     panels.close(false);
-    searchOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     toolbarState.openSearch();
-    flushSync();
-    searchInput?.focus();
+  }
+
+  function blurSearch(): void {
+    if (!toolbarState.searchQuery) toolbarState.searchOpen = false;
+  }
+
+  function clearSearch(): void {
+    clearTimeout(debounceTimer);
+    toolbarState.setSearchQuery("");
+    if (searchInput) searchInput.value = "";
+  }
+
+  function handleSearchKey(event: KeyboardEvent): void {
+    if (event.key !== /* @wc-ignore */ "Escape") return;
+    const hadQuery = Boolean(searchInput?.value);
+    clearSearch();
+    if (!hadQuery || (pathname !== "/almanac" && pathname !== "/everything")) searchInput?.blur();
   }
 
   let filtersActive = $derived(
@@ -224,155 +280,137 @@
 
   <nav
     aria-label="Field guide tools"
-    class="toolbar pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
+    class="toolbar fixed right-0 bottom-0 left-0 z-[var(--z-toolbar)]"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
   >
-    {#if toolbarState.searchOpen}
-      <div class="search-bar pointer-events-auto flex items-center gap-2 p-1 shadow-lg">
-        <div class="relative flex-1">
-          <IconSearch
-            class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          />
+    <div class="toolbar__row">
+      <!-- Contents holds the thumb tabs, Send a note, & Settings; at book widths the rail does. -->
+      <button
+        class="floating-tool floating-tool--phone {panels.active === 'contents'
+          ? 'floating-tool--active'
+          : ''}"
+        type="button"
+        aria-label="Contents"
+        aria-expanded={panels.active === "contents"}
+        aria-controls="contents-panel"
+        data-panel-entry="contents feedback settings"
+        onclick={(event) => {
+          panels.toggle("contents", event.currentTarget);
+        }}
+      >
+        <IconListDetails class="size-5" />
+      </button>
+      {#if syncing}
+        <div class="sync-tool">
+          {#if syncReceiver.gapDays !== undefined && panels.active !== "sync"}
+            <p class="sync-tool__slip">
+              {`Haven’t heard from your game in ${syncReceiver.gapDays} days`}
+            </p>
+          {/if}
+          <button
+            class="floating-tool {panels.active === 'sync' ? 'floating-tool--active' : ''}"
+            type="button"
+            aria-label={`Save file sync: ${syncStatusLabel}`}
+            aria-expanded={panels.active === "sync"}
+            aria-controls="sync-status-panel"
+            onclick={(event) => {
+              panels.toggle("sync", event.currentTarget);
+            }}
+          >
+            <IconPlugConnected class="size-5" />
+            {#if syncSpeaksUp}<span class="sync-tool__dot" aria-hidden="true"></span>{/if}
+          </button>
+        </div>
+      {/if}
+
+      {#if toolbar.search}
+        <div class="search-field" data-toolbar-search>
+          <IconSearch class="search-field__icon size-4" />
           <label class="sr-only" for="tracker-search">Search items</label>
-          <Input
-            bind:ref={searchInput}
-            class="min-h-11 px-9"
+          <input
+            bind:this={searchInput}
+            class="search-field__input"
             id="tracker-search"
-            placeholder="Search items…"
+            placeholder={searchPlaceholder}
             type="text"
+            enterkeyhint="search"
+            autocomplete="off"
             value={toolbarState.searchQuery}
             oninput={handleSearchInput}
+            onfocus={focusSearch}
+            onblur={blurSearch}
+            onkeydown={handleSearchKey}
           />
           {#if toolbarState.searchQuery}
             <button
-              class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+              class="search-field__clear"
               type="button"
               aria-label="Clear search"
-              onclick={() => {
-                toolbarState.setSearchQuery("");
-              }}>×</button
+              onclick={clearSearch}>×</button
             >
           {/if}
         </div>
-        <button
-          class="min-h-11 px-2 font-controls text-xs text-muted-foreground hover:text-foreground"
-          type="button"
-          onclick={closeSearch}>{getName("ui", "cancel", page.data.locale)}</button
-        >
-      </div>
-    {:else}
-      <div class="flex items-end justify-between gap-3">
-        <div class="flex items-center gap-1.5">
-          <!-- Contents holds the thumb tabs, Send a note, & Settings; at book widths the rail does. -->
-          <button
-            class="floating-tool floating-tool--phone {panels.active === 'contents'
-              ? 'floating-tool--active'
-              : ''}"
-            type="button"
-            aria-label="Contents"
-            aria-expanded={panels.active === "contents"}
-            aria-controls="contents-panel"
-            data-panel-entry="contents feedback settings"
-            onclick={(event) => {
-              panels.toggle("contents", event.currentTarget);
-            }}
-          >
-            <IconListDetails class="size-5" />
-          </button>
-          {#if syncing}
-            <div class="sync-tool">
-              {#if syncReceiver.gapDays !== undefined && panels.active !== "sync"}
-                <p class="sync-tool__slip">
-                  {`Haven’t heard from your game in ${syncReceiver.gapDays} days`}
-                </p>
-              {/if}
-              <button
-                class="floating-tool {panels.active === 'sync' ? 'floating-tool--active' : ''}"
-                type="button"
-                aria-label={`Save file sync: ${syncStatusLabel}`}
-                aria-expanded={panels.active === "sync"}
-                aria-controls="sync-status-panel"
-                onclick={(event) => {
-                  panels.toggle("sync", event.currentTarget);
-                }}
-              >
-                <IconPlugConnected class="size-5" />
-                {#if syncSpeaksUp}<span class="sync-tool__dot" aria-hidden="true"></span>{/if}
-              </button>
-            </div>
-          {/if}
-        </div>
+      {:else}
+        <span class="toolbar__spacer"></span>
+      {/if}
 
-        <div class="flex items-center gap-1.5">
-          {#if toolbar.search}
-            <button
-              class="floating-tool"
-              type="button"
-              aria-label="Search"
-              data-toolbar-search-trigger
-              onclick={openSearch}
-            >
-              <IconSearch class="size-5" />
-            </button>
+      {#if toolbar.filter}
+        <button
+          class="floating-tool {panels.active === 'visibility'
+            ? 'floating-tool--active'
+            : filtersActive
+              ? 'floating-tool--filtered'
+              : ''}"
+          type="button"
+          aria-label="Visibility filters"
+          aria-expanded={panels.active === "visibility"}
+          aria-controls="filter-panel"
+          onclick={(event) => {
+            panels.toggle("visibility", event.currentTarget);
+          }}
+        >
+          <IconFilter class="size-5" />
+          {#if filtersActive}<span class="filter-tool__dot" aria-hidden="true"></span>{/if}
+        </button>
+      {/if}
+      {#if toolbar.clock}
+        <button
+          class="floating-tool floating-tool--clock {panels.active === 'clock'
+            ? 'floating-tool--active'
+            : ''}"
+          type="button"
+          aria-label={trackingReminders.clockHint
+            ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                userState.state.worldState.weather,
+                userState.state.worldState.season,
+              )}. This sorts your lists; set today’s day.`
+            : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                userState.state.worldState.weather,
+                userState.state.worldState.season,
+              )}`}
+          aria-expanded={panels.active === "clock"}
+          aria-controls="clock-panel"
+          onclick={(event) => {
+            panels.toggle("clock", event.currentTarget);
+          }}
+        >
+          <IconClock class="size-5" />
+          {#if trackingReminders.clockHint}
+            <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
           {/if}
-          {#if toolbar.filter}
-            <button
-              class="floating-tool {panels.active === 'visibility'
-                ? 'floating-tool--active'
-                : filtersActive
-                  ? 'floating-tool--filtered'
-                  : ''}"
-              type="button"
-              aria-label="Visibility filters"
-              aria-expanded={panels.active === "visibility"}
-              aria-controls="filter-panel"
-              onclick={(event) => {
-                panels.toggle("visibility", event.currentTarget);
-              }}
-            >
-              <IconFilter class="size-5" />
-            </button>
-          {/if}
-          {#if toolbar.clock}
-            <button
-              class="floating-tool floating-tool--tabbed {panels.active === 'clock'
-                ? 'floating-tool--active'
-                : ''}"
-              type="button"
-              aria-label={trackingReminders.clockHint
-                ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
-                    userState.state.worldState.weather,
-                    userState.state.worldState.season,
-                  )}. This sorts your lists; set today’s day.`
-                : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
-                    userState.state.worldState.weather,
-                    userState.state.worldState.season,
-                  )}`}
-              aria-expanded={panels.active === "clock"}
-              aria-controls="clock-panel"
-              onclick={(event) => {
-                panels.toggle("clock", event.currentTarget);
-              }}
-            >
-              <IconClock class="size-5" />
-              {#if trackingReminders.clockHint}
-                <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
-              {/if}
-              <!-- Sits behind the button's edge, at the screen's edge. -->
-              <span class="clock-tab" data-clock-tab aria-hidden="true">
-                <Icon.Season season={userState.state.worldState.season} class="size-3" />
-                <Icon.Weather
-                  season={userState.state.worldState.season}
-                  weather={userState.state.worldState.weather}
-                  class="size-3"
-                />
-              </span>
-            </button>
-          {/if}
-        </div>
-      </div>
-    {/if}
+          <!-- Today's season & weather, printed small inside the button after a hairline (F36). -->
+          <span class="clock-tab" data-clock-tab aria-hidden="true">
+            <Icon.Season season={userState.state.worldState.season} class="size-3" />
+            <Icon.Weather
+              season={userState.state.worldState.season}
+              weather={userState.state.worldState.weather}
+              class="size-3"
+            />
+          </span>
+        </button>
+      {/if}
+    </div>
   </nav>
 
   {#if panels.active !== null && panels.active !== "feedback"}
@@ -381,7 +419,7 @@
       animateOut
       closeLabel="Close panel"
       onClose={closePanel}
-      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
+      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}; {panelAnchor}"
     >
       {#if panels.active === "contents"}
         <FoldoutPanel id="contents-panel" title="Contents" onClose={closePanel}>
@@ -422,17 +460,101 @@
   <p class="sr-only" role="status" aria-live="polite">{filterStatus}</p>
 {/if}
 
+<svelte:window onresize={() => (viewportTick += 1)} />
+
 <style>
-  /* Stays put, above the page, while a page turns (see app.css). */
+  /* At book widths the tools turn with the page. On phones the strip stays put. */
   .toolbar {
     view-transition-name: book-toolbar;
   }
 
-  .search-bar,
-  .floating-tool {
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
-    border-radius: var(--radius-md);
+  /*
+   * On phones the tools sit on a strip of the page header's paper along the screen's foot, running
+   * under the home indicator. It's the same stock as the header & the panels the tools open, so a
+   * panel reads as coming out of the strip. The cloth belongs to the cover, behind the book.
+   */
+  .toolbar {
+    padding: 0.5rem 0.75rem max(0.5rem, env(safe-area-inset-bottom));
+    border-block-start: 1px solid var(--color-rule);
     background: var(--color-paper-raised);
+    box-shadow: var(--shadow-small);
+    color: var(--color-ink-muted);
+  }
+
+  /* A short window pins more at once, so the strip keeps only its buttons' own height (F5). */
+  @media (max-height: 31.25rem) {
+    .toolbar {
+      padding-block: 0.25rem max(0.25rem, env(safe-area-inset-bottom));
+    }
+  }
+
+  .toolbar__row {
+    display: flex;
+    max-inline-size: 32rem;
+    align-items: center;
+    gap: 0.375rem;
+    margin-inline: auto;
+  }
+
+  .toolbar__spacer {
+    flex: 1;
+  }
+
+  /* The field is a ruled line to write on, not a box. */
+  .search-field {
+    position: relative;
+    display: flex;
+    min-inline-size: 0;
+    flex: 1;
+    align-items: center;
+  }
+
+  .search-field :global(.search-field__icon) {
+    position: absolute;
+    inset-inline-start: 0.25rem;
+    color: var(--color-ink-muted);
+    pointer-events: none;
+  }
+
+  .search-field__input {
+    min-inline-size: 0;
+    min-block-size: 44px;
+    flex: 1;
+    padding-inline: 1.75rem 0.25rem;
+    border: 0;
+    border-block-end: 1px solid var(--color-ink-hairline);
+    border-radius: 0;
+    background: none;
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-style: italic;
+  }
+
+  .search-field__input::placeholder {
+    color: var(--color-ink-muted);
+  }
+
+  .search-field:has(.search-field__clear) .search-field__input {
+    padding-inline-end: 2.5rem;
+  }
+
+  .search-field__input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+
+  .search-field__clear {
+    position: absolute;
+    inset-inline-end: 0;
+    display: grid;
+    inline-size: 44px;
+    block-size: 44px;
+    place-items: center;
+    color: var(--color-ink-muted);
+  }
+
+  .search-field__clear:hover {
+    color: var(--color-ink);
   }
 
   .floating-tool :global(svg) {
@@ -440,76 +562,81 @@
   }
 
   .floating-tool {
+    position: relative;
     display: flex;
     min-width: 44px;
     min-height: 44px;
     align-items: center;
     justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    border-radius: var(--radius-md);
+    background: var(--color-paper-raised);
     color: var(--color-ink-muted);
-    box-shadow: var(--shadow-medium);
-    pointer-events: auto;
     transition:
-      box-shadow 150ms ease-out,
-      color 150ms ease-out,
-      transform 150ms ease-out;
+      border-color 150ms ease-out,
+      color 150ms ease-out;
   }
 
-  .floating-tool--tabbed {
-    position: relative;
-    margin-right: 20px;
+  .floating-tool--clock {
+    gap: 0.375rem;
+    padding-inline: 0.5rem 0.375rem;
   }
 
   .clock-tab {
-    position: absolute;
-    /* Offsets start inside the button's 1px border, so these sit 2px in from its outer edge. */
-    top: 1px;
-    bottom: 1px;
-    left: 100%;
-    z-index: -1;
     display: grid;
-    width: 20px;
+    align-self: stretch;
     place-items: center;
     align-content: center;
     gap: 2px;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
-    border-left: 0;
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
-    background: var(--color-paper-sunken);
-    color: var(--color-ink-muted);
+    padding-inline-start: 0.375rem;
+    border-inline-start: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
+    margin-block: 0.5rem;
   }
 
   .floating-tool:is(:hover, :focus-visible),
   .floating-tool--active {
+    border-color: var(--primary);
     color: var(--primary);
-    box-shadow: var(--shadow-large);
+    outline: none;
+  }
+
+  .floating-tool:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
-    transform: translateY(-2px);
   }
 
   .sync-tool {
     position: relative;
-    pointer-events: auto;
   }
 
-  .sync-tool__dot {
+  .sync-tool__dot,
+  .clock-tool__dot,
+  .filter-tool__dot {
     position: absolute;
     top: 5px;
-    right: 5px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
+  }
+
+  .sync-tool__dot {
+    right: 5px;
     background: var(--color-status-warning);
   }
 
   /* Top left, away from the season tab on the button's right edge. */
   .clock-tool__dot {
-    position: absolute;
-    top: 5px;
     left: 5px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    background: var(--primary);
+  }
+
+  /* Filters that hide something take the page's color, with a dot, like the sync tool's. */
+  .floating-tool--filtered {
+    color: var(--primary);
+  }
+
+  .filter-tool__dot {
+    right: 5px;
     background: var(--primary);
   }
 
@@ -530,11 +657,6 @@
     transform: translateX(-50%) rotate(-1deg);
   }
 
-  .floating-tool--filtered {
-    color: var(--color-toolbar-filtered);
-    background: color-mix(in srgb, var(--color-paper-raised) 86%, var(--color-toolbar-filtered));
-  }
-
   .floating-tool:is(:hover, :focus-visible) :global(svg) {
     transform: rotate(-7deg);
   }
@@ -545,16 +667,13 @@
       transition-duration: 0.01ms;
     }
 
-    .floating-tool:is(:hover, :focus-visible),
-    .floating-tool--active,
     .floating-tool:is(:hover, :focus-visible) :global(svg) {
       transform: none;
     }
   }
 
   /* At book widths (the media query matches the `book` variant in app.css), the page tools sit in
-     the book shell's header row across the top of the page, under the wire & left of the thumb
-     tabs, and scroll away with it. The shell's row sizes itself to them. */
+     the page header's row, so the strip itself disappears into the header's paper. */
   @media (min-width: 48rem) and (min-height: 34rem) {
     .floating-tool--phone {
       display: none;
@@ -563,12 +682,19 @@
     .toolbar {
       position: relative;
       inset: auto;
-      max-width: none;
-      padding-inline: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      box-shadow: none;
     }
 
-    .floating-tool {
-      box-shadow: none;
+    .toolbar__row {
+      max-inline-size: none;
+      justify-content: flex-end;
+    }
+
+    .search-field {
+      max-inline-size: 22rem;
     }
 
     .sync-tool__slip {

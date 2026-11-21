@@ -52,20 +52,20 @@ describe("FilterPanel interactions", () => {
     toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
     render(FilterPanel);
 
-    const gathering = screen.getByRole("button", { name: "Gathering" });
-    const stores = screen.getByRole("button", { name: "Stores" });
-    expect(gathering).toHaveAttribute("aria-pressed", "true");
-    expect(stores).toHaveAttribute("aria-pressed", "true");
+    const gathering = screen.getByRole("switch", { name: "Gathering" });
+    const stores = screen.getByRole("switch", { name: "Stores" });
+    expect(gathering).toHaveAttribute("aria-checked", "true");
+    expect(stores).toHaveAttribute("aria-checked", "true");
     expect(toolbarState.isSourceFilterNarrowing).toBe(false);
 
     await fireEvent.click(gathering);
 
-    expect(gathering).toHaveAttribute("aria-pressed", "false");
-    expect(stores).toHaveAttribute("aria-pressed", "true");
+    expect(gathering).toHaveAttribute("aria-checked", "false");
+    expect(stores).toHaveAttribute("aria-checked", "true");
     expect(toolbarState.isSourceFilterNarrowing).toBe(true);
 
     await fireEvent.click(gathering);
-    expect(gathering).toHaveAttribute("aria-pressed", "true");
+    expect(gathering).toHaveAttribute("aria-checked", "true");
     expect(toolbarState.isSourceFilterNarrowing).toBe(false);
   });
 
@@ -74,13 +74,13 @@ describe("FilterPanel interactions", () => {
     toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
     render(FilterPanel);
 
-    const gathering = screen.getByRole("button", { name: "採集" });
-    const stores = screen.getByRole("button", { name: "ショップ" });
-    expect(gathering).toHaveAttribute("aria-pressed", "true");
-    expect(stores).toHaveAttribute("aria-pressed", "true");
+    const gathering = screen.getByRole("switch", { name: "採集" });
+    const stores = screen.getByRole("switch", { name: "ショップ" });
+    expect(gathering).toHaveAttribute("aria-checked", "true");
+    expect(stores).toHaveAttribute("aria-checked", "true");
 
     await fireEvent.click(gathering);
-    expect(gathering).toHaveAttribute("aria-pressed", "false");
+    expect(gathering).toHaveAttribute("aria-checked", "false");
     expect([...toolbarState.enabledSourceFilterIds]).toEqual(["stores"]);
 
     await fireEvent.click(gathering);
@@ -112,7 +112,7 @@ describe("FilterPanel interactions", () => {
 
     expect(screen.getByRole("heading", { name: "Source types" })).toBeInTheDocument();
     expect(document.querySelector("[aria-expanded]")).toBeNull();
-    expect(screen.getByRole("button", { name: "Gathering" })).toBeVisible();
+    expect(screen.getByRole("switch", { name: "Gathering" })).toBeVisible();
   });
 
   it("collapses source types into a summarized disclosure on phones", async () => {
@@ -136,7 +136,7 @@ describe("FilterPanel interactions", () => {
     const summary = sourceTypes.querySelector(".disclosure__summary");
     expect(summary).toHaveClass("disclosure__summary--hidden");
     expect(body).not.toHaveAttribute("inert");
-    await fireEvent.click(screen.getByRole("button", { name: "Gathering" }));
+    await fireEvent.click(screen.getByRole("switch", { name: "Gathering" }));
 
     await fireEvent.click(sourceTypes);
     expect(sourceTypes).toHaveAttribute("aria-expanded", "false");
@@ -211,6 +211,6 @@ describe("FilterPanel interactions", () => {
       "aria-expanded",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Gathering" })).toBeVisible();
+    expect(screen.getByRole("switch", { name: "Gathering" })).toBeVisible();
   });
 });

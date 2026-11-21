@@ -128,17 +128,14 @@ export async function waitForRendering(page: Page): Promise<void> {
   });
   await page.waitForFunction(() =>
     [...document.images].every((image) => {
-      const box = image.getBoundingClientRect();
       // Below-the-fold lazy images have not been requested yet. Broken images are settled too;
       // their application fallback and the existing assertions determine whether they are valid.
+      if (image.complete || !image.checkVisibility({ contentVisibilityAuto: true })) return true;
+      if (image.loading !== "lazy") return false;
+      const box = image.getBoundingClientRect();
       const inViewport =
         box.bottom > 0 && box.top < innerHeight && box.right > 0 && box.left < innerWidth;
-      return (
-        image.complete ||
-        box.width === 0 ||
-        box.height === 0 ||
-        (image.loading === "lazy" && !inViewport)
-      );
+      return !inViewport;
     }),
   );
   await page.waitForFunction(() =>

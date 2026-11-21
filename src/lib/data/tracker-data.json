@@ -70441,14 +70441,17 @@
       "category": "ranching",
       "sources": [
         {
-          "type": "animal_product",
-          "animalId": "chicken"
+          "type": "animal_product"
         }
       ]
     },
     "egg": {
       "category": "ranching",
       "sources": [
+        {
+          "type": "animal_product",
+          "animalId": "chicken"
+        },
         {
           "type": "chicken_statue",
           "cost": 10
@@ -70472,6 +70475,10 @@
       "category": "ranching",
       "sources": [
         {
+          "type": "animal_product",
+          "animalId": "chicken"
+        },
+        {
           "type": "store",
           "storeId": "balor"
         }
@@ -70480,6 +70487,10 @@
     "cow_milk": {
       "category": "ranching",
       "sources": [
+        {
+          "type": "animal_product",
+          "animalId": "cow"
+        },
         {
           "type": "chicken_statue",
           "cost": 10
@@ -70520,6 +70531,10 @@
       "category": "ranching",
       "sources": [
         {
+          "type": "animal_product",
+          "animalId": "duck"
+        },
+        {
           "type": "store",
           "storeId": "balor"
         }
@@ -70537,6 +70552,10 @@
     "duck_feather": {
       "category": "ranching",
       "sources": [
+        {
+          "type": "animal_product",
+          "animalId": "duck"
+        },
         {
           "type": "store",
           "storeId": "balor"
@@ -70556,6 +70575,10 @@
       "category": "ranching",
       "sources": [
         {
+          "type": "animal_product",
+          "animalId": "horse"
+        },
+        {
           "type": "store",
           "storeId": "balor"
         }
@@ -70573,6 +70596,10 @@
     "alpaca_wool": {
       "category": "ranching",
       "sources": [
+        {
+          "type": "animal_product",
+          "animalId": "alpaca"
+        },
         {
           "type": "store",
           "storeId": "balor"
@@ -70592,6 +70619,10 @@
       "category": "ranching",
       "sources": [
         {
+          "type": "animal_product",
+          "animalId": "capybara"
+        },
+        {
           "type": "store",
           "storeId": "balor"
         }
@@ -70602,13 +70633,17 @@
       "sources": [
         {
           "type": "animal_product",
-          "animalId": "horse"
+          "animalId": "capybara"
         }
       ]
     },
     "golden_bull_horn": {
       "category": "ranching",
       "sources": [
+        {
+          "type": "animal_product",
+          "animalId": "cow"
+        },
         {
           "type": "letter",
           "letterId": "ari_birthday_hayden_romantic",
@@ -70685,22 +70720,7 @@
             "villagerId": "hayden"
           }
         }
-      ],
-      "visibility": {
-        "type": "or",
-        "conditions": [
-          {
-            "type": "heartLevel",
-            "level": 8,
-            "villagerId": "hayden"
-          },
-          {
-            "type": "heartLevel",
-            "level": 8,
-            "villagerId": "hayden"
-          }
-        ]
-      }
+      ]
     },
     "golden_cow_milk": {
       "category": "ranching",
@@ -70749,6 +70769,10 @@
       "category": "ranching",
       "sources": [
         {
+          "type": "animal_product",
+          "animalId": "rabbit"
+        },
+        {
           "type": "store",
           "storeId": "balor"
         }
@@ -70766,6 +70790,10 @@
     "sheep_wool": {
       "category": "ranching",
       "sources": [
+        {
+          "type": "animal_product",
+          "animalId": "sheep"
+        },
         {
           "type": "store",
           "storeId": "balor"

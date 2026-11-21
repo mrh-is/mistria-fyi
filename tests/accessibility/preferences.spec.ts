@@ -131,13 +131,11 @@ test.describe("browser accessibility preferences", () => {
     await page.emulateMedia({ forcedColors: "active" });
     await initializeApplication(page, "light", createStoredState());
     await gotoApplication(page, "/almanac");
-    const artifacts = page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ });
-    await artifacts.focus();
-    await artifacts.press("Enter");
-    await expect(artifacts).toHaveAttribute("aria-expanded", "true");
     await waitForRendering(page);
     await page.keyboard.press("Tab");
-    const completion = page.getByRole("button", { name: /^Check / }).first();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    const completion = artifacts.getByRole("button", { name: /^Check / }).first();
+    await completion.focus();
     await expect(completion).toBeFocused();
 
     expect(await page.evaluate(() => matchMedia("(forced-colors: active)").matches)).toBe(true);

@@ -1,7 +1,11 @@
 import { PROGRESS_STORAGE_KEY } from "../../src/lib/stores/storage-keys.js";
 import { THEME_STORAGE_KEY } from "../../src/lib/theme.js";
 import { expect, test } from "../browser/test.js";
-import { gotoApplication, waitForRendering } from "./support/application-state.js";
+import {
+  gotoApplication,
+  HYDRATED_SELECTOR,
+  waitForRendering,
+} from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
 
 for (const [theme, width] of [
@@ -11,6 +15,7 @@ for (const [theme, width] of [
   test(`${theme} first check-off requires a lane and offers a safe installation transfer`, async ({
     page,
   }, testInfo) => {
+    test.slow();
     await page.setViewportSize({ height: 844, width });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -34,8 +39,20 @@ for (const [theme, width] of [
     await waitForRendering(page);
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) });
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of/ }).click();
-    const first = page.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    // A phone opens the Almanac on its list of sections; a tap opens one in place.
+    const openArtifacts = async () => {
+      if (width < 768) {
+        const head = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
+        // A reload restores the reading position, which can open the section before this does.
+        await expect(async () => {
+          if ((await head.getAttribute("aria-expanded")) === "false") await head.click();
+          await expect(head).toHaveAttribute("aria-expanded", "true", { timeout: 1000 });
+        }).toPass();
+      }
+    };
+    await openArtifacts();
+    const first = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     const name = await first.getAttribute("aria-label");
     expect(name).toBeTruthy();
     await first.click();
@@ -69,17 +86,31 @@ for (const [theme, width] of [
         page.evaluate((key) => {
           const stored = JSON.parse(localStorage.getItem(key) ?? "null") as null | {
             local?: { reminders?: { install?: { dismissed?: boolean } }; trackingLane?: string };
-            progress?: { almanac?: string[] };
+            progress?: {
+              almanac?: string[];
+              provenance?: Record<string, { source: string }>;
+            };
           };
           return {
-            count: stored?.progress?.almanac?.length ?? 0,
             dismissed: stored?.local?.reminders?.install?.dismissed,
             lane: stored?.local?.trackingLane,
+            manualChecks:
+              stored?.progress?.almanac?.filter(
+                (id) => stored.progress?.provenance?.[`almanac/${id}`]?.source === "manual",
+              ).length ?? 0,
           };
         }, PROGRESS_STORAGE_KEY),
       )
-      .toMatchObject({ count: 1, dismissed: true, lane: "manual" });
-    await page.reload();
+      .toMatchObject({ dismissed: true, lane: "manual", manualChecks: 1 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    // A click before hydration is dropped (#330), so wait for the client like gotoApplication does.
+    await page.locator(HYDRATED_SELECTOR).waitFor({ state: "attached" });
+    await openArtifacts();
+    await artifacts.getByText("Completed", { exact: true }).click();
+    await expect(
+      artifacts.getByRole("button", { exact: true, name: `Uncheck ${name?.slice(6) ?? ""}` }),
+    ).toBeVisible();
+    await waitForRendering(page);
     await expect(install).toBeHidden();
     expect(errors).toEqual([]);
   });

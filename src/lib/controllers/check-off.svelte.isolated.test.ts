@@ -20,7 +20,10 @@ vi.mock("#lib/stores/user-state.svelte.js", () => ({
     state: { progress: {} },
   },
 }));
-vi.mock("#lib/effects/undo-toast.js", () => ({ showUndoToast: vi.fn() }));
+vi.mock("#lib/effects/undo-toast.js", () => ({
+  captureUndoFocus: vi.fn(),
+  showUndoToast: vi.fn(),
+}));
 // A condition is visible once it's in `revealed`; no condition is always visible.
 const revealed = new Set<unknown>();
 vi.mock("#lib/engine/visibility.js", () => ({
@@ -65,7 +68,13 @@ describe("createCheckOff", () => {
 
     expect(hold).toHaveBeenCalledWith("s");
     expect(toggle).toHaveBeenCalledWith("a");
-    expect(showUndoToast).toHaveBeenCalledWith("Apple", true, expect.any(Function));
+    expect(showUndoToast).toHaveBeenCalledWith(
+      "Apple",
+      true,
+      expect.any(Function),
+      false,
+      undefined,
+    );
     expect(checkOff.isLeaving("a")).toBe(true);
     vi.advanceTimersByTime(ROW_LEAVE_MS);
     expect(checkOff.isLeaving("a")).toBe(false);
@@ -94,7 +103,13 @@ describe("createCheckOff", () => {
     done.add("a");
     checkOff.onToggle(row, false);
 
-    expect(showUndoToast).toHaveBeenCalledWith("Apple", false, expect.any(Function));
+    expect(showUndoToast).toHaveBeenCalledWith(
+      "Apple",
+      false,
+      expect.any(Function),
+      false,
+      undefined,
+    );
     expect(checkOff.isLeaving("a")).toBe(false);
   });
 

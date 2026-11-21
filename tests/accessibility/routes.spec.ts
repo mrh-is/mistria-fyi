@@ -40,6 +40,8 @@ test.describe("route accessibility journeys", () => {
       `${route.name} hydrates, exposes landmarks, and passes axe in both themes`,
       criticalWhen(coreRoutes.has(route.path)),
       async ({ page }, testInfo) => {
+        // The rendered ledger needs time for both scans after hydration in Linux CI (#694).
+        if (route.path === "/almanac") test.setTimeout(60_000);
         const provenance = auditRegressionByRoute[route.path];
         if (provenance) testInfo.annotations.push({ type: "audit", description: provenance });
 

@@ -136,6 +136,8 @@
   --color-tracker-obtained: var(--color-hue-amber);
   --color-tracker-active: var(--color-hue-amber);
   --color-progress-complete: var(--color-hue-amber);
+  /* The Completed shelf's label: the least urgent thing on a page, so it may whisper. */
+  --color-shelf-completed: var(--color-progress-complete);
   --color-toolbar-filtered: var(--color-hue-cobalt);
   --color-season-spring: var(--color-hue-green);
   --color-season-summer: var(--color-hue-amber);
@@ -163,6 +165,8 @@
    */
   --filter-sprite-todo: grayscale(1) contrast(1.15);
   --blend-sprite-tint: screen;
+  /* How much of the category color the To do ink keeps; the rest is the cover's pale ink. */
+  --sprite-tint-share: 100%;
   --filter-sprite-completed: drop-shadow(var(--shadow-sticker));
   --filter-sprite-not-now: grayscale(1) contrast(0.36) brightness(1.5);
   --color-sprite-silhouette: color-mix(in srgb, var(--color-ink-hairline) 55%, var(--color-paper));
@@ -340,8 +344,20 @@
   --color-tape-paper: #283f57;
   --color-tape-strip: rgb(190 214 232 / 22%);
 
-  --filter-sprite-todo: grayscale(1) contrast(1.1) brightness(1.5);
+  /*
+   * A negative, as a cyanotype prints: inverting puts the sprite's darkest pixels in the pale ink,
+   * so dark sprites don't sit on night paper as near-black blobs.
+   */
+  --filter-sprite-todo: grayscale(1) invert(1) contrast(1.1);
   --blend-sprite-tint: multiply;
+  /* Amber glows on night paper, so the Completed label steps back toward the muted ink. */
+  --color-shelf-completed: color-mix(
+    in srgb,
+    var(--color-progress-complete) 45%,
+    var(--color-ink-muted)
+  );
+  /* Category colors are mid-tones, so on night paper the ink is lifted to stand off the page. */
+  --sprite-tint-share: 62%;
   /* A gray a little lighter than the paper, matched to light mode on real sprites: about 2.2:1
    * against the paper & 3.6:1 between the sprite's light & dark tones (light: 2.3:1 & 3.5:1). */
   --filter-sprite-not-now: grayscale(1) contrast(0.5) brightness(0.86);
@@ -716,7 +732,11 @@ html:lang(ru) {
   }
 
   [data-sprite-treatment="todo"]::after {
-    background: var(--sprite-tint, var(--color-guide-voice));
+    background: color-mix(
+      in srgb,
+      var(--sprite-tint, var(--color-guide-voice)) var(--sprite-tint-share),
+      var(--color-cover-ink)
+    );
     mix-blend-mode: var(--blend-sprite-tint);
   }
 
@@ -785,9 +805,8 @@ html:lang(ru) {
 /*
  * Page turns. `page-turn.ts` (the book shell's navigation hook) adds `book-turning` to the root for
  * each turn and animates the page's snapshots; these rules hold everything else still. The cover,
- * the wire, the rail, & the toolbar have names of their own, so they swap in place above the page
- * instead of being captured into the root snapshot under it. Other view transitions get the
- * browser's defaults.
+ * the wire, the rail, & the phone toolbar swap in place above the page. The book-width toolbar
+ * moves with the page. Other view transitions get the browser's defaults.
  */
 :root.book-turning::view-transition-group(*),
 :root.book-turning::view-transition-old(*),
@@ -810,7 +829,27 @@ html:lang(ru) {
   z-index: 1;
 }
 
+@media (min-width: 48rem) and (min-height: 34rem) {
+  :root.book-turning::view-transition-old(book-toolbar),
+  :root.book-turning::view-transition-new(book-toolbar) {
+    mix-blend-mode: normal;
+  }
+
+  :root.book-turning::view-transition-old(book-toolbar) {
+    display: block;
+    z-index: 1;
+  }
+}
+
 /* Toasts (an Undo, say) stay above the page while it turns. */
 [data-sonner-toaster] {
   view-transition-name: book-toasts;
+}
+
+/*
+ * The backup reminder waits out an open panel. Beside a panel it read as part of it, so “Export
+ * backup” seemed to belong to the filters, then the weather, then Contents (F22).
+ */
+:root:has(.book[data-panel-open]) [data-sonner-toast].backup-reminder {
+  visibility: hidden;
 }

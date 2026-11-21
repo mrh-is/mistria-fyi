@@ -27,8 +27,14 @@ export async function analyzeAccessibility(
   rules?: string[],
 ): Promise<AxeAssessment> {
   await waitForRendering(page);
-  let builder = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]);
-  if (rules) builder = builder.withRules(rules);
+  const builder = new AxeBuilder({ page });
+  if (page.frames().length === 1) {
+    // Finish single-frame scans in the page so axe can trim passing nodes before transfer.
+    // The default scan collects results across frames, including cross-origin frames.
+    builder.options({ resultTypes: ["violations", "incomplete"] }).setLegacyMode();
+  }
+  if (rules) builder.withRules(rules);
+  else builder.withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]);
   const results = await builder.analyze();
   const assessment = assessAxeResults(results, context);
 

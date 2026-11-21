@@ -914,6 +914,17 @@ describe("buildSourceSegments — quest types", () => {
 });
 
 describe("buildSourceSegments — item/cosmetic source types", () => {
+  it("describes the shared animal feeding reward", () => {
+    const lookups = deepMerge(BASE_LOOKUPS, {
+      perks: {
+        ["currency_of_care" as PerkId]: { name: "Currency Of Care" },
+      },
+    });
+    expect(buildSourceSegments({ type: "animal_product" }, lookups)).toEqual([
+      "Give your pet a treat, or feed crops to a farm animal with the Currency Of Care perk",
+    ]);
+  });
+
   it("animal_product with known animal name", () => {
     const source: Source = { type: "animal_product", animalId: "alpaca" as AnimalId };
     const lookups: SegmentLookups = {

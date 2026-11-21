@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { patterns as routePatterns } from "../../src/lib/i18n/catalogs/.wuchale/route.proxy.js";
 import { ROUTE_UI_GROUPS, SYNC_CODE_SOURCE } from "../../src/lib/i18n/route-ui-groups.js";
 import { expect, isolateNetwork, test } from "../browser/test.js";
-import { gotoApplication } from "./support/application-state.js";
+import {
+  createStoredState,
+  gotoApplication,
+  initializeApplication,
+} from "./support/application-state.js";
 
 function catalogAsset(catalog: string, locale = "es"): string {
   const manifest = JSON.parse(
@@ -68,6 +72,7 @@ test("Only Data requests save-import diagnostics", async ({ page }) => {
 });
 
 test("Home defers acquisition copy until bilingual search needs it", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
   const spanish = catalogAsset("acquisition.0");
   const english = catalogAsset("acquisition.0", "en");
   const requested = new Set<string>();
@@ -80,8 +85,8 @@ test("Home defers acquisition copy until bilingual search needs it", async ({ pa
   );
 
   await gotoApplication(page, "/es");
+  await expect(page.getByRole("region", { name: "Lugares para visitar hoy" })).toBeVisible();
   expect(requested.size).toBe(0);
-  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
   await page.getByRole("textbox", { name: "Buscar elementos" }).fill("turnip");
   await expect.poll(() => requested).toEqual(new Set([spanish, english]));
   await expect(page.getByRole("status").filter({ hasText: /^\d+ resultados?$/u })).toBeVisible();

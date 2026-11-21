@@ -1657,6 +1657,35 @@
   },
   {
     "translations": {
+      "en": "Give your pet a treat, or feed crops to a farm animal with the {0} perk",
+      "ja": "ペットにおやつをあげるか、パーク「{0}」を習得して家畜に作物を与える",
+      "zh-Hans": "给宠物喂零食，或解锁「{0}」专长后给农场动物喂作物",
+      "zh-Hant": "給寵物餵零食，或解鎖「{0}」專長後給農場動物餵作物",
+      "es": "Dale un premio a tu mascota, o alimenta a un animal de granja con cultivos si tienes la ventaja «{0}»",
+      "fr": "Donner une friandise à votre animal de compagnie ou, avec l’atout « {0} », donner des récoltes à un animal de la ferme",
+      "ko": "반려동물에게 간식을 주거나, ‘{0}’ 특성을 해금한 뒤 가축에게 작물 먹이기",
+      "ru": "Дать питомцу лакомство или покормить сельскохозяйственное животное урожаем со способностью «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/sources/source-segments.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "perk"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Gold",
       "ja": "金色",
       "zh-Hans": "金色",

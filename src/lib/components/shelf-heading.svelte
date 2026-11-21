@@ -3,6 +3,7 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import ShelfExplainer from "#lib/components/shelf-explainer.svelte";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
@@ -19,6 +20,8 @@
     expanded = false,
     explains = true,
     level = 2,
+    matchCount,
+    note,
     onToggle,
     shelf,
   }: {
@@ -29,6 +32,9 @@
     /** Offers the explainer. Folds inside a section leave it to the page's own headings. */
     explains?: boolean;
     level?: 2 | 3 | 4;
+    matchCount?: number;
+    /** Text in the count's place, such as the running head's “11 sections”. */
+    note?: string;
     onToggle?: () => void;
     shelf: Shelf;
   } = $props();
@@ -63,6 +69,17 @@
       {@render name()}
     {/if}
   </svelte:element>
+  {#if matchCount !== undefined}
+    {@const countLabel = formatNumber(matchCount, page.data.locale)}
+    <span class="shelf-heading__count">
+      {plural(matchCount, [`${countLabel} match`, `${countLabel} matches`])}
+    </span>
+  {:else if note !== undefined}
+    <span class="shelf-heading__count shelf-heading__note">{note}</span>
+  {:else if count !== undefined}
+    <span class="shelf-heading__count">{formatNumber(count, page.data.locale)}</span>
+  {/if}
+  <!-- The info button follows the count, so the label & its number read together. -->
   {#if explains}
     <button
       class="shelf-heading__info"
@@ -70,9 +87,6 @@
       aria-label={`About the ${label} shelf`}
       onclick={() => (explainerOpen = true)}><IconInfoCircle class="size-3.5" /></button
     >
-  {/if}
-  {#if count !== undefined}
-    <span class="shelf-heading__count">{formatNumber(count, page.data.locale)}</span>
   {/if}
 </div>
 
@@ -96,7 +110,7 @@
   }
 
   .shelf-heading--completed {
-    color: var(--color-progress-complete);
+    color: var(--color-shelf-completed);
   }
 
   .shelf-heading__title {

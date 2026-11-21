@@ -63,6 +63,8 @@ export const trackingReminders = {
           "You’ve been busy! Download a backup so your hard work has a safe copy.",
           {
             action: { label: "Export backup", onClick: downloadProgressBackup },
+            // The root layout hides it while a panel is open, so it never reads as the panel's.
+            class: "backup-reminder",
             duration: 15_000,
           },
         );
