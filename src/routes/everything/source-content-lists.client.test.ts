@@ -2,6 +2,7 @@ import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LEDGER_MOUNT_EVENT } from "#lib/components/ledger/ledger-context.js";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import * as celebration from "#lib/effects/celebrate.js";
@@ -365,6 +366,40 @@ describe("while source shelves hold", () => {
     expect(within(place).getByText("Anchovy", { exact: true })).toBeInTheDocument();
     expect(within(place).queryByText("Bream", { exact: true })).not.toBeInTheDocument();
     await fireEvent.click(view.getByRole("button", { name: /^Ocean/ }));
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
+  });
+
+  it("unmounts a shelf's rows when the reader closes it, even after a reveal", async () => {
+    const ocean: Source = {
+      type: "fish",
+      availability: { type: "season", seasons: ["winter"] },
+      waterTypes: ["ocean" as WaterType],
+    };
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Anchovy", false, [ocean]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+    await tick();
+    const place = view.container.querySelector<HTMLElement>("#fish-ocean");
+    const section =
+      place?.closest<HTMLElement>("[data-ledger-section]") ??
+      place?.querySelector<HTMLElement>("[data-ledger-section]");
+    if (!place || !section) throw new Error("Expected the Ocean section");
+    await fireEvent.click(view.getByRole("button", { name: /^Ocean/ }));
+    const notNow = within(place).getByText("Not now", { exact: true });
+    await fireEvent.click(notNow);
+    await tick();
+    const key = place.querySelector<HTMLElement>("[data-ledger-key]")?.dataset.ledgerKey;
+    if (!key) throw new Error("Expected the Anchovy row");
+    await fireEvent.click(notNow);
+    await tick();
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
+    // Back reveals the shelf to restore a row; closing it afterward still unmounts the rows.
+    section.dispatchEvent(new CustomEvent(LEDGER_MOUNT_EVENT, { detail: key }));
+    await tick();
+    expect(within(place).getByText("Anchovy", { exact: true })).toBeInTheDocument();
+    await fireEvent.click(notNow);
+    await tick();
     expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
   });
 

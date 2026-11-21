@@ -84,7 +84,7 @@
   });
   const SPRIG_COUNT = 6;
   // Every shelf a Find match revealed stays open, so a later match elsewhere doesn't close it.
-  const revealedShelves = $state<Partial<Record<Shelf, true>>>({});
+  const revealedShelves = $state<Partial<Record<Shelf, boolean>>>({});
   const highlights = $state<Partial<Record<Shelf, SourceFilterId>>>({});
   let groups = $derived.by(() => {
     const grouped: Record<Shelf, T[]> = { completed: [], notNow: [], todo: [] };
@@ -168,7 +168,7 @@
   );
 
   async function openFromLine(): Promise<void> {
-    if (soleClosedShelf) revealedShelves[soleClosedShelf] = true;
+    if (soleClosedShelf) revealShelf(soleClosedShelf);
     open = true;
     await tick();
     head?.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
@@ -211,18 +211,59 @@
       for (const shelf of shelves) searchBudgets[shelf] = FIRST_ROWS;
     });
   });
-  // Closed shelves the reader opened with their summary, which the `open` attribute doesn't track.
-  const toggledOpen = $state<Partial<Record<Shelf, boolean>>>({});
+  /*
+   * Whether the reader last opened or closed each shelf with its summary, which the `open`
+   * attribute doesn't track. It overrides the shelf's default until something reveals the shelf.
+   */
+  const toggledOpen = $state<Record<Shelf, boolean | undefined>>({
+    completed: undefined,
+    notNow: undefined,
+    todo: undefined,
+  });
+
+  function revealShelf(shelf: Shelf): void {
+    revealedShelves[shelf] = true;
+    toggledOpen[shelf] = undefined;
+  }
 
   function shelfShown(shelf: Shelf): boolean {
     if (!expanded || line) return false;
+    if (shelf === "todo") return true;
     return (
-      shelf === "todo" ||
-      toggledOpen[shelf] === true ||
-      revealedShelves[shelf] === true ||
-      openedShelf === shelf ||
-      (forceOpen && shelf === "completed")
+      toggledOpen[shelf] ??
+      (revealedShelves[shelf] === true ||
+        openedShelf === shelf ||
+        (forceOpen && shelf === "completed"))
     );
+  }
+
+  /*
+   * A shelf that opens mounts its first screenful in the same update, so the rows are there when
+   * the reader looks, without waiting for the placeholder to measure. That includes a shelf an
+   * anchor or Back opens at first render. Only the To do shelves a section opens by default leave
+   * this to the placeholder, which mounts just those near the screen; the Almanac opens hundreds.
+   */
+  const wasShown = untrack((): Record<Shelf, boolean> => ({
+    completed: false,
+    notNow: false,
+    todo: !collapsible && !folded,
+  }));
+  $effect.pre(() => {
+    for (const shelf of shelves) {
+      const shown = shelfShown(shelf);
+      if (shown && !wasShown[shelf]) {
+        untrack(() => {
+          budgets[shelf] = Math.max(budgets[shelf], SCREEN_ROWS);
+          if (isSearching) searchBudgets[shelf] = Math.max(searchBudgets[shelf], SCREEN_ROWS);
+        });
+      }
+      wasShown[shelf] = shown;
+    }
+  });
+
+  /** How many of the shelf's first rows stay mounted through a search. */
+  function keptRows(shelf: Shelf): number {
+    return open || forceOpen ? budgets[shelf] : 0;
   }
 
   function mountedEntries(shelf: Shelf): T[] {
@@ -231,19 +272,17 @@
     if (!isSearching) return entries.slice(0, budgets[shelf]);
     const found = new Set(matches[shelf].slice(0, searchBudgets[shelf]).map(({ key }) => key));
     // Rows the reader had open before the search stay mounted, so clearing it changes nothing else.
-    const kept = open || forceOpen ? budgets[shelf] : 0;
+    const kept = keptRows(shelf);
     return entries.filter((entry, rowIndex) => rowIndex < kept || found.has(entry.key));
   }
 
   /** How many of the shelf's rows wait to mount. */
   function unmounted(shelf: Shelf): number {
     if (!shelfShown(shelf)) return 0;
-    return Math.max(
-      0,
-      isSearching
-        ? matches[shelf].length - searchBudgets[shelf]
-        : groups[shelf].length - budgets[shelf],
-    );
+    if (!isSearching) return Math.max(0, groups[shelf].length - budgets[shelf]);
+    // Matches among the kept rows are already mounted.
+    const kept = new Set(groups[shelf].slice(0, keptRows(shelf)).map(({ key }) => key));
+    return matches[shelf].slice(searchBudgets[shelf]).filter(({ key }) => !kept.has(key)).length;
   }
 
   function mountMore(shelf: Shelf, count: number): void {
@@ -253,13 +292,15 @@
 
   /*
    * A placeholder after a shelf's last mounted row holds the unmounted rows' estimated height, so
-   * the page keeps its length and a link or Back lands where it would with every row mounted. As
-   * it nears the screen from below, it mounts enough rows to reach a screen past the bottom edge.
-   * It doesn't watch above the screen, so mounting never moves the rows the reader is looking at.
+   * the page keeps its length and a link or Back lands where it would with every row mounted.
+   * When it appears, & whenever it nears the screen from below, it mounts enough rows to reach a
+   * screen past the bottom edge. The first check runs as the shelf opens, so its first screenful
+   * is there before the next frame.
    */
   function mountWhenNear(shelf: Shelf): Attachment<HTMLElement> {
     return (marker) => {
       let connected = true;
+      const rowsElement = marker.parentElement;
       // Rows shorter than the range leave the marker inside it, which reports no change.
       async function observeAgain(): Promise<void> {
         await tick();
@@ -267,22 +308,52 @@
         observer.unobserve(marker);
         observer.observe(marker);
       }
+      /*
+       * A reader who scrolls up into the placeholder sees what follows it, so rows mount above
+       * them a step at a time, & the page scrolls by what they add to keep that content still.
+       */
+      async function mountAbove(): Promise<void> {
+        const before = rowsElement?.getBoundingClientRect().bottom;
+        mountMore(shelf, ROWS_PER_STEP);
+        await tick();
+        if (!connected || !rowsElement || before === undefined) return;
+        const shift = rowsElement.getBoundingClientRect().bottom - before;
+        if (shift !== 0) globalThis.scrollBy({ behavior: "instant", top: shift });
+      }
+      async function mountNear({ bottom, height, top }: DOMRectReadOnly): Promise<void> {
+        const reach = globalThis.innerHeight * 2 - top;
+        if (bottom <= 0 || reach <= 0) return;
+        if (top < 0) {
+          await mountAbove();
+          return;
+        }
+        const estimate = height / Math.max(1, unmounted(shelf));
+        mountMore(shelf, Math.max(ROWS_PER_STEP, Math.ceil(reach / Math.max(1, estimate))));
+      }
+      async function mountThenObserve(rect: DOMRectReadOnly): Promise<void> {
+        await mountNear(rect);
+        await observeAgain();
+      }
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (!entry?.isIntersecting) return;
-          const { height, top } = entry.boundingClientRect;
-          const estimate = height / Math.max(1, unmounted(shelf));
-          const reach = globalThis.innerHeight * 2 - top;
-          mountMore(shelf, Math.max(ROWS_PER_STEP, Math.ceil(reach / Math.max(1, estimate))));
-          void observeAgain();
+          void mountThenObserve(entry.boundingClientRect);
         },
         { rootMargin: "0px 0px 100% 0px" },
       );
+      void mountNear(marker.getBoundingClientRect());
       observer.observe(marker);
       return () => {
         connected = false;
         observer.disconnect();
       };
+    };
+  }
+
+  /** Forgets the reader's toggle when the shelf's fold leaves the page. */
+  function forgetToggle(shelf: Shelf): Attachment<HTMLElement> {
+    return () => () => {
+      toggledOpen[shelf] = undefined;
     };
   }
 
@@ -294,7 +365,7 @@
       // Writing an unchanged `open` still runs the page's setter, whose history write ends the
       // restore that asked for these rows.
       if (!open) open = true;
-      if (shelf !== "todo") revealedShelves[shelf] = true;
+      if (shelf !== "todo") revealShelf(shelf);
       budgets[shelf] = Math.max(budgets[shelf], rowIndex + SCREEN_ROWS);
       const matchIndex = matches[shelf].findIndex((entry) => entry.key === key);
       if (matchIndex !== -1) {
@@ -356,7 +427,7 @@
   async function revealFindMatch(event: Event, shelf: Shelf): Promise<void> {
     const target = event.currentTarget;
     open = true;
-    revealedShelves[shelf] = true;
+    revealShelf(shelf);
     await tick();
     if (target instanceof HTMLElement) target.scrollIntoView({ block: "center" });
   }
@@ -553,7 +624,7 @@
     bind:this={shelvesElement}
     hidden={expanded && !line ? undefined : "until-found"}
     onbeforematch={() => {
-      if (soleClosedShelf) revealedShelves[soleClosedShelf] = true;
+      if (soleClosedShelf) revealShelf(soleClosedShelf);
       open = true;
     }}
   >
@@ -579,9 +650,13 @@
               openedShelf === shelf ||
               (forceOpen && shelf === "completed")}
             ontoggle={(event) => {
-              toggledOpen[shelf] = event.currentTarget.open;
+              const shelfOpen = event.currentTarget.open;
+              toggledOpen[shelf] = shelfOpen;
+              // A shelf the reader closes stays closed, & its rows unmount.
+              if (!shelfOpen) revealedShelves[shelf] = false;
               scheduleShelfRead();
             }}
+            {@attach forgetToggle(shelf)}
           >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
               {#if expanded}
@@ -932,16 +1007,23 @@
     --ledger-row-tracks: auto auto minmax(0, 1fr);
   }
 
-  /* The unmounted rows' estimated height, from the size each row assumes before it renders. */
+  /*
+   * The unmounted rows' estimated height: the size a row assumes before it renders, plus its rule.
+   * The queries match ledger-row.svelte's.
+   */
   .mount-marker {
-    --ledger-row-estimate: 41px;
+    block-size: calc(var(--unmounted) * (var(--tracker-row-min-size) + 1px));
+  }
 
-    block-size: calc(var(--unmounted) * var(--ledger-row-estimate));
+  @media (pointer: fine) and (hover: hover) {
+    .mount-marker {
+      --tracker-row-min-size: 36px;
+    }
   }
 
   @media (any-pointer: coarse), (hover: none) {
     .mount-marker {
-      --ledger-row-estimate: 49px;
+      --tracker-row-min-size: 44px;
     }
   }
 
