@@ -149,7 +149,7 @@
   function measureHead(element: HTMLElement): () => void {
     const observer = new ResizeObserver(([entry]) => {
       const height = entry?.borderBoxSize[0]?.blockSize;
-      if (height !== undefined) headHeight = height;
+      if (height !== undefined && height > 0) headHeight = height;
     });
     observer.observe(element);
     return () => {

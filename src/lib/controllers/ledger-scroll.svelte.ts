@@ -278,11 +278,13 @@ export function useLedgerScroll(id: string): () => boolean {
     if (query) {
       cancel();
       const layout = ledgerContent()?.closest("[data-ledger-layout]");
-      const top = (layout?.getBoundingClientRect().top ?? 0) + globalThis.scrollY;
-      const headerHeight =
-        document.querySelector<HTMLElement>("[data-page-header]")?.offsetHeight ?? 0;
-      if (globalThis.scrollY > top - headerHeight) {
-        globalThis.scrollTo({ behavior: "instant", top: Math.max(0, top - headerHeight) });
+      if (!layout) return;
+      const top = layout.getBoundingClientRect().top + globalThis.scrollY;
+      const stickyTop = Number(
+        getComputedStyle(layout).getPropertyValue("--ledger-sticky-top").replace("px", ""),
+      );
+      if (globalThis.scrollY > top - stickyTop) {
+        globalThis.scrollTo({ behavior: "instant", top: Math.max(0, top - stickyTop) });
       }
     } else {
       returnTo(searchPosition);

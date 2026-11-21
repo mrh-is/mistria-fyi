@@ -1,17 +1,15 @@
 <!--
   The page's section index: a rail beside the ledger at wide widths, & a jump list that each
-  section's sticky head opens on narrower ones. It also owns where the page sits while searching:
-  the first keystroke remembers the row being read, every new search starts at the top, and
-  clearing the search returns to that row.
+  section's sticky head opens on narrower ones. The ledger's scroll controller restores the
+  reading position across search and Back.
 -->
 <script lang="ts">
-  import { tick, untrack } from "svelte";
+  import { tick } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
 
   import { setLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import { shelfLabel } from "#lib/presentation/shelves.js";
-  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
@@ -33,8 +31,6 @@
     sections: readonly IndexSection[];
   } = $props();
 
-  /** Where a reader's eye rests, for the row a search returns to. */
-  const READING_LINE = 0.3;
   const instance = $props.id();
   const jumpListId = `${instance}-jump`;
   const wide = new MediaQuery("min-width: 72rem", false);
@@ -45,7 +41,6 @@
   });
 
   let current = $state("");
-  let layout = $state<HTMLElement>();
   let nav = $state<HTMLElement>();
   let marker = $state<{ height: number; top: number }>();
   let stickyTop = $state(0);
@@ -190,63 +185,6 @@
     };
   });
 
-  /**
-   * The row (or section) at the reading line, & how far down the screen it sits. Rows are found
-   * again by their fact, since a search unmounts the rows it hides.
-   */
-  function readAnchor(): undefined | { selector: string; top: number } {
-    const bounds = layout?.querySelector("[data-ledger-content]")?.getBoundingClientRect();
-    if (!bounds) return undefined;
-    const line = globalThis.innerHeight * READING_LINE;
-    const hit = document.elementFromPoint(bounds.left + bounds.width / 2, line);
-    const row = hit?.closest<HTMLElement>("[data-ledger-fact]");
-    const section = hit?.closest<HTMLElement>("[data-ledger-section][id]");
-    const top = (row ?? section)?.getBoundingClientRect().top;
-    if (top === undefined) return undefined;
-    const sectionSelector = section ? `#${CSS.escape(section.id)}` : "";
-    const fact = row?.dataset.ledgerFact;
-    if (fact) {
-      return { selector: `${sectionSelector} [data-ledger-fact="${CSS.escape(fact)}"]`, top };
-    }
-    return section ? { selector: sectionSelector, top } : undefined;
-  }
-
-  async function settleSearchScroll(query: string): Promise<void> {
-    await tick();
-    if (query) {
-      const top = layout ? layout.getBoundingClientRect().top + globalThis.scrollY : 0;
-      if (globalThis.scrollY > top - stickyTop) {
-        globalThis.scrollTo({ top: Math.max(0, top - stickyTop) });
-      }
-    } else if (saved) {
-      const { selector, top } = saved;
-      saved = undefined;
-      const element = layout?.querySelector(selector);
-      if (element) globalThis.scrollBy({ top: element.getBoundingClientRect().top - top });
-    }
-  }
-
-  let saved: ReturnType<typeof readAnchor>;
-  let lastQuery = untrack(() => toolbarState.searchQuery);
-
-  // Before the results replace the rows: remember the one being read.
-  $effect.pre(() => {
-    const query = toolbarState.searchQuery;
-    untrack(() => {
-      if (query && !lastQuery && !saved) saved = readAnchor();
-    });
-  });
-
-  // After: a new search starts at the top; clearing it returns to the remembered row.
-  $effect(() => {
-    const query = toolbarState.searchQuery;
-    untrack(() => {
-      if (query === lastQuery) return;
-      lastQuery = query;
-      void settleSearchScroll(query);
-    });
-  });
-
   $effect(() => () => {
     if (frame !== undefined) cancelAnimationFrame(frame);
   });
@@ -300,12 +238,7 @@
   {/each}
 {/snippet}
 
-<div
-  class="ledger-layout"
-  data-ledger-layout
-  bind:this={layout}
-  style:--ledger-sticky-top={`${stickyTop}px`}
->
+<div class="ledger-layout" data-ledger-layout style:--ledger-sticky-top={`${stickyTop}px`}>
   <nav aria-label="Page sections" bind:this={nav}>
     {#if marker}
       <span
