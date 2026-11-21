@@ -217,6 +217,19 @@ test("a fresh Song Crystals link stays aligned after the ledger fills", async ({
   await expect(heading).toBeFocused();
 });
 
+test("the Almanac section head scrolls away in a short window", async ({ page }) => {
+  await page.setViewportSize({ height: 450, width: 640 });
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const row = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(25);
+  await row.scrollIntoViewIfNeeded();
+  await expect(
+    furniture.getByRole("heading", { exact: true, name: "Furniture" }),
+  ).not.toBeInViewport();
+  await expect(page.getByRole("textbox", { name: "Search items" })).toBeInViewport();
+});
+
 test("closed source names are findable and native reveal opens the matching row", async ({
   page,
 }) => {
@@ -469,7 +482,16 @@ test("a short variant fits next to its name", async ({ page }) => {
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   // oxlint-disable-next-line playwright/no-raw-locators -- Variant geometry lives inside the item label.
-  const variant = furniture.locator('[data-shelf="todo"] .item small').first();
+  const variants = furniture.locator('[data-shelf="todo"] .item small');
+  await expect(variants.first()).toBeAttached();
+  const short = await variants.evaluateAll((elements) =>
+    elements.findIndex((element) => {
+      const nameLength = element.previousElementSibling?.textContent.length ?? 100;
+      return nameLength + element.textContent.length < 20;
+    }),
+  );
+  expect(short).toBeGreaterThanOrEqual(0);
+  const variant = variants.nth(short);
   await variant.scrollIntoViewIfNeeded();
   const geometry = await variant.evaluate(async (element) => {
     await document.fonts.ready;

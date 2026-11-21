@@ -30,7 +30,7 @@ function readPosition(): ReadingPosition | undefined {
   const x = bounds.left + bounds.width / 2;
   // Look below any sticky heading that covers the line on smaller screens.
   let fallback: ReadingPosition | undefined;
-  for (const ratio of [0.3, 0.5, 0.7]) {
+  for (const ratio of [0.5, 0.3, 0.7]) {
     const hit = document.elementFromPoint(x, globalThis.innerHeight * ratio);
     if (!hit || !content?.contains(hit)) continue;
     const section = hit.closest<HTMLElement>(SECTION);
@@ -48,19 +48,20 @@ function readPosition(): ReadingPosition | undefined {
 }
 
 /**
- * Rows above the target keep settling for a while (late layout of rows that render as they near
- * the viewport), which pushed a restored row 14 px down. Re-align on every change in the
- * ledger's height until it holds still, the reader scrolls (which aborts `signal`), or presses.
+ * Rows can settle above and below the anchor without changing the ledger's overall height.
+ * Hold the anchor while nearby rows finish laying out, or until the reader scrolls or presses.
  */
 async function holdAlignment(align: () => void, signal: AbortSignal): Promise<void> {
   const content = ledgerContent();
   if (!content || signal.aborted) return;
-  const observer = new ResizeObserver(() => {
-    align();
-  });
   await new Promise<void>((resolve) => {
+    let frame: number;
+    const check = (): void => {
+      align();
+      frame = requestAnimationFrame(check);
+    };
     const stop = (): void => {
-      observer.disconnect();
+      cancelAnimationFrame(frame);
       clearTimeout(timer);
       signal.removeEventListener("abort", stop);
       globalThis.removeEventListener("pointerdown", stop, { capture: true });
@@ -70,7 +71,7 @@ async function holdAlignment(align: () => void, signal: AbortSignal): Promise<vo
     signal.addEventListener("abort", stop, { once: true });
     // A press is the reader acting, such as opening a fold above the row, so stop pinning it.
     globalThis.addEventListener("pointerdown", stop, { capture: true, once: true });
-    observer.observe(content);
+    frame = requestAnimationFrame(check);
   });
 }
 
@@ -210,12 +211,10 @@ export function useLedgerScroll(id: string): () => boolean {
 
     const target = row?.checkVisibility() ? row : section;
     const align = (): void => {
-      if (!signal.aborted && target.isConnected) {
-        globalThis.scrollBy({
-          behavior: "instant",
-          top: target.getBoundingClientRect().top - position.top,
-        });
-      }
+      if (signal.aborted || !target.isConnected) return;
+      const drift = target.getBoundingClientRect().top - position.top;
+      if (Math.abs(drift) < 1) return;
+      globalThis.scrollBy({ behavior: "instant", top: drift });
     };
     align();
     // Rows near the restored viewport replace their intrinsic estimates with real heights.
