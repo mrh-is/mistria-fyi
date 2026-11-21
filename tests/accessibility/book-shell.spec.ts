@@ -368,6 +368,7 @@ test.describe("page header & tools", () => {
   });
 
   test("Undo stays at the screen's foot while a panel hangs from the header", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await gotoApplication(page, "/almanac");
     await checkOffFirstArtifact(page);
     const before = await settledBox(undo(page));

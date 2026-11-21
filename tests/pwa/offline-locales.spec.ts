@@ -51,7 +51,7 @@ test("keeps the visited locale offline and leaves other locales to download on d
   // Sitewide search, on the home page, loads every category's names on first open.
   await page.goBack();
   await expect(page).toHaveURL(/\/en$/);
-  const search = page.getByRole("textbox", { name: "Search items" });
+  const search = page.getByPlaceholder("Search the field guide", { exact: true });
   await search.fill("turnip");
   await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
   await search.press("Escape");

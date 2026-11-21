@@ -37,6 +37,19 @@ describe("FeedbackPicker", () => {
     vi.spyOn(globalThis, "cancelAnimationFrame").mockReturnValue(undefined);
   });
 
+  it("does not measure reportable items while the picker is closed", async () => {
+    const context = new FeedbackContext();
+    const element = registerVisibleElement(context);
+    const measure = vi.spyOn(element, "getBoundingClientRect");
+    render(FeedbackPicker, { active: false, feedbackContext: context });
+
+    await fireEvent.scroll(globalThis.window);
+    await fireEvent.resize(globalThis.window);
+
+    expect(measure).not.toHaveBeenCalled();
+    element.remove();
+  });
+
   it("renders a highlight for each visible reportable element", async () => {
     const context = new FeedbackContext();
     const element = registerVisibleElement(context);

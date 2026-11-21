@@ -193,6 +193,9 @@ test("clearing a zero-match search restores the same Furniture row element", asy
     input.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
   });
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // Let content above Furniture settle before measuring the row's starting offset.
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count ready rows across open and closed shelves.
+  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
   const row = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
   await row.evaluate((element) => {
     const ledgerRow = element.closest<HTMLElement>("[data-ledger-fact]");
