@@ -6,7 +6,8 @@ import {
   initializeApplication,
 } from "./support/application-state.js";
 import { requireBox, settledBox } from "./support/boxes.js";
-import { villagerRecord } from "./support/scenarios.js";
+import { ledgerChecks } from "./support/ledger.js";
+import { openVisibilityPanel, villagerRecord } from "./support/scenarios.js";
 
 import type { Page } from "@playwright/test";
 
@@ -55,6 +56,11 @@ function tabs(page: Page) {
   return page.getByRole("navigation", { name: "Thumb index" });
 }
 
+function railTools(page: Page) {
+  // oxlint-disable-next-line playwright/no-raw-locators -- the rail tools have no landmark
+  return page.locator(".book__rail-tools");
+}
+
 async function isTurning(page: Page): Promise<boolean> {
   return page.evaluate(() => document.documentElement.classList.contains("book-turning"));
 }
@@ -93,7 +99,8 @@ test.describe("book shell", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await gotoApplication(page, "/almanac");
-    const trigger = page.getByRole("button", { exact: true, name: "Send feedback" });
+    // Scoped to the rail tools, since a page-wide button query is slow on the Almanac's long list.
+    const trigger = railTools(page).getByRole("button", { exact: true, name: "Send feedback" });
     await trigger.click();
     const dialog = page.getByRole("dialog", { name: "Send feedback" });
     await dialog.getByRole("textbox").first().fill("A draft worth keeping");
@@ -301,10 +308,7 @@ function headerPart(page: Page, selector: string) {
 
 async function checkOffFirstArtifact(page: Page): Promise<void> {
   const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-  await artifacts
-    .getByRole("button", { name: /^Check (?!spoilered item)/ })
-    .first()
-    .click();
+  await ledgerChecks(artifacts).first().click();
   await expect(undo(page)).toBeVisible();
 }
 
@@ -375,8 +379,7 @@ test.describe("page header & tools", () => {
     await checkOffFirstArtifact(page);
     const before = await settledBox(undo(page));
 
-    await page.getByRole("button", { name: "Visibility filters" }).click();
-    await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
+    await openVisibilityPanel(page);
     const after = await settledBox(undo(page));
     expect(after.y).toBeCloseTo(before.y, 0);
   });

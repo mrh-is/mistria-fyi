@@ -7,6 +7,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
+import { ledgerButton, ledgerChecks } from "./support/ledger.js";
 import { focusedVillagerRecord, villagerRecord } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
@@ -137,22 +138,22 @@ test.describe("keyboard and focus accessibility", () => {
   test("the first check and the starter checks have separate Undo actions", async ({ page }) => {
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    const row = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
-    const name = await row.getAttribute("aria-label");
+    const row = ledgerChecks(artifacts).first();
+    const name = (await row.getAttribute("aria-label")) ?? "";
     await row.click();
 
-    const itemUndo = page.getByRole("button", { exact: true, name: "Undo" });
-    const starterUndo = page.getByRole("button", { name: "Undo starter checks" });
+    // Scoped to the toasts, since a page-wide button query is slow on the Almanac's long list.
+    const notifications = page.getByRole("region", { name: /^Notifications/u });
+    const itemUndo = notifications.getByRole("button", { exact: true, name: "Undo" });
+    const starterUndo = notifications.getByRole("button", { name: "Undo starter checks" });
     await expect(page.getByText("We checked off your starter items (266)")).toBeVisible();
     await itemUndo.click({ trial: true });
     await starterUndo.click();
 
     await expect(starterUndo).toBeHidden();
-    await expect(
-      artifacts.getByRole("button", { name: `Uncheck ${name?.slice(6) ?? ""}` }),
-    ).toBeVisible();
+    await expect(ledgerButton(artifacts, `Uncheck ${name.slice(6)}`)).toBeVisible();
     await itemUndo.click();
-    await expect(artifacts.getByRole("button", { name: name ?? "" })).toBeVisible();
+    await expect(ledgerButton(artifacts, name)).toBeVisible();
   });
 
   test("Villager alphabet and relationship progression preserve keyboard focus", async ({
