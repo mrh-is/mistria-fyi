@@ -269,14 +269,26 @@
     return { start: Math.min(window?.start ?? 0, count), end: Math.min(window?.end ?? 0, count) };
   }
 
+  // A focused row the window has scrolled past stays mounted, so focus never falls to the body.
+  const focusedRows = $state<Partial<Record<Shelf, string>>>({});
+
   function mountedEntries(shelf: Shelf, onScreen: readonly T[]): T[] {
-    if (!isSearching) return [...onScreen];
-    const kept = readingWindows[shelf];
-    if (!kept) return [...onScreen];
+    const kept = isSearching ? readingWindows[shelf] : undefined;
+    const focused = focusedRows[shelf];
     const keys = new Set(onScreen.map(({ key }) => key));
+    if (!kept && (focused === undefined || keys.has(focused))) return [...onScreen];
     return groups[shelf].filter(
-      (entry, rowIndex) => (rowIndex >= kept.start && rowIndex < kept.end) || keys.has(entry.key),
+      (entry, rowIndex) =>
+        (kept !== undefined && rowIndex >= kept.start && rowIndex < kept.end) ||
+        keys.has(entry.key) ||
+        entry.key === focused,
     );
+  }
+
+  function focusedRowKey(element: HTMLElement): string | undefined {
+    const active = document.activeElement;
+    if (!active || !element.contains(active)) return undefined;
+    return active.closest<HTMLElement>("[data-ledger-key]")?.dataset.ledgerKey;
   }
 
   /** Watch the entire shelf, so a jump can mount rows in the middle of either spacer. */
@@ -308,6 +320,8 @@
           globalThis.innerHeight,
         );
         if (!next && element.contains(document.activeElement)) return;
+        const focused = focusedRowKey(element);
+        if (focusedRows[shelf] !== focused) focusedRows[shelf] = focused;
         if (windows[shelf]?.start === next?.start && windows[shelf]?.end === next?.end) return;
         windows[shelf] = next;
       }
@@ -1020,8 +1034,8 @@
   }
 
   /*
-   * Rows can't share a subgrid: their content-visibility contains layout, which turns subgrid off.
-   * Every track is sized the same way for every row instead, so the columns still line up.
+   * Rows don't share a subgrid. Every track is sized the same way for every row instead, so the
+   * columns still line up.
    */
   .ledger-table {
     --ledger-row-tracks: auto auto minmax(0, 1fr);

@@ -63,17 +63,23 @@ async function holdAlignment(align: () => void, signal: AbortSignal): Promise<vo
       align();
       frame = requestAnimationFrame(check);
     };
+    // Tab can scroll the newly focused control into view, which pinning would undo.
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === "Tab") stop();
+    };
     const stop = (): void => {
       cancelAnimationFrame(frame);
       clearTimeout(timer);
       signal.removeEventListener("abort", stop);
       globalThis.removeEventListener("pointerdown", stop, { capture: true });
+      globalThis.removeEventListener("keydown", onKey, { capture: true });
       resolve();
     };
     const timer = setTimeout(stop, ALIGNMENT_HOLD_MS);
     signal.addEventListener("abort", stop, { once: true });
     // A press is the reader acting, such as opening a fold above the row, so stop pinning it.
     globalThis.addEventListener("pointerdown", stop, { capture: true, once: true });
+    globalThis.addEventListener("keydown", onKey, { capture: true });
     frame = requestAnimationFrame(check);
   });
 }
@@ -177,6 +183,8 @@ export function useLedgerScroll(id: string): () => boolean {
           return;
         }
         if (!toolbarState.searchQuery) searchPosition = undefined;
+        // This runs before the toolbar's handler, which blurs an empty field so the reader can leave.
+        if (!input.value) return;
         // The toolbar handles Escape itself. Recover focus only if clearing left it on the body.
         requestAnimationFrame(() => {
           if (

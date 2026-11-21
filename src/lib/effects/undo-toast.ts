@@ -131,30 +131,45 @@ export function clearUndoToasts(): void {
 interface UndoFocus {
   element: HTMLElement;
   fact?: string;
+  /** The place or section holding the row, since a fact can appear under several places. */
+  section?: Element;
 }
 
 /** Capture before a spoiler prompt takes focus away from the row. */
 export function captureUndoFocus(): undefined | UndoFocus {
   const element = typeof document === "undefined" ? null : document.activeElement;
   if (!(element && element instanceof HTMLElement) || element === document.body) return undefined;
-  return { element, fact: element.closest<HTMLElement>("[data-ledger-fact]")?.dataset.ledgerFact };
+  return {
+    element,
+    fact: element.closest<HTMLElement>("[data-ledger-fact]")?.dataset.ledgerFact,
+    section: element.closest("section") ?? undefined,
+  };
 }
 
-async function focusAfterUndo({ element, fact }: UndoFocus, action: Element): Promise<void> {
+function visibleCheckbox(scope: ParentNode, fact: string): HTMLElement | undefined {
+  return [
+    ...scope.querySelectorAll<HTMLElement>(
+      `[data-ledger-fact="${CSS.escape(fact)}"] .tracker-checkbox`,
+    ),
+  ].find((candidate) => candidate.checkVisibility());
+}
+
+async function focusAfterUndo(
+  { element, fact, section }: UndoFocus,
+  action: Element,
+): Promise<void> {
   await tick();
   if (document.activeElement !== action && document.activeElement !== document.body) return;
   if (element.isConnected && element.checkVisibility()) {
     element.focus({ preventScroll: true });
     return;
   }
-  const checkbox = fact
-    ? [
-        ...document.querySelectorAll<HTMLElement>(
-          `[data-ledger-fact="${CSS.escape(fact)}"] .tracker-checkbox`,
-        ),
-      ].find((candidate) => candidate.checkVisibility())
-    : undefined;
-  checkbox?.focus({ preventScroll: true });
+  if (!fact) return;
+  // Prefer the copy in the reader's place. Another place's copy may be off-screen, so scroll to it.
+  const checkbox =
+    (section?.isConnected ? visibleCheckbox(section, fact) : undefined) ??
+    visibleCheckbox(document, fact);
+  checkbox?.focus();
 }
 
 function showStackedUndoToast(

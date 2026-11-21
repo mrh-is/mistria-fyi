@@ -1,3 +1,5 @@
+import { devices, webkit } from "@playwright/test";
+
 import { expect, test } from "../browser/test.js";
 import {
   createStoredState,
@@ -124,45 +126,105 @@ test("jumping into Furniture mounts rows near the landing point", async ({ page 
   expect(await rows.count()).toBeLessThanOrEqual(100);
 });
 
-test("scrolling through Furniture in small steps keeps the reading row in place", async ({
-  page,
-}) => {
+test("a focused row stays mounted when the window scrolls past it", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const first = furniture.getByRole("button", { name: /^Check (?!spoilered item)/u }).first();
+  await expect(first).toBeVisible();
+  await first.focus();
+  const label = (await first.getAttribute("aria-label")) ?? "";
+  await furniture.evaluate((section) => {
+    const shelf = section.querySelector('[data-shelf="todo"]');
+    if (!shelf) throw new Error("Furniture To do shelf is missing.");
+    const { height, top } = shelf.getBoundingClientRect();
+    globalThis.scrollBy({ behavior: "instant", top: top + height * 0.7 });
+  });
+  // The window moves away from the first rows once it measures the new scroll position.
+  await expect
+    .poll(() =>
+      furniture.evaluate(
+        (section) => section.querySelector("[data-rows-before]")?.getAttribute("style") ?? "",
+      ),
+    )
+    .not.toMatch(/--unmounted:\s*0\b/u);
+  expect(await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? "")).toBe(
+    label,
+  );
+});
+
+/** Scroll Furniture 120 px at a time, down then up, and list each step the reading row drifted. */
+async function scrollDrifts(page: Page): Promise<string[]> {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
   await settleLayout(page);
-  // Rows run taller than the spacers' estimate, so each window step used to move the page by the
-  // difference: 9 to 153 px at this width (#717).
-  const drifts = await furniture.evaluate(async (section) => {
-    const middle = (): HTMLElement | undefined =>
-      [...section.querySelectorAll<HTMLElement>("[data-ledger-key]")].find((row) => {
-        const { bottom, top } = row.getBoundingClientRect();
-        return top <= globalThis.innerHeight / 2 && bottom > globalThis.innerHeight / 2;
-      });
-    const found: string[] = [];
-    for (const direction of [1, -1]) {
-      for (let step = 0; step < 40; step += 1) {
-        const row = middle();
-        if (!row) throw new Error(`No Furniture row at mid-viewport on step ${String(step)}.`);
-        const key = row.dataset.ledgerKey ?? "";
-        const expected = row.getBoundingClientRect().top - direction * 120;
-        globalThis.scrollBy({ behavior: "instant", top: direction * 120 });
-        // The window measures on the next frame, and its rows lay out on the one after.
+  const found: string[] = [];
+  for (const direction of [1, -1]) {
+    for (let step = 0; step < 25; step += 1) {
+      const before = await furniture.evaluate((section, distance) => {
+        const row = [...section.querySelectorAll<HTMLElement>("[data-ledger-key]")].find(
+          (candidate) => {
+            const { bottom, top } = candidate.getBoundingClientRect();
+            return top <= globalThis.innerHeight / 2 && bottom > globalThis.innerHeight / 2;
+          },
+        );
+        if (!row) return undefined;
+        const expected = row.getBoundingClientRect().top - distance;
+        globalThis.scrollBy({ behavior: "instant", top: distance });
+        return { expected, key: row.dataset.ledgerKey ?? "" };
+      }, direction * 120);
+      if (!before) throw new Error(`No Furniture row at mid-viewport on step ${String(step)}.`);
+      // The window measures on the next frame, and its rows lay out on the one after.
+      await page.evaluate(async () => {
         for (let frame = 0; frame < 3; frame += 1) {
           await new Promise((resolve) => {
             requestAnimationFrame(resolve);
           });
         }
-        const after = section.querySelector(`[data-ledger-key="${CSS.escape(key)}"]`);
-        const drift = after ? after.getBoundingClientRect().top - expected : Number.NaN;
-        // Scroll anchoring snaps to whole pixels, so a subpixel row can land 1 px off.
-        if (!(Math.abs(drift) <= 1)) found.push(`${String(direction * step)}: ${String(drift)}`);
-      }
+      });
+      const drift = await furniture.evaluate(
+        (section, { expected, key }) =>
+          (section.querySelector(`[data-ledger-key="${CSS.escape(key)}"]`)?.getBoundingClientRect()
+            .top ?? Number.NaN) - expected,
+        before,
+      );
+      // Scroll anchoring snaps to whole pixels, so a subpixel row can land 1 px off.
+      if (!(Math.abs(drift) <= 1)) found.push(`${String(direction * step)}: ${String(drift)}`);
     }
-    return found;
-  });
-  expect(drifts).toEqual([]);
+  }
+  return found;
+}
+
+test("scrolling through Furniture in small steps keeps the reading row in place", async ({
+  page,
+}) => {
+  // Rows run taller than the spacers' estimate, so each window step used to move the page by the
+  // difference: 9 to 153 px at this width (#717).
+  expect(await scrollDrifts(page)).toEqual([]);
+});
+
+test("scrolling up through Furniture in WebKit keeps the reading row in place", async ({
+  baseURL,
+}) => {
+  // WebKit's scroll anchoring didn't absorb rows growing on their first paint: up to 151 px a step.
+  // It also launches its own browser, so it needs longer than one page's tests.
+  test.setTimeout(120_000);
+  const browser = await webkit.launch();
+  try {
+    const context = await browser.newContext({
+      ...devices["Desktop Safari"],
+      baseURL,
+      locale: "en-US",
+      serviceWorkers: "block",
+      timezoneId: "UTC",
+      viewport: { height: 720, width: 1280 },
+    });
+    expect(await scrollDrifts(await context.newPage())).toEqual([]);
+  } finally {
+    await browser.close();
+  }
 });
 
 test("the next row control moves focus to the next unmounted entry", async ({ page }) => {

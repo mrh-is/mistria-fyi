@@ -138,8 +138,10 @@ test("keeps the tools and section index within reach in the middle of Furniture"
       ),
     )
     .toBeGreaterThanOrEqual(noticeBottom - 1);
-  await page.getByRole("button", { name: "Refresh shelves" }).click();
+  await page.getByRole("button", { name: "Refresh shelves" }).press("Enter");
   await expect(page.getByText("Your progress or the day changed.")).toHaveCount(0);
+  // The button leaves with the notice, so focus moves to the heading of the section in view.
+  await expect(page.getByRole("heading", { exact: true, name: "Furniture" })).toBeFocused();
 });
 
 test("a section jump and a repeated jump focus the heading", async ({ page }) => {
@@ -196,6 +198,69 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await expect(row).toBeInViewport();
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
   expect(await furniture.getByRole("button", { name: /^Check /u }).count()).toBeLessThan(100);
+});
+
+test("Tab right after Back keeps the newly focused control in view", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  await scrollToSection(furniture);
+  await page.mouse.wheel(0, 7000);
+  const previous = furniture.getByRole("button", { name: "Previous rows" }).first();
+  await expect(previous).toBeAttached();
+  const check = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
+  const row = furniture.getByRole("button", {
+    exact: true,
+    name: (await check.getAttribute("aria-label")) ?? "",
+  });
+  await row.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+  await settleLayout(page);
+
+  await page.getByRole("link", { name: "Back to home" }).click();
+  await expect(page).toHaveURL(/\/en\/?$/u);
+  await page.goBack();
+  await expect(row).toBeInViewport();
+  // The restore pins the row for a moment. Tab from above the window lands on its first row, which
+  // sits off-screen, so the browser scrolls to it, and the pin mustn't scroll it back out.
+  await previous.evaluate((button: HTMLElement) => {
+    button.focus({ preventScroll: true });
+  });
+  await page.keyboard.press("Tab");
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }),
+  );
+  const focusedInView = await page.evaluate(() => {
+    const focused = document.activeElement;
+    if (!focused || focused === document.body) return false;
+    const { bottom, top } = focused.getBoundingClientRect();
+    return bottom > 0 && top < globalThis.innerHeight;
+  });
+  expect(focusedInView).toBe(true);
+});
+
+test("Escape leaves an empty ledger search field", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac");
+  const search = page.getByRole("textbox", { name: "Search items" });
+  await search.fill("doormat");
+  await search.press("Escape");
+  // Clearing a query keeps the field focused, so the reader can type another.
+  await expect(search).toHaveValue("");
+  await expect(search).toBeFocused();
+  await search.press("Escape");
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }),
+  );
+  await expect(search).not.toBeFocused();
 });
 
 test("clearing a zero-match search restores the same Furniture row element", async ({ page }) => {

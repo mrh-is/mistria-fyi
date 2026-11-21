@@ -258,9 +258,14 @@ describe("while source shelves hold", () => {
     expect(userState.restoreBackup(backup)).toEqual({ ok: true });
     await tick();
     expect(view.getByRole("button", { name: "Check Acorn" })).toBe(row);
-    await fireEvent.click(view.getByRole("button", { name: "Refresh shelves" }));
+    const refresh = view.getByRole("button", { name: "Refresh shelves" });
+    refresh.focus();
+    await fireEvent.click(refresh);
     expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
     expect(view.getByText("1 to do")).toBeVisible();
+    // The button leaves with the notice, so focus stays in the ledger rather than on the body.
+    await tick();
+    expect(document.activeElement?.closest("[data-ledger-content]")).not.toBeNull();
   });
 
   it("rebuilds the captured place names when a mounted ledger changes language", async () => {

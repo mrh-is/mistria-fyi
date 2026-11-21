@@ -363,9 +363,12 @@
 </div>
 
 <style>
+  /*
+   * No content-visibility: a row mounted above the screen would take its placeholder height, then
+   * grow on its first paint. WebKit's scroll anchoring doesn't absorb that growth, so scrolling up
+   * drifted by up to 151 px. The row window bounds the rows mounted, so skipping paint saves little.
+   */
   [data-ledger-row] {
-    content-visibility: auto;
-    contain-intrinsic-block-size: auto var(--tracker-row-min-size);
     border-inline-start: 2px solid transparent;
     border-block-end: 1px solid var(--color-rule);
   }

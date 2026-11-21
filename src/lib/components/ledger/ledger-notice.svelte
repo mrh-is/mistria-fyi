@@ -1,12 +1,42 @@
 <script lang="ts">
+  import { tick } from "svelte";
+
   let { changed, onRefresh }: { changed: boolean; onRefresh: () => void } = $props();
+
+  /** The heading of the section the reader is in: the last one to start above a third down. */
+  function readingHeading(): HTMLElement | undefined {
+    const headings = document.querySelectorAll<HTMLElement>(
+      "[data-ledger-content] section h3[tabindex='-1']",
+    );
+    const line = globalThis.innerHeight / 3;
+    let found = headings[0];
+    for (const heading of headings) {
+      const section = heading.closest("section") ?? heading;
+      if (section.getBoundingClientRect().top > line) break;
+      found = heading;
+    }
+    return found;
+  }
+
+  /*
+   * The button leaves with the notice, so hand focus to the section the reader is in. Moving it
+   * first lets a page's own focus fallback keep it there if the refresh moves that section.
+   */
+  async function refresh(event: MouseEvent): Promise<void> {
+    const focused = event.currentTarget === document.activeElement;
+    if (focused) readingHeading()?.focus({ preventScroll: true });
+    onRefresh();
+    if (!focused) return;
+    await tick();
+    if (document.activeElement === document.body) readingHeading()?.focus({ preventScroll: true });
+  }
 </script>
 
 <!-- The ledger index measures this, so sticky heads & the rail sit below it while it shows. -->
 <div class="ledger-notice" data-ledger-notice aria-live="polite">
   {#if changed}
     <span>Your progress or the day changed.</span>
-    <button type="button" onclick={onRefresh}>Refresh shelves</button>
+    <button type="button" onclick={(event) => void refresh(event)}>Refresh shelves</button>
   {/if}
 </div>
 
