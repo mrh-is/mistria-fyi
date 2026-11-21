@@ -11,8 +11,8 @@ import {
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseEnv } from "node:util";
 
+import { R2_UPLOAD_REFERENCES } from "#scripts/lib/op-agent";
 import { isInside } from "#scripts/lib/paths";
 
 import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from "node:child_process";
@@ -473,44 +473,53 @@ export function checkPnpmStore(machine: Environment): CheckResult | undefined {
     : check("pnpm-store", label, "wrong", `pnpm uses ${resolved}, not ${configured}`, fix);
 }
 
+/** Checks that op-agent is available for local secret resolution. */
+export function checkOpAgent(machine: Environment): CheckResult {
+  const result = machine.run("op-agent", ["--version"]);
+  return result.ok
+    ? check("op-agent", "1Password agent", "ok", "op-agent is available")
+    : check(
+        "op-agent",
+        "1Password agent",
+        "missing",
+        "op-agent is not available",
+        "Install the dotfiles 1Password wrapper (docs/machine-setup.md)",
+      );
+}
+
 /**
- * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler (`R2_UPLOAD_TOKEN`, not
- * `CLOUDFLARE_API_TOKEN`, which may hold an unrelated read-only token), from the environment or
- * `.env.r2-upload` at the main checkout's root, as `loadR2UploadEnvFile` reads them. Only presence
- * is checked: the doctor never prints or validates the token itself.
+ * The R2 API token that `sprites:upload` & `fonts:upload` hand to Wrangler. Shell values take
+ * precedence; otherwise the scripts read the 1Password references. The doctor checks presence
+ * only, never prints or validates secret values.
  */
 export function checkR2Token(machine: Environment): CheckResult {
-  const common = machine.run("git", [
-    "-C",
-    machine.root,
-    "rev-parse",
-    "--path-format=absolute",
-    "--git-common-dir",
-  ]);
-  const mainRoot = common.ok ? dirname(common.stdout.trim()) : machine.root;
-  const fileText = machine.read(join(mainRoot, ".env.r2-upload"));
-  if (fileText?.includes("\u0000")) {
+  const missing = Object.entries(R2_UPLOAD_REFERENCES).filter(([name]) => !machine.env[name]);
+  if (missing.length === 0) {
     return check(
       "r2-token",
       "R2 upload token",
-      "wrong",
-      ".env.r2-upload is not UTF-8",
-      "Save .env.r2-upload as UTF-8 (docs/machine-setup.md, R2 upload token)",
+      "ok",
+      "R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are set",
     );
   }
-  const fromFile = fileText === undefined ? {} : parseEnv(fileText.replace(/^﻿/, ""));
-  const unset = ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"].filter(
-    (name) => !machine.env[name] && !fromFile[name],
+  const unresolved = missing
+    .filter(([, reference]) => !machine.run("op-agent", ["read", reference]).ok)
+    .map(([name]) => name);
+  if (unresolved.length > 0) {
+    return check(
+      "r2-token",
+      "R2 upload token",
+      "manual",
+      `${unresolved.join(" & ")} ${unresolved.length === 1 ? "is" : "are"} not set`,
+      "Install op-agent & add both values to “Mistria R2 upload token” (docs/machine-setup.md)",
+    );
+  }
+  return check(
+    "r2-token",
+    "R2 upload token",
+    "ok",
+    "R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are set",
   );
-  return unset.length === 0
-    ? check("r2-token", "R2 upload token", "ok", "R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are set")
-    : check(
-        "r2-token",
-        "R2 upload token",
-        "manual",
-        `${unset.join(" & ")} ${unset.length === 1 ? "is" : "are"} not set`,
-        "Create an R2 API token & add it with the account ID to .env.r2-upload (docs/machine-setup.md, R2 upload token)",
-      );
 }
 
 /** Work areas. Core always runs; the rest are needed only for specific work. */
@@ -539,7 +548,7 @@ export const SECTIONS = {
     title: "Pipeline (game files)",
   },
   release: {
-    checks: (machine: Environment): CheckResult[] => [checkR2Token(machine)],
+    checks: (machine: Environment): CheckResult[] => [checkOpAgent(machine), checkR2Token(machine)],
     title: "Release (R2 uploads)",
   },
 } as const;

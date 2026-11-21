@@ -93,13 +93,12 @@ Wrangler comes into the workspace through `@sveltejs/adapter-cloudflare`. `allow
 `pnpm exec wrangler <command>`, including `pnpm exec wrangler login`. `pnpx wrangler` installs a
 separate copy that ignores `allowBuilds` and fails with `ERR_PNPM_IGNORED_BUILDS`. The R2 uploader
 (`scripts/lib/r2-upload.ts`, behind `sprites:upload` & `fonts:upload`) runs the workspace binary the
-same way. It loads `R2_UPLOAD_TOKEN` from the main checkout's `.env.r2-upload` or the shell, hands
-it to Wrangler as `CLOUDFLARE_API_TOKEN`, and refuses a real upload without that token rather than
-falling back to a stored login.
+same way. It loads `R2_UPLOAD_TOKEN` from 1Password or the shell, hands it to Wrangler as
+`CLOUDFLARE_API_TOKEN`, and refuses a real upload without that token rather than falling back to a
+stored login.
 
-Wrangler may need access to Cloudflare’s API & to its stored credentials. Those live under
-`~/Library/Preferences/.wrangler/` on macOS and under `%APPDATA%\xdg.config\.wrangler\` on Windows.
-Never read or expose the stored OAuth token.
+Wrangler may need access to Cloudflare’s API & to upload credentials supplied by `op-agent`. Never
+read or expose stored secret values.
 
 **Adding or bumping a dependency:**
 
@@ -176,7 +175,6 @@ Claude Code’s `permissions.deny` in `.claude/settings.json` blocks these paths
 
 | Rule                                      | Covers                                                               |
 | ----------------------------------------- | -------------------------------------------------------------------- |
-| `Read(**/.env.r2-upload)`                 | Read, Grep, & Glob of the R2 upload token                            |
 | `Read(**/src/lib/data/tracker-data.json)` | Reading the generated tracker data into context                      |
 | `Edit(**/src/lib/data/tracker-data.json)` | Edit, Write, MultiEdit, & NotebookEdit on the generated tracker data |
 

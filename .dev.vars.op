@@ -1,0 +1,2 @@
+GITHUB_FEEDBACK_TOKEN={{ op://Agent secrets/Mistria feedback GitHub token/credential }}
+TURNSTILE_SECRET_KEY={{ op://Agent secrets/Mistria Turnstile secret key/credential }}

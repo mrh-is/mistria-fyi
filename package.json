@@ -9,6 +9,7 @@
     "messages:compile": "node scripts/compile-wuchale.ts",
     "messages:extract": "wuchale --clean",
     "dev": "vite dev",
+    "dev:feedback": "tsx scripts/dev-feedback.ts",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p src/service-worker/tsconfig.json && tsc --noEmit -p pipeline/tsconfig.json && tsc --noEmit -p relay/tsconfig.json",

@@ -4,6 +4,12 @@ Claude Code cloud and Codex cloud use fresh Linux checkouts that do not inherit 
 credentials. Configure both environments to install dependencies on a supported Node version, and
 grant only read access to Cloudflare Pages build logs.
 
+Cloud checkouts do not inherit local `op-agent` credentials or plaintext secret env files. Run only
+the repository commands supported by the cloud environment; upload, feedback-secret generation, &
+wiki commands are maintainer-only local workflows. Configure the Pages-read token separately through
+the environment-specific credential settings below. Do not copy R2, wiki, Turnstile, or feedback
+secrets into the cloud setup script.
+
 Both environments run `.node-version`’s exact release for everything started through pnpm.
 `package.json`’s `devEngines.runtime` makes `pnpm install` download that release into the pnpm store
 and link it into `node_modules`, so `pnpm run` and `pnpm exec` use it regardless of the image’s

@@ -481,55 +481,23 @@ describe("checkR2Token", () => {
     expect(result.fix).toContain("docs/machine-setup.md");
   });
 
-  it("reads either variable from .env.r2-upload, without printing it", () => {
-    const result = checkR2Token(
-      machine({
-        env: { CLOUDFLARE_ACCOUNT_ID: "account-id" },
-        read: (path) =>
-          basename(path) === ".env.r2-upload" ? `R2_UPLOAD_TOKEN=${secret}\n` : undefined,
-      }),
-    );
-    expect(result.status).toBe("ok");
-    expect(result.detail).not.toContain(secret);
-  });
-
-  it("reads .env.r2-upload from the main checkout, even with a byte-order mark", () => {
+  it("accepts the R2 secret from op-agent", () => {
     const result = checkR2Token(
       machine({
         commands: {
-          "git -C /repo/.worktrees/a rev-parse --path-format=absolute --git-common-dir":
-            "/repo/.git\n",
+          "op-agent read op://Agent secrets/Mistria R2 upload token/credential": "r2-admin",
         },
-        read: (path) =>
-          path.replaceAll("\\", "/") === "/repo/.env.r2-upload"
-            ? `﻿R2_UPLOAD_TOKEN=${secret}\r\nCLOUDFLARE_ACCOUNT_ID=account-id\r\n`
-            : undefined,
-        root: "/repo/.worktrees/a",
+        env: { CLOUDFLARE_ACCOUNT_ID: "account-id" },
       }),
     );
     expect(result.status).toBe("ok");
   });
 
-  it("reports a UTF-16 .env.r2-upload as wrong", () => {
-    const result = checkR2Token(
-      machine({
-        read: (path) => (basename(path) === ".env.r2-upload" ? "��R\u0000=\u0000" : undefined),
-      }),
-    );
-    expect(result).toMatchObject({ detail: ".env.r2-upload is not UTF-8", status: "wrong" });
-  });
-
-  it("treats an empty .env.r2-upload value as unset", () => {
-    const result = checkR2Token(
-      machine({
-        read: (path) =>
-          basename(path) === ".env.r2-upload"
-            ? "R2_UPLOAD_TOKEN=\nCLOUDFLARE_ACCOUNT_ID=account-id\n"
-            : undefined,
-      }),
-    );
+  it("reports a missing vault credential", () => {
+    const result = checkR2Token(machine());
     expect(result.status).toBe("manual");
-    expect(result.detail).toBe("R2_UPLOAD_TOKEN is not set");
+    expect(result.detail).toContain("R2_UPLOAD_TOKEN");
+    expect(result.fix).toContain("op-agent");
   });
 
   it("treats an empty variable as unset", () => {
@@ -537,7 +505,7 @@ describe("checkR2Token", () => {
       machine({ env: { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "" } }),
     );
     expect(result.status).toBe("manual");
-    expect(result.detail).toBe("R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID are not set");
+    expect(result.detail).toBe("CLOUDFLARE_ACCOUNT_ID & R2_UPLOAD_TOKEN are not set");
   });
 });
 
@@ -602,9 +570,11 @@ describe("report", () => {
       "git -C /repo config --get core.hooksPath": ".husky/_\n",
       "git config --get commit.gpgsign": "true\n",
       "git config --get user.signingkey": "~/.ssh/id_ed25519_signing.pub\n",
+      "op-agent --version": "2.0.0",
       "pnpm --version": "11.28.2\n",
       "shellcheck --version": "ok",
     },
+    env: { CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" },
     exists: (path) => path === join("/repo", "node_modules"),
   });
 
@@ -632,8 +602,9 @@ describe("report", () => {
     const report = formatReport(runChecks(machine()));
     expect(report).toContain("Core (every contributor):\n[ok]      Node.js");
     expect(report).toContain("[missing] pnpm");
-    expect(report).toContain("Release (R2 uploads):\n[todo]    R2 upload token");
-    expect(report).toContain("fix: Create an R2 API token");
+    expect(report).toContain("Release (R2 uploads):");
+    expect(report).toContain("[todo]    R2 upload token");
+    expect(report).toContain("fix: Install op-agent");
     expect(report).not.toContain("Skipped");
   });
 
@@ -648,7 +619,7 @@ describe("report", () => {
   it("mentions [todo] steps only when one was printed", () => {
     expect(formatReport(runChecks(ready, ["core"]))).not.toContain("[todo]");
     expect(formatReport(runChecks(ready, ["core", "release"]))).toContain(
-      "All checked prerequisites pass. Steps marked [todo] are manual",
+      "All checked prerequisites pass.",
     );
   });
 });

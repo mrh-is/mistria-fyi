@@ -113,11 +113,6 @@ describe("planLinks", () => {
         directory: true,
         source: join(main, "pipeline/input"),
       },
-      {
-        destination: join(worktree, ".env.local"),
-        directory: false,
-        source: join(main, ".env.local"),
-      },
     ]);
   });
 });
@@ -195,7 +190,7 @@ describe("setup-worktree", () => {
     expect(readFileSync(join(worktree, "pipeline/input/assets/misc.toml"), "utf8")).toBe(
       "version = 1\n",
     );
-    expect(readFileSync(join(worktree, ".env"), "utf8")).toBe("SECRET=1\n");
+    expect(existsSync(join(worktree, ".env"))).toBe(false);
     expect(existsSync(join(worktree, ".dev.vars"))).toBe(false);
     expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
     expect(git(main, "worktree", "list", "--porcelain")).not.toContain("prunable");

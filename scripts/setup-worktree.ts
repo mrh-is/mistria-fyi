@@ -46,11 +46,13 @@ export interface InstallPlan {
  */
 export const SHARED_DIRECTORIES = ["pipeline/input/"];
 
+const LOCAL_SECRET_PATHS = new Set([".env", ".dev.vars", ".env.r2-upload", ".env.wiki"]);
+
 /**
  * Resolves `.worktreeinclude` lines to the main-checkout entries that exist and aren't already in
  * the worktree. A trailing `/` names a directory; other lines name files, with `*` & `?` globs in
  * their last segment (e.g. `.env.*`). A `!` line excludes the exact path it names, as in
- * `.gitignore` (e.g. `!.env.r2-upload`). Missing sources are skipped rather than linked dangling.
+ * `.gitignore` exclusions. Missing sources are skipped rather than linked dangling.
  */
 export function planLinks(repoRoot: string, worktreeDir: string, patterns: string[]): LinkPlan[] {
   const plans: LinkPlan[] = [];
@@ -72,6 +74,12 @@ export function planLinks(repoRoot: string, worktreeDir: string, patterns: strin
     for (const relativePath of relativePaths) {
       const source = join(repoRoot, relativePath);
       const destination = join(worktreeDir, relativePath);
+      if (
+        LOCAL_SECRET_PATHS.has(relativePath) ||
+        /^\.env\.(?!example$|test$)[^/]+$/.test(relativePath)
+      ) {
+        continue;
+      }
       // Skip files the checkout already tracks (e.g. `.env.example` matches `.env.*`) and entries
       // the harness already copied or a previous run already linked.
       if (!excluded.has(relativePath) && existsSync(source) && !pathExists(destination)) {

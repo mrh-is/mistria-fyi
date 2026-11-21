@@ -83,7 +83,14 @@ Each item names the doctor section that checks it.
 2. **Game assets** (`pipeline`) for pipeline work: place or link them at `pipeline/input/` (see
    [game-version-update-protocol.md](game-version-update-protocol.md)). `pnpm run game-assets:share`
    copies them to the maintainer's shared drive.
-3. **R2 upload token** (`release`) for `sprites:upload` & `fonts:upload`, which run Wrangler against
+3. **1Password agent** (`release`) for maintainer-only upload, feedback, & wiki credentials. Install
+   the dotfiles `op-agent` wrapper & store repo credentials in the `Agent secrets` vault.
+   `.dev.vars.op` is a checked-in reference template; it contains `op://` paths, not secret values.
+   The wiki login stays in 1Password for manual use; no repository script currently reads it. Delete
+   `.env.r2-upload`, `.env.wiki`, & `.dev.vars` from the main checkout; those are legacy plaintext
+   files. `.dev.vars` is regenerated only while `pnpm run dev:feedback` runs, then deleted when it
+   exits, including when you stop it with Ctrl+C.
+4. **R2 upload token** (`release`) for `sprites:upload` & `fonts:upload`, which run Wrangler against
    the `mistria-fyi-assets` bucket. The upload scripts hand `R2_UPLOAD_TOKEN` to Wrangler as its
    `CLOUDFLARE_API_TOKEN`, for that child process only, so no `wrangler login` is needed. The
    separate name keeps the R2 token from replacing the read-only Pages token that `cloudflare:logs`
@@ -99,37 +106,21 @@ Each item names the doctor section that checks it.
       it.
    3. Copy the **Token value**; the S3 access key pair it also shows isn't used. Copy the account ID
       from the R2 overview.
-   4. Save both in `.env.r2-upload` at the root of the main checkout:
-
-      ```sh
-      R2_UPLOAD_TOKEN=…
-      CLOUDFLARE_ACCOUNT_ID=…
-      ```
-
-      Save it as UTF-8; a byte-order mark is fine. `.gitignore` keeps it out of commits, and
-      `.worktreeinclude` excludes it, so worktrees never hold a copy that goes stale after a
-      rotation: the upload scripts & `r2:check` read it from the main checkout, from any worktree. A
-      nonempty shell variable of the same name wins. Agents can then run the uploads in the
-      [game version update](game-version-update-protocol.md) without a dedicated shell; each upload
-      still asks for permission. Claude Code's `Read(**/.env.r2-upload)` deny rule keeps its file
-      tools from opening or searching the file, but shell commands & anything running as your user
-      can read it. If you suspect the token was exposed, revoke it in the dashboard & create a new
-      one; that is the expected response, not an emergency. A worktree made before this exclusion
-      may hold a copy or hard link; delete that worktree's `.env.r2-upload`.
+   4. Store the token & account ID in the 1Password vault `Agent secrets`, in the item
+      `Mistria R2 upload token`. Use `credential` for the token & `account id` for the account ID.
+      The upload scripts resolve both values directly through `R2_UPLOAD_REFERENCES`; no plaintext
+      env file is needed. A nonempty shell variable of the same name wins. Agents can run the
+      uploads in the [game version update](game-version-update-protocol.md) without a dedicated
+      shell; each upload still asks for permission.
 
    5. Run `pnpm run r2:check`. It puts & deletes a probe object in the bucket, which proves the
       token can write; a real upload doesn't, because it skips every object that is already current
       and so may never call Wrangler. Without `R2_UPLOAD_TOKEN`, a real upload refuses to start
       rather than falling back to a stored `wrangler login`; a `DRY_RUN=1` preview still works.
 
-   Note: Wrangler loads `.env` & `.env.local` from the repository root itself, but never
-   `.env.r2-upload`. Keep `CLOUDFLARE_API_TOKEN`, `R2_UPLOAD_TOKEN`, & `CLOUDFLARE_ACCOUNT_ID` out
-   of `.env` & `.env.local`: a `CLOUDFLARE_API_TOKEN` there reaches any Wrangler call that doesn't
-   set its own, and an account ID there satisfies Wrangler while the doctor still reports it unset.
-
-   The doctor checks only that both names are set, in the shell or the main checkout's
-   `.env.r2-upload`; it never prints or validates the token. A token has no interactive step, so it
-   can be revoked & replaced in the dashboard at any time. Never run `pnpx wrangler`.
+   The doctor never reads or prints the secret values. It checks `op-agent`, the R2 references, &
+   the account ID. A token has no interactive step, so it can be revoked & replaced in 1Password at
+   any time. Never run `pnpx wrangler`.
 
 ## Codex shells
 

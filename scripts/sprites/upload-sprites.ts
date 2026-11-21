@@ -17,7 +17,7 @@ import { pathToFileURL } from "node:url";
 
 import {
   listFiles,
-  loadR2UploadEnvFile,
+  loadR2UploadSecrets,
   r2UploadOptionsFromEnv,
   r2UploadTree,
 } from "#scripts/lib/r2-upload";
@@ -58,6 +58,8 @@ export async function uploadSprites(spritesDir: string): Promise<number> {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const defaultDir = path.join(import.meta.dirname, "../../pipeline/output/sprites");
-  await loadR2UploadEnvFile();
+  if (process.env.DRY_RUN !== "1") {
+    await loadR2UploadSecrets();
+  }
   process.exitCode = await uploadSprites(process.argv[2] ?? defaultDir);
 }
