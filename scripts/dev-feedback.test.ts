@@ -1,17 +1,29 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const tempDirs: string[] = [];
-const wrappers: ReturnType<typeof spawn>[] = [];
+const wrappers: { childPidFile: string; wrapper: ReturnType<typeof spawn> }[] = [];
 
 afterEach(() => {
-  for (const wrapper of wrappers.splice(0)) {
+  for (const { childPidFile, wrapper } of wrappers.splice(0)) {
     if (wrapper.exitCode === null && wrapper.signalCode === null) {
       wrapper.kill("SIGKILL");
+    }
+    if (existsSync(childPidFile)) {
+      const childPid = Number(readFileSync(childPidFile, "utf8"));
+      if (Number.isSafeInteger(childPid) && childPid > 0) {
+        try {
+          process.kill(childPid, "SIGKILL");
+        } catch (error) {
+          if (!(error instanceof Error) || !("code" in error) || error.code !== "ESRCH") {
+            throw error;
+          }
+        }
+      }
     }
   }
   for (const dir of tempDirs.splice(0)) {
@@ -24,6 +36,7 @@ describe("dev:feedback signal handling", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "feedback-dev-signal-"));
     tempDirs.push(dir);
     const varsFile = path.join(dir, ".dev.vars");
+    const childPidFile = path.join(dir, "child.pid");
     const fixture = path.join(dir, "wrapper.mjs");
     const script = path.resolve(import.meta.dirname, "dev-feedback.ts");
     writeFileSync(
@@ -32,21 +45,30 @@ describe("dev:feedback signal handling", () => {
 import { rmSync, writeFileSync } from "node:fs";
 import { waitForFeedbackDev } from ${JSON.stringify(pathToFileURL(script).href)};
 const varsFile = process.env.FEEDBACK_TEST_VARS;
-if (!varsFile) throw new Error("Missing test vars-file path.");
-writeFileSync(varsFile, "secret");
+const childPidFile = process.env.FEEDBACK_TEST_CHILD_PID;
+if (!varsFile || !childPidFile) throw new Error("Missing test fixture paths.");
 const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });
+if (!child.pid) throw new Error("Could not start the fixture child.");
+writeFileSync(childPidFile, String(child.pid));
+writeFileSync(varsFile, "secret");
+child.once("close", () => rmSync(childPidFile, { force: true }));
 process.exitCode = await waitForFeedbackDev(child, () => rmSync(varsFile, { force: true }));
 `,
     );
     const wrapper = spawn(process.execPath, ["--import", "tsx", fixture], {
       cwd: path.resolve(import.meta.dirname, ".."),
-      env: { ...process.env, FEEDBACK_TEST_VARS: varsFile },
+      env: {
+        ...process.env,
+        FEEDBACK_TEST_CHILD_PID: childPidFile,
+        FEEDBACK_TEST_VARS: varsFile,
+      },
       stdio: "ignore",
     });
-    wrappers.push(wrapper);
+    wrappers.push({ childPidFile, wrapper });
 
     await vi.waitFor(() => {
       expect(existsSync(varsFile)).toBe(true);
+      expect(existsSync(childPidFile)).toBe(true);
     });
     if (wrapper.pid === undefined) {
       throw new Error("Could not start the dev:feedback signal fixture.");
