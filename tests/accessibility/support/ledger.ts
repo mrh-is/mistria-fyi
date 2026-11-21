@@ -65,3 +65,9 @@ export function sectionTrigger(scope: Locator | Page, name: string): Locator {
 export function headTrigger(section: Locator, name: string): Locator {
   return section.getByRole("heading").getByRole("button", { exact: true, name });
 }
+
+/** The first shown “About the … shelf” info button, such as the one on a ledger section’s shelf. */
+export function shelfInfo(scope: Locator | Page): Locator {
+  // oxlint-disable-next-line playwright/no-raw-locators -- a role query styles every skipped row
+  return scope.locator(`button[aria-label^="About the "][aria-label$=" shelf"]${shown}`).first();
+}

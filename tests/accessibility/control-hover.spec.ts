@@ -1,6 +1,7 @@
 import { expect, test } from "../browser/test.js";
 import { gotoApplication, initializeApplication } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
+import { shelfInfo } from "./support/ledger.js";
 
 import type { Locator } from "@playwright/test";
 
@@ -53,7 +54,7 @@ for (const theme of ["light", "dark"] as const) {
       ["/almanac", "--color-category-almanac"],
     ] as const) {
       await gotoApplication(page, path);
-      const info = page.getByRole("button", { name: /^About the .* shelf$/ }).first();
+      const info = shelfInfo(page);
       await info.hover();
       const accent = await info.evaluate((element, property) => {
         const sample = document.createElement("span");
