@@ -55,6 +55,26 @@ function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+test("Home shows the last imported farmer and farm on its bookplate", async ({ page }) => {
+  const state = createStoredState();
+  state.progress.lastImport = {
+    farmName: "Meadow Farm",
+    identity: { creationVersion: null, saveNumber: null },
+    importedAt: Date.now(),
+    playerName: "Dewey",
+  };
+  await initializeApplication(page, "light", state);
+  await gotoApplication(page, "/");
+  const plate = page.getByText("Field notes of Dewey", { exact: true });
+  await expect(plate).toBeVisible();
+  await expect(page.getByText("Meadow Farm", { exact: true })).toBeVisible();
+  const field = page.getByPlaceholder("Search the field guide", { exact: true });
+  await field.fill("turnip");
+  await expect(plate).toBeHidden();
+  await field.press("Escape");
+  await expect(plate).toBeVisible();
+});
+
 test.describe("book shell", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "system", createStoredState());

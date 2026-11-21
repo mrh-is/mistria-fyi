@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends LedgerPlacement & { key: string; obtainable: boolean }">
   import { tick, untrack } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
 
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import {
@@ -179,8 +180,17 @@
    */
   const FIRST_ROWS = 16;
   const ROWS_PER_IDLE = 60;
+  const searchRows = new SvelteSet<string>();
   let mountedRows = $state(FIRST_ROWS);
   let rowCount = $derived(groups.todo.length + groups.notNow.length + groups.completed.length);
+  $effect.pre(() => {
+    if (!isSearching || mountedRows >= rowCount) return;
+    for (const shelf of shelves) {
+      for (const entry of matches[shelf].slice(0, FIRST_ROWS)) {
+        searchRows.add(entry.key);
+      }
+    }
+  });
   $effect(() => {
     if (mountedRows >= rowCount) return;
     const handle = afterIdle(() => {
@@ -199,6 +209,13 @@
       before += groups[earlier].length;
     }
     return Math.max(0, mountedRows - before);
+  }
+
+  function mountedEntries(shelf: Shelf): T[] {
+    const entries = groups[shelf];
+    const budget = mountedIn(shelf);
+    if (budget >= entries.length) return entries;
+    return entries.filter((entry, rowIndex) => rowIndex < budget || searchRows.has(entry.key));
   }
 
   /*
@@ -526,7 +543,7 @@
         {/each}
       </div>
     {/if}
-    {#each groups[shelf].slice(0, mountedIn(shelf)) as entry (entry.key)}
+    {#each mountedEntries(shelf) as entry (entry.key)}
       {@const highlighted =
         highlight !== undefined &&
         columns.includes(highlight) &&
@@ -918,7 +935,7 @@
   }
 
   /* The final row hands off to the shelf fold's own dashed rule. */
-  .ledger-table > :global([data-ledger-row]:last-child) {
+  .ledger-table > :global(:nth-last-child(1 of [data-ledger-row]:not([hidden]))) {
     border-block-end: 0;
   }
 

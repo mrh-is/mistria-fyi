@@ -17,9 +17,8 @@ export function pageTurnFinished(): Promise<void> | undefined {
 }
 
 /** Hold the outgoing ledger inert and out of layout while the new page takes its snapshot. */
-export function deferLedgerTeardown(element: HTMLElement): { delay?: number; duration: number } {
+export function deferLedgerTeardown(): { delay?: number; duration: number } {
   if (!pageTurnFinished()) return { duration: 0 };
-  element.hidden = true;
   return { delay: SETTLE_MS * 2, duration: 0 };
 }
 

@@ -8,6 +8,13 @@
   let { data }: PageProps = $props();
 </script>
 
-<div out:deferLedgerTeardown|global>
+<div class="almanac-route" out:deferLedgerTeardown|global>
   <AlmanacLedger locale={data.locale} />
 </div>
+
+<style>
+  /* Svelte sets inert on the outro and clears it if the route returns before removal. */
+  .almanac-route[inert] {
+    display: none;
+  }
+</style>

@@ -244,7 +244,7 @@
     if (event.key !== /* @wc-ignore */ "Escape") return;
     const hadQuery = Boolean(searchInput?.value);
     clearSearch();
-    if (!hadQuery) searchInput?.blur();
+    if (!hadQuery || (pathname !== "/almanac" && pathname !== "/everything")) searchInput?.blur();
   }
 
   let filtersActive = $derived(

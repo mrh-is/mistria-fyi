@@ -2,7 +2,7 @@ import { onMount, tick, untrack } from "svelte";
 
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { whenIdleWorkFinishes } from "#lib/utils/idle.js";
-import { afterNavigate, beforeNavigate, snapshot } from "$app/navigation";
+import { beforeNavigate, snapshot } from "$app/navigation";
 
 interface ReadingPosition {
   fact?: string;
@@ -117,18 +117,31 @@ export function cancelOnReaderScroll(cancel: () => void): () => void {
 /** Share the same row anchor between search and the router's per-history-entry snapshots. */
 export function useLedgerScroll(id: string): () => boolean {
   let searchPosition: ReadingPosition | undefined;
-  let departingPosition: ReadingPosition | undefined;
+  let departure: undefined | { position: ReadingPosition | undefined };
   let lastQuery = untrack(() => toolbarState.searchQuery);
   let pending: AbortController | undefined;
   const cancel = (): void => pending?.abort();
   const readingPosition = (): ReadingPosition | undefined =>
     (toolbarState.searchQuery ? searchPosition : undefined) ?? readPosition();
 
-  beforeNavigate(({ from, to }) => {
-    if (from?.url.pathname !== to?.url.pathname) departingPosition = readingPosition();
-  });
-  afterNavigate(() => {
-    departingPosition = undefined;
+  async function clearDeparture(
+    complete: Promise<void>,
+    captured: typeof departure,
+  ): Promise<void> {
+    try {
+      await complete;
+    } catch {
+      // A canceled navigation never consumes its reading position.
+    } finally {
+      if (departure === captured) departure = undefined;
+    }
+  }
+
+  beforeNavigate(({ complete, from, to }) => {
+    if (from?.url.pathname === to?.url.pathname) return;
+    const captured = { position: readingPosition() };
+    departure = captured;
+    void clearDeparture(complete, captured);
   });
 
   onMount(() => {
@@ -146,7 +159,9 @@ export function useLedgerScroll(id: string): () => boolean {
       "input",
       (event) => {
         if (!toolbarState.searchQuery && isSearchInput(event.target)) {
-          searchPosition ??= readPosition();
+          searchPosition = event.target.value.trim()
+            ? (searchPosition ?? readPosition())
+            : undefined;
         }
       },
       options,
@@ -158,6 +173,7 @@ export function useLedgerScroll(id: string): () => boolean {
         if (event.key !== "Escape" || !isSearchInput(input)) {
           return;
         }
+        if (!toolbarState.searchQuery) searchPosition = undefined;
         // The toolbar handles Escape itself. Recover focus only if clearing left it on the body.
         requestAnimationFrame(() => {
           if (
@@ -244,7 +260,7 @@ export function useLedgerScroll(id: string): () => boolean {
   }
 
   snapshot({
-    capture: () => departingPosition ?? readingPosition(),
+    capture: () => departure?.position ?? readingPosition(),
     id,
     reset: cancel,
     restore: returnTo,

@@ -184,6 +184,14 @@ test("clearing a zero-match search restores the same Furniture row element", asy
   await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
+  // Cancel before the debounce commits. The next search starts from Furniture, not Artifacts.
+  const search = page.getByRole("textbox", { name: "Search items" });
+  await search.evaluate((input: HTMLInputElement) => {
+    input.focus();
+    input.value = "p";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+  });
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   const row = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
   await row.evaluate((element) => {
@@ -201,7 +209,7 @@ test("clearing a zero-match search restores the same Furniture row element", asy
     (element) => element.closest<HTMLElement>("[data-ledger-fact]")?.dataset.searchRestoreProbe,
   );
   expect(elementIdentity).toBe("original");
-  await expect(page.getByRole("textbox", { name: "Search items" })).toBeFocused();
+  await expect(search).toBeFocused();
 });
 
 test("a fresh Song Crystals link stays aligned after the ledger fills", async ({ page }) => {
