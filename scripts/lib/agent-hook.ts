@@ -91,20 +91,6 @@ export function repositoryRoot(cwd: string): string {
   return canonicalPath(cwd, result.stdout.trim());
 }
 
-/** The main checkout's root, from it or any linked worktree: the parent of Git's common directory. */
-export function mainCheckoutRoot(cwd: string): string {
-  const result = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
-    cwd,
-    encoding: "utf8",
-  });
-  if (result.status !== 0) {
-    throw new Error(
-      result.error?.message ?? (result.stderr.trim() || "Could not resolve Git common directory"),
-    );
-  }
-  return dirname(result.stdout.trim());
-}
-
 function commonDirOf(directory: string): string | undefined {
   const result = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
     cwd: directory,
