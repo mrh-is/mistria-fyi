@@ -6,6 +6,7 @@ import {
   gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
+import { ledgerButton, ledgerChecks, placeTrigger } from "./support/ledger.js";
 import { closeSearch, openSearch, openVisibilityPanel } from "./support/scenarios.js";
 
 /*
@@ -93,8 +94,7 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const rows = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ });
-  const distantRow = rows.nth(50);
+  const distantRow = ledgerChecks(furniture).nth(50);
   const spriteMask = () =>
     distantRow.evaluate((button) =>
       button
@@ -110,7 +110,8 @@ test("keeps the tools and section index within reach in the middle of Furniture"
     "aria-current",
     "location",
   );
-  const clock = page.getByRole("button", { name: /^Season & weather/ });
+  const tools = page.getByRole("navigation", { name: "Field guide tools" });
+  const clock = tools.getByRole("button", { name: /^Season & weather/ });
   await expect(clock).toBeInViewport();
   await clock.click();
   await page.getByRole("radio", { exact: true, name: "Winter" }).click();
@@ -130,7 +131,11 @@ test("keeps the tools and section index within reach in the middle of Furniture"
       ),
     )
     .toBeGreaterThanOrEqual(noticeBottom - 1);
-  await page.getByRole("button", { name: "Refresh shelves" }).click();
+  // oxlint-disable-next-line playwright/no-raw-locators -- the notice is a live region with no name
+  await page
+    .locator("[data-ledger-notice]")
+    .getByRole("button", { name: "Refresh shelves" })
+    .click();
   await expect(page.getByText("Your progress or the day changed.")).toHaveCount(0);
 });
 
@@ -164,9 +169,9 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const check = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
+  const check = ledgerChecks(furniture).nth(20);
   const label = (await check.getAttribute("aria-label")) ?? "";
-  const row = furniture.getByRole("button", { exact: true, name: label });
+  const row = ledgerButton(furniture, label);
   const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
   await row.evaluate((element) => {
     element.scrollIntoView({ block: "center" });
@@ -174,7 +179,8 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   const top = await position();
 
   await page.getByRole("link", { name: "Back to home" }).click();
-  await expect(page).toHaveURL(/\/en\/?$/u);
+  // `toHaveURL` snapshots the whole Almanac's accessibility tree on each miss, stalling the turn.
+  await page.waitForURL(/\/en\/?$/u);
   await page.goBack();
   await expect(row).toBeInViewport();
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
@@ -196,7 +202,7 @@ test("clearing a zero-match search restores the same Furniture row element", asy
   // Let content above Furniture settle before measuring the row's starting offset.
   // oxlint-disable-next-line playwright/no-raw-locators -- Count ready rows across open and closed shelves.
   await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
-  const row = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
+  const row = ledgerButton(furniture, "Check Basic Doormat");
   await row.evaluate((element) => {
     const ledgerRow = element.closest<HTMLElement>("[data-ledger-fact]");
     if (ledgerRow) ledgerRow.dataset.searchRestoreProbe = "original";
@@ -248,7 +254,7 @@ test("closed source names are findable and native reveal opens the matching row"
   test.slow();
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/everything?group=source");
-  const balor = page.getByRole("button", { exact: true, name: "Balor's Wagon" });
+  const balor = placeTrigger(page, "Balor's Wagon");
   await expect(balor).toHaveAttribute("aria-expanded", "false");
 
   const contentId = await balor.getAttribute("aria-controls");
@@ -271,9 +277,7 @@ test("closed source names are findable and native reveal opens the matching row"
   });
   await expect(balor).toHaveAttribute("aria-expanded", "true");
   await expect(hiddenMatch).toHaveAttribute("id", "test-browser-find-target");
-  await expect(
-    page.getByRole("button", { exact: true, name: "Check Barrel Hat" }),
-  ).toBeInViewport();
+  await expect(ledgerButton(page, "Check Barrel Hat")).toBeInViewport();
 });
 
 test("a section's stuck head names the shelf scrolling under it", async ({ page }) => {

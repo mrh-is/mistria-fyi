@@ -572,6 +572,13 @@ decorative `data-*` hook), put the raw locator in a helper or add a one-line
 and `support/geometry.ts` are exempt in `.oxlintrc.json`: they measure layout on `data-*` hooks and
 read `<meta>` tags, which have no role or accessible name.
 
+The Almanac & Everything ledgers are the exception to preferring roles. Each row skips offscreen
+styling, so a `getByRole("button")` query inside a ledger makes Chromium style every row first, and
+it stalls the page on CI (#708). Find ledger buttons with the helpers in
+`tests/accessibility/support/ledger.ts`, and scope other button queries to their toolbar or dialog.
+To wait for a navigation away from a ledger, use `page.waitForURL`. `toHaveURL` snapshots the whole
+page’s accessibility tree each time it checks.
+
 TypeScript's `noImplicitReturns` stands in for oxlint's `typescript/consistent-return`, which can't
 see that an exhaustive `switch` returns on every path.
 

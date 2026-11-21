@@ -9,6 +9,7 @@ import {
   initializeApplication,
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
+import { ledgerButton } from "./support/ledger.js";
 import {
   closeSearch,
   openFeedbackValidation,
@@ -22,6 +23,15 @@ const emptySave = Buffer.from(buildSavBytes({ player: { items_acquired: [] } }))
 const progressPlayerPath = fileURLToPath(
   new URL("fixtures/import/progress-player.json", import.meta.url),
 );
+
+// The Almanac states hold about 35,000 elements, and a trace's DOM snapshot after each action
+// stalls them on CI's traced retry (#708). Keep actions & screenshots without DOM snapshots.
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
 
 test.describe("stateful accessibility", () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -109,13 +119,13 @@ test.describe("stateful accessibility", () => {
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
     await artifacts.getByText("Not now", { exact: true }).click();
-    const spoiler = artifacts.getByRole("button", { name: "Reveal spoiler" }).first();
+    const spoiler = ledgerButton(artifacts, "Reveal spoiler").first();
     await expect(spoiler).toBeVisible();
     const spoilerText = await spoiler.textContent();
     const spoilerName = spoilerText?.trim();
     if (!spoilerName) throw new Error("Spoiler control had no searchable item name");
     await openSearch(page, spoilerName);
-    await expect(page.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
+    await expect(ledgerButton(page, "Reveal spoiler")).toHaveCount(0);
     await analyzeAccessibility(
       page,
       { route: "/almanac", state: "spoiler-hidden", theme: "light" },
