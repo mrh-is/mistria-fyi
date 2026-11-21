@@ -165,6 +165,10 @@ function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments
 
   switch (source.type) {
     case "animal_product": {
+      if (source.animalId === undefined) {
+        const perk = requireEntry(lookups.perks, "currency_of_care" as PerkId, "perks").name;
+        return [`Give your pet a treat, or feed crops to a farm animal with the ${perk} perk`];
+      }
       const animal = requireEntry(lookups.animalNames, source.animalId, "animalNames");
       return [`Collect from ${animal}`];
     }

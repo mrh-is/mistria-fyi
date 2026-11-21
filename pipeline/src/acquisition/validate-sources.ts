@@ -1089,7 +1089,7 @@ function validateVariantFields(
 
   switch (source.type) {
     case "animal_product":
-      stringReferences.push(["animalId", "animal"]);
+      if (source.animalId !== undefined) stringReferences.push(["animalId", "animal"]);
       break;
     case "artifact_dig":
     case "bug_catch":

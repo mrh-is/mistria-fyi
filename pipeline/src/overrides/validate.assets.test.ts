@@ -116,20 +116,4 @@ describe("reviewed game facts against installed assets", () => {
       "Obsolete reviewed item exclusion entry now encoded in native acquisition sources: gold_chest",
     );
   });
-
-  it("fails when a native golden product gains its reviewed animal owner", () => {
-    const data = installedFacts();
-    const items = data.items as Record<
-      string,
-      Record<string, Record<string, Record<string, unknown>>>
-    >;
-    for (const categories of Object.values(items)) {
-      for (const entries of Object.values(categories)) {
-        if (entries.golden_egg) entries.golden_egg.animal_product = "chicken";
-      }
-    }
-    expect(() => {
-      validateReviewedGameFacts(data);
-    }).toThrow("Obsolete reviewed golden animal product entry");
-  });
 });

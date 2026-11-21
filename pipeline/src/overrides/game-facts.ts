@@ -140,25 +140,12 @@ export const MINE_SEAL_FLOORS = entriesToRecord(MINE_SEAL_FLOORS_ENTRIES);
 /** The Void Seal is a side room behind the Ruins Seal's portal, so no floor waits on it directly. */
 export const SEALS_OFF_THE_FLOORS: ReadonlySet<string> = new Set(["void"]);
 
-export const GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES = entriesFromRecord(
-  {
-    animal_currency: "chicken",
-    bull_horn: "cow",
-    golden_alpaca_wool: "alpaca",
-    golden_bristle: "horse",
-    golden_cow_milk: "cow",
-    golden_duck_egg: "duck",
-    golden_duck_feather: "duck",
-    golden_egg: "chicken",
-    golden_feather: "chicken",
-    golden_horse_hair: "horse",
-    golden_rabbit_wool: "rabbit",
-    golden_sheep_wool: "sheep",
-  },
-  "items/other/animal_products.toml descriptions and animals.toml produce families",
-  "Golden products lack the native animal_product owner field",
+export const ANIMAL_FEEDING_REWARD_ENTRIES = entriesFromRecord(
+  { animal_currency: true },
+  "Shiny Bead description in items/other/ranching.toml; feeding in obj_player_animal.gml and obj_pet.gml",
+  "Farm animals and pets give Shiny Beads when fed, outside their production tables",
 );
-export const GOLDEN_PRODUCT_TO_ANIMAL = entriesToRecord(GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES);
+export const ANIMAL_FEEDING_REWARDS = entriesToRecord(ANIMAL_FEEDING_REWARD_ENTRIES);
 
 export const PERK_BY_SUBCATEGORY_ENTRIES = entriesFromRecord(
   {
