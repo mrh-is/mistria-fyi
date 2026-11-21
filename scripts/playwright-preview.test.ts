@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { runPreview } from "./playwright-preview.js";
+import { parseSkipBuild, runPreview } from "./playwright-preview.js";
 
 const directories: string[] = [];
 afterEach(() => {
@@ -189,4 +189,19 @@ it("gives each port its own Miniflare persistence directory (#19)", async () => 
   expect(preview.read()).toContain(
     `persist=${join(checkout ?? "", ".wrangler", "preview-state", "4188")}`,
   );
+});
+
+it.each([
+  [undefined, false],
+  ["", false],
+  ["false", false],
+  ["0", false],
+  ["true", true],
+  ["1", true],
+])("reads PLAYWRIGHT_SKIP_BUILD=%j as %s", (value, expected) => {
+  expect(parseSkipBuild(value)).toBe(expected);
+});
+
+it.each(["yes", "TRUE", " true"])("refuses PLAYWRIGHT_SKIP_BUILD=%j", (value) => {
+  expect(() => parseSkipBuild(value)).toThrow(/PLAYWRIGHT_SKIP_BUILD must be/u);
 });

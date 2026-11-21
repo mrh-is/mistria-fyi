@@ -1,7 +1,8 @@
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+
+import { trackedTestFiles } from "./tracked-test-files.js";
 
 /**
  * The `app`, `client`, `pipeline`, & `node` projects share one module registry per worker (#707), so
@@ -20,8 +21,7 @@ const isolatedRoots = ["eslint-rules/", "scripts/", "src/", "tests/"];
 /** Test files in a shared-registry project, including ones directly under each root. */
 function sharedRegistryFiles(): string[] {
   // A `dir/**/*.test.ts` pathspec skips files directly in `dir/`, so list every test & filter.
-  return execFileSync("git", ["ls-files", "*.test.ts"], { cwd: root, encoding: "utf8" })
-    .split("\n")
+  return trackedTestFiles(root)
     .filter((file) =>
       ["eslint-rules/", "pipeline/", "scripts/", "src/", "tests/"].some((dir) =>
         file.startsWith(dir),

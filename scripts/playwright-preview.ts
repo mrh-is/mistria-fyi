@@ -1,4 +1,4 @@
-// Playwright `webServer` command: builds unless PLAYWRIGHT_SKIP_BUILD is set, stamps this
+// Playwright `webServer` command: builds unless PLAYWRIGHT_SKIP_BUILD is `true` or `1`, stamps this
 // checkout's fingerprint into the build output, then serves it with `vite preview`. The
 // fingerprint lets another run's config refuse this server instead of silently testing the wrong
 // checkout (see `playwright-preview-owner.ts` and #330).
@@ -14,6 +14,16 @@ import { OWNER_FILE } from "./playwright-preview-owner.js";
 import type { ChildProcess } from "node:child_process";
 
 import type { PreviewOwner } from "./playwright-preview-owner.js";
+
+/**
+ * Read PLAYWRIGHT_SKIP_BUILD. An unrecognized value throws: silently building would replace the
+ * output that a concurrent `check:built` run is reading (#420).
+ */
+export function parseSkipBuild(value: string | undefined): boolean {
+  if (value === undefined || value === "" || value === "false" || value === "0") return false;
+  if (value === "true" || value === "1") return true;
+  throw new Error(`PLAYWRIGHT_SKIP_BUILD must be "true", "1", "false", or "0", not "${value}".`);
+}
 
 export interface PreviewOptions {
   args?: string[];
@@ -154,7 +164,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const preview = runPreview({
     checkout: process.cwd(),
     port,
-    skipBuild: process.env.PLAYWRIGHT_SKIP_BUILD === "true",
+    skipBuild: parseSkipBuild(process.env.PLAYWRIGHT_SKIP_BUILD),
   });
   // `exit` can precede pipe draining. Preserve the complete crash tail before relaying a signal.
   preview?.on("close", (code, signal) => {

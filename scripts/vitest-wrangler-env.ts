@@ -14,6 +14,20 @@ export function resolvePlatformProxyPersistence(
   return previewDirectory ? { path: previewDirectory } : undefined;
 }
 
+/**
+ * Keep dev & preview servers' Wrangler writes in the checkout's gitignored `.wrangler/`. Wrangler
+ * otherwise writes its worker registry & logs under the user's preferences directory, which agent
+ * sandboxes deny (#420). The app binds no other workers, so a per-checkout registry loses nothing.
+ */
+export function configureLocalWranglerEnv(
+  checkout: string,
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  if (env.VITEST === "true") return;
+  env.WRANGLER_REGISTRY_PATH ??= join(checkout, ".wrangler", "registry");
+  env.WRANGLER_LOG_PATH ??= join(checkout, ".wrangler", "logs");
+}
+
 /** Keep Vitest's Cloudflare proxy writes out of the user's preferences directory (#659). */
 export function configureVitestWranglerEnv(
   env: NodeJS.ProcessEnv = process.env,

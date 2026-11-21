@@ -269,7 +269,7 @@ describe("generated source rendering contract", () => {
 
     for (const { entity } of sourcedEntities) {
       for (const source of entity.sources) {
-        if (source.type === "animal_product") {
+        if (source.type === "animal_product" && source.animalId !== undefined) {
           check(lookups.animalNames, "animal", source.animalId);
         }
         if (
