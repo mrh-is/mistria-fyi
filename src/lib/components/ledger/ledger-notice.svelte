@@ -6,13 +6,14 @@
   /** The heading of the section the reader is in: the last one to start above a third down. */
   function readingHeading(): HTMLElement | undefined {
     const headings = document.querySelectorAll<HTMLElement>(
-      "[data-ledger-content] section h3[tabindex='-1']",
+      "[data-ledger-content]:not([inert] *) [data-ledger-section] h3[tabindex='-1']",
     );
     const line = globalThis.innerHeight / 3;
-    let found = headings[0];
+    let found: HTMLElement | undefined;
     for (const heading of headings) {
+      if (!heading.checkVisibility()) continue;
       const section = heading.closest("section") ?? heading;
-      if (section.getBoundingClientRect().top > line) break;
+      if (section.getBoundingClientRect().top > line) return found ?? heading;
       found = heading;
     }
     return found;
@@ -28,7 +29,11 @@
     onRefresh();
     if (!focused) return;
     await tick();
-    if (document.activeElement === document.body) readingHeading()?.focus({ preventScroll: true });
+    if (document.activeElement === document.body) {
+      const target =
+        readingHeading() ?? document.querySelector<HTMLElement>("[data-toolbar-search] input");
+      target?.focus({ preventScroll: true });
+    }
   }
 </script>
 

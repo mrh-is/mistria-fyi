@@ -1,5 +1,6 @@
 import { tick } from "svelte";
 
+import { LEDGER_ARRIVAL_EVENT } from "#lib/components/ledger/ledger-context.js";
 import {
   cancelOnReaderScroll,
   ledgerJump,
@@ -82,6 +83,15 @@ function focusHeading(section: HTMLElement): void {
   heading?.focus({ preventScroll: true });
 }
 
+async function reopenLinkedSection(section: HTMLElement, signal: AbortSignal): Promise<void> {
+  const ledgerSection = section.matches("[data-source-section]")
+    ? section.querySelector("[data-ledger-section]")
+    : section;
+  ledgerSection?.dispatchEvent(new Event(LEDGER_ARRIVAL_EVENT));
+  await tick();
+  if (!signal.aborted && section.isConnected) focusHeading(section);
+}
+
 /** Align after the target's containing groups and shelves have opened. */
 export function useLedgerArrival(
   readTarget: () => string,
@@ -103,7 +113,9 @@ export function useLedgerArrival(
         if (link?.hash !== globalThis.location.hash) return;
         requestAnimationFrame(() => {
           const section = document.getElementById(target);
-          if (!listeners.signal.aborted && section) focusHeading(section);
+          if (!listeners.signal.aborted && section) {
+            void reopenLinkedSection(section, listeners.signal);
+          }
         });
       },
       { capture: true, signal: listeners.signal },

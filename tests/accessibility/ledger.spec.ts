@@ -16,9 +16,8 @@ import {
 } from "./support/scenarios.js";
 
 /*
- * Everything's source ledger keeps about 50,000 elements, and a trace's DOM snapshot after each
- * action took tens of seconds there, timing these tests out locally & on CI's traced retry. Keep
- * the trace's actions & screenshots (same modes as playwright.config.ts) without DOM snapshots.
+ * Trace DOM snapshots made the full-data ledger tests time out locally & on CI’s traced retry.
+ * Keep the trace’s actions & screenshots (same modes as playwright.config.ts) without DOM snapshots.
  */
 test.use({
   trace: {
@@ -36,8 +35,7 @@ for (const { theme, touch, width } of [
     test.use({ hasTouch: touch, isMobile: touch, viewport: { height: 900, width } });
 
     test("opens a place from Home and keeps the check and its undo in place", async ({ page }) => {
-      // Restoring every closed-place title after clearing search can contend with the other
-      // Chromium workers on Linux. Keep all three viewports on the same end-to-end path.
+      // Keep all three viewports on the same full-data path, including the Linux CI workers.
       test.slow();
       await initializeApplication(page, theme, createStoredState());
       await gotoApplication(page, "/");
@@ -72,14 +70,22 @@ for (const { theme, touch, width } of [
       await expect(uncheckItem).toBeVisible();
       await expect(shelfCount).toBeVisible();
       if (!touch) await expect(uncheckItem).toBeFocused();
-      // Scoped to the toasts: a page-wide button query checks visibility on every row's buttons,
-      // and Everything's source ledger keeps about 50,000 elements, which took Playwright 27 s.
+      // Scope to the toasts so the query does not inspect the ledger's buttons.
       const undo = page
         .getByRole("region", { name: /^Notifications/u })
         .getByRole("button", { exact: true, name: "Undo" });
       await (touch ? undo.tap() : undo.press("Enter"));
       await expect(checkItem).toBeVisible();
       if (!touch) await expect(checkItem).toBeFocused();
+
+      const placeHeading = place.getByRole("heading", { level: 3 });
+      const disclosure = placeHeading.getByRole("button");
+      await (touch ? disclosure.tap() : disclosure.click());
+      await expect(disclosure).toHaveAttribute("aria-expanded", "false");
+      await expect(checkItem).toBeHidden();
+      await expect(page).toHaveURL(new URL(destination ?? "", page.url()).href);
+      await (touch ? disclosure.tap() : disclosure.click());
+      await expect(checkItem).toBeVisible();
 
       await openSearch(page, name);
       await expect(checkItem).toBeVisible();
@@ -142,6 +148,38 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await expect(page.getByText("Your progress or the day changed.")).toHaveCount(0);
   // The button leaves with the notice, so focus moves to the heading of the section in view.
   await expect(page.getByRole("heading", { exact: true, name: "Furniture" })).toBeFocused();
+});
+
+test("a phone can fold and reopen a linked Almanac section", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await initializeApplication(page, "dark", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const disclosure = furniture.getByRole("button", { exact: true, name: "Furniture" });
+  await expect(disclosure).toHaveAttribute("aria-expanded", "true");
+  await disclosure.click();
+  await expect(disclosure).toHaveAttribute("aria-expanded", "false");
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeHidden();
+  await expect(page).toHaveURL(/#furniture$/u);
+  await disclosure.click();
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
+});
+
+test("refreshing shelves with zero search matches returns focus to search", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  await page.getByRole("button", { name: /^Season & weather/u }).click();
+  await page.getByRole("radio", { exact: true, name: "Winter" }).click();
+  await page.keyboard.press("Escape");
+  const query = "zzzznomatchingledgeritem";
+  await openSearch(page, query);
+  const search = page.getByRole("textbox", { name: "Search items" });
+  await expect(page.getByRole("heading", { exact: true, name: "Furniture" })).toBeHidden();
+  const refresh = page.getByRole("button", { name: "Refresh shelves" });
+  await refresh.press("Enter");
+  await expect(refresh).toHaveCount(0);
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue(query);
 });
 
 test("a section jump and a repeated jump focus the heading", async ({ page }) => {

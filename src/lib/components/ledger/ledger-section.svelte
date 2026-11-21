@@ -4,6 +4,7 @@
   import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import {
     getLedgerIndexContext,
+    LEDGER_ARRIVAL_EVENT,
     LEDGER_MOUNT_EVENT,
     setLedgerSectionContext,
   } from "#lib/components/ledger/ledger-context.js";
@@ -36,11 +37,11 @@
     divider = false,
     explains = false,
     folded = false,
-    forceOpen = false,
     id,
     locale,
     name,
     open = $bindable(untrack(() => !collapsible && !folded)),
+    openOnArrival = false,
     progress,
     row,
     rows,
@@ -56,12 +57,13 @@
      * as finished sections & every section on a phone do.
      */
     folded?: boolean;
-    forceOpen?: boolean;
     id?: string;
     locale: LocaleCode;
     name: string;
     /** Whether the reader opened the section. Bind it to keep the choice across a Back visit. */
     open?: boolean;
+    /** Opens the section when its fragment becomes the navigation target. */
+    openOnArrival?: boolean;
     progress?: { completed: number; total: number };
     row: Snippet<
       [
@@ -124,8 +126,8 @@
       : groups,
   );
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
-  let expanded = $derived(open || forceOpen || isSearching);
-  let showTable = $derived(open || forceOpen || (isSearching && hasRows));
+  let expanded = $derived(open || isSearching);
+  let showTable = $derived(open || (isSearching && hasRows));
   /**
    * A search that matches only one closed shelf here (Not now or Completed) prints as one line
    * that opens it, so a phone doesn't spend a screen on heads, folds, & dividers.
@@ -206,14 +208,18 @@
     toggledOpen[shelf] = undefined;
   }
 
+  function openLinkedSection(): void {
+    if (!open) open = true;
+    if (toggledOpen.completed === undefined) revealedShelves.completed = true;
+  }
+
+  $effect(() => {
+    if (openOnArrival) untrack(openLinkedSection);
+  });
+
   /** Whether a fold is open: the reader's last toggle, or else what revealed or forced it. */
   function shelfOpen(shelf: Shelf): boolean {
-    return (
-      toggledOpen[shelf] ??
-      (revealedShelves[shelf] === true ||
-        openedShelf === shelf ||
-        (forceOpen && shelf === "completed"))
-    );
+    return toggledOpen[shelf] ?? (revealedShelves[shelf] === true || openedShelf === shelf);
   }
 
   async function toggleShelf(event: Event, shelf: Shelf): Promise<void> {
@@ -247,7 +253,7 @@
   }));
   $effect.pre(() => {
     const duringSearch = isSearching;
-    const opened = open || forceOpen;
+    const opened = open;
     for (const shelf of shelves) {
       const shown = shelfShown(shelf);
       if (shown && !wasShown[shelf] && (opened || shelf !== "todo")) {
@@ -398,10 +404,12 @@
     }
   }
 
-  function listenForMount(element: HTMLElement): () => void {
+  function listenForLedgerRequests(element: HTMLElement): () => void {
     element.addEventListener(LEDGER_MOUNT_EVENT, onMountRequest);
+    element.addEventListener(LEDGER_ARRIVAL_EVENT, openLinkedSection);
     return () => {
       element.removeEventListener(LEDGER_MOUNT_EVENT, onMountRequest);
+      element.removeEventListener(LEDGER_ARRIVAL_EVENT, openLinkedSection);
     };
   }
 
@@ -523,7 +531,7 @@
   hidden={!hasRows}
   aria-labelledby={`${instance}-name`}
   style:--ledger-head-measured={headHeight ? `${headHeight}px` : undefined}
-  {@attach listenForMount}
+  {@attach listenForLedgerRequests}
 >
   <div class="head" data-ledger-head bind:this={head} {@attach measureHead}>
     <h3 id={`${instance}-heading`} tabindex="-1">
@@ -572,10 +580,7 @@
           aria-controls={`${instance}-rows`}
           onclick={() => (open = !open)}
         >
-          <Icon.UI
-            type="disclosure"
-            class="size-4 {open || forceOpen || isSearching ? 'rotate-90' : ''}"
-          />
+          <Icon.UI type="disclosure" class="size-4 {expanded ? 'rotate-90' : ''}" />
           <span id={`${instance}-name`}>{name}</span>
           {#if progress}
             {@const count = formatNumber(groups.todo.length, locale)}
@@ -584,7 +589,7 @@
             >
           {/if}
         </button>
-      {:else if folded && open && !forceOpen && !isSearching}
+      {:else if folded && open && !isSearching}
         <!-- An opened line folds back to itself, so a phone returns to the list in place. -->
         <button
           type="button"
@@ -768,7 +773,7 @@
             columns,
             discovery,
             highlighted,
-            open || forceOpen || (isSearching && visible(entry)),
+            open || (isSearching && visible(entry)),
             (event) => void revealFindMatch(event, shelf),
             isSearching && !visibleKeys.has(entry.key),
           )}

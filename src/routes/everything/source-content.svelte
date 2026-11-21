@@ -348,7 +348,7 @@
                 contextualFamily={section.source && ledgerSourceFamily(section.source)}
                 progress={spoilered ? undefined : section}
                 visible={visibleRow}
-                forceOpen={anchor === section.id ||
+                openOnArrival={anchor === section.id ||
                   (section.id === "progress" && anchor === "source-progress")}
               >
                 {#snippet row(

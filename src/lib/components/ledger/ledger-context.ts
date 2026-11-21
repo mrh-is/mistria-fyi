@@ -38,3 +38,4 @@ export function getLedgerSectionContext(): LedgerSectionContext | undefined {
  * Back & search clear do before restoring the reading position on that row.
  */
 export const LEDGER_MOUNT_EVENT = "ledgermount";
+export const LEDGER_ARRIVAL_EVENT = "ledgerarrival";

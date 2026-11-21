@@ -104,11 +104,6 @@
   let hash = $derived(building ? "" : new SvelteURL(page.url.href).hash.slice(1));
   useLedgerArrival(() => (ledger.ready ? hash : ""), restoringScroll);
 
-  // A link or the jump list opens its section, and it stays open after the link moves on.
-  $effect(() => {
-    if (hash && ledger.value.some(({ id }) => id === hash)) opened.add(hash);
-  });
-
   // A hash link starts a new history entry, so the set is written again whenever the hash moves.
   $effect(() => {
     const ids = [...opened].toSorted();
@@ -116,7 +111,7 @@
     untrack(() => {
       const saved = (page.state.almanacOpened ?? []).toSorted();
       if (ids.join("\n") === saved.join("\n")) return;
-      replaceState("", { ...page.state, almanacOpened: ids });
+      replaceState(page.url.href, { ...page.state, almanacOpened: ids });
     });
   });
 
@@ -173,7 +168,7 @@
       {visible}
       divider={id !== unfinished[0]?.id && id !== completed[0]?.id}
       folded={finished(section) || phone.current}
-      forceOpen={hash === id}
+      openOnArrival={hash === id}
       bind:open={
         () => opened.has(id) || !(finished(section) || phone.current),
         (value) => {
