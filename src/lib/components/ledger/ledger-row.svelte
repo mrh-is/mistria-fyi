@@ -71,7 +71,8 @@
     obtained?: boolean;
     onFind?: (event: Event) => void;
     onToggle: (covered: boolean) => void;
-    placement: LedgerPlacement;
+    /** The row's placement in its section, keyed as the section mounts it. */
+    placement: LedgerPlacement & { key: string };
     reportCategory: ReportCategory;
     searchMiss?: boolean;
     shelf: Shelf;
@@ -235,6 +236,7 @@
   hidden={active ? undefined : "until-found"}
   onbeforematch={onFind}
   data-ledger-fact={fact}
+  data-ledger-key={placement.key}
   data-ledger-search-miss={searchMiss || undefined}
   data-highlighted={highlighted}
   data-source-state={expanded ? "open" : "closed"}

@@ -1,11 +1,13 @@
 import { onMount, tick, untrack } from "svelte";
 
+import { LEDGER_MOUNT_EVENT } from "#lib/components/ledger/ledger-context.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-import { whenIdleWorkFinishes } from "#lib/utils/idle.js";
 import { beforeNavigate, snapshot } from "$app/navigation";
 
 interface ReadingPosition {
   fact?: string;
+  /** The row's key in its section, which mounts the row again before the restore. */
+  key?: string;
   section: string;
   top: number;
 }
@@ -38,6 +40,7 @@ function readPosition(): ReadingPosition | undefined {
     const row = hit.closest<HTMLElement>("[data-ledger-fact]");
     const position = {
       fact: row?.dataset.ledgerFact,
+      key: row?.dataset.ledgerKey,
       section: section.id,
       top: (row ?? section).getBoundingClientRect().top,
     };
@@ -196,16 +199,25 @@ export function useLedgerScroll(id: string): () => boolean {
 
   async function restore(position: ReadingPosition, signal: AbortSignal): Promise<void> {
     await tick();
-    await whenIdleWorkFinishes();
     if (signal.aborted) return;
 
     const section = document.getElementById(position.section);
     if (!section || !ledgerContent()?.contains(section)) return;
+    // Rows mount near the screen, so ask the row's section to mount through it first.
+    if (position.key) {
+      const sections = section.matches("[data-ledger-section]")
+        ? [section]
+        : section.querySelectorAll<HTMLElement>("[data-ledger-section]");
+      for (const element of sections) {
+        element.dispatchEvent(new CustomEvent(LEDGER_MOUNT_EVENT, { detail: position.key }));
+      }
+      await tick();
+    }
     const fact = position.fact;
     const row = fact
       ? section.querySelector<HTMLElement>(`[data-ledger-fact="${CSS.escape(fact)}"]`)
       : null;
-    // Follow the same disclosures as Browser Find, from the outer shelf to the row.
+    // Open each closed disclosure around the row, from the outer shelf inward.
     const disclosures: HTMLElement[] = [];
     for (
       let element: HTMLElement | null = row ?? section;

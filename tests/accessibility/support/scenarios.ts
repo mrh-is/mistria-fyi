@@ -63,3 +63,51 @@ export function villagerRecord(page: Page, villagerId: string): Locator {
 export function focusedVillagerRecord(page: Page, prefix: string): Locator {
   return page.locator(`[id^="villager-${prefix}"]:focus`);
 }
+
+/**
+ * Mounts every row of one ledger shelf the way a reader would: by scrolling its end into view
+ * until no rows are left to mount. Ledger rows mount near the screen (#714), so a test that audits
+ * a whole shelf calls this first.
+ */
+export async function mountWholeShelf(section: Locator, shelf: "notNow" | "todo"): Promise<void> {
+  // oxlint-disable-next-line playwright/no-raw-locators -- The marker is a layout box with no role.
+  const marker = section.locator(`[data-shelf="${shelf}"] .mount-marker`);
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count the shelf's mounted rows.
+  const rows = section.locator(`[data-shelf="${shelf}"] [data-ledger-fact]`);
+  await expect(rows.first()).toBeAttached();
+  // oxlint-disable-next-line no-await-in-loop, playwright/no-conditional-in-test -- Each step waits on the last.
+  while ((await marker.count()) > 0) {
+    // oxlint-disable-next-line no-await-in-loop -- Each step mounts the rows the next one scrolls past.
+    const before = await rows.count();
+    // oxlint-disable-next-line no-await-in-loop -- As above.
+    await marker.evaluate((element) => {
+      element.scrollIntoView({ block: "start" });
+    });
+    // oxlint-disable-next-line no-await-in-loop -- As above.
+    await expect.poll(() => rows.count()).toBeGreaterThan(before);
+  }
+}
+
+/** Waits two frames, so rows near the screen replace their size estimates with real heights. */
+export async function settleLayout(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      }),
+  );
+}
+
+/** Scrolls a ledger section's head to the top, so its first rows mount as a reader's would. */
+export async function scrollToSection(section: Locator): Promise<void> {
+  await section.evaluate((element) => {
+    element.scrollIntoView({ block: "start" });
+  });
+  // oxlint-disable-next-line playwright/no-raw-locators -- Wait for the section's first row box.
+  await expect(section.locator("[data-ledger-fact]").first()).toBeAttached();
+  await settleLayout(section.page());
+}

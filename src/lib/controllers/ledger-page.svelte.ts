@@ -12,7 +12,6 @@ import { filteredCounts } from "#lib/engine/shelves.js";
 import { ledgerShelf } from "#lib/presentation/ledger.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { whenIdleWorkFinishes } from "#lib/utils/idle.js";
 
 import type { ShelfRow } from "#lib/engine/shelves.js";
 import type { LedgerPlacement } from "#lib/presentation/ledger.js";
@@ -126,7 +125,8 @@ export function useLedgerArrival(
       };
       realign();
       focusHeading(section);
-      await whenIdleWorkFinishes();
+      // Rows near the target replace their intrinsic size estimates with real heights.
+      await nextFrame();
       realign();
       stop();
     }

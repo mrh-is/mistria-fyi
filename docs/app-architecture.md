@@ -444,9 +444,8 @@ arrival behavior through `controllers/ledger-page.svelte.ts`.
 
 A place link opens its containing source group & focuses the place heading after scrolling to it.
 The Completed fold starts closed. A place link into it opens the fold, and search can count the
-closed fold’s rows. Closed places expose their unmasked item names to browser Find through
-`hidden="until-found"`. A match opens its place & shelf and scrolls the corresponding interactive
-row into view.
+closed fold’s rows. Browser Find reaches only mounted rows; the ledger’s own search covers the rest
+(#714).
 
 `components/ledger/ledger-index.svelte` lists the sections. At wide widths it's a rail beside the
 ledger, and below them each section's sticky head opens it as a jump list. A section counts as
@@ -455,9 +454,15 @@ scroll during search. The first keystroke remembers the row at the reading line,
 new query starts at the top of the ledger, and clearing the search scrolls that row back to where it
 was. Navigating away forgets it.
 
-A ledger section mounts its first 16 rows at once and the rest in idle-time chunks of 60, To do
-first. A page turn waits for the new page's first render, and mounting all of Furniture's 1,017 rows
-in that frame froze the turn. Find & search reach the later rows a moment after the page appears.
+A ledger section mounts rows only on its open shelves, and only near the screen (#714). After a
+shelf's last mounted row, a placeholder holds the rest of the shelf's estimated height, so links &
+Back land where they would with every row mounted. As the placeholder comes within a screen below
+the viewport, it mounts enough rows to reach past it. It doesn't watch above the viewport, so
+mounting never moves the rows the reader is looking at. A search mounts its matches the same way.
+Back & search clear ask the row's section to mount through that row (`LEDGER_MOUNT_EVENT`) before
+restoring the reading position. Mounting every row (1,879 on the Almanac, 35,407 elements) made axe,
+Playwright, & screen readers walk the whole ledger, which stalled the accessibility CI (#708). The
+budget test in `tests/accessibility/ledger-budget.spec.ts` guards the first screen's size.
 `components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its image, and its mask
 for the masked treatments, has loaded.
 
