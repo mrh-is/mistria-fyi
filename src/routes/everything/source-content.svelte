@@ -97,7 +97,11 @@
       isVillagerComplete(id as VillagerId, userState.state.progress),
     ),
   ]);
-  const { snapshot: ledger, visible: visibleRow } = createLedgerPage(
+  const {
+    restoringScroll,
+    snapshot: ledger,
+    visible: visibleRow,
+  } = createLedgerPage(
     () => locale,
     () => {
       const day = userState.progressContext;
@@ -119,17 +123,27 @@
     { excludeCoveredFromFilterCounts: true, scrollKey: "everything-source" },
   );
 
-  useLedgerArrival(() => (ledger.ready ? anchor : ""));
+  useLedgerArrival(() => (ledger.ready ? anchor : ""), restoringScroll);
+
+  function showsPlace({ rows, spoilered }: (typeof ledger.value)[number]): boolean {
+    return (
+      (!toolbarState.searchQuery || !spoilered || userState.state.showSpoilers) &&
+      rows.some((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources))
+    );
+  }
 
   let groups = $derived(
     SOURCE_TYPE_ORDER.map((group) => ({
       group,
       sections: ledger.value
         .filter(
-          ({ rows, section, spoilered }) =>
+          ({ rows, section }) =>
             section.group === group &&
-            (!toolbarState.searchQuery || !spoilered || userState.state.showSpoilers) &&
-            rows.some((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)),
+            rows.some(
+              (row) =>
+                (row.obtainable || toolbarState.showUnobtainable) &&
+                toolbarState.matchesSourceFilters(row.sources),
+            ),
         )
         .toSorted((a, b) => compareSourceSections(a, b, locale)),
     })).filter(
@@ -140,14 +154,14 @@
     (progressCompletions.includes(true) &&
       (!toolbarState.searchQuery || progressCategoryShown(true))) ||
       groups.some(({ sections: groupSections }) =>
-        groupSections.some((entry) => isInCompletedList(entry)),
+        groupSections.some((entry) => isInCompletedList(entry) && showsPlace(entry)),
       ),
   );
   let completedMatches = $derived.by(() => {
     if (!toolbarState.searchQuery) return undefined;
     const matches = groups.flatMap(({ sections: groupSections }) =>
       groupSections
-        .filter((entry) => isInCompletedList(entry))
+        .filter((entry) => isInCompletedList(entry) && showsPlace(entry))
         .flatMap(({ rows }) =>
           rows.filter((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)),
         ),
@@ -292,7 +306,7 @@
     {@const groupId = `sources-${group}${completed && hasOutstanding ? "-completed" : ""}`}
     <!-- During a search the mine floor hides, so only matching rows or categories keep the group. -->
     {@const searchMatches =
-      groupSections.length > 0 || (group === "progress" && progressCategoryShown(completed))}
+      groupSections.some(showsPlace) || (group === "progress" && progressCategoryShown(completed))}
     {#if groupSections.length > 0 || hasProgress}
       <GroupSection
         id={groupId}
@@ -315,12 +329,14 @@
           />
         {/snippet}
 
-        {#each groupSections as { section, name, spoilered, rows } (section.id)}
+        {#each groupSections as entry (entry.section.id)}
+          {@const { section, name, spoilered, rows } = entry}
           <div
             id={section.id === "progress" ? "source-progress" : section.id}
             class="scroll-mt-[var(--ledger-anchor-offset,8rem)]"
             data-source-section
             data-source-status={spoilered ? undefined : section.state}
+            hidden={!showsPlace(entry)}
             {@attach measurePlaceHead}
           >
             <SpoilerSection {name} spoilered={spoilered && !userState.state.showSpoilers}>
@@ -335,7 +351,16 @@
                 forceOpen={anchor === section.id ||
                   (section.id === "progress" && anchor === "source-progress")}
               >
-                {#snippet row(placement, shelf, columns, discovery, highlighted, active, onFind)}
+                {#snippet row(
+                  placement,
+                  shelf,
+                  columns,
+                  discovery,
+                  highlighted,
+                  active,
+                  onFind,
+                  showsRow,
+                )}
                   {@const entry = active
                     ? (liveEntries.get(placement.key) ?? placement.entry)
                     : placement.entry}
@@ -347,6 +372,7 @@
                     {shelf}
                     {discovery}
                     {highlighted}
+                    visible={showsRow}
                     category={entry.category}
                     fact={entry.fact}
                     id={entry.id}
@@ -397,7 +423,9 @@
 
 <LedgerIndex
   sections={groups
-    .filter(({ sections }) => sections.some((entry) => !isInCompletedList(entry)))
+    .filter(({ sections }) =>
+      sections.some((entry) => !isInCompletedList(entry) && showsPlace(entry)),
+    )
     .map(({ group }) => ({ id: `sources-${group}`, name: sourceTypeLabel(group, locale) }))}
 >
   <div class="flex flex-col gap-6">

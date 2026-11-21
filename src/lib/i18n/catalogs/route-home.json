@@ -20,5 +20,34 @@
     ],
     "urlAdapters": [],
     "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Field notes of {0}",
+      "ja": "{0}のフィールドノート",
+      "zh-Hans": "{0}的田野笔记",
+      "zh-Hant": "{0}的田野筆記",
+      "es": "Notas de campo de {0}",
+      "fr": "Carnet de terrain de {0}",
+      "ko": "{0}의 현장 기록",
+      "ru": "Полевые заметки: {0}"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "bookOwner.playerName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
   }
 ]

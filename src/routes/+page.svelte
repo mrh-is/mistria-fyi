@@ -11,7 +11,7 @@
   import WelcomeCard from "#lib/components/welcome-card.svelte";
   import { getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { progressImport, userState } from "#lib/stores/user-state.svelte.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
@@ -38,6 +38,7 @@
   let overallTodoPct = $derived(overall.total > 0 ? (overall.todo / overall.total) * 100 : 0);
   let totalCompleted = $derived(formatNumber(overall.completed, data.locale));
   let grandTotal = $derived(formatNumber(overall.total, data.locale));
+  let bookOwner = $derived(progressImport.lastImport);
 </script>
 
 <!-- While searching, the page pins itself to the visible viewport so the header stays on screen
@@ -63,6 +64,12 @@
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
+      {#if bookOwner?.playerName || bookOwner?.farmName}
+        <p class="bookplate">
+          {#if bookOwner.playerName}<span>{`Field notes of ${bookOwner.playerName}`}</span>{/if}
+          {#if bookOwner.farmName}<span class="bookplate__farm">{bookOwner.farmName}</span>{/if}
+        </p>
+      {/if}
       <GotItNote locale={data.locale} />
       <SyncTroubleNote />
       {#if userState.trackingLane === undefined && !userState.hasAnyProgress}
@@ -84,6 +91,22 @@
 </div>
 
 <style>
+  .bookplate {
+    align-self: start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--color-rule);
+    background: var(--color-paper-raised);
+    font-family: var(--font-body);
+    overflow-wrap: anywhere;
+  }
+
+  .bookplate__farm {
+    color: var(--color-ink-muted);
+  }
+
   .home-page {
     display: flex;
     min-width: 0;

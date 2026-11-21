@@ -805,9 +805,8 @@ html:lang(ru) {
 /*
  * Page turns. `page-turn.ts` (the book shell's navigation hook) adds `book-turning` to the root for
  * each turn and animates the page's snapshots; these rules hold everything else still. The cover,
- * the wire, the rail, & the toolbar have names of their own, so they swap in place above the page
- * instead of being captured into the root snapshot under it. Other view transitions get the
- * browser's defaults.
+ * the wire, the rail, & the phone toolbar swap in place above the page. The book-width toolbar
+ * moves with the page. Other view transitions get the browser's defaults.
  */
 :root.book-turning::view-transition-group(*),
 :root.book-turning::view-transition-old(*),
@@ -828,6 +827,18 @@ html:lang(ru) {
 :root.book-turning::view-transition-old(book-page) {
   display: block;
   z-index: 1;
+}
+
+@media (min-width: 48rem) and (min-height: 34rem) {
+  :root.book-turning::view-transition-old(book-toolbar),
+  :root.book-turning::view-transition-new(book-toolbar) {
+    mix-blend-mode: normal;
+  }
+
+  :root.book-turning::view-transition-old(book-toolbar) {
+    display: block;
+    z-index: 1;
+  }
 }
 
 /* Toasts (an Undo, say) stay above the page while it turns. */

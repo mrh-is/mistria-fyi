@@ -196,7 +196,7 @@
     }
 
     .book--tools:has(:global(#tracker-search)) {
-      --ledger-tools-width: clamp(15rem, 34vw, 24rem);
+      --ledger-tools-width: clamp(15rem, 38vw, 24rem);
     }
 
     /* page-header.svelte drops the ribbon at half-screen widths (F38), so the tools close up. */

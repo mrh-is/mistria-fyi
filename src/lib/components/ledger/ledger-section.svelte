@@ -57,7 +57,16 @@
     open?: boolean;
     progress?: { completed: number; total: number };
     row: Snippet<
-      [T, Shelf, readonly SourceFilterId[], boolean, boolean, boolean, (event: Event) => void]
+      [
+        T,
+        Shelf,
+        readonly SourceFilterId[],
+        boolean,
+        boolean,
+        boolean,
+        (event: Event) => void,
+        boolean,
+      ]
     >;
     /** Every placement at the last refresh, including the rows filters can bring back. */
     rows: readonly T[];
@@ -105,6 +114,7 @@
   let isSearching = $derived(Boolean(toolbarState.searchQuery));
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
+  let showTable = $derived(open || forceOpen || (isSearching && hasRows));
   /**
    * A search that matches only one closed shelf here (Not now or Completed) prints as one line
    * that opens it, so a phone doesn't spend a screen on heads, folds, & dividers.
@@ -170,7 +180,7 @@
   const FIRST_ROWS = 16;
   const ROWS_PER_IDLE = 60;
   let mountedRows = $state(FIRST_ROWS);
-  let rowCount = $derived(matches.todo.length + matches.notNow.length + matches.completed.length);
+  let rowCount = $derived(groups.todo.length + groups.notNow.length + groups.completed.length);
   $effect(() => {
     if (mountedRows >= rowCount) return;
     const handle = afterIdle(() => {
@@ -186,7 +196,7 @@
     let before = 0;
     for (const earlier of shelves) {
       if (earlier === shelf) break;
-      before += matches[earlier].length;
+      before += groups[earlier].length;
     }
     return Math.max(0, mountedRows - before);
   }
@@ -431,21 +441,22 @@
   >
     {#each shelves as shelf (shelf)}
       {@const entries = matches[shelf]}
-      {#if entries.length > 0}
+      {#if groups[shelf].length > 0}
         {#if shelf === "todo"}
-          <div class="shelf" data-shelf={shelf}>
+          <div class="shelf" data-shelf={shelf} hidden={entries.length === 0}>
             {#if expanded && collapsible}<ShelfHeading
                 {shelf}
                 {explains}
                 count={progress && !isSearching ? undefined : entries.length}
                 level={4}
               />{/if}
-            {@render shelfRows(entries, shelf)}
+            {@render shelfRows(shelf)}
           </div>
         {:else}
           <details
             class="shelf"
             data-shelf={shelf}
+            hidden={entries.length === 0}
             open={revealedShelves[shelf] === true ||
               openedShelf === shelf ||
               (forceOpen && shelf === "completed")}
@@ -469,7 +480,7 @@
                 </span>
               {/if}
             </summary>
-            {@render shelfRows(entries, shelf)}
+            {@render shelfRows(shelf)}
           </details>
         {/if}
       {/if}
@@ -477,9 +488,9 @@
   </div>
 </section>
 
-{#snippet shelfRows(entries: readonly T[], shelf: Shelf)}
-  {@const columns = expanded ? timetable(groups[shelf]) : []}
-  {@const discovery = expanded && groups[shelf].some((entry) => entry.hiddenCount > 0)}
+{#snippet shelfRows(shelf: Shelf)}
+  {@const columns = showTable ? timetable(groups[shelf]) : []}
+  {@const discovery = showTable && groups[shelf].some((entry) => entry.hiddenCount > 0)}
   {@const highlight = highlights[shelf]}
   <div
     class="ledger-table"
@@ -515,7 +526,7 @@
         {/each}
       </div>
     {/if}
-    {#each entries.slice(0, mountedIn(shelf)) as entry (entry.key)}
+    {#each groups[shelf].slice(0, mountedIn(shelf)) as entry (entry.key)}
       {@const highlighted =
         highlight !== undefined &&
         columns.includes(highlight) &&
@@ -530,8 +541,9 @@
         columns,
         discovery,
         highlighted,
-        expanded,
+        open || forceOpen || (isSearching && visible(entry)),
         (event) => void revealFindMatch(event, shelf),
+        visible(entry),
       )}
     {/each}
   </div>
@@ -642,6 +654,13 @@
     top: calc(var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px));
     min-block-size: var(--ledger-head-size);
     background: var(--color-paper);
+  }
+
+  @media (max-height: 31.25rem) {
+    section:not(.collapsible) > .head {
+      position: relative;
+      top: auto;
+    }
   }
 
   h3 {
@@ -889,6 +908,12 @@
       min-inline-size: 0;
       overflow-wrap: anywhere;
       hyphens: auto;
+    }
+  }
+
+  @media (min-width: 60rem) and (max-height: 31.25rem) {
+    section:not(.collapsible) .timetable {
+      position: static;
     }
   }
 

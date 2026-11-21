@@ -2,7 +2,7 @@ import { onMount, tick, untrack } from "svelte";
 
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { whenIdleWorkFinishes } from "#lib/utils/idle.js";
-import { snapshot } from "$app/navigation";
+import { afterNavigate, beforeNavigate, snapshot } from "$app/navigation";
 
 interface ReadingPosition {
   fact?: string;
@@ -17,6 +17,10 @@ const SCROLL_KEYS = new Set(["ArrowDown", "ArrowUp", "End", "Home", "PageDown", 
 
 function ledgerContent(): HTMLElement | null {
   return document.querySelector<HTMLElement>("[data-ledger-content]:not([inert] *)");
+}
+
+function isSearchInput(target: EventTarget | null): target is HTMLInputElement {
+  return target instanceof HTMLInputElement && target.closest("[data-toolbar-search]") !== null;
 }
 
 function readPosition(): ReadingPosition | undefined {
@@ -48,22 +52,26 @@ function readPosition(): ReadingPosition | undefined {
  * the viewport), which pushed a restored row 14 px down. Re-align on every change in the
  * ledger's height until it holds still, the reader scrolls (which aborts `signal`), or presses.
  */
-function holdAlignment(align: () => void, signal: AbortSignal): void {
+async function holdAlignment(align: () => void, signal: AbortSignal): Promise<void> {
   const content = ledgerContent();
   if (!content || signal.aborted) return;
   const observer = new ResizeObserver(() => {
     align();
   });
-  const stop = (): void => {
-    observer.disconnect();
-    clearTimeout(timer);
-    globalThis.removeEventListener("pointerdown", stop, { capture: true });
-  };
-  const timer = setTimeout(stop, ALIGNMENT_HOLD_MS);
-  signal.addEventListener("abort", stop, { once: true });
-  // A press is the reader acting, such as opening a fold above the row, so stop pinning it.
-  globalThis.addEventListener("pointerdown", stop, { capture: true, once: true });
-  observer.observe(content);
+  await new Promise<void>((resolve) => {
+    const stop = (): void => {
+      observer.disconnect();
+      clearTimeout(timer);
+      signal.removeEventListener("abort", stop);
+      globalThis.removeEventListener("pointerdown", stop, { capture: true });
+      resolve();
+    };
+    const timer = setTimeout(stop, ALIGNMENT_HOLD_MS);
+    signal.addEventListener("abort", stop, { once: true });
+    // A press is the reader acting, such as opening a fold above the row, so stop pinning it.
+    globalThis.addEventListener("pointerdown", stop, { capture: true, once: true });
+    observer.observe(content);
+  });
 }
 
 export function nextFrame(): Promise<void> {
@@ -106,11 +114,21 @@ export function cancelOnReaderScroll(cancel: () => void): () => void {
 }
 
 /** Share the same row anchor between search and the router's per-history-entry snapshots. */
-export function useLedgerScroll(id: string): void {
+export function useLedgerScroll(id: string): () => boolean {
   let searchPosition: ReadingPosition | undefined;
+  let departingPosition: ReadingPosition | undefined;
   let lastQuery = untrack(() => toolbarState.searchQuery);
   let pending: AbortController | undefined;
   const cancel = (): void => pending?.abort();
+  const readingPosition = (): ReadingPosition | undefined =>
+    (toolbarState.searchQuery ? searchPosition : undefined) ?? readPosition();
+
+  beforeNavigate(({ from, to }) => {
+    if (from?.url.pathname !== to?.url.pathname) departingPosition = readingPosition();
+  });
+  afterNavigate(() => {
+    departingPosition = undefined;
+  });
 
   onMount(() => {
     const stop = cancelOnReaderScroll(cancel);
@@ -124,14 +142,19 @@ export function useLedgerScroll(id: string): void {
       options,
     );
     globalThis.addEventListener(
+      "input",
+      (event) => {
+        if (!toolbarState.searchQuery && isSearchInput(event.target)) {
+          searchPosition ??= readPosition();
+        }
+      },
+      options,
+    );
+    globalThis.addEventListener(
       "keydown",
       (event) => {
         const input = event.target;
-        if (
-          event.key !== "Escape" ||
-          !(input instanceof HTMLInputElement) ||
-          !input.closest("[data-toolbar-search]")
-        ) {
+        if (event.key !== "Escape" || !isSearchInput(input)) {
           return;
         }
         // The toolbar handles Escape itself. Recover focus only if clearing left it on the body.
@@ -199,18 +222,30 @@ export function useLedgerScroll(id: string): void {
     await nextFrame();
     await nextFrame();
     align();
-    holdAlignment(align, signal);
+    await holdAlignment(align, signal);
   }
 
   function returnTo(position: ReadingPosition | undefined): void {
     cancel();
     if (!position) return;
-    pending = new AbortController();
-    void restore(position, pending.signal);
+    const controller = new AbortController();
+    pending = controller;
+    void restoreAndClear(position, controller);
+  }
+
+  async function restoreAndClear(
+    position: ReadingPosition,
+    controller: AbortController,
+  ): Promise<void> {
+    try {
+      await restore(position, controller.signal);
+    } finally {
+      if (pending === controller) pending = undefined;
+    }
   }
 
   snapshot({
-    capture: () => searchPosition ?? readPosition(),
+    capture: () => departingPosition ?? readingPosition(),
     id,
     reset: cancel,
     restore: returnTo,
@@ -218,7 +253,7 @@ export function useLedgerScroll(id: string): void {
 
   $effect.pre(() => {
     const query = toolbarState.searchQuery;
-    if (query && !lastQuery) searchPosition = readPosition();
+    if (query && !lastQuery) searchPosition ??= readPosition();
   });
 
   $effect(() => {
@@ -239,4 +274,5 @@ export function useLedgerScroll(id: string): void {
       searchPosition = undefined;
     }
   });
+  return () => pending !== undefined && !pending.signal.aborted;
 }

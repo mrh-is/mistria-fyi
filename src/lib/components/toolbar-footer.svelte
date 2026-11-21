@@ -41,6 +41,36 @@
   const panels = getBookPanels();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(stripLocale(page.url.pathname));
+  let searchPlaceholder = $derived.by(() => {
+    switch (pathname) {
+      case "/":
+        return "Search the field guide";
+      case "/almanac":
+        return "Search the almanac";
+      case "/animals":
+        return "Search animals";
+      case "/cosmetics":
+        return "Search cosmetics";
+      case "/everything":
+        return "Search everything";
+      case "/mines":
+        return "Search the mines";
+      case "/museum":
+        return "Search the museum";
+      case "/quests":
+        return "Search quests";
+      case "/recipes":
+        return "Search recipes";
+      case "/renown":
+        return "Search renown";
+      case "/skills":
+        return "Search skills";
+      case "/villagers":
+        return "Search villagers";
+      default:
+        return "Search items";
+    }
+  });
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
   let toolbarAccent = $derived(metadata.accent);
 
@@ -212,8 +242,9 @@
 
   function handleSearchKey(event: KeyboardEvent): void {
     if (event.key !== /* @wc-ignore */ "Escape") return;
+    const hadQuery = Boolean(searchInput?.value);
     clearSearch();
-    searchInput?.blur();
+    if (!hadQuery) searchInput?.blur();
   }
 
   let filtersActive = $derived(
@@ -301,7 +332,7 @@
             bind:this={searchInput}
             class="search-field__input"
             id="tracker-search"
-            placeholder="Search items…"
+            placeholder={searchPlaceholder}
             type="text"
             enterkeyhint="search"
             autocomplete="off"
@@ -432,7 +463,7 @@
 <svelte:window onresize={() => (viewportTick += 1)} />
 
 <style>
-  /* Stays put, above the page, while a page turns (see app.css). */
+  /* At book widths the tools turn with the page. On phones the strip stays put. */
   .toolbar {
     view-transition-name: book-toolbar;
   }
@@ -489,7 +520,7 @@
     min-inline-size: 0;
     min-block-size: 44px;
     flex: 1;
-    padding-inline: 1.75rem 2.5rem;
+    padding-inline: 1.75rem 0.25rem;
     border: 0;
     border-block-end: 1px solid var(--color-ink-hairline);
     border-radius: 0;
@@ -501,6 +532,10 @@
 
   .search-field__input::placeholder {
     color: var(--color-ink-muted);
+  }
+
+  .search-field:has(.search-field__clear) .search-field__input {
+    padding-inline-end: 2.5rem;
   }
 
   .search-field__input:focus-visible {

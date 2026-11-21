@@ -62,7 +62,11 @@
   let lookups = $derived(
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
-  const { snapshot: ledger, visible } = createLedgerPage(
+  const {
+    restoringScroll,
+    snapshot: ledger,
+    visible,
+  } = createLedgerPage(
     () => locale,
     () => {
       const context = userState.progressContext;
@@ -98,7 +102,7 @@
   );
 
   let hash = $derived(building ? "" : new SvelteURL(page.url.href).hash.slice(1));
-  useLedgerArrival(() => (ledger.ready ? hash : ""));
+  useLedgerArrival(() => (ledger.ready ? hash : ""), restoringScroll);
 
   // A link or the jump list opens its section, and it stays open after the link moves on.
   $effect(() => {
@@ -129,9 +133,8 @@
   let sections = $derived(ordered.filter((section) => shows(section)));
   // The rail keeps every section, so a search or filter that empties one leaves the page's shape.
   let indexSections = $derived(ordered.map((section) => ({ ...section, muted: !shows(section) })));
-  let firstFinished = $derived(sections.findIndex((section) => finished(section)));
-  let todoCount = $derived(firstFinished === -1 ? sections.length : firstFinished);
-  let finishedCount = $derived(sections.length - todoCount);
+  let unfinished = $derived(sections.filter((section) => !finished(section)));
+  let completed = $derived(sections.filter((section) => finished(section)));
 
   function sectionCount(count: number): string {
     const label = formatNumber(count, locale);
@@ -142,16 +145,21 @@
 <SpoilerGuardDialog guard={checkOff.guard} />
 <LedgerNotice changed={ledger.needsRefresh} onRefresh={ledger.refresh} />
 <LedgerIndex sections={indexSections}>
-  {#each sections as section, index (section.id)}
+  {#each ordered as section (section.id)}
     {@const { id, name, rows, canonicalIds, progress } = section}
-    {#if index === 0 && todoCount > 0}
-      <ShelfHeading class="running-head" shelf="todo" note={sectionCount(todoCount)} level={2} />
+    {#if id === unfinished[0]?.id}
+      <ShelfHeading
+        class="running-head"
+        shelf="todo"
+        note={sectionCount(unfinished.length)}
+        level={2}
+      />
     {/if}
-    {#if index === firstFinished}
+    {#if id === completed[0]?.id}
       <ShelfHeading
         class="running-head finished-sections"
         shelf="completed"
-        note={sectionCount(finishedCount)}
+        note={sectionCount(completed.length)}
         explains={false}
         level={2}
       />
@@ -163,7 +171,7 @@
       {progress}
       {rows}
       {visible}
-      divider={index > 0 && index !== firstFinished}
+      divider={id !== unfinished[0]?.id && id !== completed[0]?.id}
       folded={finished(section) || phone.current}
       forceOpen={hash === id}
       bind:open={
@@ -174,7 +182,7 @@
         }
       }
     >
-      {#snippet row(placement, shelf, columns, discovery, highlighted)}
+      {#snippet row(placement, shelf, columns, discovery, highlighted, _active, _onFind, showsRow)}
         {@const { key, name: itemName, variant, visibility } = placement}
         <LedgerRow
           category="almanac"
@@ -192,6 +200,7 @@
           sprite={key}
           subtitle={variant}
           {variant}
+          visible={showsRow}
           onToggle={(covered) => {
             checkOff.onToggle(
               {

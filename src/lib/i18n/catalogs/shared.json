@@ -7148,14 +7148,14 @@
   },
   {
     "translations": {
-      "en": "Search items",
-      "ja": "アイテムを検索",
-      "zh-Hans": "搜索物品",
-      "zh-Hant": "搜尋物品",
-      "es": "Buscar elementos",
-      "fr": "Rechercher des éléments",
-      "ko": "항목 검색",
-      "ru": "Поиск предметов"
+      "en": "Search animals",
+      "ja": "動物を検索",
+      "zh-Hans": "搜索动物",
+      "zh-Hant": "搜尋動物",
+      "es": "Buscar animales",
+      "fr": "Rechercher des animaux",
+      "ko": "동물 검색",
+      "ru": "Поиск животных"
     },
     "references": [
       {
@@ -7170,14 +7170,169 @@
   },
   {
     "translations": {
-      "en": "Search items…",
-      "ja": "アイテムを検索…",
-      "zh-Hans": "搜索物品…",
-      "zh-Hant": "搜尋物品…",
-      "es": "Buscar elementos…",
-      "fr": "Rechercher des éléments…",
-      "ko": "항목 검색…",
-      "ru": "Поиск предметов…"
+      "en": "Search cosmetics",
+      "ja": "外見アイテムを検索",
+      "zh-Hans": "搜索装扮",
+      "zh-Hant": "搜尋飾物",
+      "es": "Buscar accesorios",
+      "fr": "Rechercher des accessoires",
+      "ko": "꾸미기 아이템 검색",
+      "ru": "Поиск украшений"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search everything",
+      "ja": "すべてを検索",
+      "zh-Hans": "搜索全部",
+      "zh-Hant": "搜尋全部",
+      "es": "Buscar en todo",
+      "fr": "Rechercher partout",
+      "ko": "전체 검색",
+      "ru": "Поиск по всему"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search items",
+      "ja": "アイテムを検索",
+      "zh-Hans": "搜索物品",
+      "zh-Hant": "搜尋物品",
+      "es": "Buscar elementos",
+      "fr": "Rechercher des éléments",
+      "ko": "항목 검색",
+      "ru": "Поиск предметов"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search quests",
+      "ja": "クエストを検索",
+      "zh-Hans": "搜索任务",
+      "zh-Hant": "搜尋任務",
+      "es": "Buscar misiones",
+      "fr": "Rechercher des quêtes",
+      "ko": "퀘스트 검색",
+      "ru": "Поиск заданий"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search recipes",
+      "ja": "レシピを検索",
+      "zh-Hans": "搜索配方",
+      "zh-Hant": "搜尋配方",
+      "es": "Buscar recetas",
+      "fr": "Rechercher des recettes",
+      "ko": "레시피 검색",
+      "ru": "Поиск рецептов"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search renown",
+      "ja": "名声を検索",
+      "zh-Hans": "搜索声望",
+      "zh-Hant": "搜尋聲望",
+      "es": "Buscar en el renombre",
+      "fr": "Rechercher dans la renommée",
+      "ko": "명성 검색",
+      "ru": "Поиск по известности"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search skills",
+      "ja": "スキルを検索",
+      "zh-Hans": "搜索技能",
+      "zh-Hant": "搜尋技能",
+      "es": "Buscar habilidades",
+      "fr": "Rechercher des compétences",
+      "ko": "기술 검색",
+      "ru": "Поиск навыков"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the almanac",
+      "ja": "図鑑を検索",
+      "zh-Hans": "搜索图鉴",
+      "zh-Hant": "搜尋圖鑑",
+      "es": "Buscar en el almanaque",
+      "fr": "Rechercher dans l’almanach",
+      "ko": "도감 검색",
+      "ru": "Поиск в альманахе"
     },
     "references": [
       {
@@ -7213,6 +7368,94 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the field guide",
+      "ja": "フィールドガイドを検索",
+      "zh-Hans": "搜索指南",
+      "zh-Hant": "搜尋指南",
+      "es": "Buscar en la guía de campo",
+      "fr": "Rechercher dans le guide",
+      "ko": "현장 가이드 검색",
+      "ru": "Поиск по справочнику"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the mines",
+      "ja": "鉱山を検索",
+      "zh-Hans": "搜索矿井",
+      "zh-Hant": "搜尋礦井",
+      "es": "Buscar en las minas",
+      "fr": "Rechercher dans les mines",
+      "ko": "광산 검색",
+      "ru": "Поиск по шахтам"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the museum",
+      "ja": "博物館を検索",
+      "zh-Hans": "搜索博物馆",
+      "zh-Hant": "搜尋博物館",
+      "es": "Buscar en el museo",
+      "fr": "Rechercher dans le musée",
+      "ko": "박물관 검색",
+      "ru": "Поиск по музею"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search villagers",
+      "ja": "住民を検索",
+      "zh-Hans": "搜索村民",
+      "zh-Hant": "搜尋村民",
+      "es": "Buscar habitantes",
+      "fr": "Rechercher des habitants",
+      "ko": "주민 검색",
+      "ru": "Поиск жителей"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
         ]
       }
     ],

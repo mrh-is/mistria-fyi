@@ -56,6 +56,7 @@
     sprite,
     subtitle,
     variant,
+    visible = true,
   }: {
     active?: boolean;
     category: CategoryKey;
@@ -76,6 +77,7 @@
     sprite?: string;
     subtitle?: string;
     variant?: string;
+    visible?: boolean;
   } = $props();
 
   const feedback = getFeedbackContext();
@@ -230,7 +232,7 @@
 <div
   data-tracker-row={active || undefined}
   data-ledger-row={active || undefined}
-  hidden={active ? undefined : "until-found"}
+  hidden={visible ? (active ? undefined : "until-found") : true}
   onbeforematch={onFind}
   data-ledger-fact={fact}
   data-highlighted={highlighted}

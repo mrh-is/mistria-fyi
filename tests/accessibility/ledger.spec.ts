@@ -132,10 +132,12 @@ test("keeps the tools and section index within reach in the middle of Furniture"
     .toBeGreaterThanOrEqual(noticeBottom - 1);
   await page.getByRole("button", { name: "Refresh shelves" }).click();
   await expect(page.getByText("Your progress or the day changed.")).toHaveCount(0);
+});
 
-  await contents.evaluate((nav) => {
-    nav.parentElement?.style.setProperty("--ledger-anchor-offset", "12rem");
-  });
+test("a section jump and a repeated jump focus the heading", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const contents = page.getByRole("navigation", { name: "Page sections" });
   const materials = contents.getByRole("link", { exact: true, name: "Materials" });
   await materials.click();
   await expect(page).toHaveURL(/#materials$/u);
@@ -157,7 +159,7 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   ).toHaveCount(0);
 });
 
-test("Back and clearing a zero-match search restore the Furniture row", async ({ page }) => {
+test("Back restores the Furniture row and its offset", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
@@ -176,11 +178,29 @@ test("Back and clearing a zero-match search restore the Furniture row", async ({
   await page.goBack();
   await expect(row).toBeInViewport();
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
+});
 
+test("clearing a zero-match search restores the same Furniture row element", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const row = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
+  await row.evaluate((element) => {
+    const ledgerRow = element.closest<HTMLElement>("[data-ledger-fact]");
+    if (ledgerRow) ledgerRow.dataset.searchRestoreProbe = "original";
+    element.scrollIntoView({ block: "center" });
+  });
+  const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
+  const top = await position();
   await openSearch(page, "zzq-no-matching-furniture");
   await expect(page.getByRole("status").filter({ hasText: "No items found" })).toHaveCount(1);
   await closeSearch(page);
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
+  const elementIdentity = await row.evaluate(
+    (element) => element.closest<HTMLElement>("[data-ledger-fact]")?.dataset.searchRestoreProbe,
+  );
+  expect(elementIdentity).toBe("original");
   await expect(page.getByRole("textbox", { name: "Search items" })).toBeFocused();
 });
 
@@ -439,6 +459,38 @@ function fixtureAlmanac(preset: "day-one" | "late-game" | "mid-game"): string[] 
   return fixtures[preset].progress.almanac;
 }
 
+test("a short variant fits next to its name", async ({ page }) => {
+  await page.setViewportSize({ height: 900, width: 1440 });
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: fixtureAlmanac("mid-game") } }),
+  );
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // oxlint-disable-next-line playwright/no-raw-locators -- Variant geometry lives inside the item label.
+  const variant = furniture.locator('[data-shelf="todo"] .item small').first();
+  await variant.scrollIntoViewIfNeeded();
+  const geometry = await variant.evaluate(async (element) => {
+    await document.fonts.ready;
+    const name = element.previousElementSibling;
+    const item = element.closest(".item");
+    if (!name || !item) throw new Error("Expected the variant next to its name");
+    const text = document.createRange();
+    text.selectNodeContents(name);
+    const nameRects = [...text.getClientRects()];
+    const nameWidth = nameRects.reduce((width, rect) => width + rect.width, 0);
+    const variantRect = element.getBoundingClientRect();
+    return {
+      available: item.getBoundingClientRect().width - 24,
+      needed: nameWidth + variantRect.width + 8,
+      offset: Math.abs(variantRect.top - (nameRects[0]?.top ?? -100)),
+    };
+  });
+  expect(geometry.available).toBeGreaterThanOrEqual(geometry.needed);
+  expect(geometry.offset).toBeLessThan(8);
+});
+
 test("a row whose source cells are blank still says where to get it", async ({ page }) => {
   await initializeApplication(
     page,
@@ -458,20 +510,13 @@ test("a row whose source cells are blank still says where to get it", async ({ p
       ),
     );
     const silent = blankCells.filter((row) => !row.querySelector(".also, .where"));
-    // A variant shares its name's line when there's room.
-    const small = rows.map((row) => row.querySelector(".item small")).find(Boolean);
-    small?.scrollIntoView({ block: "center" });
-    const nameTop = small?.previousElementSibling?.getBoundingClientRect().top ?? 0;
-    const variantTop = small?.getBoundingClientRect().top ?? 100;
     return {
       blank: blankCells.length,
       silent: silent.map((row) => row.textContent.trim()),
-      variantOffset: Math.abs(nameTop - variantTop),
     };
   });
   expect(audit.blank).toBeGreaterThan(0);
   expect(audit.silent).toEqual([]);
-  expect(audit.variantOffset).toBeLessThan(8);
 
   // A single source its cell already prints leaves nothing for the sheet, so the row doesn't open.
   const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });

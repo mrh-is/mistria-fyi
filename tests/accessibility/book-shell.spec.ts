@@ -17,6 +17,32 @@ const BOOK_MINIMUM = { height: 544, width: 768 };
 const DESKTOP = { height: 720, width: 1280 };
 const PHONE = { height: 844, width: 390 };
 
+for (const { locale, placeholder, width } of [
+  { locale: "fr", placeholder: "Rechercher dans l’almanach", width: 960 },
+  { locale: "ru", placeholder: "Поиск в альманахе", width: 820 },
+]) {
+  test(`the almanac search label fits at ${width}px in ${locale}`, async ({ page }) => {
+    await page.setViewportSize({ height: 800, width });
+    await gotoApplication(page, `/${locale}/almanac`);
+    const localizedField = page.getByPlaceholder(placeholder, { exact: true });
+    await expect(localizedField).toBeVisible();
+    const remaining = await localizedField.evaluate(async (input: HTMLInputElement) => {
+      await document.fonts.ready;
+      const style = getComputedStyle(input);
+      const context = document.createElement("canvas").getContext("2d");
+      if (!context) throw new Error("Missing canvas text measurement");
+      context.font = `${style.fontStyle} ${style.fontSize} ${style.fontFamily}`;
+      return (
+        input.clientWidth -
+        Number(style.paddingLeft.replace("px", "")) -
+        Number(style.paddingRight.replace("px", "")) -
+        context.measureText(input.placeholder).width
+      );
+    });
+    expect(remaining).toBeGreaterThanOrEqual(0);
+  });
+}
+
 function tabs(page: Page) {
   return page.getByRole("navigation", { name: "Thumb index" });
 }

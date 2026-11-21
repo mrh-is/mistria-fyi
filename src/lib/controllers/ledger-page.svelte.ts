@@ -32,11 +32,12 @@ export function createLedgerPage<Section extends { rows: readonly PageRow[]; spo
     scrollKey = "almanac",
   }: { excludeCoveredFromFilterCounts?: boolean; scrollKey?: string } = {},
 ): {
+  restoringScroll: () => boolean;
   snapshot: ReturnType<typeof createLedgerSnapshot<Section>>;
   visible: (row: Section["rows"][number]) => boolean;
 } {
   const snapshot = createLedgerSnapshot(readLocale, build);
-  useLedgerScroll(`ledger-scroll:${scrollKey}`);
+  const restoringScroll = useLedgerScroll(`ledger-scroll:${scrollKey}`);
 
   function visible(row: Section["rows"][number]): boolean {
     return (
@@ -72,7 +73,7 @@ export function createLedgerPage<Section extends { rows: readonly PageRow[]; spo
     return { filtered: filteredCounts(rows), visible: rows.filter(({ shown }) => shown).length };
   });
 
-  return { snapshot, visible };
+  return { restoringScroll, snapshot, visible };
 }
 
 function focusHeading(section: HTMLElement): void {
@@ -83,7 +84,10 @@ function focusHeading(section: HTMLElement): void {
 }
 
 /** Align after the target's containing groups and shelves have opened. */
-export function useLedgerArrival(readTarget: () => string): void {
+export function useLedgerArrival(
+  readTarget: () => string,
+  restoringScroll: () => boolean = () => false,
+): void {
   $effect(() => {
     const target = readTarget();
     if (!target) return;
@@ -109,11 +113,14 @@ export function useLedgerArrival(readTarget: () => string): void {
       await tick();
       // The browser handles the anchor click after the router updates its reactive URL.
       await nextFrame();
-      if (arrival.signal.aborted) return;
+      if (arrival.signal.aborted || restoringScroll()) {
+        stop();
+        return;
+      }
       const section = document.getElementById(target);
       if (!section) return;
       const realign = (): void => {
-        if (!arrival.signal.aborted && section.isConnected) {
+        if (!arrival.signal.aborted && !restoringScroll() && section.isConnected) {
           section.scrollIntoView({ behavior: "instant", block: "start" });
         }
       };
