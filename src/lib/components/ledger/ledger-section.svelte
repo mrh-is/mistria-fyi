@@ -136,7 +136,7 @@
     const found = shelves.filter((shelf) => matches[shelf].length > 0);
     const [shelf] = found;
     if (found.length !== 1 || shelf === undefined || shelf === "todo") return undefined;
-    if (revealedShelves[shelf] || (forceOpen && shelf === "completed")) return undefined;
+    if (shelfOpen(shelf)) return undefined;
     return shelf;
   });
   let line = $derived(soleClosedShelf !== undefined || (folded && !expanded));
@@ -212,8 +212,9 @@
     });
   });
   /*
-   * Whether the reader last opened or closed each shelf with its summary, which the `open`
-   * attribute doesn't track. It overrides the shelf's default until something reveals the shelf.
+   * Whether the reader last opened or closed each shelf with its summary. It overrides the shelf's
+   * default until something reveals the shelf, and it outlives the fold, so a search that prints
+   * the shelf as one line hands it back as the reader left it.
    */
   const toggledOpen = $state<Record<Shelf, boolean | undefined>>({
     completed: undefined,
@@ -226,15 +227,19 @@
     toggledOpen[shelf] = undefined;
   }
 
-  function shelfShown(shelf: Shelf): boolean {
-    if (!expanded || line) return false;
-    if (shelf === "todo") return true;
+  /** Whether a fold is open: the reader's last toggle, or else what revealed or forced it. */
+  function shelfOpen(shelf: Shelf): boolean {
     return (
       toggledOpen[shelf] ??
       (revealedShelves[shelf] === true ||
         openedShelf === shelf ||
         (forceOpen && shelf === "completed"))
     );
+  }
+
+  function shelfShown(shelf: Shelf): boolean {
+    if (!expanded || line) return false;
+    return shelf === "todo" || shelfOpen(shelf);
   }
 
   /*
@@ -347,13 +352,6 @@
         connected = false;
         observer.disconnect();
       };
-    };
-  }
-
-  /** Forgets the reader's toggle when the shelf's fold leaves the page. */
-  function forgetToggle(shelf: Shelf): Attachment<HTMLElement> {
-    return () => () => {
-      toggledOpen[shelf] = undefined;
     };
   }
 
@@ -646,9 +644,7 @@
             class="shelf"
             data-shelf={shelf}
             hidden={entries.length === 0}
-            open={revealedShelves[shelf] === true ||
-              openedShelf === shelf ||
-              (forceOpen && shelf === "completed")}
+            open={shelfOpen(shelf)}
             ontoggle={(event) => {
               const shelfOpen = event.currentTarget.open;
               toggledOpen[shelf] = shelfOpen;
@@ -656,7 +652,6 @@
               if (!shelfOpen) revealedShelves[shelf] = false;
               scheduleShelfRead();
             }}
-            {@attach forgetToggle(shelf)}
           >
             <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
               {#if expanded}
