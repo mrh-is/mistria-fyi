@@ -85,10 +85,11 @@ Each item names the doctor section that checks it.
    copies them to the maintainer's shared drive.
 3. **1Password agent** (`release`) for maintainer-only upload, feedback, & wiki credentials. Install
    the dotfiles `op-agent` wrapper & store repo credentials in the `Agent secrets` vault.
-   `.dev.vars.op` & `.env.wiki.op` are checked-in reference templates; they contain `op://` paths,
-   not secret values. Delete `.env.r2-upload`, `.env.wiki`, & `.dev.vars` from the main checkout;
-   those are legacy plaintext files. `.dev.vars` is regenerated only while `pnpm run dev:feedback`
-   runs, then deleted when it exits.
+   `.dev.vars.op` is a checked-in reference template; it contains `op://` paths, not secret values.
+   The wiki login stays in 1Password for manual use; no repository script currently reads it. Delete
+   `.env.r2-upload`, `.env.wiki`, & `.dev.vars` from the main checkout; those are legacy plaintext
+   files. `.dev.vars` is regenerated only while `pnpm run dev:feedback` runs, then deleted when it
+   exits, including when you stop it with Ctrl+C.
 4. **R2 upload token** (`release`) for `sprites:upload` & `fonts:upload`, which run Wrangler against
    the `mistria-fyi-assets` bucket. The upload scripts hand `R2_UPLOAD_TOKEN` to Wrangler as its
    `CLOUDFLARE_API_TOKEN`, for that child process only, so no `wrangler login` is needed. The

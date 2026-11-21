@@ -73,7 +73,7 @@ session limits) belong in each contributor’s user config.
 - To create one, run `pnpm run worktree:new <slug>` with lowercase letters, digits, & hyphens.
   `start-work issue` adds the issue number prefix. Inside a worktree that a harness created, run
   `node scripts/setup-worktree.ts` instead. Either command:
-  - links the game assets & the `.worktreeinclude` entries (env files),
+  - links the game assets, browser fixtures, & `.claude/settings.local.json`,
   - installs dependencies with the frozen lockfile,
   - runs `prepare`.
 - Run setup before editing in a harness-created worktree; no hook runs it, and a read-only session

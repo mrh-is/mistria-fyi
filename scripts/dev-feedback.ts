@@ -6,7 +6,61 @@ import path from "node:path";
 
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
 
+import type { ChildProcess } from "node:child_process";
+
 const repoRoot = path.resolve(import.meta.dirname, "..");
+
+type FeedbackDevChild = Pick<ChildProcess, "kill" | "on">;
+
+interface SignalSource {
+  off: (event: "exit" | NodeJS.Signals, listener: () => void) => SignalSource;
+  on: (signal: NodeJS.Signals, listener: () => void) => SignalSource;
+  once: (event: "exit", listener: () => void) => SignalSource;
+}
+
+export async function waitForFeedbackDev(
+  child: FeedbackDevChild,
+  cleanup: () => void,
+  signals: SignalSource = process,
+): Promise<number> {
+  return await new Promise((resolve) => {
+    let finished = false;
+    const finish = (code: number): void => {
+      if (finished) return;
+      finished = true;
+      cleanup();
+      signals.off("SIGINT", onSigint);
+      signals.off("SIGTERM", onSigterm);
+      resolve(code);
+    };
+    const onSigint = (): void => {
+      child.kill("SIGINT");
+    };
+    const onSigterm = (): void => {
+      child.kill("SIGTERM");
+    };
+    signals.on("SIGINT", onSigint);
+    signals.on("SIGTERM", onSigterm);
+    signals.once("exit", cleanup);
+    child.on("close", (code, signal) => {
+      if (code !== null) {
+        finish(code);
+      } else if (signal === "SIGINT") {
+        finish(130);
+      } else if (signal === "SIGTERM") {
+        finish(143);
+      } else {
+        finish(1);
+      }
+      signals.off("exit", cleanup);
+    });
+    child.on("error", (error) => {
+      console.error(error.message);
+      finish(1);
+      signals.off("exit", cleanup);
+    });
+  });
+}
 
 export async function startFeedbackDev(env: NodeJS.ProcessEnv = process.env): Promise<number> {
   const injected = spawnSync(
@@ -23,22 +77,14 @@ export async function startFeedbackDev(env: NodeJS.ProcessEnv = process.env): Pr
   }
 
   const pnpm = pnpmCommand(["exec", "vite", "dev"], env);
-  return await new Promise((resolve) => {
-    const child = spawn(pnpm.command, pnpm.args, {
-      cwd: repoRoot,
-      env,
-      shell: pnpm.shell,
-      stdio: "inherit",
-    });
-    child.on("close", (code) => {
-      rmSync(path.join(repoRoot, ".dev.vars"), { force: true });
-      resolve(code ?? 1);
-    });
-    child.on("error", (error) => {
-      rmSync(path.join(repoRoot, ".dev.vars"), { force: true });
-      console.error(error.message);
-      resolve(1);
-    });
+  const child = spawn(pnpm.command, pnpm.args, {
+    cwd: repoRoot,
+    env,
+    shell: pnpm.shell,
+    stdio: "inherit",
+  });
+  return await waitForFeedbackDev(child, () => {
+    rmSync(path.join(repoRoot, ".dev.vars"), { force: true });
   });
 }
 
