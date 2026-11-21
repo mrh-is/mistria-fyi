@@ -316,6 +316,7 @@
         frame ??= requestAnimationFrame(measure);
       }
 
+      const resize = new ResizeObserver(schedule);
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (!entry) return;
@@ -326,10 +327,12 @@
               signal: listeners.signal,
             });
             globalThis.addEventListener("resize", schedule, { signal: listeners.signal });
+            resize.observe(element);
             schedule();
           } else {
             globalThis.removeEventListener("scroll", schedule);
             globalThis.removeEventListener("resize", schedule);
+            resize.unobserve(element);
             if (!element.contains(document.activeElement)) windows[shelf] = undefined;
           }
         },
@@ -338,6 +341,7 @@
       observer.observe(element);
       return () => {
         observer.disconnect();
+        resize.disconnect();
         listeners.abort();
         if (frame !== undefined) cancelAnimationFrame(frame);
       };
@@ -1026,6 +1030,9 @@
   /* The intrinsic row size plus its rule, matching ledger-row.svelte. */
   .row-window {
     --ledger-row-pixels: 37;
+
+    /* Replacing rows with a spacer should not make the browser compensate for removing its anchor. */
+    overflow-anchor: none;
   }
 
   .row-spacer {
