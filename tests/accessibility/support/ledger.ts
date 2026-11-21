@@ -43,17 +43,6 @@ export function ledgerButton(scope: Locator | Page, text: string): Locator {
   return scope.locator(`${shownRow} button[aria-label=${label(text)}]`);
 }
 
-/**
- * The shown row for an item, found by its check button, so a role query for its other buttons
- * reads only that row.
- */
-export function ledgerRow(scope: Locator | Page, item: string): Locator {
-  // oxlint-disable-next-line playwright/no-raw-locators -- a role query styles every skipped row
-  return scope.locator(
-    `${shownRow}:has(button[aria-label=${label(`Check ${item}`)}], button[aria-label=${label(`Uncheck ${item}`)}])`,
-  );
-}
-
 /** A shown column-head button in a ledger timetable, such as “Highlight rows from Chests”. */
 export function ledgerColumnHead(scope: Locator | Page, text: string): Locator {
   // oxlint-disable-next-line playwright/no-raw-locators -- a role query styles every skipped row
