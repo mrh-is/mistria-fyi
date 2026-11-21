@@ -124,6 +124,47 @@ test("jumping into Furniture mounts rows near the landing point", async ({ page 
   expect(await rows.count()).toBeLessThanOrEqual(100);
 });
 
+test("scrolling through Furniture in small steps keeps the reading row in place", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
+  await settleLayout(page);
+  // Rows run taller than the spacers' estimate, so each window step used to move the page by the
+  // difference: 9 to 153 px at this width (#717).
+  const drifts = await furniture.evaluate(async (section) => {
+    const middle = (): HTMLElement | undefined =>
+      [...section.querySelectorAll<HTMLElement>("[data-ledger-key]")].find((row) => {
+        const { bottom, top } = row.getBoundingClientRect();
+        return top <= globalThis.innerHeight / 2 && bottom > globalThis.innerHeight / 2;
+      });
+    const found: string[] = [];
+    for (const direction of [1, -1]) {
+      for (let step = 0; step < 40; step += 1) {
+        const row = middle();
+        if (!row) throw new Error(`No Furniture row at mid-viewport on step ${String(step)}.`);
+        const key = row.dataset.ledgerKey ?? "";
+        const expected = row.getBoundingClientRect().top - direction * 120;
+        globalThis.scrollBy({ behavior: "instant", top: direction * 120 });
+        // The window measures on the next frame, and its rows lay out on the one after.
+        for (let frame = 0; frame < 3; frame += 1) {
+          await new Promise((resolve) => {
+            requestAnimationFrame(resolve);
+          });
+        }
+        const after = section.querySelector(`[data-ledger-key="${CSS.escape(key)}"]`);
+        const drift = after ? after.getBoundingClientRect().top - expected : Number.NaN;
+        // Scroll anchoring snaps to whole pixels, so a subpixel row can land 1 px off.
+        if (!(Math.abs(drift) <= 1)) found.push(`${String(direction * step)}: ${String(drift)}`);
+      }
+    }
+    return found;
+  });
+  expect(drifts).toEqual([]);
+});
+
 test("the next row control moves focus to the next unmounted entry", async ({ page }) => {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");

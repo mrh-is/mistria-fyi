@@ -1030,13 +1030,15 @@
   /* The intrinsic row size plus its rule, matching ledger-row.svelte. */
   .row-window {
     --ledger-row-pixels: 37;
-
-    /* Replacing rows with a spacer should not make the browser compensate for removing its anchor. */
-    overflow-anchor: none;
   }
 
+  /*
+   * Rows run taller than the estimate, so the browser has to anchor on a real row to keep the
+   * reader in place as the window moves. A spacer is never a stable anchor: its height is a guess.
+   */
   .row-spacer {
     position: relative;
+    overflow-anchor: none;
     block-size: calc(var(--unmounted) * var(--ledger-row-pixels) * 1px);
   }
 

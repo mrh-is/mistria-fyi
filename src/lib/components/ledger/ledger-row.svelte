@@ -370,7 +370,10 @@
     border-block-end: 1px solid var(--color-rule);
   }
 
-  /* Many rows to a page: compact for a mouse, a full fingertip for touch. */
+  /*
+   * Many rows to a page: compact for a mouse, a full fingertip for touch. The row window's spacer
+   * estimate (`--ledger-row-pixels` in ledger-section.svelte) is each size plus the 1px rule.
+   */
   @media (pointer: fine) and (hover: hover) {
     [data-ledger-row] {
       --tracker-target-size: 32px;
