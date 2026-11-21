@@ -107,12 +107,23 @@
     }
     return grouped;
   });
-  let matches = $derived({
-    completed: groups.completed.filter(visible),
-    notNow: groups.notNow.filter(visible),
-    todo: groups.todo.filter(visible),
-  });
   let isSearching = $derived(Boolean(toolbarState.searchQuery));
+  let matches = $derived(
+    isSearching
+      ? {
+          completed: groups.completed.filter(visible),
+          notNow: groups.notNow.filter(visible),
+          todo: groups.todo.filter(visible),
+        }
+      : groups,
+  );
+  let searchKeys = $state.raw<ReadonlySet<string>>();
+  $effect.pre(() => {
+    if (!isSearching) return;
+    // Retain the match markers on clear. Turning off the section's search flag reveals the
+    // mounted rows in one change instead of rewriting the hidden attribute on every row.
+    searchKeys = new Set(shelves.flatMap((shelf) => matches[shelf].map(({ key }) => key)));
+  });
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let expanded = $derived(open || forceOpen || isSearching);
   let showTable = $derived(open || forceOpen || (isSearching && hasRows));
@@ -329,6 +340,7 @@
   {id}
   data-ledger-section
   data-divider={(divider && !line) || undefined}
+  data-ledger-searching={isSearching || undefined}
   data-sprig={sprig}
   class:collapsible
   class:line
@@ -560,7 +572,7 @@
         highlighted,
         open || forceOpen || (isSearching && visible(entry)),
         (event) => void revealFindMatch(event, shelf),
-        visible(entry),
+        searchKeys !== undefined && !searchKeys.has(entry.key),
       )}
     {/each}
   </div>
@@ -935,8 +947,17 @@
   }
 
   /* The final row hands off to the shelf fold's own dashed rule. */
-  .ledger-table > :global(:nth-last-child(1 of [data-ledger-row]:not([hidden]))) {
+  section:not([data-ledger-searching])
+    .ledger-table
+    > :global(:nth-last-child(1 of [data-ledger-row]:not([hidden]))),
+  section[data-ledger-searching]
+    .ledger-table
+    > :global(:nth-last-child(1 of [data-ledger-row]:not([hidden], [data-ledger-search-miss]))) {
     border-block-end: 0;
+  }
+
+  section[data-ledger-searching] :global([data-ledger-search-miss]) {
+    display: none;
   }
 
   details {

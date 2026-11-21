@@ -359,7 +359,7 @@
                   highlighted,
                   active,
                   onFind,
-                  showsRow,
+                  searchMiss,
                 )}
                   {@const entry = active
                     ? (liveEntries.get(placement.key) ?? placement.entry)
@@ -372,7 +372,7 @@
                     {shelf}
                     {discovery}
                     {highlighted}
-                    visible={showsRow}
+                    {searchMiss}
                     category={entry.category}
                     fact={entry.fact}
                     id={entry.id}

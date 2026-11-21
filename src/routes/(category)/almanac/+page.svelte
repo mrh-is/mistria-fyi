@@ -14,7 +14,7 @@
 
 <style>
   /* Svelte sets inert on the outro and clears it if the route returns before removal. */
-  .almanac-route[inert] {
+  .almanac-route:global([inert]) {
     display: none;
   }
 </style>

@@ -182,7 +182,16 @@
         }
       }
     >
-      {#snippet row(placement, shelf, columns, discovery, highlighted, _active, _onFind, showsRow)}
+      {#snippet row(
+        placement,
+        shelf,
+        columns,
+        discovery,
+        highlighted,
+        _active,
+        _onFind,
+        searchMiss,
+      )}
         {@const { key, name: itemName, variant, visibility } = placement}
         <LedgerRow
           category="almanac"
@@ -200,7 +209,7 @@
           sprite={key}
           subtitle={variant}
           {variant}
-          visible={showsRow}
+          {searchMiss}
           onToggle={(covered) => {
             checkOff.onToggle(
               {

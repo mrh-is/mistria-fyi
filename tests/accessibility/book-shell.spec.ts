@@ -17,8 +17,16 @@ const BOOK_MINIMUM = { height: 544, width: 768 };
 const DESKTOP = { height: 720, width: 1280 };
 const PHONE = { height: 844, width: 390 };
 
+// Keep action traces without serializing the entire ledger after each action on retry.
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
+
 for (const { locale, placeholder, width } of [
-  { locale: "fr", placeholder: "Rechercher dans l’almanach", width: 960 },
+  { locale: "fr", placeholder: "Rechercher dans le catalogue", width: 960 },
   { locale: "ru", placeholder: "Поиск в альманахе", width: 820 },
 ]) {
   test(`the almanac search label fits at ${width}px in ${locale}`, async ({ page }) => {
@@ -278,7 +286,9 @@ function search(page: Page) {
 }
 
 function undo(page: Page) {
-  return page.getByRole("button", { exact: true, name: "Undo" });
+  return page
+    .getByRole("region", { name: /^Notifications/u })
+    .getByRole("button", { exact: true, name: "Undo" });
 }
 
 /** A layout box the test measures: the page header, its count, or its ribbon. */

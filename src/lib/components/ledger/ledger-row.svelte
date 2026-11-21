@@ -52,11 +52,11 @@
     onToggle,
     placement,
     reportCategory,
+    searchMiss = false,
     shelf,
     sprite,
     subtitle,
     variant,
-    visible = true,
   }: {
     active?: boolean;
     category: CategoryKey;
@@ -73,11 +73,11 @@
     onToggle: (covered: boolean) => void;
     placement: LedgerPlacement;
     reportCategory: ReportCategory;
+    searchMiss?: boolean;
     shelf: Shelf;
     sprite?: string;
     subtitle?: string;
     variant?: string;
-    visible?: boolean;
   } = $props();
 
   const feedback = getFeedbackContext();
@@ -232,9 +232,10 @@
 <div
   data-tracker-row={active || undefined}
   data-ledger-row={active || undefined}
-  hidden={visible ? (active ? undefined : "until-found") : true}
+  hidden={active ? undefined : "until-found"}
   onbeforematch={onFind}
   data-ledger-fact={fact}
+  data-ledger-search-miss={searchMiss || undefined}
   data-highlighted={highlighted}
   data-source-state={expanded ? "open" : "closed"}
   style:--sprite-tint={`var(--color-category-${category})`}
