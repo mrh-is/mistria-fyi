@@ -55,14 +55,17 @@ setup itself, require agents to stop & report them; see “Tooling failures” i
    `winget install koalaman.shellcheck`).
 5. **GitHub CLI** (`brew install gh`, `winget install GitHub.cli`), then run `gh auth login` and
    choose HTTPS. The remote stays HTTPS; do not switch it to SSH.
-6. **Dependencies**: `pnpm install --frozen-lockfile`, or `node scripts/setup-worktree.ts` inside a
+6. **1Password agent** (`op-agent`) for unattended local secret resolution. Store repo credentials
+   in the `Agent secrets` vault and keep secret values out of `.env`, `.env.*`, & `.dev.vars`.
+   `.env.op` is the checked-in reference template, so it contains `op://` paths, not secret values.
+7. **Dependencies**: `pnpm install --frozen-lockfile`, or `node scripts/setup-worktree.ts` inside a
    worktree. Every other `pnpm run` or `pnpm exec` command fails with
    `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` until dependencies match the lockfile, rather than installing
    them implicitly. The install also links the pinned Node at `node_modules/.bin/node`, which the
    committed VS Code settings point the Vitest extension at; Windows needs a local override (see
    [test file placement](development-workflow.md#test-file-placement)). Configure
    [Git hooks](#git-hooks) once per clone to enable the pre-commit check.
-7. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
+8. **Commit signing** (maintainer machine): a local SSH key with `gpg.format = ssh` &
    `gpg.ssh.program = ssh-keygen`, per [git identity](agent-workflow.md#git-identity). The doctor
    lists this as a todo, never a failure, because cloud sandboxes legitimately skip it. If
    `tag.gpgsign` is on, every `git tag` becomes a signed annotated tag that needs a message, so
@@ -99,37 +102,21 @@ Each item names the doctor section that checks it.
       it.
    3. Copy the **Token value**; the S3 access key pair it also shows isn't used. Copy the account ID
       from the R2 overview.
-   4. Save both in `.env.r2-upload` at the root of the main checkout:
-
-      ```sh
-      R2_UPLOAD_TOKEN=…
-      CLOUDFLARE_ACCOUNT_ID=…
-      ```
-
-      Save it as UTF-8; a byte-order mark is fine. `.gitignore` keeps it out of commits, and
-      `.worktreeinclude` excludes it, so worktrees never hold a copy that goes stale after a
-      rotation: the upload scripts & `r2:check` read it from the main checkout, from any worktree. A
-      nonempty shell variable of the same name wins. Agents can then run the uploads in the
+   4. Store the token & account ID in the 1Password vault `Agent secrets`, in the item
+      `Mistria R2 upload token`. Use `credential` for the token & `account id` for the account ID.
+      The repository's `.env.op` template references both values; no plaintext env file is needed. A
+      nonempty shell variable of the same name wins. Agents can run the uploads in the
       [game version update](game-version-update-protocol.md) without a dedicated shell; each upload
-      still asks for permission. Claude Code's `Read(**/.env.r2-upload)` deny rule keeps its file
-      tools from opening or searching the file, but shell commands & anything running as your user
-      can read it. If you suspect the token was exposed, revoke it in the dashboard & create a new
-      one; that is the expected response, not an emergency. A worktree made before this exclusion
-      may hold a copy or hard link; delete that worktree's `.env.r2-upload`.
+      still asks for permission.
 
    5. Run `pnpm run r2:check`. It puts & deletes a probe object in the bucket, which proves the
       token can write; a real upload doesn't, because it skips every object that is already current
       and so may never call Wrangler. Without `R2_UPLOAD_TOKEN`, a real upload refuses to start
       rather than falling back to a stored `wrangler login`; a `DRY_RUN=1` preview still works.
 
-   Note: Wrangler loads `.env` & `.env.local` from the repository root itself, but never
-   `.env.r2-upload`. Keep `CLOUDFLARE_API_TOKEN`, `R2_UPLOAD_TOKEN`, & `CLOUDFLARE_ACCOUNT_ID` out
-   of `.env` & `.env.local`: a `CLOUDFLARE_API_TOKEN` there reaches any Wrangler call that doesn't
-   set its own, and an account ID there satisfies Wrangler while the doctor still reports it unset.
-
-   The doctor checks only that both names are set, in the shell or the main checkout's
-   `.env.r2-upload`; it never prints or validates the token. A token has no interactive step, so it
-   can be revoked & replaced in the dashboard at any time. Never run `pnpx wrangler`.
+   The doctor never reads or prints the secret values. It checks `op-agent`, the R2 references, &
+   the account ID. A token has no interactive step, so it can be revoked & replaced in 1Password at
+   any time. Never run `pnpx wrangler`.
 
 ## Codex shells
 

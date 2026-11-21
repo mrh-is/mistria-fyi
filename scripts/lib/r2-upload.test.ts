@@ -2,14 +2,13 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   findPendingUploads,
   IMMUTABLE_CACHE_CONTROL,
   listFiles,
   loadR2UploadEnvFile,
-  parseR2UploadEnv,
   r2UploadOptionsFromEnv,
   r2UploadTree,
   wranglerEnv,
@@ -116,52 +115,26 @@ describe("wranglerEnv", () => {
 });
 
 describe("loadR2UploadEnvFile", () => {
-  it("fills the token & account ID from the file, ignoring other names", async () => {
-    const dir = tree({
-      ".env.r2-upload":
-        "R2_UPLOAD_TOKEN=r2-admin\nCLOUDFLARE_ACCOUNT_ID=account-id\nCLOUDFLARE_API_TOKEN=other\n",
-    });
+  it("fills the token & account ID from 1Password", async () => {
     const env: NodeJS.ProcessEnv = {};
+    const read = vi.fn<(reference: string) => Promise<string>>((reference) =>
+      Promise.resolve(reference.includes("credential") ? "r2-admin" : "account-id"),
+    );
 
-    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+    await loadR2UploadEnvFile(env, read);
 
     expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
   });
 
-  it("lets a nonempty environment value win over the file", async () => {
-    const dir = tree({
-      ".env.r2-upload": "R2_UPLOAD_TOKEN=from-file\nCLOUDFLARE_ACCOUNT_ID=file\n",
-    });
+  it("lets a nonempty environment value win over 1Password", async () => {
     const env: NodeJS.ProcessEnv = { CLOUDFLARE_ACCOUNT_ID: "", R2_UPLOAD_TOKEN: "from-shell" };
+    const read = vi.fn<(reference: string) => Promise<string>>((reference) =>
+      Promise.resolve(reference.includes("credential") ? "r2-admin" : "account-id"),
+    );
 
-    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
+    await loadR2UploadEnvFile(env, read);
 
-    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "file", R2_UPLOAD_TOKEN: "from-shell" });
-  });
-
-  it("ignores a UTF-8 byte-order mark & CRLF line endings", async () => {
-    const dir = tree({
-      ".env.r2-upload": "﻿R2_UPLOAD_TOKEN=r2-admin\r\nCLOUDFLARE_ACCOUNT_ID=account-id\r\n",
-    });
-    const env: NodeJS.ProcessEnv = {};
-
-    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
-
-    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "r2-admin" });
-  });
-
-  it("refuses a file that isn't UTF-8", () => {
-    expect(() => parseR2UploadEnv("R\u0000=\u0000")).toThrow(".env.r2-upload is not UTF-8");
-  });
-
-  it("leaves the environment alone without the file or with empty values", async () => {
-    const dir = tree({ ".env.r2-upload": "R2_UPLOAD_TOKEN=\n" });
-    const env: NodeJS.ProcessEnv = {};
-
-    await loadR2UploadEnvFile(env, path.join(dir, ".env.r2-upload"));
-    await loadR2UploadEnvFile(env, path.join(dir, "missing"));
-
-    expect(env).toEqual({});
+    expect(env).toEqual({ CLOUDFLARE_ACCOUNT_ID: "account-id", R2_UPLOAD_TOKEN: "from-shell" });
   });
 });
 
@@ -396,7 +369,7 @@ describe("r2UploadTree", () => {
     expect(io.puts).toEqual([]);
     expect(io.lines).toEqual([]);
     expect(io.errors).toEqual([
-      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+      "R2_UPLOAD_TOKEN is not set in the environment or 1Password; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
     ]);
   });
 

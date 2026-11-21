@@ -98,8 +98,8 @@ version bump fails until a save written by the new game exists there; that failu
 2. Add an entry for each such save to `SAVE_OBSERVATIONS` in
    `src/lib/engine/import-save.observations.ts` with its `gameVersion` & SHA-256 (`pending`
    observations are fine), then run `pnpm exec vitest run --project=saves` locally.
-3. Run `pnpm run saves:upload`. It needs `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` (from
-   `.env.r2-upload` as for sprites), checks each digest, & uploads to the bucket.
+3. Run `pnpm run saves:upload`. It needs `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` (from 1Password
+   as for sprites), checks each digest, & uploads to the bucket.
 4. Push. CI downloads the saves with the `R2_SAVES_READ_TOKEN` secret. It must be a Cloudflare API
    token with “Account, Workers R2 Storage, Read” (My Profile, API Tokens). An R2 API token with
    “Object Read only” fails with a 403, because Wrangler uses the REST API, not the S3 one. The
@@ -157,7 +157,7 @@ string so it reads the bucket’s current object rather than a stale edge-cached
 would replace an existing sprite, its pixels changed: bump `spriteGeneration` in
 `src/lib/sprites/sprite-url.ts` in the same pull request (see [sprite assets](sprite-assets.md)).
 Wrangler authenticates with the R2 upload token: `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID`, which
-the upload scripts load from the main checkout's `.env.r2-upload` or the shell
+the upload scripts load from 1Password or the shell
 ([machine setup](machine-setup.md#needed-for-specific-work)). If
 `node scripts/machine-doctor.ts --for release` lists the token as a todo, ask the maintainer to set
 it up; an agent never creates, reads, or prints it. Without the token, a real upload refuses to

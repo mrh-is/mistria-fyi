@@ -22,6 +22,7 @@ Thumbs.db
 # Env
 .env
 .env.*
+!.env.op
 .dev.vars
 !.env.example
 !.env.test

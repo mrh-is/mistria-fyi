@@ -1,7 +1,7 @@
 // Confirms the R2 upload token can write the asset bucket: puts a small probe object under tmp/,
 // then deletes it. A real upload doesn't prove this, because it skips every object that is already
 // current and so may never call Wrangler. Reads the token like the upload scripts do, from the
-// environment or `.env.r2-upload`, and never prints it.
+// environment or 1Password, and never prints it.
 //
 //   pnpm run r2:check   (R2_BUCKET overrides the bucket)
 import "#scripts/lib/require-pinned-node";
@@ -22,7 +22,7 @@ export async function checkR2Upload(
   const options = r2UploadOptionsFromEnv();
   if (!options.hasUploadToken) {
     console.error(
-      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload. Set it up per docs/machine-setup.md (R2 upload token).",
+      "R2_UPLOAD_TOKEN is not set in the environment or 1Password. Set it up per docs/machine-setup.md (R2 upload token).",
     );
     return 1;
   }

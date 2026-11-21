@@ -5,17 +5,18 @@
 // Env read by `r2UploadOptionsFromEnv`: R2_BUCKET, ASSET_ORIGIN, PARALLEL, FORCE=1 (re-upload
 // everything), DRY_RUN=1 (print what would be uploaded without running Wrangler), & whether
 // R2_UPLOAD_TOKEN is set (a real upload refuses to start without it). The upload scripts first fill
-// R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID from `.env.r2-upload` (see `loadR2UploadEnvFile`).
+// R2_UPLOAD_TOKEN & CLOUDFLARE_ACCOUNT_ID from 1Password (see `loadR2UploadEnvFile`).
 // Wrangler itself gets R2_UPLOAD_TOKEN as its CLOUDFLARE_API_TOKEN (see `wranglerEnv`).
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { parseEnv } from "node:util";
 
-import { mainCheckoutRoot } from "#scripts/lib/agent-hook";
+import { loadOpSecrets } from "#scripts/lib/op-agent";
 import { pnpmCommand } from "#scripts/lib/pnpm-command";
+
+import type { OpAgentRead } from "#scripts/lib/op-agent";
 
 /** Production asset origin; `src/lib/asset-origin.test.ts` keeps it in step with the app's. */
 export const DEFAULT_ASSET_ORIGIN = "https://assets.mistria.fyi";
@@ -92,49 +93,17 @@ export async function listFiles(dir: string): Promise<string[]> {
 /** The repository root, so `pnpm exec` finds the workspace's Wrangler from any working directory. */
 const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
 
-/**
- * The gitignored file holding the upload credentials, at the root of the main checkout only:
- * `.worktreeinclude` excludes it, so worktrees never hold a copy that goes stale after a rotation.
- * Wrangler never loads it itself (it reads only `.env` & `.env.local`).
- */
-export const R2_UPLOAD_ENV_FILE = ".env.r2-upload";
+export const R2_UPLOAD_REFERENCES = {
+  CLOUDFLARE_ACCOUNT_ID: "op://Agent secrets/Mistria R2 upload token/account id",
+  R2_UPLOAD_TOKEN: "op://Agent secrets/Mistria R2 upload token/credential",
+} as const;
 
-/**
- * Parses `.env.r2-upload`. Notepad & Windows PowerShell 5 may save it with a UTF-8 byte-order mark,
- * which would otherwise become part of the first name; a UTF-16 file can't be parsed at all.
- */
-export function parseR2UploadEnv(text: string): NodeJS.Dict<string> {
-  if (text.includes("\u0000")) {
-    throw new Error(`${R2_UPLOAD_ENV_FILE} is not UTF-8; save it as UTF-8 & retry.`);
-  }
-  return parseEnv(text.replace(/^﻿/, ""));
-}
-
-/**
- * Fills `R2_UPLOAD_TOKEN` & `CLOUDFLARE_ACCOUNT_ID` in `env` from `.env.r2-upload`, when the file
- * exists. A nonempty value already in `env` wins, so a shell can override the file. Other names in
- * the file are ignored, so it can't replace `CLOUDFLARE_API_TOKEN`.
- */
+/** Fills upload credentials from 1Password. A nonempty shell value wins. */
 export async function loadR2UploadEnvFile(
   env: NodeJS.ProcessEnv = process.env,
-  file: string = path.join(mainCheckoutRoot(REPO_ROOT), R2_UPLOAD_ENV_FILE),
+  read?: OpAgentRead,
 ): Promise<void> {
-  let text: string;
-  try {
-    text = await readFile(file, "utf8");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
-  const values = parseR2UploadEnv(text);
-  for (const name of ["R2_UPLOAD_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]) {
-    const value = values[name];
-    if (!env[name] && value) {
-      env[name] = value;
-    }
-  }
+  await loadOpSecrets(R2_UPLOAD_REFERENCES, env, read);
 }
 
 /**
@@ -359,7 +328,7 @@ export async function r2UploadTree(
   // Without the token, Wrangler would fall back to an account-wide stored login (#115).
   if (!options.dryRun && !options.hasUploadToken) {
     io.logError(
-      "R2_UPLOAD_TOKEN is not set in the environment or .env.r2-upload; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
+      "R2_UPLOAD_TOKEN is not set in the environment or 1Password; uploads never fall back to wrangler login. Set it up per docs/machine-setup.md (R2 upload token), or preview with DRY_RUN=1.",
     );
     return false;
   }
