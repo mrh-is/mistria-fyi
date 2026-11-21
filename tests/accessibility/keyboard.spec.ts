@@ -11,6 +11,14 @@ import { ledgerButton, ledgerChecks } from "./support/ledger.js";
 import { focusedVillagerRecord, villagerRecord } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
+// Keep action traces without serializing the entire ledger after each action on retry.
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
+
 test.describe("keyboard and focus accessibility", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light", createStoredState());
@@ -121,17 +129,17 @@ test.describe("keyboard and focus accessibility", () => {
     async ({ page }) => {
       await gotoApplication(page, "/almanac");
       const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-      const row = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
-      const name = await row.getAttribute("aria-label");
+      const row = ledgerChecks(artifacts).first();
+      const name = (await row.getAttribute("aria-label")) ?? "";
       await row.focus();
       await page.keyboard.press("Space");
-      await expect(
-        artifacts.getByRole("button", { name: `Uncheck ${name?.slice(6) ?? ""}` }),
-      ).toBeFocused();
-      const undo = page.getByRole("button", { exact: true, name: "Undo" });
+      await expect(ledgerButton(artifacts, `Uncheck ${name.slice(6)}`)).toBeFocused();
+      const undo = page
+        .getByRole("region", { name: /^Notifications/u })
+        .getByRole("button", { exact: true, name: "Undo" });
       await undo.focus();
       await page.keyboard.press("Enter");
-      await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+      await expect(ledgerButton(artifacts, name)).toBeVisible();
     },
   );
 

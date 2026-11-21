@@ -6,6 +6,7 @@ import {
   gotoRenderedApplication,
   initializeApplication,
 } from "./support/application-state.js";
+import { ledgerButton, ledgerButtonsStartingWith } from "./support/ledger.js";
 
 test.describe("@readiness application readiness", () => {
   test("navigation waits for hydration without waiting for unrelated requests", async ({
@@ -82,7 +83,7 @@ test.describe("@readiness application readiness", () => {
     await expectResolvedTheme(page, "dark");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
     await artifacts.getByText("Not now", { exact: true }).click();
-    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
+    await expect(ledgerButtonsStartingWith(artifacts, "Check ").first()).toBeVisible();
+    await expect(ledgerButton(page, "Reveal spoiler")).toHaveCount(0);
   });
 });

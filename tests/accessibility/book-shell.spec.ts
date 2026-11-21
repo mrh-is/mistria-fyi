@@ -184,7 +184,7 @@ test.describe("book shell", () => {
     await expect.poll(() => isTurning(page)).toBe(false);
 
     await page.goBack();
-    await expect(page).toHaveURL(/\/almanac$/);
+    await expect(page).toHaveURL((url) => url.pathname.endsWith("/almanac"));
     await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBe(252);
     await expect.poll(() => isTurning(page)).toBe(false);
   });
@@ -279,7 +279,7 @@ test.describe("book shell", () => {
       await tabs(page).getByRole("link", { name }).click();
     }
 
-    await expect(page).toHaveURL(/\/recipes$/);
+    await expect(page).toHaveURL((url) => url.pathname.endsWith("/recipes"));
     await expect(tabs(page).getByRole("link", { name: "Recipes" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -388,7 +388,10 @@ test.describe("page header & tools", () => {
     await gotoApplication(page, "/almanac");
     await checkOffFirstArtifact(page);
     await page.setViewportSize(PHONE);
-    await page.getByRole("button", { exact: true, name: "Contents" }).click();
+    await page
+      .getByRole("navigation", { name: "Field guide tools" })
+      .getByRole("button", { exact: true, name: "Contents" })
+      .click();
     await expect(page.getByRole("dialog", { name: "Contents" })).toBeVisible();
     await page.setViewportSize({ height: PHONE.width, width: PHONE.height });
 

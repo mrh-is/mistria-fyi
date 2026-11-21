@@ -6,7 +6,14 @@ import {
   gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
-import { ledgerButton, ledgerChecks, placeTrigger } from "./support/ledger.js";
+import {
+  headTrigger,
+  ledgerButton,
+  ledgerButtonsStartingWith,
+  ledgerChecks,
+  ledgerColumnHead,
+  sectionTrigger,
+} from "./support/ledger.js";
 import { closeSearch, openSearch, openVisibilityPanel } from "./support/scenarios.js";
 
 /*
@@ -44,16 +51,17 @@ for (const { theme, touch, width } of [
       const homeCount = homeLabel?.match(/([\d,]+) to do/u)?.[1] ?? "";
       expect(homeCount).toBeTruthy();
       await (touch ? link.tap() : link.click());
-      await expect(page).toHaveURL(new URL(destination ?? "", page.url()).href);
+      const expected = new URL(destination ?? "", page.url()).href;
+      await expect(page).toHaveURL((url) => url.href === expected);
 
       const placeId = new URL(page.url()).hash;
       // oxlint-disable-next-line playwright/no-raw-locators -- the Home link supplies the place anchor
       const place = page.locator(placeId);
-      const check = place.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+      const check = ledgerChecks(place).first();
       const label = await check.getAttribute("aria-label");
       const name = label?.slice(6) ?? "";
-      const checkItem = place.getByRole("button", { exact: true, name: `Check ${name}` });
-      const uncheckItem = place.getByRole("button", { exact: true, name: `Uncheck ${name}` });
+      const checkItem = ledgerButton(place, `Check ${name}`);
+      const uncheckItem = ledgerButton(place, `Uncheck ${name}`);
       const shelfCount = place.getByText(`${homeCount} to do`, { exact: true });
       await expect(shelfCount).toBeVisible();
       const rowHeight = await checkItem.evaluate(
@@ -145,7 +153,7 @@ test("a section jump and a repeated jump focus the heading", async ({ page }) =>
   const contents = page.getByRole("navigation", { name: "Page sections" });
   const materials = contents.getByRole("link", { exact: true, name: "Materials" });
   await materials.click();
-  await expect(page).toHaveURL(/#materials$/u);
+  await expect(page).toHaveURL((url) => url.hash === "#materials");
   await expect(materials).toHaveAttribute("aria-current", "location");
   const materialsHeading = page.getByRole("heading", { exact: true, name: "Materials" });
   await expect(materialsHeading).toBeFocused();
@@ -154,14 +162,12 @@ test("a section jump and a repeated jump focus the heading", async ({ page }) =>
 
   const songCrystals = contents.getByRole("link", { exact: true, name: "Song Crystals" });
   await songCrystals.click();
-  await expect(page).toHaveURL(/#song_crystal$/u);
+  await expect(page).toHaveURL((url) => url.hash === "#song_crystal");
   await expect(songCrystals).toHaveAttribute("aria-current", "location");
   const crystals = page.getByRole("region", { exact: false, name: /^Song Crystals/ });
   // Every Song Crystal comes from a chest, so the column head names it but highlights nothing.
   await expect(crystals.getByText("Chests", { exact: true }).first()).toBeVisible();
-  await expect(
-    crystals.getByRole("button", { exact: true, name: "Highlight rows from Chests" }),
-  ).toHaveCount(0);
+  await expect(ledgerColumnHead(crystals, "Highlight rows from Chests")).toHaveCount(0);
 });
 
 test("Back restores the Furniture row and its offset", async ({ page }) => {
@@ -169,6 +175,9 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // Let content above Furniture settle before measuring the row's starting offset.
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count ready rows across open and closed shelves.
+  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
   const check = ledgerChecks(furniture).nth(20);
   const label = (await check.getAttribute("aria-label")) ?? "";
   const row = ledgerButton(furniture, label);
@@ -240,7 +249,7 @@ test("the Almanac section head scrolls away in a short window", async ({ page })
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const row = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(25);
+  const row = ledgerChecks(furniture).nth(25);
   await row.scrollIntoViewIfNeeded();
   await expect(
     furniture.getByRole("heading", { exact: true, name: "Furniture" }),
@@ -255,7 +264,7 @@ test("closed source names are findable and native reveal opens the matching row"
   test.slow();
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/everything?group=source");
-  const balor = placeTrigger(page, "Balor's Wagon");
+  const balor = sectionTrigger(page, "Balor's Wagon");
   await expect(balor).toHaveAttribute("aria-expanded", "false");
 
   const contentId = await balor.getAttribute("aria-controls");
@@ -298,10 +307,7 @@ test("a section's stuck head names the shelf scrolling under it", async ({ page 
   await expect(head).not.toContainText("Not now");
 
   await notNowFold.click();
-  const notNowRow = furniture
-    .getByRole("group")
-    .getByRole("button", { name: /^Check / })
-    .nth(5);
+  const notNowRow = ledgerButtonsStartingWith(furniture.getByRole("group"), "Check ").nth(5);
   await notNowRow.evaluate((row) => {
     row.scrollIntoView({ block: "center" });
   });
@@ -331,19 +337,16 @@ test("finished sections sit on the Completed shelf as one line each, and open in
   await expect(page.getByText("10 sections", { exact: true })).toBeVisible();
 
   const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
-  const line = bugs.getByRole("button", { exact: true, name: "Bugs" });
+  const line = headTrigger(bugs, "Bugs");
   await expect(line).toHaveAttribute("aria-expanded", "false");
   // One line: no section-level Completed fold, so “Completed” isn't printed twice.
   await expect(bugs.getByText("Completed", { exact: true })).toBeHidden();
-  await expect(bugs.getByRole("button", { name: /^Uncheck / })).toHaveCount(0);
+  await expect(ledgerButtonsStartingWith(bugs, "Uncheck ")).toHaveCount(0);
 
   await line.click();
-  await expect(bugs.getByRole("button", { exact: true, name: "Uncheck Ant" })).toBeVisible();
-  await bugs.getByRole("button", { exact: true, name: "Bugs" }).click();
-  await expect(bugs.getByRole("button", { exact: true, name: "Bugs" })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
+  await expect(ledgerButton(bugs, "Uncheck Ant")).toBeVisible();
+  await line.click();
+  await expect(line).toHaveAttribute("aria-expanded", "false");
 });
 
 test("a search matching one closed shelf in a section prints one line that opens it", async ({
@@ -357,13 +360,11 @@ test("a search matching one closed shelf in a section prints one line that opens
   await gotoApplication(page, "/almanac");
   await openSearch(page, "copper");
   const blacksmithing = page.getByRole("region", { exact: true, name: "Blacksmithing" });
-  const line = blacksmithing.getByRole("button", { exact: true, name: "Blacksmithing" });
+  const line = headTrigger(blacksmithing, "Blacksmithing");
   await expect(line).toHaveAttribute("aria-expanded", "false");
   await expect(line).toContainText("Completed");
   await line.click();
-  await expect(
-    blacksmithing.getByRole("button", { name: /^Uncheck Copper/u }).first(),
-  ).toBeVisible();
+  await expect(ledgerButtonsStartingWith(blacksmithing, "Uncheck Copper").first()).toBeVisible();
 });
 
 test.describe("Almanac on a phone", () => {
@@ -375,26 +376,22 @@ test.describe("Almanac on a phone", () => {
     await initializeApplication(page, "light", createStoredState());
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    const line = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
+    const line = headTrigger(artifacts, "Artifacts");
     await expect(line).toHaveAttribute("aria-expanded", "false");
-    await expect(
-      page.getByRole("region", { exact: true, name: "Song Crystals" }).getByRole("button", {
-        exact: true,
-        name: "Song Crystals",
-      }),
-    ).toBeInViewport();
+    await expect(sectionTrigger(page, "Song Crystals")).toBeInViewport();
 
     await line.tap();
-    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
-    await artifacts.getByRole("button", { exact: true, name: "Artifacts" }).tap();
-    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeHidden();
+    const firstCheck = ledgerButtonsStartingWith(artifacts, "Check ").first();
+    await expect(firstCheck).toBeVisible();
+    await line.tap();
+    await expect(firstCheck).toBeHidden();
   });
 
   test("a link still goes straight to its section", async ({ page }) => {
     await initializeApplication(page, "light", createStoredState());
     await gotoApplication(page, "/almanac#furniture");
     const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-    await expect(furniture.getByRole("button", { name: /^Check / }).first()).toBeInViewport();
+    await expect(ledgerButtonsStartingWith(furniture, "Check ").first()).toBeInViewport();
   });
 });
 
@@ -403,7 +400,7 @@ test("the rail and the sticky head agree on the current section", async ({ page 
   await gotoApplication(page, "/almanac");
   const contents = page.getByRole("navigation", { name: "Page sections" });
   const blacksmithing = page.getByRole("region", { exact: true, name: "Blacksmithing" });
-  await expect(blacksmithing.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+  await expect(ledgerButtonsStartingWith(blacksmithing, "Check ").first()).toBeVisible();
   // Blacksmithing's head sits above the old 30% reading line but hasn't reached the sticky line,
   // so Artifacts' head is the one still stuck at the top.
   await blacksmithing.evaluate((section) => {
@@ -424,7 +421,7 @@ test("column heads stick below the section head's measured height at book widths
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const row = furniture.getByRole("button", { name: /^Check / }).nth(40);
+  const row = ledgerButtonsStartingWith(furniture, "Check ").nth(40);
   await row.evaluate((button) => {
     button.scrollIntoView({ block: "center" });
   });
@@ -449,8 +446,8 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
   );
   await gotoApplication(page, "/almanac");
   const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
-  const bugsHead = bugs.getByRole("button", { exact: true, name: "Bugs" });
-  const ant = bugs.getByRole("button", { exact: true, name: "Uncheck Ant" });
+  const bugsHead = headTrigger(bugs, "Bugs");
+  const ant = ledgerButton(bugs, "Uncheck Ant");
   const thumbIndex = page.getByRole("navigation", { name: "Thumb index" });
   const contents = page.getByRole("navigation", { name: "Page sections" });
 
@@ -458,11 +455,11 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
   await expect(ant).toBeVisible();
   // A hash link starts a new history entry; the opened line stays open across it.
   await contents.getByRole("link", { exact: true, name: "Furniture" }).click();
-  await expect(page).toHaveURL(/#furniture$/u);
+  await expect(page).toHaveURL((url) => url.hash === "#furniture");
   await expect(bugsHead).toHaveAttribute("aria-expanded", "true");
 
   await thumbIndex.getByRole("link", { name: "Museum" }).click();
-  await expect(page).toHaveURL(/\/museum/u);
+  await expect(page).toHaveURL((url) => url.pathname.endsWith("/museum"));
   await page.goBack();
   await expect(bugsHead).toHaveAttribute("aria-expanded", "true");
   // The finished section's rows come back too, not a closed Completed fold.
@@ -471,9 +468,9 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
   await expect(ant).toBeVisible();
 
   await thumbIndex.getByRole("link", { name: "Museum" }).click();
-  await expect(page).toHaveURL(/\/museum/u);
+  await expect(page).toHaveURL((url) => url.pathname.endsWith("/museum"));
   await thumbIndex.getByRole("link", { name: "Almanac" }).click();
-  await expect(page).toHaveURL(/\/almanac$/u);
+  await expect(page).toHaveURL((url) => url.pathname.endsWith("/almanac"));
   await expect(bugsHead).toHaveAttribute("aria-expanded", "false");
 });
 

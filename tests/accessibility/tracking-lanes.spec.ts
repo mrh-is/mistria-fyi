@@ -7,6 +7,15 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
+import { headTrigger, ledgerButton, ledgerChecks } from "./support/ledger.js";
+
+// Keep action traces without serializing the entire ledger after each action on retry.
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
 
 for (const [theme, width] of [
   ["light", 1280],
@@ -43,12 +52,12 @@ for (const [theme, width] of [
     // A phone opens the Almanac on its list of sections; a tap opens one in place.
     const openArtifacts = async () => {
       if (width < 768) {
-        await artifacts.getByRole("button", { exact: true, name: "Artifacts" }).click();
+        await headTrigger(artifacts, "Artifacts").click();
       }
     };
     await openArtifacts();
-    const first = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
-    const name = await first.getAttribute("aria-label");
+    const first = ledgerChecks(artifacts).first();
+    const name = (await first.getAttribute("aria-label")) ?? "";
     expect(name).toBeTruthy();
     await first.click();
     const chooser = page.getByRole("dialog", { name: "How do you wanna track your farm?" });
@@ -58,7 +67,7 @@ for (const [theme, width] of [
     await page.screenshot({ path: testInfo.outputPath(`chooser-${width}.png`) });
     await chooser.getByRole("button", { exact: true, name: "Close" }).click();
     await expect(chooser).toBeHidden();
-    await expect(page.getByRole("button", { exact: true, name: name ?? "" })).toBeVisible();
+    await expect(ledgerButton(artifacts, name)).toBeVisible();
     await first.click();
     await chooser.getByRole("button", { name: /I’ll track it all by hand/ }).click();
     const install = page.getByRole("dialog", { name: "Let’s keep your progress safe" });
@@ -102,9 +111,7 @@ for (const [theme, width] of [
     await page.locator(HYDRATED_SELECTOR).waitFor({ state: "attached" });
     await openArtifacts();
     await artifacts.getByText("Completed", { exact: true }).click();
-    await expect(
-      artifacts.getByRole("button", { exact: true, name: `Uncheck ${name?.slice(6) ?? ""}` }),
-    ).toBeVisible();
+    await expect(ledgerButton(artifacts, `Uncheck ${name.slice(6)}`)).toBeVisible();
     await waitForRendering(page);
     await expect(install).toBeHidden();
     expect(errors).toEqual([]);

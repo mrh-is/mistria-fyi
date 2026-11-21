@@ -9,7 +9,7 @@ import {
   initializeApplication,
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
-import { ledgerButton } from "./support/ledger.js";
+import { ledgerButton, ledgerButtonsStartingWith, ledgerChecks } from "./support/ledger.js";
 import {
   closeSearch,
   openFeedbackValidation,
@@ -146,11 +146,15 @@ test.describe("stateful accessibility", () => {
   test("completed rows and Undo pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    const completion = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
+    const completion = ledgerChecks(artifacts).first();
     await completion.click();
-    await expect(page.getByRole("button", { exact: true, name: "Undo" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: /^Notifications/u })
+        .getByRole("button", { exact: true, name: "Undo" }),
+    ).toBeVisible();
 
-    await expect(artifacts.getByRole("button", { name: /^Uncheck / }).first()).toBeVisible();
+    await expect(ledgerButtonsStartingWith(artifacts, "Uncheck ").first()).toBeVisible();
     await analyzeAccessibility(
       page,
       { route: "/almanac", state: "completed-row-shown", theme: "light" },

@@ -6,6 +6,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
+import { ledgerButtonsStartingWith } from "./support/ledger.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
@@ -134,7 +135,7 @@ test.describe("browser accessibility preferences", () => {
     await waitForRendering(page);
     await page.keyboard.press("Tab");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    const completion = artifacts.getByRole("button", { name: /^Check / }).first();
+    const completion = ledgerButtonsStartingWith(artifacts, "Check ").first();
     await completion.focus();
     await expect(completion).toBeFocused();
 
@@ -148,6 +149,10 @@ test.describe("browser accessibility preferences", () => {
     expect(Number.parseFloat(focusStyle.outlineWidth)).toBeGreaterThan(0);
 
     await completion.press("Space");
-    await expect(page.getByRole("button", { exact: true, name: "Undo" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: /^Notifications/u })
+        .getByRole("button", { exact: true, name: "Undo" }),
+    ).toBeVisible();
   });
 });
