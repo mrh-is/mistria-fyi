@@ -63,3 +63,52 @@ export function villagerRecord(page: Page, villagerId: string): Locator {
 export function focusedVillagerRecord(page: Page, prefix: string): Locator {
   return page.locator(`[id^="villager-${prefix}"]:focus`);
 }
+
+/** Visit each screen of a shelf in order, including rows already mounted just outside the view. */
+export async function visitLedgerShelf(
+  section: Locator,
+  shelf: "notNow" | "todo",
+  visit: (shelf: Locator) => Promise<void>,
+): Promise<void> {
+  // oxlint-disable-next-line playwright/no-raw-locators -- The shelf itself can be a layout box.
+  const box = section.locator(`[data-shelf="${shelf}"]`);
+  const page = section.page();
+  await box.evaluate((element) => {
+    element.scrollIntoView({ block: "start" });
+  });
+  // oxlint-disable-next-line no-await-in-loop -- Read each mounted window before scrolling to the next.
+  for (;;) {
+    await settleLayout(page);
+    await visit(box);
+    // oxlint-disable-next-line no-await-in-loop -- Stop after reading the last screen of the shelf.
+    const bottom = await box.evaluate((element) => element.getBoundingClientRect().bottom);
+    if (bottom <= (await page.evaluate(() => globalThis.innerHeight))) return;
+    await page.evaluate(() => {
+      globalThis.scrollBy({ behavior: "instant", top: globalThis.innerHeight * 0.8 });
+    });
+  }
+}
+
+/** Waits two frames, so rows near the screen replace their size estimates with real heights. */
+export async function settleLayout(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      }),
+  );
+}
+
+/** Scrolls a ledger section's head to the top, so its first rows mount as a reader's would. */
+export async function scrollToSection(section: Locator): Promise<void> {
+  await section.evaluate((element) => {
+    element.scrollIntoView({ block: "start" });
+  });
+  // oxlint-disable-next-line playwright/no-raw-locators -- Wait for the section's first row box.
+  await expect(section.locator("[data-ledger-fact]").first()).toBeAttached();
+  await settleLayout(section.page());
+}

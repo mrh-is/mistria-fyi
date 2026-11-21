@@ -444,9 +444,8 @@ arrival behavior through `controllers/ledger-page.svelte.ts`.
 
 A place link opens its containing source group & focuses the place heading after scrolling to it.
 The Completed fold starts closed. A place link into it opens the fold, and search can count the
-closed fold’s rows. Closed places expose their unmasked item names to browser Find through
-`hidden="until-found"`. A match opens its place & shelf and scrolls the corresponding interactive
-row into view.
+closed fold’s rows. Browser Find reaches only mounted rows; the ledger’s own search covers the rest
+(#714).
 
 `components/ledger/ledger-index.svelte` lists the sections. At wide widths it's a rail beside the
 ledger, and below them each section's sticky head opens it as a jump list. A section counts as
@@ -455,11 +454,16 @@ scroll during search. The first keystroke remembers the row at the reading line,
 new query starts at the top of the ledger, and clearing the search scrolls that row back to where it
 was. Navigating away forgets it.
 
-A ledger section mounts its first 16 rows at once and the rest in idle-time chunks of 60, To do
-first. A page turn waits for the new page's first render, and mounting all of Furniture's 1,017 rows
-in that frame froze the turn. Find & search reach the later rows a moment after the page appears.
-`components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its image, and its mask
-for the masked treatments, has loaded.
+A ledger section mounts a window of rows on each open shelf near the screen (#714). Spacers hold the
+estimated height of earlier & later rows, so jumping into a long shelf mounts the rows at the
+landing point. “Previous rows” & “Next rows” move focus to an adjacent row even when it hasn’t
+mounted yet. Search uses the same window over its matches and retains the reading rows while the
+query is active. Back & search clear ask the section to mount a window around the saved row
+(`LEDGER_MOUNT_EVENT`) before restoring its offset. Mounting every row (1,879 on the Almanac, 35,407
+elements) made axe, Playwright, & screen readers walk the whole ledger, which stalled the
+accessibility CI (#708). `tests/accessibility/ledger-budget.spec.ts` checks the first screen, broad
+search, & long jumps. `components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its
+image, and its mask for the masked treatments, has loaded.
 
 Ledger rows can't share a CSS subgrid, because `content-visibility` contains their layout. Each row
 lays out the same deterministic tracks instead, which its shelf passes as `--ledger-tracks`.

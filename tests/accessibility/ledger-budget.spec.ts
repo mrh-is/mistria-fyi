@@ -1,0 +1,207 @@
+import { expect, test } from "../browser/test.js";
+import {
+  createStoredState,
+  gotoApplication,
+  initializeApplication,
+  waitForRendering,
+} from "./support/application-state.js";
+import { analyzeAccessibility } from "./support/axe.js";
+import { openSearch, settleLayout } from "./support/scenarios.js";
+
+import type { Page } from "@playwright/test";
+
+/*
+ * The ledgers mount rows near the screen, not all at once (#714). Mounting every row made axe,
+ * Playwright, & screen readers walk the whole ledger, which stalled the accessibility CI (#708).
+ * These budgets fail a change that mounts far more of a ledger again, at CI's 4× CPU throttling,
+ * before it shows up as unrelated timeouts.
+ */
+const CPU_THROTTLE = 4;
+
+interface Budget {
+  /** Elements in the whole document, once the first screen's rows have mounted. */
+  elements: number;
+  /** Time from navigation to the first row's checkbox showing, in milliseconds. */
+  interactiveMs: number;
+  /** Ledger rows mounted. */
+  rows: number;
+  /** One whole-page axe scan, in milliseconds. */
+  scanMs: number;
+}
+
+async function measure(page: Page, path: string, firstCheck: () => Promise<void>): Promise<Budget> {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: CPU_THROTTLE });
+  await initializeApplication(page, "light", createStoredState());
+  const started = Date.now();
+  await gotoApplication(page, path);
+  await firstCheck();
+  const interactiveMs = Date.now() - started;
+  await waitForRendering(page);
+  await settleLayout(page);
+  const { elements, rows } = await page.evaluate(() => ({
+    elements: document.querySelectorAll("*").length,
+    rows: document.querySelectorAll("[data-ledger-fact]").length,
+  }));
+  const scanStarted = Date.now();
+  await analyzeAccessibility(page, { route: path, state: "budget", theme: "light" });
+  const scanMs = Date.now() - scanStarted;
+  return { elements, interactiveMs, rows, scanMs };
+}
+
+test("the Almanac stays within its budget at 4× CPU throttling", async ({ page }) => {
+  const measured = await measure(page, "/almanac", async () => {
+    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
+  });
+  test.info().annotations.push({ type: "budget", description: JSON.stringify(measured) });
+  // Measured about 2,100 elements, 60 rows, 1 s to interactive, & a 1.3 s scan. Mounting every
+  // row measured 35,407 elements & 1,879 rows on the same desktop window.
+  expect(measured.rows).toBeLessThanOrEqual(200);
+  expect(measured.elements).toBeLessThanOrEqual(5000);
+  expect(measured.interactiveMs).toBeLessThanOrEqual(10_000);
+  expect(measured.scanMs).toBeLessThanOrEqual(10_000);
+});
+
+test("the source ledger mounts no rows until a place opens", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/everything?group=source");
+  // Every place starts closed. Its heads alone still cost about 24,600 elements across 888 places,
+  // which #716 tracks, so this test avoids page-wide role queries. Mounting every row as well
+  // measured about 52,000.
+  // oxlint-disable-next-line playwright/no-raw-locators -- Place boxes have no role of their own.
+  const places = page.locator("[data-source-section]");
+  await expect
+    .poll(() => page.evaluate(() => document.querySelectorAll("[data-source-section]").length))
+    .toBeGreaterThan(800);
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count row boxes across the page.
+  const rows = page.locator("[data-ledger-fact]");
+  await settleLayout(page);
+  await expect(rows).toHaveCount(0);
+
+  const place = places.first();
+  await place.getByRole("button", { expanded: false }).first().click();
+  // oxlint-disable-next-line playwright/no-raw-locators -- Count the opened place's row boxes.
+  await expect.poll(() => place.locator("[data-ledger-fact]").count()).toBeGreaterThan(0);
+});
+
+test("a broad source search keeps the row budget", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/everything?group=source");
+  await openSearch(page, "a");
+  await expect
+    .poll(() => page.evaluate(() => document.querySelectorAll("[data-ledger-fact]").length))
+    .toBeGreaterThan(0);
+  await settleLayout(page);
+  const rows = await page.evaluate(() => document.querySelectorAll("[data-ledger-fact]").length);
+  expect(rows).toBeLessThanOrEqual(200);
+});
+
+test("jumping into Furniture mounts rows near the landing point", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const rows = furniture.getByRole("button", { name: /^Check (?!spoilered item)/u });
+  const first = (await rows.first().getAttribute("aria-label")) ?? "";
+  expect(first).toMatch(/^Check /u);
+  await furniture.evaluate((section) => {
+    const shelf = section.querySelector('[data-shelf="todo"]');
+    if (!shelf) throw new Error("Furniture To do shelf is missing.");
+    const { height, top } = shelf.getBoundingClientRect();
+    globalThis.scrollBy({ behavior: "instant", top: top + height * 0.7 });
+  });
+  await expect
+    .poll(() =>
+      furniture.evaluate((section) =>
+        [...section.querySelectorAll("[data-ledger-row]")].some((row) => {
+          const { bottom, top } = row.getBoundingClientRect();
+          return bottom > 150 && top < globalThis.innerHeight;
+        }),
+      ),
+    )
+    .toBe(true);
+  await expect(furniture.getByRole("button", { exact: true, name: first })).toHaveCount(0);
+  expect(await rows.count()).toBeLessThanOrEqual(100);
+});
+
+test("scrolling through Furniture in small steps keeps the reading row in place", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
+  await settleLayout(page);
+  // Rows run taller than the spacers' estimate, so each window step used to move the page by the
+  // difference: 9 to 153 px at this width (#717).
+  const drifts = await furniture.evaluate(async (section) => {
+    const middle = (): HTMLElement | undefined =>
+      [...section.querySelectorAll<HTMLElement>("[data-ledger-key]")].find((row) => {
+        const { bottom, top } = row.getBoundingClientRect();
+        return top <= globalThis.innerHeight / 2 && bottom > globalThis.innerHeight / 2;
+      });
+    const found: string[] = [];
+    for (const direction of [1, -1]) {
+      for (let step = 0; step < 40; step += 1) {
+        const row = middle();
+        if (!row) throw new Error(`No Furniture row at mid-viewport on step ${String(step)}.`);
+        const key = row.dataset.ledgerKey ?? "";
+        const expected = row.getBoundingClientRect().top - direction * 120;
+        globalThis.scrollBy({ behavior: "instant", top: direction * 120 });
+        // The window measures on the next frame, and its rows lay out on the one after.
+        for (let frame = 0; frame < 3; frame += 1) {
+          await new Promise((resolve) => {
+            requestAnimationFrame(resolve);
+          });
+        }
+        const after = section.querySelector(`[data-ledger-key="${CSS.escape(key)}"]`);
+        const drift = after ? after.getBoundingClientRect().top - expected : Number.NaN;
+        // Scroll anchoring snaps to whole pixels, so a subpixel row can land 1 px off.
+        if (!(Math.abs(drift) <= 1)) found.push(`${String(direction * step)}: ${String(drift)}`);
+      }
+    }
+    return found;
+  });
+  expect(drifts).toEqual([]);
+});
+
+test("the next row control moves focus to the next unmounted entry", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/almanac#furniture");
+  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  const next = furniture.getByRole("button", { exact: true, name: "Next rows" }).first();
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
+  await expect(next).toBeAttached();
+  await next.press("Enter");
+  await expect
+    .poll(() =>
+      furniture.evaluate((section) => {
+        const focused = document.activeElement;
+        if (!focused || !section.contains(focused)) return "";
+        const { bottom, top } = focused.getBoundingClientRect();
+        return top >= 0 && bottom <= globalThis.innerHeight
+          ? focused.getAttribute("aria-label")
+          : "";
+      }),
+    )
+    .toMatch(/^Check /u);
+});
+
+test("closing a search result shelf returns focus to its section button", async ({ page }) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: ["clay_amphora"] } }),
+  );
+  await gotoApplication(page, "/almanac");
+  await openSearch(page, "Clay Amphora");
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  const result = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
+  await expect(result).toHaveAttribute("aria-expanded", "false");
+  await result.press("Enter");
+  // oxlint-disable-next-line playwright/no-raw-locators -- Chromium reports an open summary as a disclosure, not a button.
+  const shelf = artifacts.locator("details[open] > summary").filter({ hasText: "Completed" });
+  await expect(shelf).toBeVisible();
+  await shelf.press("Space");
+  await expect(result).toBeFocused();
+});

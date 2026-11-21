@@ -43,7 +43,12 @@ for (const [theme, width] of [
     // A phone opens the Almanac on its list of sections; a tap opens one in place.
     const openArtifacts = async () => {
       if (width < 768) {
-        await artifacts.getByRole("button", { exact: true, name: "Artifacts" }).click();
+        const head = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
+        // A reload restores the reading position, which can open the section before this does.
+        await expect(async () => {
+          if ((await head.getAttribute("aria-expanded")) === "false") await head.click();
+          await expect(head).toHaveAttribute("aria-expanded", "true", { timeout: 1000 });
+        }).toPass();
       }
     };
     await openArtifacts();

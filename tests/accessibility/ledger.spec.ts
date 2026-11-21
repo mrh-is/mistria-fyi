@@ -6,7 +6,14 @@ import {
   gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
-import { closeSearch, openSearch, openVisibilityPanel } from "./support/scenarios.js";
+import {
+  closeSearch,
+  openSearch,
+  openVisibilityPanel,
+  scrollToSection,
+  settleLayout,
+  visitLedgerShelf,
+} from "./support/scenarios.js";
 
 /*
  * Everything's source ledger keeps about 50,000 elements, and a trace's DOM snapshot after each
@@ -94,7 +101,8 @@ test("keeps the tools and section index within reach in the middle of Furniture"
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   const rows = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ });
-  const distantRow = rows.nth(50);
+  const label = (await rows.last().getAttribute("aria-label")) ?? "";
+  const distantRow = furniture.getByRole("button", { exact: true, name: label });
   const spriteMask = () =>
     distantRow.evaluate((button) =>
       button
@@ -164,6 +172,9 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  await scrollToSection(furniture);
+  await page.mouse.wheel(0, 7000);
+  await expect(furniture.getByRole("button", { name: "Previous rows" }).first()).toBeAttached();
   const check = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
   const label = (await check.getAttribute("aria-label")) ?? "";
   const row = furniture.getByRole("button", { exact: true, name: label });
@@ -171,6 +182,12 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await row.evaluate((element) => {
     element.scrollIntoView({ block: "center" });
   });
+  // Rows near the screen replace their size estimates, so measure once they have.
+  await settleLayout(page);
+  await row.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+  await settleLayout(page);
   const top = await position();
 
   await page.getByRole("link", { name: "Back to home" }).click();
@@ -178,6 +195,7 @@ test("Back restores the Furniture row and its offset", async ({ page }) => {
   await page.goBack();
   await expect(row).toBeInViewport();
   await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
+  expect(await furniture.getByRole("button", { name: /^Check /u }).count()).toBeLessThan(100);
 });
 
 test("clearing a zero-match search restores the same Furniture row element", async ({ page }) => {
@@ -193,15 +211,19 @@ test("clearing a zero-match search restores the same Furniture row element", asy
     input.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
   });
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  // Let content above Furniture settle before measuring the row's starting offset.
-  // oxlint-disable-next-line playwright/no-raw-locators -- Count ready rows across open and closed shelves.
-  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
+  await scrollToSection(furniture);
   const row = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
   await row.evaluate((element) => {
     const ledgerRow = element.closest<HTMLElement>("[data-ledger-fact]");
     if (ledgerRow) ledgerRow.dataset.searchRestoreProbe = "original";
     element.scrollIntoView({ block: "center" });
   });
+  // Rows near the screen replace their size estimates, so measure once they have.
+  await settleLayout(page);
+  await row.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+  await settleLayout(page);
   const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
   const top = await position();
   await openSearch(page, "zzq-no-matching-furniture");
@@ -215,15 +237,14 @@ test("clearing a zero-match search restores the same Furniture row element", asy
   await expect(search).toBeFocused();
 });
 
-test("a fresh Song Crystals link stays aligned after the ledger fills", async ({ page }) => {
+test("a fresh Song Crystals link stays aligned as rows mount", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#song_crystal");
   const heading = page.getByRole("heading", { exact: true, name: "Song Crystals" });
-  const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  // The last idle chunks include the titles that Browser Find can reveal in Furniture.
-  // oxlint-disable-next-line playwright/no-raw-locators -- Count mounted rows across closed shelves.
-  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
+  // Sections above the target mount no further rows, so nothing pushes the heading away.
+  await settleLayout(page);
+  await settleLayout(page);
   await expect(heading).toBeInViewport();
   await expect(heading).toBeFocused();
 });
@@ -233,47 +254,12 @@ test("the Almanac section head scrolls away in a short window", async ({ page })
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const row = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(25);
-  await row.scrollIntoViewIfNeeded();
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeAttached();
+  await page.mouse.wheel(0, 800);
   await expect(
     furniture.getByRole("heading", { exact: true, name: "Furniture" }),
   ).not.toBeInViewport();
   await expect(page.getByRole("textbox", { name: "Search items" })).toBeInViewport();
-});
-
-test("closed source names are findable and native reveal opens the matching row", async ({
-  page,
-}) => {
-  // The browser first builds the searchable titles for the whole source ledger.
-  test.slow();
-  await initializeApplication(page, "light", createStoredState());
-  await gotoApplication(page, "/everything?group=source");
-  const balor = page.getByRole("button", { exact: true, name: "Balor's Wagon" });
-  await expect(balor).toHaveAttribute("aria-expanded", "false");
-
-  const contentId = await balor.getAttribute("aria-controls");
-  // Chromium's browser Find bar and fragment navigation run the same native reveal algorithm.
-  // oxlint-disable-next-line playwright/no-raw-locators -- the disclosure supplies the content ID
-  const hiddenMatch = page.locator(`[id="${contentId}"]`).getByText("Barrel Hat", { exact: true });
-  await expect(hiddenMatch).toBeAttached();
-  await expect(hiddenMatch).toBeHidden();
-  // The closed titles mount after the ledger's headings, so wait for Find to reach them.
-  await expect
-    .poll(() =>
-      page.evaluate(() =>
-        (globalThis as typeof globalThis & { find: (query: string) => boolean }).find("Barrel Hat"),
-      ),
-    )
-    .toBe(true);
-  await hiddenMatch.evaluate((match) => {
-    match.id = "test-browser-find-target";
-    location.hash = match.id;
-  });
-  await expect(balor).toHaveAttribute("aria-expanded", "true");
-  await expect(hiddenMatch).toHaveAttribute("id", "test-browser-find-target");
-  await expect(
-    page.getByRole("button", { exact: true, name: "Check Barrel Hat" }),
-  ).toBeInViewport();
 });
 
 test("a section's stuck head names the shelf scrolling under it", async ({ page }) => {
@@ -398,6 +384,7 @@ test("the rail and the sticky head agree on the current section", async ({ page 
   await gotoApplication(page, "/almanac");
   const contents = page.getByRole("navigation", { name: "Page sections" });
   const blacksmithing = page.getByRole("region", { exact: true, name: "Blacksmithing" });
+  await scrollToSection(blacksmithing);
   await expect(blacksmithing.getByRole("button", { name: /^Check / }).first()).toBeVisible();
   // Blacksmithing's head sits above the old 30% reading line but hasn't reached the sticky line,
   // so Artifacts' head is the one still stuck at the top.
@@ -419,10 +406,8 @@ test("column heads stick below the section head's measured height at book widths
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const row = furniture.getByRole("button", { name: /^Check / }).nth(40);
-  await row.evaluate((button) => {
-    button.scrollIntoView({ block: "center" });
-  });
+  await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeAttached();
+  await page.mouse.wheel(0, 1500);
   await expect
     .poll(() =>
       furniture.evaluate((section) => {
@@ -460,9 +445,10 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
   await expect(page).toHaveURL(/\/museum/u);
   await page.goBack();
   await expect(bugsHead).toHaveAttribute("aria-expanded", "true");
-  // The finished section's rows come back too, not a closed Completed fold.
-  await expect(ant).toBeAttached();
-  await ant.scrollIntoViewIfNeeded();
+  // The finished section's rows come back too, not a closed Completed fold. A wheel turn takes
+  // over from Back's restore, which otherwise holds the Furniture row in place for a moment.
+  await page.mouse.wheel(0, -1);
+  await scrollToSection(bugs);
   await expect(ant).toBeVisible();
 
   await thumbIndex.getByRole("link", { name: "Museum" }).click();
@@ -532,27 +518,28 @@ test("a row whose source cells are blank still says where to get it", async ({ p
   );
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  // Wait for the idle chunks, so every To do row is on the page.
-  // oxlint-disable-next-line playwright/no-raw-locators -- Count mounted rows across shelves.
-  await expect.poll(() => furniture.locator("[data-ledger-fact]").count()).toBeGreaterThan(1000);
-  const audit = await furniture.evaluate((section) => {
-    const rows = [...section.querySelectorAll('[data-shelf="todo"] [data-ledger-row]')];
-    const blankCells = rows.filter((row) =>
-      [...row.querySelectorAll(".cell")].every(
-        (cell) => !cell.textContent.trim() && !cell.querySelector("svg"),
-      ),
+  const blank = new Map<string, boolean>();
+  await visitLedgerShelf(furniture, "todo", async (shelf) => {
+    const rows = await shelf.evaluate((element) =>
+      [...element.querySelectorAll<HTMLElement>("[data-ledger-row]")]
+        .filter((row) =>
+          [...row.querySelectorAll(".cell")].every(
+            (cell) => !cell.textContent.trim() && !cell.querySelector("svg"),
+          ),
+        )
+        .map(
+          (row) =>
+            [row.dataset.ledgerKey ?? "", Boolean(row.querySelector(".also, .where"))] as const,
+        ),
     );
-    const silent = blankCells.filter((row) => !row.querySelector(".also, .where"));
-    return {
-      blank: blankCells.length,
-      silent: silent.map((row) => row.textContent.trim()),
-    };
+    for (const [key, hasSource] of rows) blank.set(key, hasSource);
   });
-  expect(audit.blank).toBeGreaterThan(0);
-  expect(audit.silent).toEqual([]);
+  expect(blank.size).toBeGreaterThan(0);
+  expect([...blank.entries()].filter(([, hasSource]) => !hasSource)).toEqual([]);
 
   // A single source its cell already prints leaves nothing for the sheet, so the row doesn't open.
   const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  await scrollToSection(artifacts);
   // oxlint-disable-next-line playwright/no-raw-locators -- rows are layout boxes keyed by fact
   const amphora = artifacts.locator('[data-ledger-fact="almanac/clay_amphora"]');
   await expect(amphora).toContainText("Dig up at an artifact dig site");
@@ -591,15 +578,22 @@ test.describe("Almanac rows on a phone", () => {
     await gotoApplication(page, "/almanac#furniture");
     const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
     await furniture.getByText("Not now", { exact: true }).click();
-    const readOrder = () =>
-      furniture.evaluate((section) =>
-        [...section.querySelectorAll('[data-shelf="notNow"] [data-ledger-row]')].map((row) =>
-          row.querySelector(".spoiler-cover") ? "covered" : "plain",
+    const visited = new Map<string, string>();
+    await visitLedgerShelf(furniture, "notNow", async (shelf) => {
+      const rows = await shelf.evaluate((element) =>
+        [...element.querySelectorAll<HTMLElement>("[data-ledger-row]")].map(
+          (row) =>
+            [
+              row.dataset.ledgerKey ?? "",
+              row.querySelector(".spoiler-cover") ? "covered" : "plain",
+            ] as const,
         ),
       );
-    // The shelf's rows mount in idle chunks, so wait for the covered ones to arrive.
-    await expect.poll(readOrder).toContain("covered");
-    const order = await readOrder();
+      for (const [key, kind] of rows) visited.set(key, kind);
+    });
+    const order = [...visited.values()];
+    expect(order).toContain("covered");
+    expect(order).toContain("plain");
     expect(order.indexOf("covered")).toBeGreaterThan(order.lastIndexOf("plain"));
   });
 });

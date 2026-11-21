@@ -123,7 +123,7 @@ test.describe("stateful accessibility", () => {
     );
 
     await closeSearch(page);
-    await artifacts.getByText("Not now", { exact: true }).click();
+    // Clearing the search leaves the shelf the reader opened open.
     await expect(spoiler).toBeVisible();
     await spoiler.click();
     await analyzeAccessibility(

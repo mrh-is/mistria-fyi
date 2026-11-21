@@ -2,6 +2,7 @@ import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LEDGER_MOUNT_EVENT } from "#lib/components/ledger/ledger-context.js";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import * as celebration from "#lib/effects/celebrate.js";
@@ -341,7 +342,7 @@ describe("while source shelves hold", () => {
     );
   });
 
-  it("keeps a Find-revealed shelf open after a later match reopens the place", async () => {
+  it("mounts a place's rows only while the place is open", async () => {
     const ocean: Source = {
       type: "fish",
       availability: { type: "season", seasons: ["winter"] },
@@ -353,21 +354,53 @@ describe("while source shelves hold", () => {
     ]);
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
     await tick();
-    const reveal = async (name: string) => {
-      // A closed place's rows are title-only and wait for Find under `hidden="until-found"`.
-      const row = view.getByText(name, { exact: true }).closest("[hidden='until-found']");
-      if (!row) throw new Error(`Expected the ${name} row`);
-      row.dispatchEvent(new Event("beforematch"));
-      await tick();
-      return row.closest("details");
-    };
-    const notNow = await reveal("Anchovy");
-    // Closing the place returns its rows to Find, so the next match reveals through it again.
+    const place = view.container.querySelector<HTMLElement>("#fish-ocean");
+    if (!place) throw new Error("Expected the Ocean section");
+    // A closed place keeps its head but leaves its rows out of the document (#714).
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
     await fireEvent.click(view.getByRole("button", { name: /^Ocean/ }));
-    const completed = await reveal("Bream");
-    expect(notNow).not.toBe(completed);
-    expect(notNow).toHaveAttribute("open");
-    expect(completed).toHaveAttribute("open");
+    // Anchovy waits on Not now and Bream is done, so both shelves start closed & empty.
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
+    await fireEvent.click(within(place).getByText("Not now", { exact: true }));
+    await tick();
+    expect(within(place).getByText("Anchovy", { exact: true })).toBeInTheDocument();
+    expect(within(place).queryByText("Bream", { exact: true })).not.toBeInTheDocument();
+    await fireEvent.click(view.getByRole("button", { name: /^Ocean/ }));
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
+  });
+
+  it("unmounts a shelf's rows when the reader closes it, even after a reveal", async () => {
+    const ocean: Source = {
+      type: "fish",
+      availability: { type: "season", seasons: ["winter"] },
+      waterTypes: ["ocean" as WaterType],
+    };
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+      checklistRow("Anchovy", false, [ocean]),
+    ]);
+    const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+    await tick();
+    const place = view.container.querySelector<HTMLElement>("#fish-ocean");
+    const section =
+      place?.closest<HTMLElement>("[data-ledger-section]") ??
+      place?.querySelector<HTMLElement>("[data-ledger-section]");
+    if (!place || !section) throw new Error("Expected the Ocean section");
+    await fireEvent.click(view.getByRole("button", { name: /^Ocean/ }));
+    const notNow = within(place).getByText("Not now", { exact: true });
+    await fireEvent.click(notNow);
+    await tick();
+    const key = place.querySelector<HTMLElement>("[data-ledger-key]")?.dataset.ledgerKey;
+    if (!key) throw new Error("Expected the Anchovy row");
+    await fireEvent.click(notNow);
+    await tick();
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
+    // Back reveals the shelf to restore a row; closing it afterward still unmounts the rows.
+    section.dispatchEvent(new CustomEvent(LEDGER_MOUNT_EVENT, { detail: key }));
+    await tick();
+    expect(within(place).getByText("Anchovy", { exact: true })).toBeInTheDocument();
+    await fireEvent.click(notNow);
+    await tick();
+    expect(place.querySelectorAll("[data-ledger-fact]")).toHaveLength(0);
   });
 
   it("names the season for this place when a row also has a seasonal source elsewhere", async () => {
