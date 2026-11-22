@@ -4,12 +4,12 @@ import { getCutsceneRecords } from "../parse/parse-fiddle.js";
 import { entriesFromRecord, validateReviewedEntries } from "./entry.js";
 import { cosmeticExclusions, ITEM_EXCLUSION_ENTRIES } from "./exclusions.js";
 import {
+  ANIMAL_FEEDING_REWARD_ENTRIES,
   CROWN_QUEST_GATE,
   CUTSCENE_QUEST_ENTRIES,
   DRAGON_FORGE_RULE,
   EXCEPTIONS_ENTRIES,
   FESTIVAL_SEASON_MAP_ENTRIES,
-  GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES,
   HAYDENS_BARN_GATE,
   KNOWN_STORES_ENTRIES,
   MINE_SEAL_FLOORS_ENTRIES,
@@ -133,12 +133,7 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
       record(record(record(fiddle.items).mines)[entry.id]).biome_id === entry.value,
   );
   validate("mine seal floor", MINE_SEAL_FLOORS_ENTRIES, ids(record(fiddle.seals)));
-  validate(
-    "golden animal product",
-    GOLDEN_PRODUCT_TO_ANIMAL_ENTRIES,
-    ids(items),
-    (entry) => items[entry.id]?.animal_product === entry.value,
-  );
+  validate("animal feeding reward", ANIMAL_FEEDING_REWARD_ENTRIES, ids(items));
   // Recipe obsolescence compares native collector snapshots in collectRecipeOnlySources.
   validate("recipe perk category", PERK_BY_SUBCATEGORY_ENTRIES, subcategories);
   validate("recipe perk item", PERK_BY_ITEM_ID_ENTRIES, ids(items));

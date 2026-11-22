@@ -1,6 +1,14 @@
 import { expect, test } from "../browser/test.js";
 import { gotoApplication, initializeApplication } from "./support/application-state.js";
 
+// Keep the navigation timeline without serializing the Almanac DOM on every action.
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
+
 for (const route of ["about", "data", "sync"]) {
   test(`${route} back arrow stays in the guide after external entry`, async ({
     page,
@@ -40,9 +48,24 @@ for (const route of ["about", "data", "sync"]) {
       link.href = href;
       link.textContent = "Utility navigation test";
       document.body.append(link);
+      const outgoing = document.querySelector("main");
+      const routeContainer = outgoing?.parentElement;
+      if (!routeContainer) throw new Error("Missing route container");
+      // The browser URL can change before the view transition mounts the new page.
+      const observer = new MutationObserver(() => {
+        const landmarks = [...routeContainer.querySelectorAll(":scope > main")];
+        if (!landmarks.some((landmark) => landmark !== outgoing)) return;
+        link.dataset.routeMount = landmarks.length === 1 ? "single" : "overlapping";
+        observer.disconnect();
+      });
+      observer.observe(routeContainer, { childList: true });
     }, `/en/${route}`);
     await page.getByRole("link", { name: "Utility navigation test" }).click();
     await expect(page).toHaveURL(new RegExp(`/en/${route}$`));
+    await expect(page.getByRole("link", { name: "Utility navigation test" })).toHaveAttribute(
+      "data-route-mount",
+      "single",
+    );
     await page.getByRole("link", { exact: true, name: "Back to home" }).click();
     await expect(page).toHaveURL(/\/en$/);
   });

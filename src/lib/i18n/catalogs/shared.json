@@ -1,6 +1,63 @@
 [
   {
     "translations": {
+      "en": [
+        "+{0} to discover",
+        "+{0} to discover"
+      ],
+      "ja": [
+        "あと{0}件を発見"
+      ],
+      "zh-Hans": [
+        "还有 {0} 个来源待发现"
+      ],
+      "zh-Hant": [
+        "還有 {0} 個來源待發現"
+      ],
+      "es": [
+        "+{0} por descubrir",
+        "+{0} por descubrir",
+        "+{0} por descubrir"
+      ],
+      "fr": [
+        "+{0} à découvrir",
+        "+{0} à découvrir",
+        "+{0} à découvrir"
+      ],
+      "ko": [
+        "발견할 곳 {0}개 더"
+      ],
+      "ru": [
+        "+{0} источник предстоит открыть",
+        "+{0} источника предстоит открыть",
+        "+{0} источников предстоит открыть",
+        "+{0} источника предстоит открыть"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "1. Download a backup of your progress first.",
       "ja": "1. まず進捗のバックアップをダウンロードしてください。",
       "zh-Hans": "1. 先下载一份进度备份。",
@@ -1437,6 +1494,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           null
@@ -1465,6 +1528,19 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "nameWithVariant"
+              ]
+            ]
+          }
+        ]
+      },
+      {
         "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           {
@@ -1488,6 +1564,50 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Checked off a spoilered item",
+      "ja": "ネタバレ項目をチェックしました",
+      "zh-Hans": "已勾选剧透物品",
+      "zh-Hant": "已勾選隱藏的項目",
+      "es": "Has marcado un elemento con spoiler",
+      "fr": "Élément masqué coché",
+      "ko": "스포일러 항목을 체크했어요",
+      "ru": "Отмечено: скрытый предмет"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Checked off a spoilered quest",
+      "ja": "ネタバレのクエストをチェックしました",
+      "zh-Hans": "已勾选剧透任务",
+      "zh-Hant": "已勾選隱藏的任務",
+      "es": "Has marcado una misión con spoiler",
+      "fr": "Quête masquée cochée",
+      "ko": "스포일러 퀘스트를 체크했어요",
+      "ru": "Отмечено: скрытое задание"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
         ]
       }
     ],
@@ -1776,6 +1896,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/save-drop.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Clear filters",
+      "ja": "フィルターを解除",
+      "zh-Hans": "清除筛选",
+      "zh-Hant": "清除篩選",
+      "es": "Quitar filtros",
+      "fr": "Effacer les filtres",
+      "ko": "필터 지우기",
+      "ru": "Сбросить фильтры"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/page-search-status.svelte",
         "refs": [
           null
         ]
@@ -2077,6 +2219,35 @@
         "file": "src/lib/data/categories.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Comes back by waiting, {0}.",
+      "ja": "{0}まで待つと、また手に入ります。",
+      "zh-Hans": "等到{0}就能再次获得。",
+      "zh-Hant": "等到{0}就能再次取得。",
+      "es": "Volverá a estar disponible {0}.",
+      "fr": "De nouveau disponible {0}.",
+      "ko": "{0} 다시 얻을 수 있어요.",
+      "ru": "Снова будет доступно {0}."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "seasons"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3720,6 +3891,35 @@
   },
   {
     "translations": {
+      "en": "Highlight rows from {0}",
+      "ja": "「{0}」から入手できる行を強調",
+      "zh-Hans": "突出显示来自“{0}”的条目",
+      "zh-Hant": "醒目顯示來自「{0}」的項目",
+      "es": "Resaltar las filas con «{0}» como fuente",
+      "fr": "Mettre en évidence les lignes de la source « {0} »",
+      "ko": "‘{0}’에서 얻는 항목 강조",
+      "ru": "Выделить строки с источником «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "label"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Hmm, we can’t read your save file",
       "ja": "うーん、セーブデータを読み込めません",
       "zh-Hans": "嗯，我们读取不了你的存档",
@@ -4099,6 +4299,34 @@
     "references": [
       {
         "file": "src/lib/components/install-nudge-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Jump to a section",
+      "ja": "セクションへ移動",
+      "zh-Hans": "跳转到分区",
+      "zh-Hant": "跳至分區",
+      "es": "Ir a una sección",
+      "fr": "Aller à une section",
+      "ko": "섹션으로 이동",
+      "ru": "Перейти к разделу"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-index.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -5050,6 +5278,28 @@
   },
   {
     "translations": {
+      "en": "Name",
+      "ja": "名前",
+      "zh-Hans": "名称",
+      "zh-Hant": "名稱",
+      "es": "Nombre",
+      "fr": "Nom",
+      "ko": "이름",
+      "ru": "Название"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Never mind",
       "ja": "やめておく",
       "zh-Hans": "算了",
@@ -5181,6 +5431,28 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Next rows",
+      "ja": "次の項目",
+      "zh-Hans": "后续条目",
+      "zh-Hant": "後續項目",
+      "es": "Entradas siguientes",
+      "fr": "Entrées suivantes",
+      "ko": "다음 항목",
+      "ru": "Следующие записи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -5648,6 +5920,28 @@
   },
   {
     "translations": {
+      "en": "Page sections",
+      "ja": "このページの目次",
+      "zh-Hans": "本页目录",
+      "zh-Hant": "本頁目錄",
+      "es": "Secciones de la página",
+      "fr": "Sommaire de la page",
+      "ko": "이 페이지의 목차",
+      "ru": "Разделы страницы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-index.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Path not chosen",
       "ja": "未選択",
       "zh-Hans": "尚未选择关系",
@@ -5914,6 +6208,28 @@
   },
   {
     "translations": {
+      "en": "Places to go today",
+      "ja": "今日行ける場所",
+      "zh-Hans": "今天可以去的地方",
+      "zh-Hant": "今天可以去的地方",
+      "es": "Lugares para visitar hoy",
+      "fr": "Où aller aujourd’hui",
+      "ko": "오늘 갈 만한 곳",
+      "ru": "Куда сходить сегодня"
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Preview build: Your feedback passed every check, but nothing was filed.",
       "ja": "プレビュー版のため、フィードバックは確認済みですが送信されていません。",
       "zh-Hans": "预览版本：反馈已通过所有检查，但未提交任何内容。",
@@ -5926,6 +6242,28 @@
     "references": [
       {
         "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Previous rows",
+      "ja": "前の項目",
+      "zh-Hans": "前面的条目",
+      "zh-Hant": "前面的項目",
+      "es": "Entradas anteriores",
+      "fr": "Entrées précédentes",
+      "ko": "이전 항목",
+      "ru": "Предыдущие записи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -6290,6 +6628,28 @@
   },
   {
     "translations": {
+      "en": "Refresh shelves",
+      "ja": "一覧を更新",
+      "zh-Hans": "更新分组",
+      "zh-Hant": "更新分組",
+      "es": "Actualizar listas",
+      "fr": "Actualiser les listes",
+      "ko": "목록 새로고침",
+      "ru": "Обновить списки"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-notice.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reload",
       "ja": "再読み込み",
       "zh-Hans": "重新加载",
@@ -6522,6 +6882,28 @@
     "references": [
       {
         "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reset a spoilered quest",
+      "ja": "ネタバレのクエストをリセットしました",
+      "zh-Hans": "已重置剧透任务",
+      "zh-Hant": "已重設隱藏的任務",
+      "es": "Has restablecido una misión con spoiler",
+      "fr": "Quête masquée réinitialisée",
+      "ko": "스포일러 퀘스트를 초기화했어요",
+      "ru": "Сброшено: скрытое задание"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
         "refs": [
           null
         ]
@@ -6810,14 +7192,58 @@
   },
   {
     "translations": {
-      "en": "Search",
-      "ja": "検索",
-      "zh-Hans": "搜索",
-      "zh-Hant": "搜尋",
-      "es": "Buscar",
-      "fr": "Rechercher",
-      "ko": "검색",
-      "ru": "Поиск"
+      "en": "Search animals",
+      "ja": "動物を検索",
+      "zh-Hans": "搜索动物",
+      "zh-Hant": "搜尋動物",
+      "es": "Buscar animales",
+      "fr": "Rechercher des animaux",
+      "ko": "동물 검색",
+      "ru": "Поиск животных"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search cosmetics",
+      "ja": "外見アイテムを検索",
+      "zh-Hans": "搜索装扮",
+      "zh-Hant": "搜尋飾物",
+      "es": "Buscar accesorios",
+      "fr": "Rechercher des accessoires",
+      "ko": "꾸미기 아이템 검색",
+      "ru": "Поиск украшений"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search everything",
+      "ja": "すべてを検索",
+      "zh-Hans": "搜索全部",
+      "zh-Hant": "搜尋全部",
+      "es": "Buscar en todo",
+      "fr": "Rechercher partout",
+      "ko": "전체 검색",
+      "ru": "Поиск по всему"
     },
     "references": [
       {
@@ -6845,6 +7271,7 @@
       {
         "file": "src/lib/components/toolbar-footer.svelte",
         "refs": [
+          null,
           null
         ]
       }
@@ -6854,14 +7281,102 @@
   },
   {
     "translations": {
-      "en": "Search items…",
-      "ja": "アイテムを検索…",
-      "zh-Hans": "搜索物品…",
-      "zh-Hant": "搜尋物品…",
-      "es": "Buscar elementos…",
-      "fr": "Rechercher des éléments…",
-      "ko": "항목 검색…",
-      "ru": "Поиск предметов…"
+      "en": "Search quests",
+      "ja": "クエストを検索",
+      "zh-Hans": "搜索任务",
+      "zh-Hant": "搜尋任務",
+      "es": "Buscar misiones",
+      "fr": "Rechercher des quêtes",
+      "ko": "퀘스트 검색",
+      "ru": "Поиск заданий"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search recipes",
+      "ja": "レシピを検索",
+      "zh-Hans": "搜索配方",
+      "zh-Hant": "搜尋配方",
+      "es": "Buscar recetas",
+      "fr": "Rechercher des recettes",
+      "ko": "레시피 검색",
+      "ru": "Поиск рецептов"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search renown",
+      "ja": "名声を検索",
+      "zh-Hans": "搜索声望",
+      "zh-Hant": "搜尋聲望",
+      "es": "Buscar en el renombre",
+      "fr": "Rechercher dans la renommée",
+      "ko": "명성 검색",
+      "ru": "Поиск по известности"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search skills",
+      "ja": "スキルを検索",
+      "zh-Hans": "搜索技能",
+      "zh-Hant": "搜尋技能",
+      "es": "Buscar habilidades",
+      "fr": "Rechercher des compétences",
+      "ko": "기술 검색",
+      "ru": "Поиск навыков"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the almanac",
+      "ja": "図鑑を検索",
+      "zh-Hans": "搜索图鉴",
+      "zh-Hant": "搜尋圖鑑",
+      "es": "Buscar en el almanaque",
+      "fr": "Rechercher dans le catalogue",
+      "ko": "도감 검색",
+      "ru": "Поиск в альманахе"
     },
     "references": [
       {
@@ -6897,6 +7412,94 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the field guide",
+      "ja": "フィールドガイドを検索",
+      "zh-Hans": "搜索指南",
+      "zh-Hant": "搜尋指南",
+      "es": "Buscar en la guía de campo",
+      "fr": "Rechercher dans le guide",
+      "ko": "현장 가이드 검색",
+      "ru": "Поиск по справочнику"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the mines",
+      "ja": "鉱山を検索",
+      "zh-Hans": "搜索矿井",
+      "zh-Hant": "搜尋礦井",
+      "es": "Buscar en las minas",
+      "fr": "Rechercher dans les mines",
+      "ko": "광산 검색",
+      "ru": "Поиск по шахтам"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search the museum",
+      "ja": "博物館を検索",
+      "zh-Hans": "搜索博物馆",
+      "zh-Hant": "搜尋博物館",
+      "es": "Buscar en el museo",
+      "fr": "Rechercher dans le musée",
+      "ko": "박물관 검색",
+      "ru": "Поиск по музею"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Search villagers",
+      "ja": "住民を検索",
+      "zh-Hans": "搜索村民",
+      "zh-Hant": "搜尋村民",
+      "es": "Buscar habitantes",
+      "fr": "Rechercher des habitants",
+      "ko": "주민 검색",
+      "ru": "Поиск жителей"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          null
         ]
       }
     ],
@@ -7249,28 +7852,6 @@
   },
   {
     "translations": {
-      "en": "Show anyway",
-      "ja": "それでも表示",
-      "zh-Hans": "仍然显示",
-      "zh-Hant": "仍然顯示",
-      "es": "Mostrar igualmente",
-      "fr": "Afficher quand même",
-      "ko": "그래도 표시",
-      "ru": "Всё равно показать"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/page-search-status.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Show spoilers?",
       "ja": "ネタバレを表示しますか？",
       "zh-Hans": "显示剧透吗？",
@@ -7326,6 +7907,19 @@
       "ru": "Показать «{0}» в цвете"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-sprite.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [
@@ -7569,6 +8163,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/rank-record.svelte",
         "refs": [
           null
@@ -7621,6 +8221,28 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Started a spoilered quest",
+      "ja": "ネタバレのクエストを開始しました",
+      "zh-Hans": "已开始剧透任务",
+      "zh-Hant": "已開始隱藏的任務",
+      "es": "Misión con spoiler comenzada",
+      "fr": "Quête masquée commencée",
+      "ko": "스포일러 퀘스트를 시작했어요",
+      "ru": "Задание начато: скрытое задание"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
         "refs": [
           null
         ]
@@ -8457,6 +9079,28 @@
   },
   {
     "translations": {
+      "en": "Uncheck spoilered item",
+      "ja": "ネタバレ項目のチェックを外す",
+      "zh-Hans": "取消勾选剧透物品",
+      "zh-Hant": "取消勾選隱藏的項目",
+      "es": "Desmarcar elemento con spoiler",
+      "fr": "Décocher l’élément masqué",
+      "ko": "스포일러 항목 체크 해제",
+      "ru": "Снять отметку со скрытого предмета"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Uncheck {0}",
       "ja": "{0}のチェックを外す",
       "zh-Hans": "取消勾选{0}",
@@ -8467,6 +9111,19 @@
       "ru": "Снять отметку с «{0}»"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "nameWithVariant"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/skill-perks.svelte",
         "refs": [
@@ -8491,6 +9148,28 @@
               ]
             ]
           }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unchecked a spoilered item",
+      "ja": "ネタバレ項目のチェックを外しました",
+      "zh-Hans": "已取消勾选剧透物品",
+      "zh-Hant": "已取消勾選隱藏的項目",
+      "es": "Has desmarcado un elemento con spoiler",
+      "fr": "Élément masqué décoché",
+      "ko": "스포일러 항목 체크를 해제했어요",
+      "ru": "Отметка снята: скрытый предмет"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          null
         ]
       }
     ],
@@ -10024,28 +10703,6 @@
   },
   {
     "translations": {
-      "en": "Your filters are off for this search. <0>Turn them back on</0>",
-      "ja": "この検索ではフィルターがオフです。 <0>フィルターをオンに戻す</0>",
-      "zh-Hans": "本次搜索已关闭筛选条件。 <0>恢复筛选条件</0>",
-      "zh-Hant": "本次搜尋已關閉篩選條件。 <0>恢復篩選條件</0>",
-      "es": "Tus filtros están desactivados para esta búsqueda. <0>Volver a activarlos</0>",
-      "fr": "Vos filtres sont désactivés pour cette recherche. <0>Les réactiver</0>",
-      "ko": "이 검색에서는 필터가 꺼져 있어요. <0>필터 다시 켜기</0>",
-      "ru": "Фильтры отключены для этого поиска. <0>Вернуть фильтры</0>"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/page-search-status.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Your filters leave nothing on this page.",
       "ja": "フィルターにより、このページには何も表示されません。",
       "zh-Hans": "筛选后，此页面没有内容了。",
@@ -10213,6 +10870,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/sync-trouble-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Your progress or the day changed.",
+      "ja": "進み具合か、ゲーム内の日付や天気が変わりました。",
+      "zh-Hans": "你的进度或游戏内的日期和天气有变动。",
+      "zh-Hant": "你的進度或遊戲內的日期和天氣有變動。",
+      "es": "Tu progreso o el día han cambiado.",
+      "fr": "Ta progression ou la journée a changé.",
+      "ko": "진행 상황이나 게임 속 하루가 바뀌었어요.",
+      "ru": "Ваш прогресс или игровой день изменились."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-notice.svelte",
         "refs": [
           null
         ]
@@ -10506,6 +11185,94 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in fall",
+      "ja": "秋",
+      "zh-Hans": "秋天",
+      "zh-Hant": "秋天",
+      "es": "en otoño",
+      "fr": "en automne",
+      "ko": "가을에",
+      "ru": "осенью"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in spring",
+      "ja": "春",
+      "zh-Hans": "春天",
+      "zh-Hant": "春天",
+      "es": "en primavera",
+      "fr": "au printemps",
+      "ko": "봄에",
+      "ru": "весной"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in summer",
+      "ja": "夏",
+      "zh-Hans": "夏天",
+      "zh-Hant": "夏天",
+      "es": "en verano",
+      "fr": "en été",
+      "ko": "여름에",
+      "ru": "летом"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "in winter",
+      "ja": "冬",
+      "zh-Hans": "冬天",
+      "zh-Hant": "冬天",
+      "es": "en invierno",
+      "fr": "en hiver",
+      "ko": "겨울에",
+      "ru": "зимой"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
         "refs": [
           null
         ]
@@ -11009,6 +11776,92 @@
   },
   {
     "translations": {
+      "en": [
+        "{0} match",
+        "{0} matches"
+      ],
+      "ja": [
+        "{0}件一致"
+      ],
+      "zh-Hans": [
+        "{0} 个匹配项"
+      ],
+      "zh-Hant": [
+        "{0} 個符合項目"
+      ],
+      "es": [
+        "{0} coincidencia",
+        "{0} coincidencias",
+        "{0} coincidencias"
+      ],
+      "fr": [
+        "{0} résultat",
+        "{0} résultats",
+        "{0} résultats"
+      ],
+      "ko": [
+        "검색 결과 {0}개"
+      ],
+      "ru": [
+        "{0} совпадение",
+        "{0} совпадения",
+        "{0} совпадений",
+        "{0} совпадения"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/lib/components/shelf-heading.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "countLabel"
+              ],
+              [
+                "0",
+                "countLabel"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} more locked",
       "ja": "ほか{0}個未解放",
       "zh-Hans": "另有{0}个未解锁",
@@ -11149,6 +12002,35 @@
       "ru": "Выполнено {0} из {1}"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "completed"
+              ],
+              [
+                "1",
+                "total"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "completed"
+              ],
+              [
+                "1",
+                "total"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/page-header.svelte",
         "refs": [
@@ -11517,6 +12399,63 @@
   },
   {
     "translations": {
+      "en": [
+        "{0} section",
+        "{0} sections"
+      ],
+      "ja": [
+        "{0}セクション"
+      ],
+      "zh-Hans": [
+        "{0} 个分类"
+      ],
+      "zh-Hant": [
+        "{0} 個分類"
+      ],
+      "es": [
+        "{0} sección",
+        "{0} secciones",
+        "{0} secciones"
+      ],
+      "fr": [
+        "{0} section",
+        "{0} sections",
+        "{0} sections"
+      ],
+      "ko": [
+        "{0}개 섹션"
+      ],
+      "ru": [
+        "{0} раздел",
+        "{0} раздела",
+        "{0} разделов",
+        "{0} раздела"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/routes/(category)/almanac/almanac-ledger.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "label"
+              ],
+              [
+                "0",
+                "label"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} sources",
       "ja": "{0}の入手先",
       "zh-Hans": "{0}的获取来源",
@@ -11535,6 +12474,80 @@
               [
                 "0",
                 "isSpoilered ? \"Spoilered item\" : name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} to do",
+        "{0} to do"
+      ],
+      "ja": [
+        "今日できること：{0}件"
+      ],
+      "zh-Hans": [
+        "今日可做 {0} 项"
+      ],
+      "zh-Hant": [
+        "今日可做 {0} 項"
+      ],
+      "es": [
+        "{0} por hacer",
+        "{0} por hacer",
+        "{0} por hacer"
+      ],
+      "fr": [
+        "{0} à faire",
+        "{0} à faire",
+        "{0} à faire"
+      ],
+      "ko": [
+        "오늘 할 수 있는 일 {0}개"
+      ],
+      "ru": [
+        "{0} дело на сегодня",
+        "{0} дела на сегодня",
+        "{0} дел на сегодня",
+        "{0} дела на сегодня"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatted"
+              ],
+              [
+                "0",
+                "formatted"
               ]
             ]
           }
@@ -11600,26 +12613,6 @@
               [
                 "1",
                 "shelfLabel(note.shelf)"
-              ]
-            ]
-          },
-          {
-            "placeholders": [
-              [
-                "0",
-                "note.count"
-              ],
-              [
-                "1",
-                "slot(\"shelf\")"
-              ],
-              [
-                "0",
-                "note.count"
-              ],
-              [
-                "1",
-                "slot(\"shelf\")"
               ]
             ]
           }
@@ -11711,6 +12704,23 @@
       "ru": "{0}, {1}"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "variant"
+              ]
+            ]
+          }
+        ]
+      },
       {
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [

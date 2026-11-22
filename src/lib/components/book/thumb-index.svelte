@@ -83,8 +83,18 @@
     text-decoration: none;
   }
 
+  /*
+   * Send a note & Settings stay pinned to the panel's foot, side by side, so a reader doesn't have
+   * to scroll past every tab to find them.
+   */
   .thumb-index--tools {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     margin-top: 0.75rem;
+    border-top: 1px solid var(--color-rule);
+    background: var(--color-paper-raised);
   }
 
   .thumb-index__row--tool {

@@ -96,7 +96,8 @@
   }
 </script>
 
-<svelte:window onkeydown={handleKeydown} onresize={updateHighlights} onscroll={updateHighlights} />
+<!-- The active picker refreshes each frame. Ordinary scrolling needs no target measurements. -->
+<svelte:window onkeydown={handleKeydown} />
 
 {#if active}
   <div

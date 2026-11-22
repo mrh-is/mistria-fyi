@@ -92,7 +92,10 @@ describe("ToolbarFooter panels", () => {
       await waitFor(() =>
         expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus(),
       );
-      const trigger = screen.getByRole("button", { name: replacement });
+      const trigger =
+        replacement === "Search"
+          ? screen.getByRole("textbox", { name: "Search items" })
+          : screen.getByRole("button", { name: replacement });
       trigger.focus();
       await fireEvent.click(trigger);
       await waitFor(() => {
@@ -254,8 +257,9 @@ describe("ToolbarFooter panels", () => {
     vi.useFakeTimers();
     try {
       const view = renderToolbar();
-      await fireEvent.click(screen.getByRole("button", { name: "Search" }));
-      await fireEvent.input(screen.getByRole("textbox"), { target: { value: "stale query" } });
+      await fireEvent.input(screen.getByRole("textbox", { name: "Search items" }), {
+        target: { value: "stale query" },
+      });
       view.unmount();
       await vi.advanceTimersByTimeAsync(250);
       expect(toolbarState.searchQuery).toBe("");
@@ -286,7 +290,7 @@ describe("ToolbarFooter panels", () => {
     renderToolbar("hidden");
 
     expect(screen.queryByRole("navigation", { name: "Field guide tools" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Search items" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Quick settings" })).toBeNull();
   });
 });
@@ -294,21 +298,19 @@ describe("ToolbarFooter panels", () => {
 describe("ToolbarFooter search", () => {
   it("offers search only when the page's toolbar config enables it", () => {
     renderToolbar({ search: false });
-    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Search items" })).toBeNull();
     cleanup();
 
     renderToolbar({ search: true });
-    expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Search items" })).toBeInTheDocument();
   });
 
-  it("opens the search bar, focuses the input, and debounces the query", async () => {
+  it("keeps the field on the page, opens a search on focus, and debounces the query", async () => {
     renderToolbar();
-
-    await fireEvent.click(screen.getByRole("button", { name: "Search" }));
-
     const input = screen.getByRole("textbox", { name: "Search items" });
-    expect(input).toHaveFocus();
-    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
+
+    input.focus();
+    expect(toolbarState.searchOpen).toBe(true);
 
     await fireEvent.input(input, { target: { value: "tomato" } });
     expect(toolbarState.searchQuery).toBe("");
@@ -319,47 +321,42 @@ describe("ToolbarFooter search", () => {
     expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
   });
 
-  it("clears the query without closing the search bar", async () => {
+  it("clears the query and keeps the field", async () => {
     renderToolbar();
-    await fireEvent.click(screen.getByRole("button", { name: "Search" }));
     toolbarState.setSearchQuery("bread");
 
     await fireEvent.click(await screen.findByRole("button", { name: "Clear search" }));
 
     expect(toolbarState.searchQuery).toBe("");
-    expect(screen.getByRole("textbox", { name: "Search items" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Search items" })).toHaveValue("");
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
     });
   });
 
-  it("cancels search, resets the query, and returns focus to the search trigger", async () => {
+  it("clears the search with Escape and leaves the field", async () => {
     renderToolbar();
-    const trigger = screen.getByRole("button", { name: "Search" });
-    trigger.focus();
-    await fireEvent.click(trigger);
+    const input = screen.getByRole("textbox", { name: "Search items" });
+    input.focus();
     toolbarState.setSearchQuery("bread");
 
-    await fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await fireEvent.keyDown(input, { key: "Escape" });
 
-    expect(toolbarState.searchOpen).toBe(false);
     expect(toolbarState.searchQuery).toBe("");
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Search" })).toHaveFocus();
-    });
+    expect(toolbarState.searchOpen).toBe(false);
+    expect(input).not.toHaveFocus();
   });
 
-  it("closes any open panel when search opens", async () => {
+  it("closes any open panel when the search field takes focus", async () => {
     renderToolbar();
     await fireEvent.click(settingsButton());
     await screen.findByRole("dialog", { name: "Quick settings" });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    screen.getByRole("textbox", { name: "Search items" }).focus();
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
-    expect(screen.getByRole("textbox", { name: "Search items" })).toBeInTheDocument();
   });
 });
 
@@ -415,15 +412,13 @@ function clockButton() {
 }
 
 describe("ToolbarFooter clock", () => {
-  it("puts search, filter, & clock in that order, so the tab sits at the screen edge", () => {
+  it("puts search, filter, & clock in that order, with today’s season & weather inside the clock", () => {
     renderToolbar({ clock: true, filter: true, search: true });
 
-    const buttons = within(toolbarNav()).getAllByRole("button");
-    expect(buttons.slice(-3).map((button) => button.getAttribute("aria-label"))).toEqual([
-      "Search",
-      "Visibility filters",
-      "Season & weather: Spring, Sun",
-    ]);
+    const controls = [...toolbarNav().querySelectorAll("button, input")];
+    expect(
+      controls.slice(-3).map((control) => control.getAttribute("aria-label") ?? control.id),
+    ).toEqual(["tracker-search", "Visibility filters", "Season & weather: Spring, Sun"]);
     expect(clockButton().querySelector("[data-clock-tab]")).toBeInTheDocument();
   });
 

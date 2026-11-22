@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { toPosixPath } from "#scripts/lib/paths";
+
+import { trackedTestFiles as trackedTestFilesIn } from "./tracked-test-files.js";
 
 /**
  * Every tracked test file must run somewhere, and exactly once. A file no project includes (or one
@@ -58,11 +60,7 @@ async function listProjectFiles(
   }
 }
 
-function trackedTestFiles(): string[] {
-  return execFileSync("git", ["ls-files", "*.test.ts"], { cwd: root, encoding: "utf8" })
-    .split("\n")
-    .filter(Boolean);
-}
+const trackedTestFiles = () => trackedTestFilesIn(root);
 
 const byFile = (a: ListedFile, b: ListedFile) => a.file.localeCompare(b.file);
 

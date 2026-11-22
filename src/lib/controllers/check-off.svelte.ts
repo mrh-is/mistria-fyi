@@ -1,7 +1,7 @@
 import { celebrateProgress } from "#lib/controllers/celebration.js";
 import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
 import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
-import { showUndoToast } from "#lib/effects/undo-toast.js";
+import { captureUndoFocus, showUndoToast } from "#lib/effects/undo-toast.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { trackerRowDisplay } from "#lib/utils/row-display.js";
@@ -118,14 +118,21 @@ export function createCheckOff<Id, SectionKey>(
     isLeaving: checkOff.isLeaving,
     onToggle(request, covered): void {
       const { id, name, sectionChecks, sectionKey, visibility } = request;
+      const focus = captureUndoFocus();
       checkOff.run({
         category: options.category,
         covered,
         finish: () => {
           const completed = options.isCompleted(id);
-          showUndoToast(name, completed, () => {
-            options.toggle(id);
-          });
+          showUndoToast(
+            name,
+            completed,
+            () => {
+              options.toggle(id);
+            },
+            covered,
+            focus,
+          );
           return completed;
         },
         hold: () => {

@@ -18,7 +18,8 @@ export default {
     const styleFiles = files.filter((f) => f.endsWith(".svelte") && inStylelintScope(f));
     return [
       `oxfmt --no-error-on-unmatched-pattern ${quote(files)}`,
-      `oxlint --type-aware --fix ${quote(files)}`,
+      // A staged file that oxlint ignores (a lint probe, a design generator) selects nothing.
+      `oxlint --type-aware --fix --no-error-on-unmatched-pattern ${quote(files)}`,
       ...(svelteFiles.length > 0 ? [`eslint --fix ${quote(svelteFiles)}`] : []),
       ...(styleFiles.length > 0 ? [`stylelint --fix ${quote(styleFiles)}`] : []),
     ];

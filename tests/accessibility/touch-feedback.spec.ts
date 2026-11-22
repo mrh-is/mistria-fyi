@@ -6,6 +6,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
+import { openLegacyArtifacts } from "./support/scenarios.js";
 
 import type { Locator, Page } from "@playwright/test";
 
@@ -81,9 +82,8 @@ test.describe("touch feedback", () => {
       await initializeApplication(page, theme);
       await gotoRenderedApplication(page, "/");
       await scrollFromControl(page, page.getByRole("link", { name: /^Almanac,/ }));
-      await gotoRenderedApplication(page, "/almanac");
+      await openLegacyArtifacts(page);
       const section = page.getByRole("button", { name: /^Artifacts,/ });
-      await section.tap();
       await waitForRendering(page);
       await scrollFromControl(page, section);
       const original = await feedback(section);
@@ -121,7 +121,7 @@ test.describe("touch feedback", () => {
 
 test("mouse hover & keyboard focus retain row feedback", async ({ page }) => {
   await initializeApplication(page, "light");
-  await gotoRenderedApplication(page, "/almanac");
+  await gotoRenderedApplication(page, "/everything?group=category");
   const section = page.getByRole("button", { name: /^Artifacts,/ });
   const original = await feedback(section);
   await section.hover();

@@ -23,28 +23,6 @@
   },
   {
     "translations": {
-      "en": "Done",
-      "ja": "完了",
-      "zh-Hans": "已完成",
-      "zh-Hant": "已完成",
-      "es": "Completado",
-      "fr": "Terminé",
-      "ko": "완료",
-      "ru": "Готово"
-    },
-    "references": [
-      {
-        "file": "src/routes/everything/source-content.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Group by",
       "ja": "グループ分け",
       "zh-Hans": "分组方式",
@@ -68,6 +46,28 @@
   },
   {
     "translations": {
+      "en": "Jump to a section",
+      "ja": "セクションへ移動",
+      "zh-Hans": "跳转到分区",
+      "zh-Hant": "跳至分區",
+      "es": "Ir a una sección",
+      "fr": "Aller à une section",
+      "ko": "섹션으로 이동",
+      "ru": "Перейти к разделу"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/group-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Source",
       "ja": "入手先",
       "zh-Hans": "来源",
@@ -82,39 +82,6 @@
         "file": "src/routes/everything/+page.svelte",
         "refs": [
           null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} · {1}",
-      "ja": "{0} · {1}",
-      "zh-Hans": "{0} · {1}",
-      "zh-Hant": "{0} · {1}",
-      "es": "{0} · {1}",
-      "fr": "{0} · {1}",
-      "ko": "{0} · {1}",
-      "ru": "{0} · {1}"
-    },
-    "references": [
-      {
-        "file": "src/routes/everything/source-content.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "section.state === /* @wc-ignore */ \"done\" ? \"Done\" : shelfLabel(stateShelf(section.state))"
-              ]
-            ]
-          }
         ]
       }
     ],

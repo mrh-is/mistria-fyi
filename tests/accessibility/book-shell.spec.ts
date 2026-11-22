@@ -17,6 +17,40 @@ const BOOK_MINIMUM = { height: 544, width: 768 };
 const DESKTOP = { height: 720, width: 1280 };
 const PHONE = { height: 844, width: 390 };
 
+// Keep action traces without serializing the entire ledger after each action on retry.
+test.use({
+  trace: {
+    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
+    snapshots: false,
+  },
+});
+
+for (const { locale, placeholder, width } of [
+  { locale: "fr", placeholder: "Rechercher dans le catalogue", width: 960 },
+  { locale: "ru", placeholder: "Поиск в альманахе", width: 820 },
+]) {
+  test(`the almanac search label fits at ${width}px in ${locale}`, async ({ page }) => {
+    await page.setViewportSize({ height: 800, width });
+    await gotoApplication(page, `/${locale}/almanac`);
+    const localizedField = page.getByPlaceholder(placeholder, { exact: true });
+    await expect(localizedField).toBeVisible();
+    const remaining = await localizedField.evaluate(async (input: HTMLInputElement) => {
+      await document.fonts.ready;
+      const style = getComputedStyle(input);
+      const context = document.createElement("canvas").getContext("2d");
+      if (!context) throw new Error("Missing canvas text measurement");
+      context.font = `${style.fontStyle} ${style.fontSize} ${style.fontFamily}`;
+      return (
+        input.clientWidth -
+        Number(style.paddingLeft.replace("px", "")) -
+        Number(style.paddingRight.replace("px", "")) -
+        context.measureText(input.placeholder).width
+      );
+    });
+    expect(remaining).toBeGreaterThanOrEqual(0);
+  });
+}
+
 function tabs(page: Page) {
   return page.getByRole("navigation", { name: "Thumb index" });
 }
@@ -28,6 +62,26 @@ async function isTurning(page: Page): Promise<boolean> {
 function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
+
+test("Home shows the last imported farmer and farm on its bookplate", async ({ page }) => {
+  const state = createStoredState();
+  state.progress.lastImport = {
+    farmName: "Meadow Farm",
+    identity: { creationVersion: null, saveNumber: null },
+    importedAt: Date.now(),
+    playerName: "Dewey",
+  };
+  await initializeApplication(page, "light", state);
+  await gotoApplication(page, "/");
+  const plate = page.getByText("Field notes of Dewey", { exact: true });
+  await expect(plate).toBeVisible();
+  await expect(page.getByText("Meadow Farm", { exact: true })).toBeVisible();
+  const field = page.getByPlaceholder("Search the field guide", { exact: true });
+  await field.fill("turnip");
+  await expect(plate).toBeHidden();
+  await field.press("Escape");
+  await expect(plate).toBeVisible();
+});
 
 test.describe("book shell", () => {
   test.beforeEach(async ({ page }) => {
@@ -60,8 +114,8 @@ test.describe("book shell", () => {
 
     const links = tabs(page).getByRole("link");
     await expect(links).toHaveCount(12);
-    const names = await settledBox(tabs(page).getByRole("button", { name: "Show tab names" }));
-    const first = await settledBox(links.first());
+    // A mouse names a tab on hover, so the names toggle is only for touch screens.
+    await expect(tabs(page).getByRole("button", { name: "Show tab names" })).toBeHidden();
     const last = await settledBox(links.last());
     const feedback = await settledBox(
       page.getByRole("button", { exact: true, name: "Send feedback" }),
@@ -70,7 +124,6 @@ test.describe("book shell", () => {
       page.getByRole("button", { exact: true, name: "Quick settings" }),
     );
 
-    expect(overlaps(names, first), "names toggle & Home").toBe(false);
     expect(overlaps(last, feedback), "Everything & Send feedback").toBe(false);
     expect(overlaps(feedback, settings), "Send feedback & Quick settings").toBe(false);
     expect(settings.y + settings.height).toBeLessThanOrEqual(BOOK_MINIMUM.height);
@@ -166,26 +219,26 @@ test.describe("book shell", () => {
     await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0);
   });
 
-  test("tab names can be toggled with the keyboard", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await gotoApplication(page, "/almanac");
-    const toggle = tabs(page).getByRole("button", { name: "Show tab names" });
-    const museum = tabs(page).getByRole("link", { name: "Museum" });
-    const label = museum.getByText("Museum", { exact: true });
-
-    await toggle.focus();
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await expect(label).toHaveCSS("opacity", "0");
-    await page.keyboard.press("Space");
-    await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    await expect(label).toHaveCSS("opacity", "1");
-    await page.keyboard.press("Escape");
-    await expect(toggle).toBeFocused();
-    await expect(label).toHaveCSS("opacity", "0");
-  });
-
   test.describe("touch at book widths", () => {
     test.use({ hasTouch: true });
+
+    test("tab names can be toggled with the keyboard", async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await gotoApplication(page, "/almanac");
+      const toggle = tabs(page).getByRole("button", { name: "Show tab names" });
+      const museum = tabs(page).getByRole("link", { name: "Museum" });
+      const label = museum.getByText("Museum", { exact: true });
+
+      await toggle.focus();
+      await expect(toggle).toHaveAttribute("aria-pressed", "false");
+      await expect(label).toHaveCSS("opacity", "0");
+      await page.keyboard.press("Space");
+      await expect(toggle).toHaveAttribute("aria-pressed", "true");
+      await expect(label).toHaveCSS("opacity", "1");
+      await page.keyboard.press("Escape");
+      await expect(toggle).toBeFocused();
+      await expect(label).toHaveCSS("opacity", "0");
+    });
 
     test("the visible Russian tab name can be tapped in a short dark window", async ({ page }) => {
       await page.setViewportSize(BOOK_MINIMUM);
@@ -225,6 +278,116 @@ test.describe("book shell", () => {
     await expect(page.getByRole("main")).toHaveCount(1);
     await expect.poll(() => isTurning(page)).toBe(false);
     expect(errors).toEqual([]);
+  });
+});
+
+function search(page: Page) {
+  return page.getByRole("textbox", { name: "Search items" });
+}
+
+function undo(page: Page) {
+  return page
+    .getByRole("region", { name: /^Notifications/u })
+    .getByRole("button", { exact: true, name: "Undo" });
+}
+
+/** A layout box the test measures: the page header, its count, or its ribbon. */
+function headerPart(page: Page, selector: string) {
+  // oxlint-disable-next-line playwright/no-raw-locators -- header geometry boxes have no role; Home's header isn't a landmark
+  return page.locator(selector);
+}
+
+async function checkOffFirstArtifact(page: Page): Promise<void> {
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  await artifacts
+    .getByRole("button", { name: /^Check (?!spoilered item)/ })
+    .first()
+    .click();
+  await expect(undo(page)).toBeVisible();
+}
+
+test.describe("page header & tools", () => {
+  test.beforeEach(async ({ page }) => {
+    await initializeApplication(page, "system", createStoredState());
+    await page.emulateMedia({ reducedMotion: "reduce" });
+  });
+
+  for (const [path, header] of [
+    ["/", ".home-header"],
+    ["/animals", "[data-page-header]"],
+    ["/almanac", "[data-page-header]"],
+  ] as const) {
+    test(`${path} carries its tools in its own header row`, async ({ page }) => {
+      await gotoApplication(page, path);
+      const row = await settledBox(headerPart(page, header));
+      const field = await settledBox(search(page));
+      expect(field.y, "search below the header's top").toBeGreaterThanOrEqual(row.y);
+      expect(field.y + field.height, "search above its foot").toBeLessThanOrEqual(
+        row.y + row.height,
+      );
+      expect(field.x, "search at the header's end").toBeGreaterThan(row.x + row.width / 2);
+    });
+  }
+
+  test("the header follows the window as it narrows", async ({ page }) => {
+    await page.setViewportSize({ height: 800, width: 1440 });
+    await gotoApplication(page, "/almanac");
+    await settledBox(page.getByRole("region", { exact: true, name: "Artifacts" }));
+    await page.setViewportSize({ height: 800, width: 1000 });
+
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(1000);
+    const header = await settledBox(headerPart(page, "[data-page-header]"));
+    // The thumb index starts where the page ends.
+    const index = await settledBox(tabs(page));
+    expect(header.x + header.width).toBeLessThanOrEqual(index.x + 0.5);
+    const count = await settledBox(headerPart(page, ".page-header__count"));
+    const field = await settledBox(search(page));
+    expect(overlaps(count, field), "the count & the search field").toBe(false);
+  });
+
+  test("the header's ribbon steps aside at half-screen widths", async ({ page }) => {
+    const ribbon = headerPart(page, "[data-page-header-ribbon]");
+    await page.setViewportSize({ height: 800, width: 960 });
+    await gotoApplication(page, "/almanac");
+    await expect(ribbon).toBeHidden();
+    await page.setViewportSize(DESKTOP);
+    await expect(ribbon).toBeVisible();
+  });
+
+  test("the current tab doesn't name itself under a resting pointer", async ({ page }) => {
+    await gotoApplication(page, "/almanac");
+    const current = tabs(page).getByRole("link", { name: "Almanac" });
+    const museum = tabs(page).getByRole("link", { name: "Museum" });
+
+    await museum.hover();
+    await expect(museum.getByText("Museum", { exact: true })).toHaveCSS("opacity", "1");
+    await current.hover();
+    await expect(current.getByText("Almanac", { exact: true })).toHaveCSS("opacity", "0");
+  });
+
+  test("Undo stays at the screen's foot while a panel hangs from the header", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await gotoApplication(page, "/almanac");
+    await checkOffFirstArtifact(page);
+    const before = await settledBox(undo(page));
+
+    await page.getByRole("button", { name: "Visibility filters" }).click();
+    await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
+    const after = await settledBox(undo(page));
+    expect(after.y).toBeCloseTo(before.y, 0);
+  });
+
+  test("Undo stays on screen over Contents on a landscape phone", async ({ page }) => {
+    await gotoApplication(page, "/almanac");
+    await checkOffFirstArtifact(page);
+    await page.setViewportSize(PHONE);
+    await page.getByRole("button", { exact: true, name: "Contents" }).click();
+    await expect(page.getByRole("dialog", { name: "Contents" })).toBeVisible();
+    await page.setViewportSize({ height: PHONE.width, width: PHONE.height });
+
+    await expect(undo(page)).toBeInViewport({ ratio: 1 });
   });
 });
 

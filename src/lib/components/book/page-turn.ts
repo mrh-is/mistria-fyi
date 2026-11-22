@@ -6,13 +6,15 @@ type OnNavigate = Parameters<Parameters<typeof onNavigate>[0]>[0];
 
 /** On `<html>` while a page turns, so the turn's view-transition styles touch no other transition. */
 export const TURNING_CLASS = "book-turning";
+const SETTLE_MS = 220;
 
 let latestTurn = 0;
 
 /**
  * Turns the page for a client-side navigation: the old page slides off the desk while the next one
  * comes in under it, ending in a settle of at most 2px, so the desk is never bare (round four of
- * #477). Only the page moves; the cover, the wire, the rail, & the toolbar swap in place above it.
+ * #477). The tools move with the page at book widths. The cover, wire, rail, & phone toolbar
+ * swap in place.
  *
  * Returns the promise `onNavigate` waits on before it updates the DOM, or nothing for a plain cut: a
  * full load, reduced motion, a browser without view transitions, or a query or hash change on the
@@ -72,16 +74,33 @@ async function finishTurn(
 }
 
 function animateTurn(root: HTMLElement, shift: number): void {
+  const page = document.querySelector(".book__page");
+  const bookWidth = globalThis.matchMedia("(min-width: 48rem) and (min-height: 34rem)").matches;
+  const paintedParts = bookWidth && page ? ["book-page", "book-toolbar"] : ["book-page"];
+  const pageWidth = page?.getBoundingClientRect().width;
+  for (const part of paintedParts) {
+    animatePart(root, part, shift, pageWidth);
+  }
+}
+
+function animatePart(
+  root: HTMLElement,
+  part: string,
+  shift: number,
+  pageWidth: number | undefined,
+): void {
+  const exit = pageWidth === undefined ? "-104%" : `${-1.04 * pageWidth}px`;
+  const rise = part === "book-page" ? shift : 0;
   root.animate(
     [
-      { transform: `translateY(${shift}px)` },
-      { transform: `translate(-104%, ${shift}px) rotate(-0.6deg)` },
+      { transform: `translateY(${rise}px)` },
+      { transform: `translate(${exit}, ${rise}px) rotate(-0.6deg)` },
     ],
     {
-      duration: 420,
+      duration: 180,
       easing: "cubic-bezier(0.55, 0, 0.75, 0.3)",
       fill: "both",
-      pseudoElement: "::view-transition-old(book-page)",
+      pseudoElement: `::view-transition-old(${part})`,
     },
   );
   root.animate(
@@ -91,10 +110,10 @@ function animateTurn(root: HTMLElement, shift: number): void {
       { transform: "none" },
     ],
     {
-      duration: 520,
+      duration: SETTLE_MS,
       easing: "cubic-bezier(0.45, 0.05, 0.25, 1)",
       fill: "both",
-      pseudoElement: "::view-transition-new(book-page)",
+      pseudoElement: `::view-transition-new(${part})`,
     },
   );
 }

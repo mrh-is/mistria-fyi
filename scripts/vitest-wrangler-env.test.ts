@@ -3,6 +3,7 @@ import { isAbsolute, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  configureLocalWranglerEnv,
   configureVitestWranglerEnv,
   resolvePlatformProxyPersistence,
 } from "./vitest-wrangler-env.js";
@@ -52,6 +53,31 @@ describe("Vitest Wrangler environment", () => {
     const inherited = { ...env };
     expect(configure(inherited)).toBeUndefined();
     expect(inherited).toEqual(env);
+  });
+});
+
+describe("Local Wrangler environment", () => {
+  const checkout = "/repo/worktree";
+
+  it("keeps dev & preview registry and log writes inside the checkout", () => {
+    const env: NodeJS.ProcessEnv = {};
+    configureLocalWranglerEnv(checkout, env);
+    expect(env).toEqual({
+      WRANGLER_LOG_PATH: join(checkout, ".wrangler", "logs"),
+      WRANGLER_REGISTRY_PATH: join(checkout, ".wrangler", "registry"),
+    });
+  });
+
+  it.each(["WRANGLER_REGISTRY_PATH", "WRANGLER_LOG_PATH"])("preserves an explicit %s", (key) => {
+    const env: NodeJS.ProcessEnv = { [key]: "/custom/path" };
+    configureLocalWranglerEnv(checkout, env);
+    expect(env[key]).toBe("/custom/path");
+  });
+
+  it("leaves Vitest to its temporary directory", () => {
+    const env: NodeJS.ProcessEnv = { VITEST: "true" };
+    configureLocalWranglerEnv(checkout, env);
+    expect(env).toEqual({ VITEST: "true" });
   });
 });
 

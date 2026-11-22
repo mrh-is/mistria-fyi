@@ -51,10 +51,10 @@ test("keeps the visited locale offline and leaves other locales to download on d
   // Sitewide search, on the home page, loads every category's names on first open.
   await page.goBack();
   await expect(page).toHaveURL(/\/en$/);
-  await page.getByRole("button", { name: "Search" }).click();
-  await page.getByRole("textbox", { name: "Search items" }).fill("turnip");
+  const search = page.getByPlaceholder("Search the field guide", { exact: true });
+  await search.fill("turnip");
   await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await search.press("Escape");
 
   // An incomplete locale explains itself instead of navigating to a broken page.
   await page.getByRole("button", { name: "Quick settings" }).click();
@@ -76,7 +76,6 @@ test("runs bilingual search and hydrates an unopened route offline", async ({ co
     .toEqual(["/es/about"]);
 
   await goOffline(context);
-  await page.getByRole("button", { exact: true, name: "Buscar" }).click();
   await page.getByRole("textbox", { name: "Buscar elementos" }).fill("Request for a Turnip");
   await expect(page.getByRole("button", { name: "Marcar Encargo de nabo" })).toBeVisible();
 

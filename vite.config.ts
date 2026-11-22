@@ -25,6 +25,7 @@ import {
 import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import {
+  configureLocalWranglerEnv,
   configureVitestWranglerEnv,
   resolvePlatformProxyPersistence,
 } from "./scripts/vitest-wrangler-env.js";
@@ -38,6 +39,7 @@ import { PRERENDER_ENTRIES } from "./src/lib/i18n/prerender-entries.js";
 import { APP_DIRECTORY } from "./src/lib/pwa/config.js";
 import { cspDirectives } from "./src/lib/security/csp-directives.js";
 
+configureLocalWranglerEnv(import.meta.dirname);
 const wranglerTestDirectory = configureVitestWranglerEnv();
 if (wranglerTestDirectory) {
   process.once("exit", () => rmSync(wranglerTestDirectory, { force: true, recursive: true }));

@@ -2,10 +2,11 @@ import { trackerData } from "#lib/data/index.js";
 import { getAlmanacEntryVariant } from "#lib/data/item-variants.js";
 import { animalNameId, getAlmanacEntryNames, getName } from "#lib/data/names.js";
 import { isAnimalVariantSpoilered } from "#lib/engine/animal-availability.js";
+import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { projectAlmanac } from "#lib/engine/projections/almanac.js";
 import { projectAnimals } from "#lib/engine/projections/animals.js";
 import { projectMuseum } from "#lib/engine/projections/museum.js";
-import { projectQuests } from "#lib/engine/projections/quests.js";
+import { projectQuests, questSources } from "#lib/engine/projections/quests.js";
 import { recipePlacements } from "#lib/engine/projections/recipes.js";
 import { factKey } from "#lib/engine/provenance.js";
 import { buildQuestSections } from "#lib/presentation/quest-sections.js";
@@ -18,7 +19,7 @@ import type { ReportCategory } from "#lib/feedback/types.js";
 import type { SourceGroupRow } from "#lib/presentation/source-groups.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId, QuestType, RecipeId } from "#lib/types/tracker-data.js";
 import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
@@ -56,31 +57,52 @@ export interface SourceChecklistRow extends SourceGroupRow {
   toggle: () => () => void;
 }
 
+type RowDescription = Pick<SourceChecklistRow, "name" | "searchNames" | "searchTerms" | "subtitle">;
+type SourceChecklistDraft = Omit<SourceChecklistRow, keyof RowDescription> & {
+  describe?: (locale: LocaleCode) => RowDescription;
+};
+
 export function buildSourceChecklist(
   ctx: ProgressContext,
   locale: LocaleCode,
   /** Decides each row's spoiler mask. Availability never reads it. */
   showSpoilers = false,
 ): SourceChecklistRow[] {
-  const rows: SourceChecklistRow[] = [];
+  return collectSourceRows(ctx, showSpoilers, locale).map(({ describe, ...row }) => {
+    if (!describe) throw new Error(`No checklist description for ${row.key}`);
+    return { ...row, ...describe(locale) };
+  });
+}
+
+/** Home needs the same facts & placements without loading item names or acquisition messages. */
+export function projectSourceChecklist(ctx: ProgressContext): SourceGroupRow[] {
+  return collectSourceRows(ctx, false);
+}
+
+function collectSourceRows(
+  ctx: ProgressContext,
+  showSpoilers: boolean,
+  questLocale?: LocaleCode,
+): SourceChecklistDraft[] {
+  const rows: SourceChecklistDraft[] = [];
   function add(
     category: CategoryKey,
     id: string,
-    name: string,
+    describe: SourceChecklistDraft["describe"],
     entity: { sources: Source[]; visibility?: VisibilityCondition },
     completed: boolean,
     reportCategory: keyof typeof FACT_FIELDS,
     toggle: () => void,
-    extra: Partial<SourceChecklistRow> = {},
+    extra: Partial<SourceChecklistDraft> = {},
   ): void {
     rows.push({
       ...entity,
       category,
       completed,
+      describe,
       fact: factKey(FACT_FIELDS[reportCategory], id),
       id,
       key: `${category}:${reportCategory}:${id}`,
-      name,
       obtainable: true,
       reportCategory,
       toggle: () => {
@@ -91,11 +113,18 @@ export function buildSourceChecklist(
     });
   }
   for (const row of projectAlmanac(ctx).rows) {
-    const variant = getAlmanacEntryVariant(row.entry, locale);
     add(
       "almanac",
       row.canonicalId,
-      getAlmanacEntryNames(row.entry, locale)[0],
+      (locale) => {
+        const searchNames = getAlmanacEntryNames(row.entry, locale);
+        const variant = getAlmanacEntryVariant(row.entry, locale);
+        return {
+          name: searchNames[0],
+          searchNames,
+          ...(variant ? { searchTerms: [variant], subtitle: variant } : {}),
+        };
+      },
       { sources: row.sources, visibility: row.item.visibility },
       row.completed,
       "almanac-item",
@@ -104,9 +133,7 @@ export function buildSourceChecklist(
       },
       {
         obtainable: row.obtainable,
-        searchNames: getAlmanacEntryNames(row.entry, locale),
         sprite: row.canonicalId,
-        ...(variant ? { searchTerms: [variant], subtitle: variant } : {}),
       },
     );
   }
@@ -114,7 +141,7 @@ export function buildSourceChecklist(
     add(
       "museum",
       row.id,
-      getName("items", row.id, locale),
+      (locale) => ({ name: getName("items", row.id, locale) }),
       trackerData.items[row.id],
       row.completed,
       "museum-item",
@@ -135,7 +162,9 @@ export function buildSourceChecklist(
     add(
       "recipes",
       id,
-      sprite ? getName("items", sprite, locale) : getName("recipes", id, locale),
+      (locale) => ({
+        name: sprite ? getName("items", sprite, locale) : getName("recipes", id, locale),
+      }),
       recipe,
       ctx.progress.almanacRecipes.has(id),
       "recipe",
@@ -149,7 +178,7 @@ export function buildSourceChecklist(
     add(
       "cosmetics",
       id,
-      getName("cosmetics", id, locale),
+      (locale) => ({ name: getName("cosmetics", id, locale) }),
       cosmetic,
       ctx.progress.cosmetics.has(id),
       "cosmetic",
@@ -162,13 +191,26 @@ export function buildSourceChecklist(
     switch (row.kind) {
       case "variant": {
         const animal = trackerData.animals[row.animalId];
-        const species = getName("animals", animalNameId(row.animalId, "core"), locale);
         const tier = animal.variantTiers.findIndex((t) => row.variantId in t);
         const variant = animal.variantTiers[tier][row.variantId];
         add(
           "animals",
           `${row.animalId}/${row.variantId}`,
-          getName("animals", animalNameId(row.animalId, "variants", row.variantId), locale),
+          (locale) => {
+            const species = getName("animals", animalNameId(row.animalId, "core"), locale);
+            return {
+              name: getName(
+                "animals",
+                animalNameId(row.animalId, "variants", row.variantId),
+                locale,
+              ),
+              searchNames: [species],
+              subtitle:
+                animal.variantTiers.length > 1
+                  ? [species, getName("ui", `tier_${tier + 1}`, locale)].join(" · ")
+                  : species,
+            };
+          },
           { sources: [variant.source], visibility: animal.visibility },
           row.completed,
           "animal-variants",
@@ -182,39 +224,39 @@ export function buildSourceChecklist(
               ctx.progress.animals[row.animalId],
               false,
             ),
-            searchNames: [species],
             spoilered: isAnimalVariantSpoilered(
               row.animalId,
               row.variantId,
               ctx.progress.animals[row.animalId],
               showSpoilers,
             ),
-            subtitle: [
-              species,
-              animal.variantTiers.length > 1
-                ? getName("ui", `tier_${tier + 1}`, locale)
-                : undefined,
-            ]
-              .filter(Boolean)
-              .join(" · "),
           },
         );
         break;
       }
       case "cosmetic": {
         const animal = trackerData.animals[row.animalId];
-        const species = getName("animals", animalNameId(row.animalId, "core"), locale);
         add(
           "animals",
           `${row.animalId}/${row.cosmeticId}`,
-          getName("animals", animalNameId(row.animalId, "cosmetics", row.cosmeticId), locale),
+          (locale) => {
+            const species = getName("animals", animalNameId(row.animalId, "core"), locale);
+            return {
+              name: getName(
+                "animals",
+                animalNameId(row.animalId, "cosmetics", row.cosmeticId),
+                locale,
+              ),
+              searchNames: [species],
+              subtitle: species,
+            };
+          },
           { ...animal.cosmetics[row.cosmeticId], visibility: animal.visibility },
           row.completed,
           "animal-cosmetics",
           () => {
             userState.toggleAnimalCosmetic(row.animalId, row.cosmeticId);
           },
-          { searchNames: [species], subtitle: species },
         );
         break;
       }
@@ -222,7 +264,7 @@ export function buildSourceChecklist(
         add(
           "animals",
           row.id,
-          getName("mount", row.id, locale),
+          (locale) => ({ name: getName("mount", row.id, locale) }),
           trackerData.mount.appearances[row.id],
           row.completed,
           "mount-appearance",
@@ -235,7 +277,7 @@ export function buildSourceChecklist(
         add(
           "animals",
           row.id,
-          getName("perks", row.id, locale),
+          (locale) => ({ name: getName("perks", row.id, locale) }),
           trackerData.mount.perks[row.id],
           row.completed,
           "mount-perk",
@@ -248,7 +290,7 @@ export function buildSourceChecklist(
         add(
           "animals",
           row.id,
-          getName("pets/cosmetic_sets", row.id, locale),
+          (locale) => ({ name: getName("pets/cosmetic_sets", row.id, locale) }),
           trackerData.pets.cosmetics[row.id],
           row.completed,
           "pet-cosmetic",
@@ -261,7 +303,7 @@ export function buildSourceChecklist(
         add(
           "animals",
           row.id,
-          getName("pets/skins", row.id, locale),
+          (locale) => ({ name: getName("pets/skins", row.id, locale) }),
           trackerData.pets.skins[row.id],
           row.completed,
           "pet-skin",
@@ -272,55 +314,73 @@ export function buildSourceChecklist(
         break;
     }
   }
-  const questAvailability = new Map(
-    projectQuests(ctx).rows.map((row) => [row.id, row.doableAnywhere]),
-  );
-  for (const section of buildQuestSections(ctx.progress, locale)) {
-    for (const row of section.rows) {
-      const questId = row.kind === "craving" ? row.questId : row.id;
-      if (!questId) continue;
-      const visibility = row.kind === "quest" ? row.visibility : undefined;
-      const categoryVisibility = trackerData.categoryVisibility[section.questType];
-      const combined = visibility
-        ? {
-            type: "and" as const,
-            conditions: [categoryVisibility, visibility] as [
-              VisibilityCondition,
-              VisibilityCondition,
-            ],
-          }
-        : categoryVisibility;
-      const completed = ctx.progress.questStates[questId] === "completed";
-      add(
-        "quests",
-        row.id,
-        row.displayName,
-        { sources: row.kind === "quest" ? row.sources : [], visibility: combined },
-        completed,
-        "quest",
-        () => {
-          userState.completeQuestWithRecipes(questId);
+  const quests = projectQuests(ctx);
+  const questAvailability = new Map(quests.rows.map((row) => [row.id, row.doableAnywhere]));
+  function addQuest(
+    questId: QuestId,
+    questType: QuestType,
+    sources: Source[],
+    visibility?: VisibilityCondition,
+    description?: RowDescription,
+  ): void {
+    const categoryVisibility = trackerData.categoryVisibility[questType];
+    const combined: undefined | VisibilityCondition =
+      categoryVisibility && visibility
+        ? { type: "and", conditions: [categoryVisibility, visibility] }
+        : (visibility ?? categoryVisibility);
+    const questState = ctx.progress.questStates[questId] ?? "none";
+    const completed = questState === "completed";
+    add(
+      "quests",
+      questId,
+      description ? () => description : undefined,
+      { sources, visibility: combined },
+      completed,
+      "quest",
+      () => {
+        userState.completeQuestWithRecipes(questId);
+      },
+      {
+        fact: factKey("questStates", questId),
+        locked: !completed && questAvailability.get(questId) === false,
+        questState,
+        toggle: () => {
+          const completion = userState.completeQuestWithRecipes(questId);
+          return () => {
+            if (completion) userState.undoQuestWithRecipes(questId, completion);
+          };
         },
-        {
-          fact: factKey("questStates", questId),
-          locked: !completed && row.kind === "quest" && questAvailability.get(row.id) === false,
-          questState: ctx.progress.questStates[questId] ?? "none",
-          subtitle: row.subtitle,
-          toggle: () => {
-            const completion = userState.completeQuestWithRecipes(questId);
-            return () => {
-              if (completion) userState.undoQuestWithRecipes(questId, completion);
-            };
-          },
-        },
-      );
+      },
+    );
+  }
+  if (questLocale) {
+    for (const { questType, rows: questRows } of buildQuestSections(ctx.progress, questLocale)) {
+      for (const row of questRows) {
+        const description = { name: row.displayName, subtitle: row.subtitle };
+        if (row.kind === "quest") {
+          addQuest(row.id, questType, row.sources, row.visibility, description);
+        } else if (row.questId) {
+          addQuest(row.questId, questType, [], undefined, description);
+        }
+      }
+    }
+  } else {
+    for (const [questType, byType] of recordEntries(trackerData.quests)) {
+      for (const [id, quest] of recordEntries(byType)) {
+        if (!PREGNANCY_QUEST_IDS.has(id)) {
+          addQuest(id, questType, questSources(questType, id), quest.visibility);
+        }
+      }
+    }
+    if (quests.craving.applicable && quests.craving.questId) {
+      addQuest(quests.craving.questId, "heart", []);
     }
   }
   for (const [id, spell] of recordEntries(trackerData.mines.spells)) {
     add(
       "mines",
       id,
-      getName("spells", id, locale),
+      (locale) => ({ name: getName("spells", id, locale) }),
       spell,
       ctx.progress.spells.has(id),
       "spell",

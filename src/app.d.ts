@@ -29,6 +29,10 @@ declare global {
       locale: LocaleCode;
       metadata: PageMetadata;
     }
+    interface PageState {
+      /** The Almanac sections the reader opened from their one-line entries, kept per history entry. */
+      almanacOpened?: string[];
+    }
   }
 
   interface Window {

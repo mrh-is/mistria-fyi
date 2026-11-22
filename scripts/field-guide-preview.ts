@@ -46,12 +46,16 @@ async function main(): Promise<void> {
   const progress = fixtures[preset as Preset];
   if (!progress) throw new Error(`Missing field guide progress export: ${preset}`);
   const screenshot = values.screenshot;
-  const browser = await chromium.launch({ headless: screenshot !== undefined });
+  const browser = await chromium.launch({
+    args: screenshot === undefined ? ["--window-size=1280,900"] : [],
+    headless: screenshot !== undefined,
+  });
   try {
     const page = await browser.newPage({
       reducedMotion: "reduce",
       serviceWorkers: "block",
-      viewport: { height: 900, width: 1280 },
+      // A screenshot needs a fixed size; a review window should resize like any browser.
+      viewport: screenshot === undefined ? null : { height: 900, width: 1280 },
     });
     page.setDefaultTimeout(30_000);
     await page.addInitScript(

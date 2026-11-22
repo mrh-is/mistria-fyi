@@ -29,11 +29,10 @@ This guide is the brief for the redesign’s per-screen sessions, so it covers s
 component draws them.
 
 - **Live in the app:** the two materials, the category colors, the thumb tabs, the provenance marks,
-  the type scale, & every token in `src/app.css`.
-- **Specified, not built yet:** the sprite treatments, the meters, the taped note, & the hand face
-  (#677). Their tokens & rules exist, and the options sheet
-  ([`token-options.html`](design/field-guide/token-options.html)) draws them, but no screen uses
-  them until its session builds them.
+  the type scale, the ledger’s sprite treatments, & every token in `src/app.css`.
+- **Specified, not built yet:** the meters, the taped note, & the hand face (#677). Their tokens &
+  rules exist, and the options sheet ([`token-options.html`](design/field-guide/token-options.html))
+  draws them, but no screen uses them until its session builds them.
 
 ### The book’s grammar
 
@@ -86,9 +85,8 @@ dark, not only a different color, raise it instead of branching on `.dark` in th
 
 ### Sprites
 
-Specified, not built yet. A sprite’s treatment says which shelf its row is on. The treatments are
-CSS filters & masks applied at runtime, so the project ships no derivative images, and a palette
-change stays a CSS change.
+A sprite’s treatment says which shelf its row is on. The treatments are CSS filters & masks applied
+at runtime, so the project ships no derivative images, and a palette change stays a CSS change.
 
 | Treatment   | Looks like                               | Means                          |
 | ----------- | ---------------------------------------- | ------------------------------ |

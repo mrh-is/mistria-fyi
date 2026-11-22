@@ -1,3 +1,4 @@
+import { tick } from "svelte";
 import { toast } from "svelte-sonner";
 
 import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
@@ -25,8 +26,9 @@ export function questToastMessage(
   state: QuestState,
   newlyAdded: readonly RecipeId[],
   locale: LocaleCode,
+  covered = false,
 ): string {
-  return inLocale(locale, () => formatQuestToast(name, state, newlyAdded, locale));
+  return inLocale(locale, () => formatQuestToast(name, state, newlyAdded, locale, covered));
 }
 
 function formatQuestToast(
@@ -34,7 +36,14 @@ function formatQuestToast(
   state: QuestState,
   newlyAdded: readonly RecipeId[],
   locale: LocaleCode,
+  covered: boolean,
 ): string {
+  // A covered row's name & rewards stay hidden, so its toast names neither.
+  if (covered) {
+    if (state === "obtained") return "Started a spoilered quest";
+    if (state === "none") return "Reset a spoilered quest";
+    return "Checked off a spoilered quest";
+  }
   if (state === "obtained") return `Started “${name}”`;
   if (state === "none") return `Reset “${name}”`;
   if (newlyAdded.length === 1) {
@@ -60,12 +69,15 @@ export function showQuestToast(
   newlyAdded: readonly RecipeId[],
   locale: LocaleCode,
   onUndo: () => void,
+  covered = false,
+  focus = captureUndoFocus(),
 ): void {
   inLocale(locale, () => {
     showStackedUndoToast(
       `quest:${name}`,
-      formatQuestToast(name, state, newlyAdded, locale),
+      formatQuestToast(name, state, newlyAdded, locale, covered),
       onUndo,
+      focus,
     );
   });
 }
@@ -74,9 +86,25 @@ export function showQuestToast(
  * Show a toast with an "Undo" action for check-off state changes. Toasts for different items
  * stack; a second toast for the same item replaces its first.
  */
-export function showUndoToast(itemName: string, completed: boolean, onUndo: () => void): void {
-  const message = completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
-  showStackedUndoToast(`item:${itemName}`, message, onUndo);
+export function showUndoToast(
+  itemName: string,
+  completed: boolean,
+  onUndo: () => void,
+  /** The row's name is still behind its spoiler cover, so the toast mustn't reveal it. */
+  covered = false,
+  focus = captureUndoFocus(),
+): void {
+  showStackedUndoToast(
+    `item:${itemName}`,
+    undoMessage(itemName, completed, covered),
+    onUndo,
+    focus,
+  );
+}
+
+function undoMessage(itemName: string, completed: boolean, covered: boolean): string {
+  if (covered) return completed ? "Checked off a spoilered item" : "Unchecked a spoilered item";
+  return completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
 }
 
 /** The starter batch keeps its own Undo while the player continues checking things off. */
@@ -100,7 +128,56 @@ export function clearUndoToasts(): void {
   undoToasts.clear();
 }
 
-function showStackedUndoToast(key: string, message: string, onUndo: () => void): void {
+interface UndoFocus {
+  element: HTMLElement;
+  fact?: string;
+  /** The place or section holding the row, since a fact can appear under several places. */
+  section?: Element;
+}
+
+/** Capture before a spoiler prompt takes focus away from the row. */
+export function captureUndoFocus(): undefined | UndoFocus {
+  const element = typeof document === "undefined" ? null : document.activeElement;
+  if (!(element && element instanceof HTMLElement) || element === document.body) return undefined;
+  return {
+    element,
+    fact: element.closest<HTMLElement>("[data-ledger-fact]")?.dataset.ledgerFact,
+    section: element.closest("section") ?? undefined,
+  };
+}
+
+function visibleCheckbox(scope: ParentNode, fact: string): HTMLElement | undefined {
+  return [
+    ...scope.querySelectorAll<HTMLElement>(
+      `[data-ledger-fact="${CSS.escape(fact)}"] .tracker-checkbox`,
+    ),
+  ].find((candidate) => candidate.checkVisibility());
+}
+
+async function focusAfterUndo(
+  { element, fact, section }: UndoFocus,
+  action: Element,
+): Promise<void> {
+  await tick();
+  if (document.activeElement !== action && document.activeElement !== document.body) return;
+  if (element.isConnected && element.checkVisibility()) {
+    element.focus({ preventScroll: true });
+    return;
+  }
+  if (!fact) return;
+  // Prefer the copy in the reader's place. Another place's copy may be off-screen, so scroll to it.
+  const checkbox =
+    (section?.isConnected ? visibleCheckbox(section, fact) : undefined) ??
+    visibleCheckbox(document, fact);
+  checkbox?.focus();
+}
+
+function showStackedUndoToast(
+  key: string,
+  message: string,
+  onUndo: () => void,
+  focus: undefined | UndoFocus,
+): void {
   // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
   if (userState.trackingLaneNeeded) return;
   const previous = undoToasts.get(key);
@@ -125,8 +202,12 @@ function showStackedUndoToast(key: string, message: string, onUndo: () => void):
     cancel: {
       label: "Undo",
       onClick: () => {
+        const action = typeof document === "undefined" ? null : document.activeElement;
         forget();
         onUndo();
+        if (focus && action?.closest("[data-sonner-toast]")) {
+          void focusAfterUndo(focus, action);
+        }
       },
     },
     duration: 30_000,

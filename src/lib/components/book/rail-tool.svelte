@@ -2,10 +2,10 @@
 <script lang="ts">
   import type { HTMLButtonAttributes } from "svelte/elements";
 
-  let { children, ...rest }: HTMLButtonAttributes = $props();
+  let { children, class: className, ...rest }: HTMLButtonAttributes = $props();
 </script>
 
-<button class="rail-tool" type="button" {...rest}>
+<button class={["rail-tool", className]} type="button" {...rest}>
   {@render children?.()}
 </button>
 

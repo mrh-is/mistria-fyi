@@ -65,9 +65,9 @@ describe("turnPage", () => {
 
   it("scopes its styles to the turn, dropping them once it finishes", async () => {
     await turnPage(navigation("/en/almanac", "/en/museum"));
+    expect(document.documentElement.classList).toContain(TURNING_CLASS);
     transitions[0]?.finish();
     await transitions[0]?.finished;
-    await Promise.resolve();
     expect(document.documentElement.classList).not.toContain(TURNING_CLASS);
   });
 

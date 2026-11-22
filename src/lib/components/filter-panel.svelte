@@ -115,24 +115,28 @@
         inert={isCollapsed("sources")}
       >
         <div class="collapsible__inner">
-          <div class="chip-row">
+          <!-- Each source type is a switch, like Show's, so the list reads as things to turn on & off. -->
+          <ul class="source-switches">
             {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
               {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
-              {@const selected = toolbarState.enabledSourceFilterIds.has(filter.id)}
-              <button
-                class="filter-chip"
-                class:filter-chip--active={selected}
-                type="button"
-                aria-pressed={selected}
-                onclick={() => {
-                  toolbarState.toggleSourceFilter(filter);
-                  onFilterChange?.();
-                }}
-              >
-                <SourceIcon class="size-3" />{sourceFilterLabel(filter.id, page.data.locale)}
-              </button>
+              <li class="toggle">
+                <BlockySwitch
+                  checked={toolbarState.enabledSourceFilterIds.has(filter.id)}
+                  onCheckedChange={() => {
+                    toolbarState.toggleSourceFilter(filter);
+                    onFilterChange?.();
+                  }}
+                >
+                  <span class="toggle__label"
+                    ><SourceIcon class="size-3.5 shrink-0" />{sourceFilterLabel(
+                      filter.id,
+                      page.data.locale,
+                    )}</span
+                  >
+                </BlockySwitch>
+              </li>
             {/each}
-          </div>
+          </ul>
         </div>
       </div>
     </section>
@@ -323,42 +327,25 @@
     transition: opacity 90ms ease-out;
   }
 
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 7px;
+  /*
+   * A ruled list on the panel's paper, two columns of label & switch, ruled like the index rail,
+   * not a grid of tiles: the panel stays quieter than the page it filters (F31).
+   */
+  .source-switches {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.25rem;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .filter-chip {
-    display: inline-flex;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 5px 10px;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
-    color: var(--color-ink-muted);
-    background: var(--color-paper-sunken);
-    font-family: var(--font-controls);
-    font-size: var(--text-3xs);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .filter-chip {
-      min-height: 34px;
+  @media (max-width: 22rem) {
+    .source-switches {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
-  /* The border & tint carry the category color; the label stays ink, since a category color misses
-   * 4.5:1 on its own tint. */
-  .filter-chip--active {
-    border-color: var(--primary);
-    color: var(--color-ink);
-    background: color-mix(in srgb, var(--primary) 14%, var(--color-paper-raised));
-  }
-
-  .filter-chip:is(:hover, :focus-visible),
   .info-button:is(:hover, :focus-visible) {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
@@ -374,8 +361,7 @@
 
   .toggle-row {
     align-items: stretch;
-    gap: 5px;
-    margin-top: 7px;
+    margin-top: 4px;
   }
 
   .toggle {
@@ -383,8 +369,7 @@
     min-width: 0;
     min-height: 44px;
     flex: 1;
-    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
-    background: var(--color-paper-sunken);
+    border-block-end: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
   }
 
   .toggle :global(label) {
@@ -392,15 +377,18 @@
     flex-direction: row-reverse;
     justify-content: space-between;
     gap: 8px;
-    padding: 0 10px;
   }
 
   .toggle__label {
     min-width: 0;
     gap: 6px;
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+  }
+
+  .toggle__label :global(svg) {
     color: var(--color-ink-muted);
-    font-family: var(--font-controls);
-    font-size: var(--text-3xs);
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -17,6 +17,8 @@ import {
   findTargetSizeViolations,
 } from "./support/geometry.js";
 import {
+  closeSearch,
+  openLegacyArtifacts,
   openSearch,
   openSettingsCard,
   openShelf,
@@ -69,7 +71,7 @@ test.describe("320-pixel reflow", () => {
     await gotoApplication(page, "/");
     await openSearch(page, "turnip");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await closeSearch(page);
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
@@ -204,7 +206,6 @@ test.describe("interactive target geometry", () => {
 
   test("fine-pointer tracker controls retain compact accessible targets", async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
     expect(
       await page.evaluate(() => matchMedia("(pointer: fine) and (hover: hover)").matches),
     ).toBe(true);
@@ -217,7 +218,7 @@ test.describe("interactive target geometry", () => {
         target: styles.getPropertyValue("--tracker-target-size"),
       };
     });
-    expect(responsiveSizes).toEqual({ row: "40px", sprite: "36px", target: "32px" });
+    expect(responsiveSizes).toEqual({ row: "36px", sprite: "36px", target: "32px" });
 
     const control = row.getByRole("button", { name: /^Check / });
     const box = await control.boundingBox();
@@ -231,8 +232,7 @@ test.describe("tracker paper geometry", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light");
-    await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await openLegacyArtifacts(page);
   });
 
   test(
@@ -330,8 +330,7 @@ test.describe("tracker paper touch geometry", () => {
 
   test("coarse-pointer targets and expanded sources fit at 320 pixels", async ({ page }) => {
     await initializeApplication(page, "light");
-    await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await openLegacyArtifacts(page);
 
     expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia("(any-pointer: coarse)").matches)).toBe(true);
@@ -357,8 +356,7 @@ test.describe("tracker paper touch geometry", () => {
 
   test("spoiler covers stay text-height while their targets reach 44 pixels", async ({ page }) => {
     await initializeApplication(page, "light", createStoredState());
-    await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed/ }).click();
+    await openLegacyArtifacts(page);
     await openShelf(page, "Not now");
 
     await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();

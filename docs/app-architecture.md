@@ -430,21 +430,48 @@ The Everything page also offers a Source grouping. `controllers/source-checklist
 category projections into rows with their original completion identity, presentation, & reversible
 store action. `presentation/source-groups.ts` places each row under all of its source instances,
 merges stock facets within an instance, & classifies availability using only that instance’s
-sources. Source totals & To do, Not now, & Done rollups precede display filtering; unobtainable rows
-never hold a source open. `source-content.svelte` composes the source types & sections, placing Done
-sections inside the same page-wide Completed fold. In both lenses, outstanding groups start open &
-completed groups start closed on each page load; these choices aren't persisted. A source anchor
-opens its containing type group, including a completed one. `controllers/completion-scope.svelte.ts`
-partitions category sections by the same completion their headers show; compact records & masked
-top-level spoiler sections register individually, & a masked section always counts as outstanding. A
-section changes lists once a completed row has had time to leave, the source lens holds its sections
-the same way, & focus inside a section that leaves moves to the nearest visible section trigger. The
-Completed fold starts closed and renders its copy only once opened, because that copy is every
-category a second time. Collapsed groups keep their content mounted so progress edits & filters can
-update which groups have content. Category pages have no completion scope & keep their existing
-grouping. The `group=category|source` query overrides the device’s `everythingGrouping` preference
-without rewriting it; choosing the control updates both the preference & URL. Progress serialization
-is unchanged.
+sources. The `group=category|source` query overrides the device’s `everythingGrouping` preference.
+Choosing the control updates the preference & URL.
+
+In the Source grouping and on the Almanac page, the ledger captures its sections, shelves, & columns
+after local progress loads. A check-off updates the mark at each placement of that fact. Placements
+& shelf counts hold until the page remounts or the reader refreshes the shelves. A calendar or
+weather change, save import, sync receipt, backup restore, reset, or progress replacement from
+another tab offers that refresh. The source filter can narrow availability using the captured day.
+Search counts matching placements in each shelf while the page total counts each fact once. A column
+heading highlights matching rows within its shelf. Both ledgers share their snapshot, search, &
+arrival behavior through `controllers/ledger-page.svelte.ts`.
+
+A place link opens its containing source group & focuses the place heading after scrolling to it.
+The Completed fold starts closed. A place link into it opens the fold, and search can count the
+closed fold’s rows. Browser Find reaches only mounted rows; the ledger’s own search covers the rest
+(#714).
+
+`components/ledger/ledger-index.svelte` lists the sections. At wide widths it's a rail beside the
+ledger, and below them each section's sticky head opens it as a jump list. A section counts as
+current once its head passes a reading line 30% of the way down the viewport. The index also owns
+scroll during search. The first keystroke remembers the row at the reading line, by its fact. Each
+new query starts at the top of the ledger, and clearing the search scrolls that row back to where it
+was. Navigating away forgets it.
+
+A ledger section mounts a window of rows on each open shelf near the screen (#714). Spacers hold the
+estimated height of earlier & later rows, so jumping into a long shelf mounts the rows at the
+landing point. “Previous rows” & “Next rows” move focus to an adjacent row even when it hasn’t
+mounted yet. Search uses the same window over its matches and retains the reading rows while the
+query is active. Back & search clear ask the section to mount a window around the saved row
+(`LEDGER_MOUNT_EVENT`) before restoring its offset. Mounting every row (1,879 on the Almanac, 35,407
+elements) made axe, Playwright, & screen readers walk the whole ledger, which stalled the
+accessibility CI (#708). `tests/accessibility/ledger-budget.spec.ts` checks the first screen, broad
+search, & long jumps. `components/ledger/ledger-sprite.svelte` keeps each sprite invisible until its
+image, and its mask for the masked treatments, has loaded.
+
+Ledger rows can't share a CSS subgrid, because `content-visibility` contains their layout. Each row
+lays out the same deterministic tracks instead, which its shelf passes as `--ledger-tracks`.
+
+In Everything’s Category grouping, `controllers/completion-scope.svelte.ts` partitions sections by
+the completion their headers show. Compact records & masked top-level spoiler sections register
+individually, and masked sections count as outstanding. A finished row leaves its list after its
+animation, and focus moves to the nearest visible section trigger.
 
 ### Component conventions
 
