@@ -439,7 +439,11 @@ test.describe("tracker paper touch geometry", () => {
     expect(afterScroll.y + afterScroll.height).toBeLessThanOrEqual(652);
 
     await gotoApplication(page, "/skills");
-    for (const control of await page.locator("[data-skill-record] button").first().all()) {
+    for (const control of [
+      page.getByRole("button", { name: "Decrease Archaeology level" }),
+      page.getByRole("button", { name: "Increase Archaeology level" }),
+      page.getByRole("slider", { name: "Archaeology level" }),
+    ]) {
       const box = await control.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(44);
       expect(box?.height).toBeGreaterThanOrEqual(44);

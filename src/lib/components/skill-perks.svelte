@@ -1,371 +1,120 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
-  import { SvelteSet } from "svelte/reactivity";
-  import { slide } from "svelte/transition";
+  import { fade } from "svelte/transition";
 
-  import { Icon } from "#lib/components/icon/index.js";
-  import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
-  import { celebrateProgress } from "#lib/controllers/celebration.js";
-  import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { perkUnlocksFor } from "#lib/engine/perk-unlocks.js";
   import { factKey } from "#lib/engine/provenance.js";
-  import { isConditionVisible } from "#lib/engine/visibility.js";
-  import plural from "#lib/i18n/catalogs/plural.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordKeys } from "#lib/utils/record.js";
+  import { formatNumber } from "#lib/utils/format.js";
 
-  import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { PerkId, SkillId } from "#lib/types/tracker-data.js";
-  import type { VisibilityCondition } from "#lib/types/visibility.js";
 
   let {
     id,
+    level,
     locale,
-    name,
-    spoilerGuard,
-  }: { id: SkillId; locale: LocaleCode; name: string; spoilerGuard: SpoilerGuard } = $props();
+    tiers,
+  }: {
+    id: SkillId;
+    level: number;
+    locale: LocaleCode;
+    tiers: readonly { ids: readonly PerkId[]; level: number; number: number }[];
+  } = $props();
 
-  const panelId = $props.id();
-  let expanded = $state(false);
-  /** Perks whose spoiler cover the player has tapped away, for this drawer's lifetime. */
-  const revealed = new SvelteSet<PerkId>();
-
-  /**
-   * The skill's perk tiers in game order. A tier opens at its skill level; until then its unbought
-   * perks are spoilered, & checking one asks the spoiler guard first.
-   */
-  let tiers = $derived(
-    trackerData.skills[id].perkTiers.map((tier, index) => {
-      const level = trackerData.perkTierLevels[index];
-      const condition: VisibilityCondition = { type: "skillLevel", level, skillId: id };
-      const visible = isConditionVisible(condition, userState.progressionState);
-      return {
-        condition,
-        level,
-        number: index + 1,
-        perks: recordKeys(tier).map((perkId) => {
-          const unlocked = userState.state.progress.unlockedPerks.has(perkId);
-          return {
-            id: perkId,
-            name: getName("perks", perkId, locale),
-            spoilered: !visible && !unlocked,
-            unlocked,
-            unlocks: unlocksOf(perkId),
-          };
-        }),
-        reached: (userState.state.progress.skillLevels[id] ?? 0) >= level,
-      };
-    }),
-  );
-  let perks = $derived(tiers.flatMap((tier) => tier.perks.map((perk) => ({ ...perk, tier }))));
-  let unlocked = $derived(perks.filter((perk) => perk.unlocked).length);
-  /** Perks the player could have now: every perk in a reached tier, plus any already unlocked. */
-  let available = $derived(perks.filter((perk) => perk.tier.reached || perk.unlocked).length);
-  let locked = $derived(perks.length - available);
-  let toggleLabel = $derived.by(() => {
-    if (available === 0) return `${name} perks, ${locked} locked`;
-    if (locked === 0) return `${name} perks, ${unlocked} of ${available} unlocked`;
-    return `${name} perks, ${unlocked} of ${available} unlocked, ${locked} more locked`;
-  });
-
-  /** What a perk unlocks, one note per kind. Plain text until rows can be linked directly. */
-  function unlocksOf(perkId: PerkId): { count: number; id: string; label: string }[] {
-    const unlocks = perkUnlocksFor(perkId);
-    if (!unlocks) return [];
-    const { almanac, cosmetics, recipes } = unlocks;
-    return [
-      {
-        count: recipes.length,
-        id: "recipes",
-        label: plural(recipes.length, [
-          `unlocks ${recipes.length} recipe`,
-          `unlocks ${recipes.length} recipes`,
-        ]),
-      },
-      {
-        count: almanac.length,
-        id: "almanac",
-        label: plural(almanac.length, [
-          `unlocks ${almanac.length} almanac item`,
-          `unlocks ${almanac.length} almanac items`,
-        ]),
-      },
-      {
-        count: cosmetics.length,
-        id: "cosmetics",
-        label: plural(cosmetics.length, [
-          `unlocks ${cosmetics.length} cosmetic`,
-          `unlocks ${cosmetics.length} cosmetics`,
-        ]),
-      },
-    ].filter(({ count }) => count > 0);
-  }
-
-  function togglePerk(perk: (typeof perks)[number]): void {
-    const toggle = (): void => {
-      celebrateProgress("skills", () => {
-        userState.togglePerk(perk.id);
-      });
-    };
-    if (perk.spoilered) {
-      const subject = revealed.has(perk.id) ? { name: perk.name } : undefined;
-      spoilerGuard.requestGuardedAction(perk.tier.condition, toggle, subject);
-    } else {
-      toggle();
-    }
-  }
+  let provenance = $derived(userState.provenanceOf(factKey("skillLevels", id)));
 </script>
 
-<div class="skill-perks" data-skill-perks data-expanded={expanded}>
-  <button
-    class="skill-perks__toggle"
-    type="button"
-    aria-expanded={expanded}
-    aria-controls={expanded ? panelId : undefined}
-    aria-label={toggleLabel}
-    onclick={() => {
-      expanded = !expanded;
-    }}
-  >
-    <Icon.UI
-      type="disclosure"
-      class="skill-perks__disclosure size-4 shrink-0 transition-transform motion-reduce:transition-none {expanded
-        ? 'rotate-90'
-        : ''}"
-    />
-    <span class="skill-perks__label">Perks</span>
-    <span class="skill-perks__summary" aria-hidden="true">
-      {#if available > 0}
-        <span>{`${unlocked} / ${available} unlocked`}</span>
-        {#if locked > 0}
-          <span class="skill-perks__locked">{`${locked} more locked`}</span>
-        {/if}
+{#snippet perks(ids: readonly PerkId[], reached: boolean)}
+  {#each ids as perkId (perkId)}
+    {@const name = getName("perks", perkId, locale)}
+    <li class="perk">
+      <TrackerCheckbox
+        fact={factKey("unlockedPerks", perkId)}
+        {provenance}
+        state={reached ? "checked" : "unchecked"}
+        label={reached ? "Reached" : "Unreached"}
+      />
+      {#if reached || userState.state.showSpoilers}
+        <span>{name}</span>
       {:else}
-        <span>{`${locked} locked`}</span>
+        <span class="sr-only">Spoilered perk</span>
+        <span class="blank" aria-hidden="true" style:inline-size={`${[...name].length}ch`}></span>
       {/if}
-    </span>
-  </button>
+    </li>
+  {/each}
+{/snippet}
 
-  {#if expanded}
-    <ol
-      id={panelId}
-      class="skill-perks__tiers"
-      transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
-    >
-      {#each tiers as tier (tier.number)}
-        <li class="skill-perks__tier" data-perk-tier data-reached={tier.reached}>
-          <span class="skill-perks__tier-heading" aria-hidden="true">
-            <span class="skill-perks__tier-name"
-              >{getName("ui", `tier_${tier.number.toString()}`, locale)}</span
-            >
-            <span class="skill-perks__tier-rule"></span>
-            <span class="skill-perks__tier-level">{`Level ${tier.level}`}</span>
-          </span>
-          <ul
-            class="skill-perks__perks"
-            aria-label={`${name} perks, ${getName("ui", `tier_${tier.number.toString()}`, locale)}, level ${tier.level}`}
-          >
-            {#each tier.perks as perk (perk.id)}
-              {@const covered = perk.spoilered && !revealed.has(perk.id)}
-              <li class="skill-perks__perk" data-unlocked={perk.unlocked}>
-                <TrackerCheckbox
-                  fact={factKey("unlockedPerks", perk.id)}
-                  provenance={userState.provenanceOf(factKey("unlockedPerks", perk.id))}
-                  state={perk.unlocked ? "checked" : "unchecked"}
-                  label={perk.unlocked
-                    ? `Uncheck ${perk.name}`
-                    : covered
-                      ? "Check spoilered item"
-                      : `Check ${perk.name}`}
-                  onclick={() => {
-                    togglePerk({ ...perk, tier });
-                  }}
-                />
-                <span class="skill-perks__perk-body">
-                  <span class="skill-perks__perk-name">
-                    {#if perk.spoilered}
-                      <Spoiler
-                        spoilered={covered}
-                        onReveal={() => {
-                          revealed.add(perk.id);
-                        }}>{perk.name}</Spoiler
-                      >
-                    {:else}
-                      {perk.name}
-                    {/if}
-                  </span>
-                  {#if !covered}
-                    {#each perk.unlocks as unlock (unlock.id)}
-                      <span class="skill-perks__unlocks">{unlock.label}</span>
-                    {/each}
-                  {/if}
-                </span>
-              </li>
-            {/each}
-          </ul>
-        </li>
-      {/each}
-    </ol>
-  {/if}
-</div>
+<ol class="tiers">
+  {#each tiers as tier (tier.number)}
+    {@const tierName = getName("ui", `tier_${tier.number.toString()}`, locale)}
+    {@const threshold = formatNumber(tier.level, locale)}
+    <li class="tier">
+      <p>{`${tierName} · Lv ${threshold}`}</p>
+      {#if level >= tier.level}
+        <ul in:fade={{ duration: prefersReducedMotion.current ? 0 : 200 }}>
+          {@render perks(tier.ids, true)}
+        </ul>
+      {:else}
+        <ul>
+          {@render perks(tier.ids, false)}
+        </ul>
+      {/if}
+    </li>
+  {/each}
+</ol>
 
 <style>
-  .skill-perks {
-    min-width: 0;
+  .tiers {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
   }
 
-  /* A drawer pull: tinted & bordered so it reads as something to open. */
-  .skill-perks__toggle {
-    display: flex;
-    width: 100%;
-    min-height: 44px;
-    align-items: center;
-    gap: 6px;
-    padding: 0 8px 0 6px;
-    border: 1px solid var(--color-ink-hairline);
-    border-radius: var(--radius);
-    background: var(--color-paper-sunken);
-    color: var(--color-ink);
-    font-family: var(--font-body);
-    font-size: var(--text-sm);
-    text-align: start;
-    touch-action: manipulation;
+  .tier {
+    min-inline-size: 0;
+    padding-inline: 0.5rem;
+    border-inline-start: 1px dashed var(--color-rule);
   }
 
-  .skill-perks[data-expanded="true"] .skill-perks__toggle {
-    border-bottom-style: dashed;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-
-  .skill-perks__toggle:is(:active, :focus-visible) {
-    border-color: var(--color-category-skills);
-    outline: 2px solid var(--color-category-skills);
-    outline-offset: -2px;
-  }
-
-  @media (hover: hover) {
-    .skill-perks__toggle:hover {
-      border-color: var(--color-category-skills);
-      background: color-mix(in srgb, var(--color-category-skills) 8%, var(--color-paper-sunken));
-    }
-  }
-
-  .skill-perks__toggle :global(.skill-perks__disclosure) {
-    color: var(--color-category-skills-text);
-  }
-
-  .skill-perks__label {
-    flex: 1;
-    font-weight: 600;
-  }
-
-  .skill-perks__summary {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
+  .tier p {
+    margin-block-end: 0.35rem;
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
+    font-size: var(--text-3xs);
+    letter-spacing: 0.06em;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
+  }
+
+  .perk {
+    display: flex;
+    min-inline-size: 0;
+    align-items: flex-start;
+    gap: 0.25rem;
+    margin-block-end: 0.35rem;
     font-size: var(--text-xs);
-    line-height: 1.15;
-    white-space: nowrap;
-  }
-
-  .skill-perks__locked {
-    color: var(--color-ink-muted);
-    font-size: var(--text-2xs);
-  }
-
-  .skill-perks__tiers {
-    display: grid;
-    gap: 6px;
-    margin: 0;
-    padding: 8px 6px 2px;
-    border: 1px solid var(--color-ink-hairline);
-    border-top: 0;
-    border-radius: 0 0 var(--radius) var(--radius);
-    background: color-mix(in srgb, var(--color-paper-sunken) 45%, var(--color-paper-raised));
-    list-style: none;
-  }
-
-  .skill-perks__tier-heading {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  .skill-perks__tier-name {
-    color: var(--color-category-skills-text);
-    font-family: var(--font-annotation);
-    font-size: var(--text-sm);
-    font-style: italic;
-  }
-
-  .skill-perks__tier[data-reached="false"] .skill-perks__tier-name {
-    color: var(--color-ink-muted);
-  }
-
-  .skill-perks__tier-rule {
-    flex: 1;
-    border-bottom: 1px solid var(--color-ink-hairline);
-  }
-
-  .skill-perks__tier-level {
-    color: var(--color-ink-muted);
-    font-family: var(--font-data);
-    font-size: var(--text-2xs);
-    white-space: nowrap;
-  }
-
-  .skill-perks__perks {
-    display: grid;
-    margin: 0;
-    padding: 0;
-    column-gap: 8px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    list-style: none;
-  }
-
-  .skill-perks__perk {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 2px;
-    font-family: var(--font-body);
-    font-size: var(--text-sm);
-    line-height: 1.15;
-  }
-
-  .skill-perks__perk[data-unlocked="true"] .skill-perks__perk-name {
-    color: var(--color-ink-muted);
-  }
-
-  .skill-perks__perk-body {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 1px;
-  }
-
-  .skill-perks__perk-name {
-    min-width: 0;
     overflow-wrap: anywhere;
   }
 
-  /* A note in the margin, like a journal's pencilled aside. */
-  .skill-perks__unlocks {
-    color: var(--color-ink-muted);
-    font-family: var(--font-annotation);
-    font-size: var(--text-2xs);
-    font-style: italic;
-    line-height: 1.2;
+  .blank {
+    max-inline-size: 100%;
+    block-size: 0.9em;
+    border-block-end: 1px solid var(--color-rule);
   }
 
-  @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-    .skill-perks__toggle {
-      min-height: 32px;
+  @media (max-width: 43.75rem) {
+    .tier {
+      padding: 0.5rem 0 0.25rem;
+      border-block-start: 1px dashed var(--color-rule);
+      border-inline-start: 0;
     }
+  }
+
+  :global(.compact) > .tiers > .tier {
+    padding: 0.5rem 0 0.25rem;
+    border-block-start: 1px dashed var(--color-rule);
+    border-inline-start: 0;
   }
 </style>

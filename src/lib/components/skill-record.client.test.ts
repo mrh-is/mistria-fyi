@@ -1,139 +1,80 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, expect, it } from "vitest";
 
 import SkillRecordHarness from "#lib/components/skill-record.test-harness.svelte";
-import { perksOfSkill } from "#lib/engine/projections/skills.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName, loadNames } from "#lib/data/names.js";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type { SkillId } from "#lib/types/tracker-data.js";
 
-const skillId = "mining" as SkillId;
+const id = "mining" as SkillId;
+const tiers = trackerData.skills[id].perkTiers.map((tier, index) => ({
+  ids: recordKeys(tier),
+  level: trackerData.perkTierLevels[index],
+}));
+const firstName = getName("perks", tiers[0].ids[0], "en");
+const lastName = getName("perks", tiers[4].ids[0], "en");
 
-describe("SkillRecord", () => {
-  beforeEach(async () => {
-    await userState.startTrackingByHand();
+beforeEach(async () => {
+  await userState.startTrackingByHand();
+});
+
+it("registers feedback metadata and opens the right tiers on keyboard and button edits", async () => {
+  const feedbackContext = new FeedbackContext();
+  const view = render(SkillRecordHarness, { feedbackContext, id, name: "Mining" });
+  await waitFor(() => {
+    expect(feedbackContext.registrations.size).toBe(1);
   });
+  expect([...feedbackContext.registrations.values()][0]).toMatchObject({
+    category: "skill",
+    displayName: "Mining",
+    entityId: "mining",
+    extra: { level: 0 },
+  });
+  const ruler = screen.getByRole("slider", { name: "Mining level" });
+  const decrease = screen.getByRole("button", { name: "Decrease Mining level" });
+  const increase = screen.getByRole("button", { name: "Increase Mining level" });
+  expect(ruler).toHaveAttribute("aria-valuetext", "Mining, level 0 of 60");
+  expect(decrease).toBeDisabled();
+  expect(screen.queryByText(firstName)).toBeNull();
 
-  it("registers with skill metadata", async () => {
-    const feedbackContext = new FeedbackContext();
-    const view = render(SkillRecordHarness, {
-      feedbackContext,
-      id: skillId,
+  await fireEvent.click(increase);
+  expect(ruler).toHaveAttribute("aria-valuenow", "1");
+  expect(screen.getByText(firstName)).toBeInTheDocument();
+  expect(screen.getAllByRole("img", { name: "Reached" })).toHaveLength(tiers[0].ids.length);
+  expect(screen.queryByText(lastName)).toBeNull();
+
+  await fireEvent.keyDown(ruler, { key: "PageUp" });
+  expect(ruler).toHaveAttribute("aria-valuenow", "16");
+  await fireEvent.keyDown(ruler, { key: "End" });
+  expect(increase).toBeDisabled();
+  expect(screen.getByText(lastName)).toBeInTheDocument();
+  await fireEvent.keyDown(ruler, { key: "Home" });
+  expect(decrease).toBeDisabled();
+  expect(screen.queryByText(firstName)).toBeNull();
+
+  view.unmount();
+  expect(feedbackContext.registrations.size).toBe(0);
+});
+
+it("prints localized perk names when spoiler covers are off", async () => {
+  await loadNames("ru", ["perks", "ui"]);
+  userState.toggleShowSpoilers();
+  try {
+    render(SkillRecordHarness, {
+      feedbackContext: new FeedbackContext(),
+      id,
+      locale: "ru",
       name: "Mining",
     });
-
-    await waitFor(() => {
-      expect(feedbackContext.registrations.size).toBe(1);
-    });
-    const registration = [...feedbackContext.registrations.values()][0];
-    expect(registration).toMatchObject({
-      category: "skill",
-      displayName: "Mining",
-      entityId: "mining",
-    });
-    expect(registration.extra).toHaveProperty("level");
-
-    expect(
-      screen.getByRole("button", { name: "Edit Mining level, currently 0 of 60" }),
-    ).toBeInTheDocument();
-    await fireEvent.click(
-      screen.getByRole("button", { name: "Edit Mining level, currently 0 of 60" }),
+    expect(screen.getByText(getName("perks", tiers[4].ids[0], "ru"))).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: "Unreached" })).toHaveLength(
+      tiers.reduce((count, tier) => count + tier.ids.length, 0),
     );
-    expect(screen.getByRole("spinbutton", { name: "Mining level" })).toHaveValue(0);
-
-    view.unmount();
-    expect(feedbackContext.registrations.size).toBe(0);
-  });
-
-  it("renders four decorative fifteen-level segments and a spaced count", () => {
-    userState.setSkillLevel(skillId, 22);
-    const view = render(SkillRecordHarness, {
-      feedbackContext: new FeedbackContext(),
-      id: skillId,
-      name: "Mining",
-    });
-
-    const segments = view.container.querySelectorAll("[data-skill-segment]");
-    expect(segments).toHaveLength(4);
-    expect(view.getByTestId("skill-segments")).toHaveAttribute("aria-hidden", "true");
-    expect(segments[0].querySelector("i")).toHaveStyle("width: 100%");
-    expect(segments[1].querySelector("i")).toHaveStyle("width: 46.666666666666664%");
-    expect(segments[2].querySelector("i")).toHaveStyle("width: 0%");
-    expect(
-      view.getByRole("button", { name: "Edit Mining level, currently 22 of 60" }),
-    ).toHaveTextContent("Level 22 / 60");
-    expect(view.getByRole("group", { name: "Mining level, 22 of 60" })).toBeInTheDocument();
-  });
-
-  it("commits finite direct edits and cancels invalid or escaped edits", async () => {
-    const view = render(SkillRecordHarness, {
-      feedbackContext: new FeedbackContext(),
-      id: skillId,
-      name: "Mining",
-    });
-    const editButton = () => view.getByRole("button", { name: /Edit Mining level, currently/ });
-
-    await fireEvent.click(editButton());
-    let input = view.getByRole("spinbutton", { name: "Mining level" });
-    await fireEvent.input(input, { target: { value: "31" } });
-    await fireEvent.keyDown(input, { key: "Enter" });
-    expect(editButton()).toHaveTextContent("Level 31 / 60");
-
-    await fireEvent.click(editButton());
-    input = view.getByRole("spinbutton", { name: "Mining level" });
-    await fireEvent.input(input, { target: { value: "not-a-number" } });
-    await fireEvent.blur(input);
-    expect(editButton()).toHaveTextContent("Level 31 / 60");
-
-    await fireEvent.click(editButton());
-    input = view.getByRole("spinbutton", { name: "Mining level" });
-    await fireEvent.input(input, { target: { value: "55" } });
-    await fireEvent.keyDown(input, { key: "Escape" });
-    expect(editButton()).toHaveTextContent("Level 31 / 60");
-  });
-
-  it("offers the skill's perks below its level", () => {
-    const view = render(SkillRecordHarness, {
-      feedbackContext: new FeedbackContext(),
-      id: skillId,
-      name: "Mining",
-    });
-
-    const record = view.container.querySelector("[data-skill-record]");
-    expect(record?.querySelector("[data-skill-perks]")).not.toBeNull();
-    expect(view.getByRole("button", { name: /^Mining perks, \d+ locked$/ })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
-  });
-
-  it("keeps controls bounded and marks completion without color alone", async () => {
-    const view = render(SkillRecordHarness, {
-      compact: true,
-      feedbackContext: new FeedbackContext(),
-      id: skillId,
-      name: "Mining",
-    });
-    expect(view.getByRole("button", { name: "Decrease Mining level" })).toBeDisabled();
-    expect(view.container.querySelector("[data-skill-record]")).toHaveAttribute(
-      "data-compact",
-      "true",
-    );
-
-    userState.setSkillLevel(skillId, 60);
-    await waitFor(() => {
-      expect(view.getByRole("button", { name: "Increase Mining level" })).toBeDisabled();
-    });
-    // Level 60 alone leaves the skill incomplete while it has perks to buy.
-    const record = view.container.querySelector("[data-skill-record]");
-    expect(record).toHaveAttribute("data-complete", "false");
-    expect(view.queryByTestId("skill-completion-mark")).toBeNull();
-
-    for (const perkId of perksOfSkill(skillId)) userState.togglePerk(perkId);
-    await waitFor(() => {
-      expect(record).toHaveAttribute("data-complete", "true");
-    });
-    expect(view.getByTestId("skill-completion-mark")).toBeInTheDocument();
-  });
+  } finally {
+    userState.toggleShowSpoilers();
+  }
 });

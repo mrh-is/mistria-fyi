@@ -92,10 +92,8 @@ it("partitions compact skill records only after both their level and perks are f
   const finishedSkills = within(completed).getByRole("button", { name: "Skills" });
   expect(finishedSkills).toHaveAttribute("aria-expanded", "false");
   await fireEvent.click(finishedSkills);
-  expect(within(completed).getAllByRole("listitem")).toHaveLength(1);
-  expect(
-    within(within(completed).getByRole("listitem")).getByText(name, { exact: true }),
-  ).toBeInTheDocument();
+  expect(within(completed).getAllByRole("slider")).toHaveLength(1);
+  expect(within(completed).getByRole("heading", { name })).toBeInTheDocument();
   userState.togglePerk(perks[0]);
   await finishRowLeaving();
   expect(within(completed).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();

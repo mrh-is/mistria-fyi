@@ -1,39 +1,29 @@
 import { screen } from "@testing-library/svelte";
-import { flushSync } from "svelte";
-import { beforeEach, describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 
 import SkillsContent from "#lib/components/skills-content.svelte";
+import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
 import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
-import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type { SkillId } from "#lib/types/tracker-data.js";
 
-const skillId = "mining" as SkillId;
+it("keeps all nine rulers in game order, including maxed skills", async () => {
+  await userState.startTrackingByHand();
+  userState.setSkillLevel("mining" as SkillId, MAX_SKILL_LEVEL);
+  renderWithFeedback(SkillsContent, { locale: "en" });
 
-function miningRecord() {
-  return screen.queryByRole("button", { name: /^Edit Mining level/ });
-}
-
-describe("SkillsContent", () => {
-  beforeEach(async () => {
-    await userState.startTrackingByHand();
-  });
-
-  it("keeps a maxed skill visible until every perk is bought", () => {
-    renderWithFeedback(SkillsContent, { locale: "en" });
-    const [lastPerk, ...otherPerks] = perksOfSkill(skillId).toReversed();
-
-    userState.setSkillLevel(skillId, MAX_SKILL_LEVEL);
-    for (const perkId of otherPerks) userState.togglePerk(perkId);
-    flushSync();
-    expect(miningRecord()).not.toBeNull();
-
-    // A finished skill moves into the closed Completed fold.
-    userState.togglePerk(lastPerk);
-    flushSync();
-    expect(miningRecord()).toBeNull();
-    expect(screen.getByRole("button", { expanded: false, name: "Completed" })).toBeInTheDocument();
-  });
+  const names = recordKeys(trackerData.skills).map((id) => getName("skills", id, "en"));
+  expect(names).toHaveLength(9);
+  expect(
+    screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
+  ).toEqual(names);
+  expect(screen.getAllByRole("slider")).toHaveLength(9);
+  expect(screen.getByRole("slider", { name: "Mining level" })).toHaveAttribute(
+    "aria-valuenow",
+    "60",
+  );
 });

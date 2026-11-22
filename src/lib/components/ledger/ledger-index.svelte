@@ -17,6 +17,8 @@
 
   interface IndexSection {
     id: string;
+    /** A meter's position. Meter entries keep their supplied order at every level. */
+    meterLevel?: number;
     /** Nothing in it matches the search or filters, so the entry stays as muted text. */
     muted?: boolean;
     name: string;
@@ -211,7 +213,7 @@
 />
 
 {#snippet entries(list: readonly IndexSection[], onPick?: () => void)}
-  {#each list as { id, muted, name, progress } (id)}
+  {#each list as { id, muted, name, progress, meterLevel } (id)}
     {#snippet entry()}
       <span class="entry-name">{name}</span>
       {#if progress && !muted}
@@ -220,6 +222,9 @@
         <span class="entry-count" aria-hidden="true"
           ><span class="hand">{count(progress.completed)}</span> / {count(progress.total)}</span
         >
+      {:else if meterLevel !== undefined && !muted}
+        <span class="leader" aria-hidden="true"></span>
+        <span class="entry-count hand" aria-hidden="true">{count(meterLevel)}</span>
       {/if}
     {/snippet}
     <!-- A section the search or filters empty stays listed, so the rail keeps the page's shape. -->

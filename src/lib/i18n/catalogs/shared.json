@@ -1500,12 +1500,6 @@
         ]
       },
       {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          null
-        ]
-      },
-      {
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [
           null
@@ -1535,19 +1529,6 @@
               [
                 "0",
                 "nameWithVariant"
-              ]
-            ]
-          }
-        ]
-      },
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "perk.name"
               ]
             ]
           }
@@ -2857,43 +2838,6 @@
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Edit {0} level, currently {1} of {2}",
-      "ja": "{0}レベルを編集、現在{2}中{1}",
-      "zh-Hans": "编辑{0}等级，当前为{1}/{2}级",
-      "zh-Hant": "編輯{0}等級，目前為{1}級（共{2}級）",
-      "es": "Editar nivel de {0}, actualmente {1} de {2}",
-      "fr": "Modifier le niveau de {0}, actuellement {1} sur {2}",
-      "ko": "{0} 레벨 편집, 현재 {2} 중 {1}",
-      "ru": "Изменить уровень «{0}», сейчас {1} из {2}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "level"
-              ],
-              [
-                "2",
-                "MAX_SKILL_LEVEL"
-              ]
-            ]
-          }
         ]
       }
     ],
@@ -4608,57 +4552,6 @@
   },
   {
     "translations": {
-      "en": "Level",
-      "ja": "レベル",
-      "zh-Hans": "等级",
-      "zh-Hant": "等級",
-      "es": "Nivel",
-      "fr": "Niveau",
-      "ko": "레벨",
-      "ru": "Уровень"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Level {0}",
-      "ja": "レベル{0}",
-      "zh-Hans": "{0}级",
-      "zh-Hant": "{0}級",
-      "es": "Nivel {0}",
-      "fr": "Niveau {0}",
-      "ko": "레벨 {0}",
-      "ru": "Уровень {0}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "tier.level"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Light",
       "ja": "ライト",
       "zh-Hans": "浅色",
@@ -6037,12 +5930,6 @@
         ]
       },
       {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          null
-        ]
-      },
-      {
         "file": "src/lib/data/source-filters.ts",
         "refs": [
           null
@@ -6445,6 +6332,28 @@
     "references": [
       {
         "file": "src/lib/utils/format.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reached",
+      "ja": "到達済み",
+      "zh-Hans": "已达到",
+      "zh-Hant": "已達到",
+      "es": "Alcanzado",
+      "fr": "Atteint",
+      "ko": "도달함",
+      "ru": "Уровень достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           null
         ]
@@ -8187,6 +8096,28 @@
   },
   {
     "translations": {
+      "en": "Spoilered perk",
+      "ja": "未公開のスキルボーナス",
+      "zh-Hans": "隐藏的技能特长",
+      "zh-Hant": "隱藏的技能特長",
+      "es": "Don de habilidad oculto",
+      "fr": "Bonus de compétence masqué",
+      "ko": "숨겨진 스킬 특성",
+      "ru": "Скрытый навык"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Spouse gifts",
       "ja": "配偶者からの贈り物",
       "zh-Hans": "配偶礼物",
@@ -9125,19 +9056,6 @@
         ]
       },
       {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "perk.name"
-              ]
-            ]
-          }
-        ]
-      },
-      {
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [
           {
@@ -9263,6 +9181,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unreached",
+      "ja": "未到達",
+      "zh-Hans": "尚未达到",
+      "zh-Hant": "尚未達到",
+      "es": "Aún no alcanzado",
+      "fr": "Pas encore atteint",
+      "ko": "아직 도달하지 않음",
+      "ru": "Уровень ещё не достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
         "refs": [
           null
         ]
@@ -11349,177 +11289,6 @@
   },
   {
     "translations": {
-      "en": [
-        "unlocks {0} almanac item",
-        "unlocks {0} almanac items"
-      ],
-      "ja": [
-        "図鑑アイテム{0}個を解放"
-      ],
-      "zh-Hans": [
-        "解锁{0}个博物图鉴物品"
-      ],
-      "zh-Hant": [
-        "解鎖{0}個博物圖鑑項目"
-      ],
-      "es": [
-        "desbloquea {0} objeto del almanaque",
-        "desbloquea {0} objetos del almanaque",
-        "desbloquea {0} objetos del almanaque"
-      ],
-      "fr": [
-        "débloque {0} objet du catalogue",
-        "débloque {0} objets du catalogue",
-        "débloque {0} objets du catalogue"
-      ],
-      "ko": [
-        "도감 아이템 {0}개 해금"
-      ],
-      "ru": [
-        "открывает {0} предмет альманаха",
-        "открывает {0} предмета альманаха",
-        "открывает {0} предметов альманаха",
-        "открывает {0} предмета альманаха"
-      ]
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "almanac.length"
-              ],
-              [
-                "0",
-                "almanac.length"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": [
-        "unlocks {0} cosmetic",
-        "unlocks {0} cosmetics"
-      ],
-      "ja": [
-        "外見アイテム{0}個を解放"
-      ],
-      "zh-Hans": [
-        "解锁{0}个装扮"
-      ],
-      "zh-Hant": [
-        "解鎖{0}個飾物"
-      ],
-      "es": [
-        "desbloquea {0} accesorio",
-        "desbloquea {0} accesorios",
-        "desbloquea {0} accesorios"
-      ],
-      "fr": [
-        "débloque {0} accessoire",
-        "débloque {0} accessoires",
-        "débloque {0} accessoires"
-      ],
-      "ko": [
-        "꾸미기 아이템 {0}개 해금"
-      ],
-      "ru": [
-        "открывает {0} украшение",
-        "открывает {0} украшения",
-        "открывает {0} украшений",
-        "открывает {0} украшения"
-      ]
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "cosmetics.length"
-              ],
-              [
-                "0",
-                "cosmetics.length"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": [
-        "unlocks {0} recipe",
-        "unlocks {0} recipes"
-      ],
-      "ja": [
-        "レシピ{0}個を解放"
-      ],
-      "zh-Hans": [
-        "解锁{0}个食谱"
-      ],
-      "zh-Hant": [
-        "解鎖{0}個食譜"
-      ],
-      "es": [
-        "desbloquea {0} receta",
-        "desbloquea {0} recetas",
-        "desbloquea {0} recetas"
-      ],
-      "fr": [
-        "débloque {0} recette",
-        "débloque {0} recettes",
-        "débloque {0} recettes"
-      ],
-      "ko": [
-        "레시피 {0}개 해금"
-      ],
-      "ru": [
-        "открывает {0} рецепт",
-        "открывает {0} рецепта",
-        "открывает {0} рецептов",
-        "открывает {0} рецепта"
-      ]
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "recipes.length"
-              ],
-              [
-                "0",
-                "recipes.length"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "up to date",
       "ja": "最新",
       "zh-Hans": "已是最新",
@@ -11619,28 +11388,39 @@
   },
   {
     "translations": {
-      "en": "{0} / {1} unlocked",
-      "ja": "{0}/{1} 解放済み",
-      "zh-Hans": "已解锁 {0}/{1}",
-      "zh-Hant": "已解鎖 {0}/{1}",
-      "es": "{0} / {1} desbloqueados",
-      "fr": "{0} / {1} débloqués",
-      "ko": "{0}/{1} 해금",
-      "ru": "открыто {0} / {1}"
+      "en": [
+        "{0} / {1} perk",
+        "{0} / {1} perks"
+      ],
+      "ja": ["スキルボーナス {0} / {1}"],
+      "zh-Hans": ["技能特长 {0} / {1}"],
+      "zh-Hant": ["技能特長 {0} / {1}"],
+      "es": ["{0} / {1} don", "{0} / {1} dones", "{0} / {1} dones"],
+      "fr": ["{0} / {1} bonus", "{0} / {1} bonus", "{0} / {1} bonus"],
+      "ko": ["스킬 특성 {0} / {1}"],
+      "ru": ["{0} / {1} навык", "{0} / {1} навыка", "{0} / {1} навыков", "{0} / {1} навыка"]
     },
     "references": [
       {
-        "file": "src/lib/components/skill-perks.svelte",
+        "file": "src/lib/components/skill-record.svelte",
         "refs": [
           {
             "placeholders": [
               [
                 "0",
-                "unlocked"
+                "formattedReached"
               ],
               [
                 "1",
-                "available"
+                "formattedTotal"
+              ],
+              [
+                "0",
+                "formattedReached"
+              ],
+              [
+                "1",
+                "formattedTotal"
               ]
             ]
           }
@@ -11730,43 +11510,6 @@
                 "name"
               ]
             ]
-          },
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} locked",
-      "ja": "{0}個未解放",
-      "zh-Hans": "{0}个未解锁",
-      "zh-Hant": "{0}個未解鎖",
-      "es": "{0} bloqueados",
-      "fr": "{0} verrouillés",
-      "ko": "{0}개 잠김",
-      "ru": "закрыто: {0}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "locked"
-              ]
-            ]
           }
         ]
       }
@@ -11851,68 +11594,6 @@
               [
                 "0",
                 "countLabel"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} more locked",
-      "ja": "ほか{0}個未解放",
-      "zh-Hans": "另有{0}个未解锁",
-      "zh-Hant": "另有{0}個未解鎖",
-      "es": "{0} más bloqueados",
-      "fr": "encore {0} verrouillés",
-      "ko": "{0}개 더 잠김",
-      "ru": "ещё закрыто: {0}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "locked"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} of {1}",
-      "ja": "{1}中{0}",
-      "zh-Hans": "{0}/{1}级",
-      "zh-Hant": "{0}級（共{1}級）",
-      "es": "{0} de {1}",
-      "fr": "{0} sur {1}",
-      "ko": "{1} 중 {0}",
-      "ru": "{0} из {1}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "level"
-              ],
-              [
-                "1",
-                "MAX_SKILL_LEVEL"
               ]
             ]
           }
@@ -12080,154 +11761,6 @@
               [
                 "2",
                 "formatPercent(overall.pct, page.data.locale)"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} perks, {1} locked",
-      "ja": "{0}のスキルボーナス、{1}個未解放",
-      "zh-Hans": "{0}技能特长，{1}个未解锁",
-      "zh-Hant": "{0}技能特長，{1}個未解鎖",
-      "es": "Dones de habilidad de {0}: {1} bloqueados",
-      "fr": "Bonus de compétences de {0} : {1} verrouillés",
-      "ko": "{0} 스킬 특성, {1}개 잠김",
-      "ru": "Навыки умения «{0}», закрыто: {1}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "locked"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} perks, {1} of {2} unlocked",
-      "ja": "{0}のスキルボーナス、{2}個中{1}個解放済み",
-      "zh-Hans": "{0}技能特长，已解锁{1}/{2}",
-      "zh-Hant": "{0}技能特長，已解鎖{1}/{2}",
-      "es": "Dones de habilidad de {0}: {1} de {2} desbloqueados",
-      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués",
-      "ko": "{0} 스킬 특성, {2}개 중 {1}개 해금",
-      "ru": "Навыки умения «{0}»: открыто {1} из {2}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "unlocked"
-              ],
-              [
-                "2",
-                "available"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} perks, {1} of {2} unlocked, {3} more locked",
-      "ja": "{0}のスキルボーナス、{2}個中{1}個解放済み、ほか{3}個未解放",
-      "zh-Hans": "{0}技能特长，已解锁{1}/{2}，另有{3}个未解锁",
-      "zh-Hant": "{0}技能特長，已解鎖{1}/{2}，另有{3}個未解鎖",
-      "es": "Dones de habilidad de {0}: {1} de {2} desbloqueados, {3} más bloqueados",
-      "fr": "Bonus de compétences de {0} : {1} sur {2} débloqués, encore {3} verrouillés",
-      "ko": "{0} 스킬 특성, {2}개 중 {1}개 해금, {3}개 더 잠김",
-      "ru": "Навыки умения «{0}»: открыто {1} из {2}, ещё закрыто: {3}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "unlocked"
-              ],
-              [
-                "2",
-                "available"
-              ],
-              [
-                "3",
-                "locked"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} perks, {1}, level {2}",
-      "ja": "{0}のスキルボーナス、{1}、レベル{2}",
-      "zh-Hans": "{0}技能特长，{1}，{2}级",
-      "zh-Hant": "{0}技能特長，{1}，{2}級",
-      "es": "Dones de habilidad de {0}, {1}, nivel {2}",
-      "fr": "Bonus de compétences de {0}, {1}, niveau {2}",
-      "ko": "{0} 스킬 특성, {1}, 레벨 {2}",
-      "ru": "Навыки умения «{0}», {1}, уровень {2}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-perks.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "getName(\"ui\", `tier_${tier.number.toString()}`, locale)"
-              ],
-              [
-                "2",
-                "tier.level"
               ]
             ]
           }
@@ -12661,6 +12194,39 @@
   },
   {
     "translations": {
+      "en": "{0} · Lv {1}",
+      "ja": "{0}・Lv {1}",
+      "zh-Hans": "{0} · {1}级",
+      "zh-Hant": "{0} · {1}級",
+      "es": "{0} · Niv. {1}",
+      "fr": "{0} · Niv. {1}",
+      "ko": "{0} · 레벨 {1}",
+      "ru": "{0} · Ур. {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-perks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "tierName"
+              ],
+              [
+                "1",
+                "threshold"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} · {1}",
       "ja": "{0}・{1}",
       "zh-Hans": "{0} · {1}",
@@ -12683,6 +12249,43 @@
               [
                 "1",
                 "rewardRecipeName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}, level {1} of {2}",
+      "ja": "{0}、レベル{1}（最大{2}）",
+      "zh-Hans": "{0}，当前{1}级，最高{2}级",
+      "zh-Hant": "{0}，目前{1}級，最高{2}級",
+      "es": "{0}, nivel {1} de {2}",
+      "fr": "{0}, niveau {1} sur {2}",
+      "ko": "{0}, 현재 레벨 {1}, 최대 레벨 {2}",
+      "ru": "{0}, уровень {1} из {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "formattedLevel"
+              ],
+              [
+                "2",
+                "formattedMax"
               ]
             ]
           }

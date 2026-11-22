@@ -1,44 +1,58 @@
 <script lang="ts">
-  import IconCompletion from "#lib/components/icon/icon-completion.svelte";
+  import { meterInput } from "#lib/attachments/meter-input.js";
   import SkillPerks from "#lib/components/skill-perks.svelte";
-  import Stepper from "#lib/components/stepper.svelte";
-  import { Input } from "#lib/components/ui/input/index.js";
   import { celebrateProgress } from "#lib/controllers/celebration.js";
+  import { trackerData } from "#lib/data/index.js";
+  import { captureUndoFocus, showMeterUndo } from "#lib/effects/undo-toast.js";
   import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
-  import { isSkillComplete } from "#lib/engine/projections/skills.js";
+  import { factKey } from "#lib/engine/provenance.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { formatNumber } from "#lib/utils/format.js";
+  import { recordKeys } from "#lib/utils/record.js";
   import { page } from "$app/state";
 
-  import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { SkillId } from "#lib/types/tracker-data.js";
 
-  /** The level bar's quarters, each spanning an equal share of `MAX_SKILL_LEVEL`. */
-  const SEGMENT_COUNT = 4;
-  const SEGMENT_SPAN = MAX_SKILL_LEVEL / SEGMENT_COUNT;
-  const SEGMENTS = Array.from({ length: SEGMENT_COUNT }, (_, index) => ({
-    start: index * SEGMENT_SPAN,
-    end: (index + 1) * SEGMENT_SPAN,
-  }));
-
   let {
+    anchor,
     compact = false,
     id,
     locale,
     name,
-    spoilerGuard,
   }: {
+    anchor?: string;
     compact?: boolean;
     id: SkillId;
     locale: LocaleCode;
     name: string;
-    spoilerGuard: SpoilerGuard;
   } = $props();
 
+  const minorStep = 5;
+  const majorStep = 15;
+  const ticks = Array.from({ length: MAX_SKILL_LEVEL / minorStep + 1 }, (_, i) => i * minorStep);
   const feedbackContext = getFeedbackContext();
   let level = $derived(userState.state.progress.skillLevels[id] ?? 0);
-  let complete = $derived(isSkillComplete(id, userState.state.progress));
+  let preview = $state<number>();
+  let shownLevel = $derived(preview ?? level);
+  let tiers = $derived(
+    trackerData.skills[id].perkTiers.map((tier, index) => ({
+      ids: recordKeys(tier),
+      level: trackerData.perkTierLevels[index],
+      number: index + 1,
+    })),
+  );
+  let total = $derived(tiers.reduce((count, tier) => count + tier.ids.length, 0));
+  let reached = $derived(
+    tiers.reduce((count, tier) => count + (level >= tier.level ? tier.ids.length : 0), 0),
+  );
+  let formattedReached = $derived(formatNumber(reached, locale));
+  let formattedTotal = $derived(formatNumber(total, locale));
+  let formattedLevel = $derived(formatNumber(shownLevel, locale));
+  let formattedMax = $derived(formatNumber(MAX_SKILL_LEVEL, locale));
+
   let reportable = $derived(
     feedbackContext.reportableAttachment({
       category: "skill",
@@ -48,269 +62,315 @@
       page: page.url.pathname,
     }),
   );
-  let editing = $state(false);
-  let editValue = $state("");
-  let editInputRef = $state<HTMLInputElement | null>(null);
 
-  $effect(() => {
-    if (editInputRef) {
-      editInputRef.focus();
-      editInputRef.select();
-    }
-  });
-
-  function commitEdit(): void {
-    const value = Number(editValue);
-    if (editValue.trim() !== "" && Number.isFinite(value) && Number.isInteger(value)) {
-      setLevelWithCelebration(value);
-    }
-    editing = false;
-  }
-
-  function handleEditKeydown(event: KeyboardEvent): void {
-    if (event.key === /* @wc-ignore */ "Enter") commitEdit();
-    if (event.key === /* @wc-ignore */ "Escape") editing = false;
-  }
-
-  function segmentFill(segment: { start: number; end: number }): number {
-    if (level <= segment.start) return 0;
-    if (level >= segment.end) return 100;
-    return ((level - segment.start) / (segment.end - segment.start)) * 100;
-  }
-
-  function setLevelWithCelebration(newLevel: number): void {
+  function setLevel(next: number): void {
+    const focus = captureUndoFocus();
+    const skill = id;
+    const displayName = name;
+    const language = locale;
+    const fact = factKey("skillLevels", skill);
     celebrateProgress("skills", () => {
-      userState.setSkillLevel(id, newLevel);
+      userState.setSkillLevel(skill, next, (before, after) => {
+        const provenance = userState.provenanceOf(fact);
+        showMeterUndo(
+          {
+            after,
+            before,
+            id: fact,
+            locale: language,
+            name: displayName,
+            undo(value) {
+              if (
+                userState.state.progress.skillLevels[skill] === after &&
+                userState.provenanceOf(fact) === provenance
+              ) {
+                userState.setSkillLevel(skill, value);
+              }
+            },
+          },
+          focus,
+        );
+      });
     });
   }
 
-  function startEditing(): void {
-    editing = true;
-    editValue = String(level);
-  }
+  const input = meterInput({
+    getValue: () => level,
+    majorStep,
+    max: MAX_SKILL_LEVEL,
+    min: 0,
+    onCommit: setLevel,
+    onPreview: (value) => {
+      preview = value;
+    },
+  });
 </script>
 
-<li
-  class="skill-record"
-  data-skill-record
-  data-compact={compact}
-  data-complete={complete}
-  {@attach reportable}
->
-  <div class="skill-head">
-    <span class="skill-name">
-      {#if complete}
-        <span data-testid="skill-completion-mark">
-          <IconCompletion state="completed" class="skill-completion-mark" />
-        </span>
-      {/if}
-      <strong>{name}</strong>
-    </span>
-
-    {#if editing}
-      <Input
-        aria-label={`${name} level`}
-        bind:ref={editInputRef}
-        class="h-8 w-16 shrink-0 text-center font-mono text-xs"
-        type="number"
-        max={MAX_SKILL_LEVEL}
-        min={0}
-        value={editValue}
-        onblur={commitEdit}
-        oninput={(event: Event) => {
-          editValue = (event.target as HTMLInputElement).value;
-        }}
-        onkeydown={handleEditKeydown}
-      />
-    {:else}
+<li class="skill-record" {@attach reportable}>
+  <div class="head">
+    <h2 id={anchor} data-ledger-index-heading={anchor ? "" : undefined} tabindex="-1">{name}</h2>
+    <div class="controls">
       <button
-        class="skill-count"
         type="button"
-        aria-label={`Edit ${name} level, currently ${level} of ${MAX_SKILL_LEVEL}`}
-        onclick={startEditing}
+        disabled={level === 0}
+        aria-label={`Decrease ${name} level`}
+        onclick={() => setLevel(level - 1)}>−</button
       >
-        <span class="skill-count__text">
-          <span class="skill-count__label">Level</span>
-          <span class="skill-count__value">{level}</span>
-          <span>/ {MAX_SKILL_LEVEL}</span>
-        </span>
-      </button>
-    {/if}
+      <span class="font-hand">{formattedLevel}</span>
+      <button
+        type="button"
+        disabled={level === MAX_SKILL_LEVEL}
+        aria-label={`Increase ${name} level`}
+        onclick={() => setLevel(level + 1)}>+</button
+      >
+      <span>/ {formattedMax}</span>
+    </div>
+    <span class="count"
+      >{plural(total, [
+        `${formattedReached} / ${formattedTotal} perk`,
+        `${formattedReached} / ${formattedTotal} perks`,
+      ])}</span
+    >
   </div>
 
-  <Stepper
-    accentColor="var(--color-category-skills)"
-    decrementDisabled={level <= 0}
-    incrementDisabled={level >= MAX_SKILL_LEVEL}
-    decrementLabel={`Decrease ${name} level`}
-    incrementLabel={`Increase ${name} level`}
-    label={`${name} level`}
-    value={`${level} of ${MAX_SKILL_LEVEL}`}
-    onDecrement={() => {
-      setLevelWithCelebration(level - 1);
-    }}
-    onIncrement={() => {
-      setLevelWithCelebration(level + 1);
-    }}
-  >
-    <span class="skill-segments" data-testid="skill-segments" aria-hidden="true">
-      {#each SEGMENTS as segment (segment.start)}
-        <span data-skill-segment>
-          <i style="width: {segmentFill(segment)}%"></i>
+  <div class="ruler-and-tiers" class:compact>
+    <div
+      class="ruler"
+      class:scrubbing={preview !== undefined}
+      role="slider"
+      tabindex="0"
+      aria-label={`${name} level`}
+      aria-valuemin={0}
+      aria-valuemax={MAX_SKILL_LEVEL}
+      aria-valuenow={shownLevel}
+      aria-valuetext={`${name}, level ${formattedLevel} of ${formattedMax}`}
+      {@attach input}
+    >
+      <span class="rule" aria-hidden="true"></span>
+      {#each ticks as value (value)}
+        {@const major = value % majorStep === 0}
+        <span
+          class="tick"
+          class:major
+          class:zero={value === 0}
+          style:inset-inline-start={`${(value / MAX_SKILL_LEVEL) * 100}%`}
+          aria-hidden="true"
+        >
+          {#if major}<span>{formatNumber(value, locale)}</span>{/if}
         </span>
       {/each}
-    </span>
-  </Stepper>
-
-  <SkillPerks {id} {locale} {name} {spoilerGuard} />
+      <span
+        class="fill"
+        style:inline-size={`${(shownLevel / MAX_SKILL_LEVEL) * 100}%`}
+        aria-hidden="true"
+      ></span>
+    </div>
+    <SkillPerks {id} {locale} {level} {tiers} />
+  </div>
 </li>
 
 <style>
   .skill-record {
-    display: grid;
-    min-width: 0;
-    gap: 4px;
-    padding: 4px 8px 8px;
-    border: 1px solid var(--color-ink-hairline);
-    border-bottom: 0;
-    background: var(--color-paper-raised);
-    box-shadow: var(--shadow-small);
-    color: var(--color-ink);
+    min-inline-size: 0;
+    padding-block: 1rem;
   }
 
-  .skill-record:first-child {
-    border-radius: var(--radius) var(--radius) 0 0;
+  .skill-record:not(:first-child) {
+    border-block-start: 1px solid var(--color-rule);
   }
 
-  .skill-record:last-child {
-    border-bottom: 1px solid var(--color-ink-hairline);
-    border-radius: 0 0 var(--radius) var(--radius);
-  }
-
-  .skill-record[data-complete="true"] {
-    color: var(--color-ink-muted);
-  }
-
-  .skill-head {
+  .head {
     display: flex;
-    min-width: 0;
-    min-height: 32px;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 0.25rem 0.75rem;
   }
 
-  .skill-name {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    align-items: center;
-    gap: 4px;
+  h2 {
     font-family: var(--font-body);
-    font-size: var(--text-base);
-  }
-
-  .skill-name strong {
-    overflow: hidden;
+    font-size: var(--text-xl);
     font-weight: 650;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    scroll-margin-block-start: 7rem;
   }
 
-  .skill-name > span {
-    display: contents;
-  }
-
-  .skill-name :global(.skill-completion-mark) {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
-    color: var(--color-category-skills-text);
-  }
-
-  .skill-segments {
-    display: grid;
-    min-width: 0;
-    flex: 1;
-    gap: 3px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .skill-segments > span {
-    height: 16px;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--color-category-skills) 40%, transparent);
-    background: color-mix(in srgb, var(--color-category-skills) 8%, var(--color-paper));
-  }
-
-  .skill-segments > span:first-child {
-    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-  }
-
-  .skill-segments > span:last-child {
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  }
-
-  .skill-segments i {
-    display: block;
-    height: 100%;
-    background: var(--color-category-skills);
-    transition: width 300ms ease-out;
-  }
-
-  .skill-count {
-    display: flex;
-    min-height: 44px;
-    margin-block: -6px;
-    align-items: center;
-    padding: 0;
-    border: 0;
-    background: transparent;
+  .controls,
+  .count {
     color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-xs);
+  }
+
+  .controls {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.4rem;
     white-space: nowrap;
   }
 
-  .skill-count__text {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
+  .controls .font-hand {
+    min-inline-size: 2ch;
+    color: var(--color-meter-mark);
+    font-size: var(--text-lg);
+    text-align: center;
   }
 
-  .skill-count__label {
-    margin-inline-end: 3px;
-    font-family: var(--font-annotation);
-    font-size: var(--text-sm);
-    font-style: italic;
-  }
-
-  .skill-count__value {
-    color: var(--color-ink);
+  .controls button {
+    min-inline-size: 2rem;
+    min-block-size: 2rem;
+    border: 1px solid var(--color-rule);
+    background: var(--color-paper-raised);
     font-size: var(--text-base);
-    font-weight: 600;
+    touch-action: manipulation;
   }
 
-  .skill-count:is(:active, :focus-visible) {
-    color: var(--color-category-skills-text);
-    outline: 2px solid var(--color-category-skills);
-    outline-offset: 2px;
+  .controls button:disabled {
+    opacity: 0.55;
   }
 
   @media (hover: hover) {
-    .skill-count:hover {
+    .controls button:enabled:hover {
+      border-color: var(--color-category-skills);
       color: var(--color-category-skills-text);
-      outline: 2px solid var(--color-category-skills);
-      outline-offset: 2px;
     }
   }
 
-  .skill-record[data-compact="true"] {
-    padding-block: 4px;
+  .count {
+    margin-inline-start: auto;
+  }
+
+  .ruler-and-tiers {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin-block-start: 0.65rem;
+  }
+
+  .ruler {
+    position: relative;
+    isolation: isolate;
+    grid-column: 1 / 5;
+    min-block-size: 2.5rem;
+    cursor: ew-resize;
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .rule,
+  .tick,
+  .fill {
+    position: absolute;
+    inset-block-start: 65%;
+    pointer-events: none;
+  }
+
+  .rule {
+    inset-inline: 0 -0.6rem;
+    block-size: var(--size-meter-rule);
+    background: var(--color-meter-rule);
+    translate: 0 -50%;
+  }
+
+  .rule::after {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: 0;
+    inline-size: 0.4rem;
+    block-size: 0.4rem;
+    border-block-start: var(--size-meter-rule) solid var(--color-meter-rule);
+    border-inline-end: var(--size-meter-rule) solid var(--color-meter-rule);
+    content: "";
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .tick {
+    inline-size: 1px;
+    block-size: var(--size-meter-tick);
+    background: var(--color-meter-tick);
+    translate: -50% -50%;
+  }
+
+  .tick.major {
+    block-size: var(--size-meter-tick-major);
+  }
+
+  .tick.zero {
+    inline-size: var(--size-meter-mark);
+    background: var(--color-meter-rule);
+  }
+
+  .tick span {
+    position: absolute;
+    inset-block-end: 100%;
+    inset-inline-start: 50%;
+    color: var(--color-ink-muted);
+    font-family: var(--font-data);
+    font-size: var(--text-3xs);
+    line-height: 1;
+    translate: -50%;
+  }
+
+  .fill {
+    inset-inline-start: 0;
+    block-size: var(--size-meter-mark);
+    background: var(--color-category-skills);
+    filter: url("#pencil-sm");
+    transition: inline-size 160ms ease-out;
+    translate: 0 -50%;
+  }
+
+  .scrubbing .fill {
+    transition: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .skill-segments i {
-      transition-duration: 0.01ms;
+    .fill {
+      transition: none;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .controls button,
+    .ruler {
+      min-block-size: 44px;
+    }
+
+    .controls button {
+      min-inline-size: 44px;
+    }
+  }
+
+  .ruler-and-tiers.compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compact .ruler {
+    grid-column: 1;
+    margin-inline: 0.4rem 0.8rem;
+  }
+
+  @media (max-width: 43.75rem) {
+    .head {
+      justify-content: space-between;
+    }
+
+    h2 {
+      flex: 1;
+      min-inline-size: 0;
+    }
+
+    .count {
+      flex-basis: 100%;
+      margin-inline-start: 0;
+    }
+
+    .ruler-and-tiers {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ruler {
+      grid-column: 1;
+      margin-inline: 0.4rem 0.8rem;
     }
   }
 </style>
