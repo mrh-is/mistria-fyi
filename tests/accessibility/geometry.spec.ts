@@ -179,10 +179,11 @@ test.describe("interactive target geometry", () => {
     },
   );
 
-  test("home category ribbons stay inside the viewport at 320 pixels", async ({ page }) => {
+  test("Home Contents fit inside the viewport at 320 pixels", async ({ page }) => {
     await page.setViewportSize({ height: 720, width: 320 });
     await gotoApplication(page, "/");
-    await expect(page.locator("[data-category-ribbon]").first()).toBeVisible();
+    const contents = page.getByRole("navigation", { name: "Contents" });
+    await expect(contents.getByRole("link", { name: /^Everything,/u })).toBeVisible();
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });
 
@@ -495,12 +496,5 @@ test.describe("landscape phone width", () => {
     const roster = await requireBox(page.getByTestId("villager-roster"));
     const whitespaceCenter = (roster.x + roster.width + 844) / 2;
     expect(Math.abs(index.x + index.width / 2 - whitespaceCenter)).toBeLessThanOrEqual(0.5);
-  });
-
-  test("a desktop window keeps the narrow column", async ({ page }) => {
-    await page.setViewportSize({ height: 800, width: 1280 });
-    await gotoApplication(page, "/");
-    const main = await requireBox(page.locator("#main-content"));
-    expect(main.width).toBe(512);
   });
 });

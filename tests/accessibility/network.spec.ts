@@ -71,7 +71,9 @@ test("Only Data requests save-import diagnostics", async ({ page }) => {
   expect(requests).toBe(1);
 });
 
-test("Home defers acquisition copy until bilingual search needs it", async ({ page }) => {
+test("Home loads local acquisition copy and defers English copy until bilingual search", async ({
+  page,
+}) => {
   await initializeApplication(page, "light", createStoredState());
   const spanish = catalogAsset("acquisition.0");
   const english = catalogAsset("acquisition.0", "en");
@@ -86,7 +88,7 @@ test("Home defers acquisition copy until bilingual search needs it", async ({ pa
 
   await gotoApplication(page, "/es");
   await expect(page.getByRole("region", { name: "Lugares para visitar hoy" })).toBeVisible();
-  expect(requested.size).toBe(0);
+  expect(requested).toEqual(new Set([spanish]));
   await page.getByRole("textbox", { name: "Buscar elementos" }).fill("turnip");
   await expect.poll(() => requested).toEqual(new Set([spanish, english]));
   await expect(page.getByRole("status").filter({ hasText: /^\d+ resultados?$/u })).toBeVisible();

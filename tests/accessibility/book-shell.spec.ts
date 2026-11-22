@@ -86,6 +86,19 @@ test("Home Contents gives Everything an overall completion count after hydration
   await expect(everything).toHaveAttribute("href", "/en/everything?group=source");
 });
 
+test("Home opens available quests in Everything's category view", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/");
+  const quests = page
+    .getByRole("region", { name: "Places to go today" })
+    .getByRole("link", { name: /^Available quests Quests [\d,]+$/u });
+  await quests.click();
+  await expect(page).toHaveURL(/\/en\/everything\?group=category#category-quests$/u);
+  await expect(
+    page.getByRole("button", { exact: true, expanded: true, name: "Quests" }),
+  ).toBeVisible();
+});
+
 test("Home shows the last imported farmer and farm on its bookplate", async ({ page }) => {
   const state = createStoredState();
   state.progress.lastImport = {
@@ -96,14 +109,18 @@ test("Home shows the last imported farmer and farm on its bookplate", async ({ p
   };
   await initializeApplication(page, "light", state);
   await gotoApplication(page, "/");
-  const plate = page.getByText("Field notes of Dewey", { exact: true });
-  await expect(plate).toBeVisible();
-  await expect(page.getByText("Meadow Farm", { exact: true })).toBeVisible();
-  const field = page.getByPlaceholder("Search the field guide", { exact: true });
+  // oxlint-disable-next-line playwright/no-raw-locators -- The flyleaf plate is a layout box with no landmark role.
+  const plate = page.locator(".bookplate");
+  const farmer = plate.getByText("Dewey", { exact: true });
+  const farm = plate.getByText("Meadow Farm", { exact: true });
+  await expect(farmer).toBeVisible();
+  await expect(farm).toBeVisible();
+  const field = search(page);
   await field.fill("turnip");
   await expect(plate).toBeHidden();
   await field.press("Escape");
-  await expect(plate).toBeVisible();
+  await expect(farmer).toBeVisible();
+  await expect(farm).toBeVisible();
 });
 
 test.describe("book shell", () => {
@@ -335,14 +352,22 @@ test.describe("page header & tools", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
   });
 
-  for (const [path, header] of [
-    ["/", ".home-header"],
-    ["/animals", "[data-page-header]"],
-    ["/almanac", "[data-page-header]"],
-  ] as const) {
+  test("Home keeps the search tools beside the title and above today's date", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await gotoApplication(page, "/");
+    const title = await settledBox(page.getByRole("heading", { level: 1 }));
+    const field = await settledBox(search(page));
+    const clock = await settledBox(page.getByRole("button", { name: "Which day is it?" }));
+    expect(field.x).toBeGreaterThanOrEqual(title.x + title.width);
+    expect(field.y).toBeLessThan(title.y + title.height);
+    expect(field.y + field.height).toBeGreaterThan(title.y);
+    expect(field.y + field.height).toBeLessThanOrEqual(clock.y);
+  });
+
+  for (const path of ["/animals", "/almanac"]) {
     test(`${path} carries its tools in its own header row`, async ({ page }) => {
       await gotoApplication(page, path);
-      const row = await settledBox(headerPart(page, header));
+      const row = await settledBox(headerPart(page, "[data-page-header]"));
       const field = await settledBox(search(page));
       expect(field.y, "search below the header's top").toBeGreaterThanOrEqual(row.y);
       expect(field.y + field.height, "search above its foot").toBeLessThanOrEqual(
