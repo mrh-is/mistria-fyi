@@ -31,42 +31,68 @@
   let waters: Record<string, string> = $derived(buildWaterNames(locale));
   let stationNames: Record<string, string> = $derived(getNameTable("items", locale));
 
-  function placeName(source: Source | undefined): string {
-    if (!source) return "Available quests";
-    if ("festivalId" in source) return getName("festivals", source.festivalId, locale);
-    if ("storeId" in source) return getName("stores", source.storeId, locale);
-    if ("locationIds" in source && source.locationIds) return locations[source.locationIds[0]];
-    if ("waterTypes" in source && source.waterTypes) return waters[source.waterTypes[0]];
-    if ("biomeId" in source && source.biomeId) return getName("mines", source.biomeId, locale);
-    switch (source.type) {
-      case "artifact_dig":
-        return "Dig sites";
-      case "bug_catch":
-        return "Bug catching";
-      case "forage":
-        return "Foraging";
-      case "dive":
-        return "Diving";
-      case "station":
-        return stationNames[source.stationId];
-      default:
-        return sourceFilterLabel("fishing", locale);
-    }
+  function requiredName(names: Record<string, string>, id: string, type: Source["type"]): string {
+    const name = names[id];
+    if (!name) throw new Error(`No Home place name for ${type} ID ${id} in ${locale}`);
+    return name;
   }
 
-  function placeKind(source: Source | undefined): string {
-    if (!source) return "Quests";
-    if ("festivalId" in source) return sourceFilterLabel("festivals", locale);
-    if ("storeId" in source) return sourceFilterLabel("stores", locale);
-    if (source.type === "station") {
-      return sourceFilterLabel("crafting", locale);
+  function placeLabel(source: Source | undefined): { kind: string; name: string } {
+    if (!source) return { kind: "Quests", name: "Available quests" };
+    switch (source.type) {
+      case "festival":
+      case "festival_activity":
+        return {
+          kind: sourceFilterLabel("festivals", locale),
+          name: getName("festivals", source.festivalId, locale),
+        };
+      case "scroll_bundle":
+      case "store":
+      case "upgrade":
+        return {
+          kind: sourceFilterLabel("stores", locale),
+          name: getName("stores", source.storeId, locale),
+        };
+      case "artifact_dig":
+      case "bug_catch":
+      case "forage": {
+        const names = { artifact_dig: "Dig sites", bug_catch: "Bug catching", forage: "Foraging" };
+        return {
+          kind: sourceFilterLabel("gathering", locale),
+          name: source.locationIds
+            ? requiredName(locations, source.locationIds[0], source.type)
+            : names[source.type],
+        };
+      }
+      case "dive":
+      case "fish": {
+        const kind = source.type === "dive" ? "Diving" : sourceFilterLabel("fishing", locale);
+        return {
+          kind,
+          name: source.waterTypes ? requiredName(waters, source.waterTypes[0], source.type) : kind,
+        };
+      }
+      case "mine":
+      case "mines_dig_site":
+        return {
+          kind: sourceFilterLabel("mines", locale),
+          name: getName("mines", source.biomeId, locale),
+        };
+      case "mine_fish":
+        return {
+          kind: sourceFilterLabel("mines", locale),
+          name: source.biomeId
+            ? getName("mines", source.biomeId, locale)
+            : sourceFilterLabel("fishing", locale),
+        };
+      case "station":
+        return {
+          kind: sourceFilterLabel("crafting", locale),
+          name: requiredName(stationNames, source.stationId, source.type),
+        };
+      default:
+        throw new Error(`Unexpected Home place source type: ${source.type}`);
     }
-    if ("biomeId" in source) return sourceFilterLabel("mines", locale);
-    if (source.type === "dive") return "Diving";
-    if (source.type === "fish") {
-      return sourceFilterLabel("fishing", locale);
-    }
-    return sourceFilterLabel("gathering", locale);
   }
 </script>
 
@@ -88,6 +114,7 @@
   {#if places.length > 0}
     <ol class="places">
       {#each places.slice(0, 8) as { id, source, count } (id)}
+        {@const { name, kind } = placeLabel(source)}
         <li>
           <a
             href={source
@@ -95,8 +122,8 @@
               : `${everything}?group=category#category-quests`}
           >
             <span>
-              <span>{placeName(source)}</span>
-              <small>{placeKind(source)}</small>
+              <span>{name}</span>
+              <small>{kind}</small>
             </span>
             <span class="count">{formatNumber(count, locale)}</span>
           </a>

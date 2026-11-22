@@ -2785,7 +2785,6 @@
       {
         "file": "src/routes/todays-places.svelte",
         "refs": [
-          null,
           null
         ]
       }

@@ -301,35 +301,6 @@
   },
   {
     "translations": {
-      "en": "{0} open",
-      "ja": "未完了 {0} 件",
-      "zh-Hans": "{0} 项可做",
-      "zh-Hant": "{0} 項可做",
-      "es": "{0} pendientes",
-      "fr": "{0} à faire",
-      "ko": "할 일 {0}개",
-      "ru": "доступно: {0}"
-    },
-    "references": [
-      {
-        "file": "src/routes/+page.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "open"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "{0} {1}",
       "ja": "{0}{1}日",
       "zh-Hans": "{0}{1}日",

@@ -11,7 +11,7 @@
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { SITE_NAME } from "#lib/data/site.js";
-  import { CATEGORY_KEYS, getAllProgress } from "#lib/engine/categories.js";
+  import { CATEGORY_KEYS, getAllProgress, getOverallProgress } from "#lib/engine/categories.js";
   import {
     DAYS_PER_SEASON,
     gameDayOfYear,
@@ -78,6 +78,10 @@
 
   let context = $derived(userState.progressContext);
   let allProgress = $derived(getAllProgress(context));
+  let overallProgress = $derived(getOverallProgress(allProgress));
+  let everythingName = $derived(/* @wc-include */ "Everything");
+  let everythingCompleted = $derived(formatNumber(overallProgress.completed, locale));
+  let everythingTotal = $derived(formatNumber(overallProgress.total, locale));
   let projection = $derived(
     mounted
       ? projectHomePlaces({
@@ -86,7 +90,6 @@
         })
       : { places: [], total: 0 },
   );
-  let open = $derived(formatNumber(projection.total, locale));
   $effect(() => {
     if (import.meta.env.DEV && projection.total > HOME_PLACES_WARNING_LIMIT) {
       // oxlint-disable-next-line no-console -- The development warning flags missing availability gates.
@@ -242,13 +245,22 @@
             </li>
           {/each}
           <li>
-            <a href={`${localizedHref("everything")}?group=source`}>
+            <a
+              href={`${localizedHref("everything")}?group=source`}
+              aria-label={mounted
+                ? `${everythingName}, ${everythingCompleted} of ${everythingTotal} completed`
+                : undefined}
+            >
               <span class="index-tab index-tab--everything" aria-hidden="true"
                 ><ThumbTabIcon key="everything" class="size-4" /></span
               >
-              <span class="italic">Everything</span>
+              <span class="italic">{everythingName}</span>
               <span class="leader" aria-hidden="true"></span>
-              <span class="index-count">{`${open} open`}</span>
+              {#if mounted}
+                <span class="index-count" aria-hidden="true"
+                  ><span class="player-number">{everythingCompleted}</span> / {everythingTotal}</span
+                >
+              {/if}
             </a>
           </li>
         </ul>

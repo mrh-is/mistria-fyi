@@ -296,6 +296,22 @@
                 "total"
               ]
             ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "everythingName"
+              ],
+              [
+                "1",
+                "everythingCompleted"
+              ],
+              [
+                "2",
+                "everythingTotal"
+              ]
+            ]
           }
         ]
       },

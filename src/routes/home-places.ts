@@ -17,7 +17,8 @@ const QUEST_STARTS = new Map(
 );
 
 // These shops are the visiting vendors at the Saturday Market. The ledger already checks each
-// store's unlock; Home also knows whether the weekly market is on.
+// store's unlock; Home also knows whether the weekly market is on. See #724 for replacing both
+// the vendor list and the weekly day check below with generated schedule data.
 const MARKET_STALLS = new Set(["darcy", "louis", "merri", "vera", "wheedle", "zorel"]);
 const FREE_GATHERING = new Set([
   "forage",

@@ -63,6 +63,29 @@ function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+test.describe("Home Contents before hydration", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("links to Everything without a placeholder count", async ({ page }) => {
+    await page.goto("/en");
+    const contents = page.getByRole("navigation", { name: "Contents" });
+    await expect(contents.getByRole("link", { exact: true, name: "Everything" })).toBeVisible();
+  });
+});
+
+test("Home Contents gives Everything an overall completion count after hydration", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light", createStoredState({ progress: { renown: 10 } }));
+  await gotoApplication(page, "/en");
+  const contents = page.getByRole("navigation", { name: "Contents" });
+  const everything = contents.getByRole("link", {
+    name: /^Everything, [\d,]+ of [\d,]+ completed$/u,
+  });
+  await expect(everything).toBeVisible();
+  await expect(everything).toHaveAttribute("href", "/en/everything?group=source");
+});
+
 test("Home shows the last imported farmer and farm on its bookplate", async ({ page }) => {
   const state = createStoredState();
   state.progress.lastImport = {
