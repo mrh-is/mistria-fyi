@@ -2865,43 +2865,6 @@
   },
   {
     "translations": {
-      "en": "Edit {0} level, currently {1} of {2}",
-      "ja": "{0}レベルを編集、現在{2}中{1}",
-      "zh-Hans": "编辑{0}等级，当前为{1}/{2}级",
-      "zh-Hant": "編輯{0}等級，目前為{1}級（共{2}級）",
-      "es": "Editar nivel de {0}, actualmente {1} de {2}",
-      "fr": "Modifier le niveau de {0}, actuellement {1} sur {2}",
-      "ko": "{0} 레벨 편집, 현재 {2} 중 {1}",
-      "ru": "Изменить уровень «{0}», сейчас {1} из {2}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "level"
-              ],
-              [
-                "2",
-                "MAX_SKILL_LEVEL"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Email me back",
       "ja": "メールで返信希望",
       "zh-Hans": "发邮件回复我",
@@ -4598,28 +4561,6 @@
     "references": [
       {
         "file": "src/lib/components/install-nudge-dialog.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Level",
-      "ja": "レベル",
-      "zh-Hans": "等级",
-      "zh-Hant": "等級",
-      "es": "Nivel",
-      "fr": "Niveau",
-      "ko": "레벨",
-      "ru": "Уровень"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
         "refs": [
           null
         ]
@@ -6455,6 +6396,28 @@
   },
   {
     "translations": {
+      "en": "Reached",
+      "ja": "到達済み",
+      "zh-Hans": "已达到",
+      "zh-Hant": "已達到",
+      "es": "Alcanzado",
+      "fr": "Atteint",
+      "ko": "도달함",
+      "ru": "Уровень достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reading your save file…",
       "ja": "セーブデータを読み込み中…",
       "zh-Hans": "正在读取你的存档…",
@@ -6568,6 +6531,28 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Record perk purchases in Everything",
+      "ja": "「すべて」で購入したスキルボーナスを記録",
+      "zh-Hans": "在“全部”中记录已购买的技能特长",
+      "zh-Hant": "在「全部」中記錄已購買的技能特長",
+      "es": "Registrar los dones comprados en «Todo»",
+      "fr": "Enregistrer les bonus achetés dans « Tout »",
+      "ko": "‘전체’에서 구매한 스킬 특성 기록",
+      "ru": "Отметить купленные навыки в разделе «Всё»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skills-content.svelte",
         "refs": [
           null
         ]
@@ -8187,6 +8172,28 @@
   },
   {
     "translations": {
+      "en": "Spoilered perk",
+      "ja": "未公開のスキルボーナス",
+      "zh-Hans": "隐藏的技能特长",
+      "zh-Hant": "隱藏的技能特長",
+      "es": "Don de habilidad oculto",
+      "fr": "Bonus de compétence masqué",
+      "ko": "숨겨진 스킬 특성",
+      "ru": "Скрытый навык"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Spouse gifts",
       "ja": "配偶者からの贈り物",
       "zh-Hans": "配偶礼物",
@@ -9263,6 +9270,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unreached",
+      "ja": "未到達",
+      "zh-Hans": "尚未达到",
+      "zh-Hant": "尚未達到",
+      "es": "Aún no alcanzado",
+      "fr": "Pas encore atteint",
+      "ko": "아직 도달하지 않음",
+      "ru": "Уровень ещё не достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
         "refs": [
           null
         ]
@@ -11619,6 +11648,115 @@
   },
   {
     "translations": {
+      "en": [
+        "{0} / {1} perk",
+        "{0} / {1} perks"
+      ],
+      "ja": [
+        "スキルボーナス {0} / {1}"
+      ],
+      "zh-Hans": [
+        "技能特长 {0} / {1}"
+      ],
+      "zh-Hant": [
+        "技能特長 {0} / {1}"
+      ],
+      "es": [
+        "{0} / {1} don",
+        "{0} / {1} dones",
+        "{0} / {1} dones"
+      ],
+      "fr": [
+        "{0} / {1} bonus",
+        "{0} / {1} bonus",
+        "{0} / {1} bonus"
+      ],
+      "ko": [
+        "스킬 특성 {0} / {1}"
+      ],
+      "ru": [
+        "{0} / {1} навык",
+        "{0} / {1} навыка",
+        "{0} / {1} навыков",
+        "{0} / {1} навыка"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ],
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} / {1} perk reached",
+        "{0} / {1} perks reached"
+      ],
+      "ja": ["到達したスキルボーナス {0} / {1}"],
+      "zh-Hans": ["已达到 {0} / {1} 项技能特长"],
+      "zh-Hant": ["已達到 {0} / {1} 項技能特長"],
+      "es": ["{0} / {1} don alcanzado", "{0} / {1} dones alcanzados", "{0} / {1} dones alcanzados"],
+      "fr": ["{0} / {1} bonus accessible", "{0} / {1} bonus accessibles", "{0} / {1} bonus accessibles"],
+      "ko": ["도달한 스킬 특성 {0} / {1}"],
+      "ru": ["Доступен {0} / {1} навык", "Доступно {0} / {1} навыка", "Доступно {0} / {1} навыков", "Доступно {0} / {1} навыка"]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ],
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} / {1} unlocked",
       "ja": "{0}/{1} 解放済み",
       "zh-Hans": "已解锁 {0}/{1}",
@@ -11723,14 +11861,6 @@
       {
         "file": "src/lib/components/skill-record.svelte",
         "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ]
-            ]
-          },
           {
             "placeholders": [
               [
@@ -11880,39 +12010,6 @@
               [
                 "0",
                 "locked"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} of {1}",
-      "ja": "{1}中{0}",
-      "zh-Hans": "{0}/{1}级",
-      "zh-Hant": "{0}級（共{1}級）",
-      "es": "{0} de {1}",
-      "fr": "{0} sur {1}",
-      "ko": "{1} 중 {0}",
-      "ru": "{0} из {1}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "level"
-              ],
-              [
-                "1",
-                "MAX_SKILL_LEVEL"
               ]
             ]
           }
@@ -12661,6 +12758,39 @@
   },
   {
     "translations": {
+      "en": "{0} · Lv {1}",
+      "ja": "{0}・Lv {1}",
+      "zh-Hans": "{0} · {1}级",
+      "zh-Hant": "{0} · {1}級",
+      "es": "{0} · Niv. {1}",
+      "fr": "{0} · Niv. {1}",
+      "ko": "{0} · 레벨 {1}",
+      "ru": "{0} · Ур. {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "tierName"
+              ],
+              [
+                "1",
+                "threshold"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} · {1}",
       "ja": "{0}・{1}",
       "zh-Hans": "{0} · {1}",
@@ -12683,6 +12813,43 @@
               [
                 "1",
                 "rewardRecipeName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}, level {1} of {2}",
+      "ja": "{0}、レベル{1}（最大{2}）",
+      "zh-Hans": "{0}，当前{1}级，最高{2}级",
+      "zh-Hant": "{0}，目前{1}級，最高{2}級",
+      "es": "{0}, nivel {1} de {2}",
+      "fr": "{0}, niveau {1} sur {2}",
+      "ko": "{0}, 현재 레벨 {1}, 최대 레벨 {2}",
+      "ru": "{0}, уровень {1} из {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "formattedLevel"
+              ],
+              [
+                "2",
+                "formattedMax"
               ]
             ]
           }

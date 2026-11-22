@@ -44,7 +44,11 @@ interface HandEdits {
     setQuestState: (id: QuestId, state: QuestState) => void;
     setReachedSeason: (season: Season) => void;
     setRenown: (level: number) => void;
-    setSkillLevel: (id: SkillId, level: number) => void;
+    setSkillLevel: (
+      id: SkillId,
+      level: number,
+      onApplied?: (before: number, after: number) => void,
+    ) => void;
     setVillagerRelationship: (id: VillagerId, relationship: VillagerRelationship) => void;
     readonly starterItems: Readonly<StarterItemsNotice> | undefined;
     toggleAlmanacItem: (id: ItemId) => void;
@@ -157,11 +161,17 @@ export function createHandEdits(
   }
 
   /** Hold the first edit until a tracking lane is chosen. Nested edits share one provenance diff. */
-  function handEdit<T>(run: () => T, primary?: string, addDefaults = true): T | undefined {
+  function handEdit<T>(
+    run: () => T,
+    primary?: string,
+    addDefaults = true,
+    onApplied?: (result: T) => void,
+  ): T | undefined {
     function apply(): T {
       const starting = addDefaults && !tracking && canStartTrackingByHand;
       const result = track(run, primary);
       if (starting && shell.facts.size > 0) applyStarterItems();
+      onApplied?.(result);
       return result;
     }
 
@@ -247,8 +257,24 @@ export function createHandEdits(
       setRenown(level: number) {
         manual("renown", (progress) => edits.setRenown(progress, level));
       },
-      setSkillLevel(id: SkillId, level: number) {
-        manual(factKey("skillLevels", id), (progress) => edits.setSkillLevel(progress, id, level));
+      setSkillLevel(
+        id: SkillId,
+        level: number,
+        onApplied?: (before: number, after: number) => void,
+      ) {
+        handEdit(
+          () => {
+            const before = shell.state.progress.skillLevels[id] ?? 0;
+            commit(edits.setSkillLevel(shell.state.progress, id, level));
+            return before;
+          },
+          factKey("skillLevels", id),
+          true,
+          (before) => {
+            const after = shell.state.progress.skillLevels[id] ?? 0;
+            if (before !== after) onApplied?.(before, after);
+          },
+        );
       },
       setVillagerRelationship(id: VillagerId, relationship: VillagerRelationship) {
         manual(factKey("villagerRelationships", id), (progress) =>
