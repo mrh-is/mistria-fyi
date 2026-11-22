@@ -11,6 +11,7 @@
     "src",
     "tests",
     "scripts/**/*.ts",
+    "spikes/wuchale/compare-warm-app.ts",
     "eslint-rules/**/*.ts",
     "relay/**/*.test.ts",
     "vite.config.ts",

@@ -13,10 +13,14 @@ measured against Paraglide 3.2.2 on the same main revision (`e920bf8a`). Cold Sp
 requested 17–20% less gzip JavaScript (69–90 KB) on Home, Almanac, Data, & About. Navigation &
 language switching showed no measurable difference
 ([measurements](https://github.com/mrh-is/mistria-fyi/pull/607#issuecomment-6835412890), using the
-[cold](https://github.com/mrh-is/mistria-fyi/blob/bb1ade93/spikes/wuchale/compare-cold-app.js) &
-[warm](https://github.com/mrh-is/mistria-fyi/blob/bb1ade93/spikes/wuchale/compare-warm-app.ts)
+[cold](../../spikes/wuchale/compare-cold-app.js) & [warm](../../spikes/wuchale/compare-warm-app.ts)
 probes). In an authoring exercise done on both branches, the maintainer found the Wuchale diff much
 easier to read (2026-11-12).
+
+To run the probes, serve both production builds locally with `vite preview`. From the repository
+root, run the cold probe with `node` and the warm probe with `pnpm exec tsx`. Pass the baseline
+origin and its `.svelte-kit/output/client` path, followed by the candidate origin and client path.
+The warm probe also accepts an optional trial count and defaults to seven.
 
 ## Decision
 
