@@ -7,6 +7,7 @@
   import SearchResults from "#lib/components/search-results.svelte";
   import GotItNote from "#lib/components/sync/got-it-note.svelte";
   import SyncTroubleNote from "#lib/components/sync/sync-trouble-note.svelte";
+  import { readClockDisplay } from "#lib/controllers/clock-display.js";
   import { categoryForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
@@ -49,19 +50,9 @@
   let locale = $derived(data.locale);
   let bookOwner = $derived(progressImport.lastImport);
   let clock = $derived(userState.state.worldState);
-  let noSave = $derived(
-    !bookOwner &&
-      !clock.saveDate &&
-      !userState.syncLane &&
-      userState.trackingLane === undefined &&
-      !userState.hasAnyProgress &&
-      clock.day === undefined &&
-      clock.year === undefined &&
-      clock.season === "spring" &&
-      clock.weather === "calm",
-  );
-  let day = $derived(noSave ? 1 : clock.day);
-  let year = $derived(noSave ? 1 : clock.year);
+  let calendar = $derived(mounted ? readClockDisplay() : undefined);
+  let day = $derived(calendar?.day);
+  let year = $derived(calendar?.year);
   let season = $derived(seasonLabel(clock.season, locale));
   let weather = $derived(weatherLabel(clock.weather, clock.season));
   let date = $derived.by(() => {
@@ -151,9 +142,12 @@
             data-panel-entry="clock"
             aria-controls="clock-panel"
             aria-expanded={panels.active === "clock"}
+            disabled={!mounted}
             onclick={({ currentTarget }) => panels.toggle("clock", currentTarget)}>{date}</button
           >
-          <span>{weather}</span>
+          {#if mounted}
+            <span>{weather}</span>
+          {/if}
           {#if saveAge !== undefined && saveAge > 0}
             {@const age = formatNumber(saveAge, locale)}
             <span
@@ -175,13 +169,13 @@
             {/if}
           {:else if saveAge === 0}
             <span>from your save</span>
-          {:else if noSave}
+          {:else if calendar?.usesDayOneDefaults}
             <span>day-one defaults</span>
           {:else if day !== undefined && (!bookOwner || clock.saveDate)}
             <span>set by hand</span>
           {/if}
         </div>
-        {#if noSave}
+        {#if calendar?.usesDayOneDefaults}
           <p class="clock-note">
             <a class="text-link" href={importHref}>Load a save</a> to pick up on your farm’s day.
           </p>

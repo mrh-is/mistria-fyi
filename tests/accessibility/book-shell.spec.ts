@@ -63,7 +63,7 @@ function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
-test.describe("Home Contents before hydration", () => {
+test.describe("Home before hydration", () => {
   test.use({ javaScriptEnabled: false });
 
   test("links to Everything without a placeholder count", async ({ page }) => {
@@ -71,6 +71,52 @@ test.describe("Home Contents before hydration", () => {
     const contents = page.getByRole("navigation", { name: "Contents" });
     await expect(contents.getByRole("link", { exact: true, name: "Everything" })).toBeVisible();
   });
+
+  test("keeps the farm clock neutral", async ({ page }) => {
+    await page.goto("/en");
+    await expect(page.getByRole("button", { name: "Which day is it?" })).toBeDisabled();
+    await expect(page.getByText("day-one defaults", { exact: true })).toBeHidden();
+    await expect(page.getByRole("link", { exact: true, name: "Load a save" })).toBeHidden();
+    await expect(page.getByRole("region", { name: "Birthdays this week" })).toBeHidden();
+  });
+});
+
+test("Home clock starts the picker on day one and keeps year one when the day changes", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light");
+  await gotoApplication(page, "/en");
+  await page.getByRole("button", { name: "Spring 1, Year 1" }).click();
+
+  const picker = page.getByRole("dialog", { name: "Season & weather" });
+  const day = picker.getByLabel("Day", { exact: true });
+  const year = picker.getByLabel("Year", { exact: true });
+  await expect(day).toHaveValue("1");
+  await expect(year).toHaveValue("1");
+  await day.selectOption("5");
+  await expect(year).toHaveValue("1");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Spring 5, Year 1" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Spring 5, Year 1" }).click();
+  await day.selectOption("");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Which day is it?" })).toBeVisible();
+});
+
+test("Home clock preserves an unknown year on an existing calendar", async ({ page }) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ worldState: { day: 5, season: "spring", weather: "calm" } }),
+  );
+  await gotoApplication(page, "/en");
+  await page.getByRole("button", { exact: true, name: "Spring 5" }).click();
+  const picker = page.getByRole("dialog", { name: "Season & weather" });
+  await expect(picker.getByLabel("Year", { exact: true })).toHaveValue("");
+  await picker.getByLabel("Day", { exact: true }).selectOption("6");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { exact: true, name: "Spring 6" })).toBeVisible();
 });
 
 test("Home Contents gives Everything an overall completion count after hydration", async ({

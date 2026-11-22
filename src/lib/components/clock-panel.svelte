@@ -4,6 +4,7 @@
   import { weatherIcon } from "#lib/components/icon/icon-maps.js";
   import { Icon } from "#lib/components/icon/index.js";
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
+  import { readClockDisplay } from "#lib/controllers/clock-display.js";
   import { DAYS_PER_SEASON } from "#lib/engine/game-calendar.js";
   import { weathersForSeason } from "#lib/engine/world-state.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -20,6 +21,7 @@
   const days = Array.from({ length: DAYS_PER_SEASON }, (_, index) => index + 1);
 
   let clock = $derived(userState.state.worldState);
+  let calendar = $derived(readClockDisplay());
   let currentSeason = $derived(clock.season);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
   let hasSpecialWeather = $derived(availableWeathers.includes("special"));
@@ -91,12 +93,12 @@
         <label for="clock-day">Day</label>
         <select
           id="clock-day"
-          value={clock.day ?? ""}
+          value={calendar.day ?? ""}
           onchange={({ currentTarget }) =>
             userState.setCalendarDate(
               currentSeason,
               currentTarget.value ? Number(currentTarget.value) : undefined,
-              clock.year,
+              calendar.year,
             )}
         >
           <option value="">Unknown day</option>
@@ -112,15 +114,15 @@
           type="number"
           min="1"
           step="1"
-          value={clock.year}
+          value={calendar.year}
           onchange={({ currentTarget }) => {
             if (!currentTarget.validity.valid) {
-              currentTarget.value = String(clock.year ?? "");
+              currentTarget.value = String(calendar.year ?? "");
               return;
             }
             userState.setCalendarDate(
               currentSeason,
-              clock.day,
+              calendar.day,
               currentTarget.value ? currentTarget.valueAsNumber : undefined,
             );
           }}
