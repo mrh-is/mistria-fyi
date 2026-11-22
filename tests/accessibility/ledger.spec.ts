@@ -165,6 +165,29 @@ test("a phone can fold and reopen a linked Almanac section", async ({ page }) =>
   await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
 });
 
+test("Back returns to the open Museum wing after a phone jump", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await initializeApplication(page, "dark", createStoredState());
+  await gotoApplication(page, "/museum");
+  const archaeology = page.getByRole("region", { exact: true, name: "Archaeology" });
+  const opener = archaeology.getByRole("button", { exact: true, name: "Archaeology" });
+  await opener.click();
+  await page.evaluate(() => {
+    globalThis.scrollBy(0, 500);
+  });
+  await archaeology.getByRole("button", { exact: true, name: "Sections" }).click();
+  await page
+    .getByRole("navigation", { name: "Jump to a section" })
+    .getByRole("link", { exact: true, name: "Fish" })
+    .click();
+  await expect(page).toHaveURL(/\/museum#fish$/u);
+
+  await page.goBack();
+
+  await expect(page).toHaveURL(/\/museum$/u);
+  await expect(opener).toHaveAttribute("aria-expanded", "true");
+});
+
 test("refreshing shelves with zero search matches returns focus to search", async ({ page }) => {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");

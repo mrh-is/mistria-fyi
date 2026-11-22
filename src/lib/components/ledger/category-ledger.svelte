@@ -23,7 +23,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
   import { building } from "$app/env";
-  import { goto } from "$app/navigation";
+  import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
 
   import { categorySections } from "./category-sections-messages.js";
@@ -40,7 +40,7 @@
   const categoryKey = untrack(() => category);
   const phone = new MediaQuery("max-width: 47.99rem", false);
   const folds = new SvelteMap(Object.entries(untrack(() => page.state.categoryLedgerFolds ?? {})));
-  const revealed = new SvelteSet<string>();
+  const revealed = new SvelteSet<string>(untrack(() => page.state.categoryLedgerRevealed ?? []));
   const checkOff = createRowCheckOff<string>({ animateLeaving: false });
   let pending = $state<string>();
   let revealDialogOpen = $state(false);
@@ -82,15 +82,23 @@
   });
   $effect(() => {
     const saved = Object.fromEntries(folds);
+    const revealedIds = [...revealed];
     void hash;
-    untrack(() => {
-      if (JSON.stringify(page.state.categoryLedgerFolds ?? {}) === JSON.stringify(saved)) return;
-      void goto(page.url.href, {
-        replace: true,
-        shallow: true,
-        state: { ...page.state, categoryLedgerFolds: saved },
+    const frame = requestAnimationFrame(() => {
+      if (
+        JSON.stringify(page.state.categoryLedgerFolds ?? {}) === JSON.stringify(saved) &&
+        JSON.stringify(page.state.categoryLedgerRevealed ?? []) === JSON.stringify(revealedIds)
+      ) {
+        return;
+      }
+      // The router publishes the hash during the click, before the browser adds its history entry.
+      void replaceState(page.url.href, {
+        ...page.state,
+        categoryLedgerFolds: saved,
+        categoryLedgerRevealed: revealedIds,
       });
     });
+    return () => cancelAnimationFrame(frame);
   });
 
   const isFinished = ({ progress }: CategorySection) => progress.completed >= progress.total;
@@ -98,6 +106,11 @@
     Boolean(section.spoilered && !userState.state.showSpoilers && !revealed.has(section.id));
   const shows = (section: CategorySection) =>
     section.rows.some((row) => visible(row) && toolbarState.matchesSourceFilters(row.sources));
+  // A concealed name cannot leave a clue in its alphabetical position.
+  let ordered = $derived([
+    ...ledger.value.filter((section) => !isCovered(section)),
+    ...ledger.value.filter(isCovered).toSorted((a, b) => a.id.localeCompare(b.id)),
+  ]);
   let indexSections = $derived(
     ledger.value
       .filter((section) => !isCovered(section))
@@ -181,7 +194,7 @@
 />
 <LedgerNotice changed={ledger.needsRefresh} onRefresh={ledger.refresh} />
 <LedgerIndex sections={indexSections}>
-  {#each ledger.value as section, i (section.id)}
+  {#each ordered as section, i (section.id)}
     {@render renderSection(section, false, i > 0)}
   {/each}
 </LedgerIndex>

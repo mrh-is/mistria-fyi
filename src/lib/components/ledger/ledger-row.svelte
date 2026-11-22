@@ -22,6 +22,7 @@
   import {
     ledgerCellText,
     ledgerColumn,
+    ledgerColumnFamily,
     ledgerFirstPlace,
     ledgerSourceFamily,
   } from "#lib/presentation/ledger.js";
@@ -382,9 +383,10 @@
         {/if}
       {/if}
     </div>
-    {#each cells as { column, text }, i (column)}
+    {#each cells as { column, source, text }, i (column)}
+      {@const FamilyIcon = SOURCE_FILTER_ICON[ledgerColumnFamily(column)]}
       <span class="cell" class:first={i === 0} aria-hidden="true">
-        {text}
+        {#if text}{text}{:else if source}<FamilyIcon class="size-4" />{/if}
       </span>
     {/each}
     {#if discovery}

@@ -382,7 +382,7 @@
           }}
         >
           <IconFilter class="size-5" />
-          {#if sourcesOff > 0}<span class="filter-tool__dot" aria-hidden="true"></span>{/if}
+          {#if filtersActive}<span class="filter-tool__dot" aria-hidden="true"></span>{/if}
         </button>
       {/if}
       {#if toolbar.clock}

@@ -38,9 +38,10 @@ const slotLabels: Partial<Record<CosmeticSlot, () => string>> = {
 };
 
 const animalLabels = {
+  appearances: () => "Appearances",
   colors: () => "Colors",
   cosmetics: () => "Cosmetics",
-  mount: () => "Mount appearances",
+  perks: () => "Perks",
   petCosmetics: () => "Pet cosmetics",
   petSkins: () => "Pet skins",
 };
@@ -71,15 +72,24 @@ export function categorySections(
   const collator = nameCollator(locale);
   const compare = (a: { name: string }, b: { name: string }) => collator.compare(a.name, b.name);
   const visibility = ctx.progressionState;
-  const rows = entries.map((entry): CategoryRow => ({
-    ...entry,
-    ...ledgerPlacement(entry.sources, ctx, visibility, {
-      completed: entry.completed,
-      doable: entry.obtainable && !entry.locked && isDoableToday(entry, ctx),
-      spoilered: entry.spoilered === true || !isConditionVisible(entry.visibility, visibility),
-    }),
-    sources: entry.sources,
-  }));
+  const rows = entries.map((entry): CategoryRow => {
+    // The section handles species and quest-type gates. A revealed section still covers entries
+    // with their own unmet gates and the check-off still uses the original visibility condition.
+    let ownGate = entry.visibility;
+    if (entry.category === "quests") ownGate = entry.questVisibility;
+    if (entry.reportCategory === "animal-variants" || entry.reportCategory === "animal-cosmetics") {
+      ownGate = undefined;
+    }
+    return {
+      ...entry,
+      ...ledgerPlacement(entry.sources, ctx, visibility, {
+        completed: entry.completed,
+        doable: entry.obtainable && !entry.locked && isDoableToday(entry, ctx),
+        spoilered: entry.spoilered === true || !isConditionVisible(ownGate, visibility),
+      }),
+      sources: entry.sources,
+    };
+  });
   const byId = new Map(rows.map((row) => [row.id, row]));
 
   function group(
@@ -162,14 +172,18 @@ export function categorySections(
         });
         return [
           ...animals,
-          group(
-            "mount",
-            animalLabels.mount(),
-            rows.filter(
-              (row) =>
-                row.reportCategory === "mount-appearance" || row.reportCategory === "mount-perk",
+          parent("mount", getName("ui", "mount", locale), [
+            group(
+              "mount-appearances",
+              animalLabels.appearances(),
+              rows.filter((row) => row.reportCategory === "mount-appearance").toSorted(compare),
             ),
-          ),
+            group(
+              "mount-perks",
+              animalLabels.perks(),
+              rows.filter((row) => row.reportCategory === "mount-perk").toSorted(compare),
+            ),
+          ]),
           group(
             "pet-cosmetics",
             animalLabels.petCosmetics(),

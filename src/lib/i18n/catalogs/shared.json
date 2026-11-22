@@ -779,6 +779,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/mount-appearances-section.svelte",
         "refs": [
           null
@@ -5392,28 +5398,6 @@
   },
   {
     "translations": {
-      "en": "Mount appearances",
-      "ja": "乗騎の外見",
-      "zh-Hans": "坐骑外观",
-      "zh-Hant": "坐騎外觀",
-      "es": "Aspectos de montura",
-      "fr": "Apparences de monture",
-      "ko": "탈것 외형",
-      "ru": "Облики ездовых животных"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/ledger/category-sections-messages.ts",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Mount appearances: +{0}",
       "ja": "マウントの外見：+{0}",
       "zh-Hans": "坐骑外观：+{0}",
@@ -6224,6 +6208,12 @@
       "ru": "Навыки"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/mount-appearances-section.svelte",
         "refs": [

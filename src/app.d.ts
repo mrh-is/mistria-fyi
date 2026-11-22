@@ -34,6 +34,8 @@ declare global {
       almanacOpened?: string[];
       /** Category ledger folds, keyed by section or subsection ID. */
       categoryLedgerFolds?: Record<string, boolean>;
+      /** Whole sections the reader chose to reveal in this history entry. */
+      categoryLedgerRevealed?: string[];
     }
   }
 

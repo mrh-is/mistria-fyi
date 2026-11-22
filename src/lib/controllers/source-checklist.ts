@@ -49,6 +49,8 @@ export interface SourceChecklistRow extends SourceGroupRow {
   name: string;
   questState?: QuestState;
   questType?: QuestType;
+  /** The quest’s own gate, without the gate on its section. */
+  questVisibility?: VisibilityCondition;
   reportCategory: ReportCategory;
   searchNames?: string[];
   /** Secondary words matched with the names, such as an almanac variant (“white window”). */
@@ -356,6 +358,7 @@ function collectSourceRows(
         locked: !completed && questAvailability.get(questId) === false,
         questState,
         questType,
+        questVisibility: visibility,
         toggle: () => {
           const completion = userState.completeQuestWithRecipes(questId);
           return () => {
