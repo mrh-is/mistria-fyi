@@ -13,6 +13,7 @@ packageExtensionsChecksum: sha256-t2I16vZnvl7FNTmVtMXxE92GisK/G99LnDV2hbR9oqM=
 
 patchedDependencies:
   '@sveltejs/kit@3.1.1': 84d25bb7bef5c3a3a331d5ab16bc38a43bf9ae9fdf34e11d983fd91ac1176e70
+  knip@6.43.0: 5dc56dd0126bac4ad1098fbb179085068e7cefce749b431a58b50427b5f2fb17
 
 importers:
 
@@ -117,7 +118,7 @@ importers:
         version: 9.1.7
       knip:
         specifier: ^6.43.0
-        version: 6.43.0
+        version: 6.43.0(patch_hash=5dc56dd0126bac4ad1098fbb179085068e7cefce749b431a58b50427b5f2fb17)
       lint-staged:
         specifier: ^17.6.0
         version: 17.6.0
@@ -5484,7 +5485,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  knip@6.43.0:
+  knip@6.43.0(patch_hash=5dc56dd0126bac4ad1098fbb179085068e7cefce749b431a58b50427b5f2fb17):
     dependencies:
       formatly: 0.11.4
       get-tsconfig: 4.14.3

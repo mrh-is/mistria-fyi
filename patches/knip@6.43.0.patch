@@ -1,0 +1,12 @@
+diff --git a/dist/util/jiti.js b/dist/util/jiti.js
+--- a/dist/util/jiti.js
++++ b/dist/util/jiti.js
+@@ -7,7 +7,7 @@ const options = {
+         '@rushstack/eslint-config/patch/modern-module-resolution': empty,
+         '@rushstack/eslint-patch/modern-module-resolution': empty,
+     },
+-    tsconfigPaths: true,
++    tsconfigPaths: process.cwd(),
+     jsx: true,
+ };
+ const createLoader = (options) => createJiti(process.cwd(), options);
