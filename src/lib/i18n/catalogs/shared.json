@@ -6541,6 +6541,28 @@
   },
   {
     "translations": {
+      "en": "Record perk purchases in Everything",
+      "ja": "「すべて」で購入したスキルボーナスを記録",
+      "zh-Hans": "在“全部”中记录已购买的技能特长",
+      "zh-Hant": "在「全部」中記錄已購買的技能特長",
+      "es": "Registrar los dones comprados en «Todo»",
+      "fr": "Enregistrer les bonus achetés dans « Tout »",
+      "ko": "‘전체’에서 구매한 스킬 특성 기록",
+      "ru": "Отметить купленные навыки в разделе «Всё»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skills-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Record proposal",
       "ja": "プロポーズを記録",
       "zh-Hans": "记录求婚",
@@ -11658,6 +11680,50 @@
         "{0} / {1} навыков",
         "{0} / {1} навыка"
       ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ],
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} / {1} perk reached",
+        "{0} / {1} perks reached"
+      ],
+      "ja": ["到達したスキルボーナス {0} / {1}"],
+      "zh-Hans": ["已达到 {0} / {1} 项技能特长"],
+      "zh-Hant": ["已達到 {0} / {1} 項技能特長"],
+      "es": ["{0} / {1} don alcanzado", "{0} / {1} dones alcanzados", "{0} / {1} dones alcanzados"],
+      "fr": ["{0} / {1} bonus accessible", "{0} / {1} bonus accessibles", "{0} / {1} bonus accessibles"],
+      "ko": ["도달한 스킬 특성 {0} / {1}"],
+      "ru": ["Доступен {0} / {1} навык", "Доступно {0} / {1} навыка", "Доступно {0} / {1} навыков", "Доступно {0} / {1} навыка"]
     },
     "references": [
       {

@@ -133,12 +133,19 @@
       >
       <span>/ {formattedMax}</span>
     </div>
-    <span class="count"
-      >{plural(total, [
-        `${formattedCount} / ${formattedTotal} perk`,
-        `${formattedCount} / ${formattedTotal} perks`,
-      ])}</span
-    >
+    <span class="count">
+      {#if spoilerGuard}
+        {plural(total, [
+          `${formattedCount} / ${formattedTotal} perk`,
+          `${formattedCount} / ${formattedTotal} perks`,
+        ])}
+      {:else}
+        {plural(total, [
+          `${formattedCount} / ${formattedTotal} perk reached`,
+          `${formattedCount} / ${formattedTotal} perks reached`,
+        ])}
+      {/if}
+    </span>
   </div>
 
   <div class="ruler-and-tiers" class:compact={!!spoilerGuard}>

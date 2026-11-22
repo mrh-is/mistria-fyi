@@ -10,6 +10,7 @@
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordKeys } from "#lib/utils/record.js";
 
@@ -57,11 +58,37 @@
   <SpoilerGuardDialog guard={spoilerGuard} />
 {:else}
   <LedgerIndex sections={entries}>
+    <div class="purchase">
+      <a href={`${localizedHref("everything", { locale })}#category-skills`}>
+        Record perk purchases in Everything
+      </a>
+    </div>
     {@render ledger()}
   </LedgerIndex>
 {/if}
 
 <style>
+  .purchase {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .purchase a {
+    display: flex;
+    min-block-size: 24px;
+    align-items: center;
+    color: var(--color-category-skills-text);
+    font-size: var(--text-sm);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @media (pointer: coarse) {
+    .purchase a {
+      min-block-size: 44px;
+    }
+  }
+
   .skill-ledger {
     min-width: 0;
     margin: 0;

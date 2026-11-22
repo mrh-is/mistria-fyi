@@ -22,6 +22,10 @@ it("keeps all nine rulers in game order, including maxed skills", async () => {
     screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
   ).toEqual(names);
   expect(screen.getAllByRole("slider")).toHaveLength(9);
+  expect(screen.getByRole("link", { name: "Record perk purchases in Everything" })).toHaveAttribute(
+    "href",
+    "/en/everything#category-skills",
+  );
   expect(screen.getByRole("slider", { name: "Mining level" })).toHaveAttribute(
     "aria-valuenow",
     "60",

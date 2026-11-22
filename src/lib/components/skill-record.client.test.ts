@@ -43,6 +43,7 @@ it("registers feedback metadata and opens the right tiers on keyboard and button
 
   await fireEvent.click(increase);
   expect(ruler).toHaveAttribute("aria-valuenow", "1");
+  expect(screen.getByText(/perks reached$/)).toBeVisible();
   expect(screen.getByText(firstName)).toBeInTheDocument();
   expect(screen.getAllByRole("img", { name: "Reached" })).toHaveLength(tiers[0].ids.length);
   expect(screen.queryByText(lastName)).toBeNull();
