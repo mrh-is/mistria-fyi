@@ -26,7 +26,7 @@
   } = $props();
 
   const invertible = $derived(
-    !revealSection && Boolean(condition) && canPlanConditionMutations(condition),
+    !revealSection && condition !== undefined && canPlanConditionMutations(condition),
   );
   // Checking off an item whose name is still covered gets the playful wording; anything the player
   // can see gets the plain question. Without the update button, "just this" has nothing to
