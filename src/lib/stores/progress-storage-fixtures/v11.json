@@ -1,0 +1,26 @@
+{
+  "lastImport": null,
+  "progress": {
+    "almanac": [],
+    "almanacRecipes": [],
+    "animalCosmetics": {},
+    "animals": {},
+    "cosmetics": [],
+    "mineFloor": 0,
+    "mountAppearances": [],
+    "museum": [],
+    "petCosmetics": [],
+    "petSkins": [],
+    "renown": 0,
+    "spells": [],
+    "unlockedPerks": []
+  },
+  "version": 11,
+  "worldState": {
+    "day": 8,
+    "saveDate": { "day": 2, "season": "fall", "year": 2 },
+    "season": "fall",
+    "weather": "calm",
+    "year": 2
+  }
+}

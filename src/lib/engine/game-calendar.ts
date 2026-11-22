@@ -1,5 +1,5 @@
 /** The game's calendar, as saves record it: seconds since the first morning of the first year. */
-import { seasonFromOrdinal } from "#lib/engine/domain-primitives.js";
+import { seasonFromOrdinal, seasonOrdinal } from "#lib/engine/domain-primitives.js";
 
 import type { Season } from "#lib/types/tracker-data.js";
 
@@ -15,6 +15,18 @@ export interface GameDate {
   season: Season;
   /** From 1. */
   year: number;
+}
+
+export function gameDayOfYear({ day, season }: Pick<GameDate, "day" | "season">): number {
+  return seasonOrdinal(season) * DAYS_PER_SEASON + day;
+}
+
+export function gameDaysBetween(from: GameDate, to: GameDate): number {
+  return (
+    (to.year - from.year) * DAYS_PER_SEASON * SEASONS_PER_YEAR +
+    gameDayOfYear(to) -
+    gameDayOfYear(from)
+  );
 }
 
 /** The date `seconds` falls on. */

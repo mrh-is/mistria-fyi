@@ -890,6 +890,28 @@
   },
   {
     "translations": {
+      "en": "Available quests",
+      "ja": "受けられるクエスト",
+      "zh-Hans": "可接任务",
+      "zh-Hant": "可接任務",
+      "es": "Misiones disponibles",
+      "fr": "Quêtes disponibles",
+      "ko": "받을 수 있는 퀘스트",
+      "ru": "Доступные задания"
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Back",
       "ja": "背中",
       "zh-Hans": "背部",
@@ -1312,6 +1334,12 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
         "refs": [
           null
         ]
@@ -2586,6 +2614,28 @@
   },
   {
     "translations": {
+      "en": "Day",
+      "ja": "日",
+      "zh-Hans": "日期",
+      "zh-Hant": "日期",
+      "es": "Día",
+      "fr": "Jour",
+      "ko": "일",
+      "ru": "День"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/clock-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Decrease renown",
       "ja": "名声を下げる",
       "zh-Hans": "降低声望",
@@ -2703,6 +2753,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -2723,6 +2779,13 @@
       {
         "file": "src/lib/data/source-filters.ts",
         "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -3445,6 +3508,12 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
         "refs": [
           null
         ]
@@ -5493,6 +5562,28 @@
   },
   {
     "translations": {
+      "en": "No open places to list.",
+      "ja": "今行ける場所はありません。",
+      "zh-Hans": "暂时没有可去的地方。",
+      "zh-Hant": "暫時沒有可去的地方。",
+      "es": "No hay lugares disponibles.",
+      "fr": "Aucun lieu disponible pour le moment.",
+      "ko": "지금 갈 만한 곳이 없어요.",
+      "ru": "Пока нет доступных мест."
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "No types",
       "ja": "種類なし",
       "zh-Hans": "未选类型",
@@ -6185,6 +6276,28 @@
   },
   {
     "translations": {
+      "en": "Pick a day to see seasonal places.",
+      "ja": "日付を選ぶと、季節に応じた場所が表示されます。",
+      "zh-Hans": "选择日期，即可查看随季节变化的地点。",
+      "zh-Hant": "選擇日期，即可查看隨季節變化的地點。",
+      "es": "Elige un día para ver los lugares de temporada.",
+      "fr": "Choisissez un jour pour voir les lieux de saison.",
+      "ko": "날짜를 선택하면 계절에 맞는 장소가 표시돼요.",
+      "ru": "Выберите день, чтобы увидеть сезонные места."
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Pick an item to report",
       "ja": "報告する項目を選択",
       "zh-Hans": "选择要报告的项目",
@@ -6360,6 +6473,12 @@
       },
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/routes/todays-places.svelte",
         "refs": [
           null
         ]
@@ -7633,6 +7752,63 @@
         "file": "src/lib/presentation/merge-labels.ts",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "See {0} place",
+        "All {0} places"
+      ],
+      "ja": [
+        "全{0}か所を見る"
+      ],
+      "zh-Hans": [
+        "查看全部 {0} 个地点"
+      ],
+      "zh-Hant": [
+        "查看全部 {0} 個地點"
+      ],
+      "es": [
+        "Ver {0} lugar",
+        "Los {0} lugares",
+        "Los {0} lugares"
+      ],
+      "fr": [
+        "Voir {0} lieu",
+        "Voir les {0} lieux",
+        "Voir les {0} lieux"
+      ],
+      "ko": [
+        "장소 {0}곳 모두 보기"
+      ],
+      "ru": [
+        "Посмотреть {0} место",
+        "Посмотреть все {0} места",
+        "Посмотреть все {0} мест",
+        "Посмотреть все {0} места"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "placeCount"
+              ],
+              [
+                "0",
+                "placeCount"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -9251,6 +9427,28 @@
   },
   {
     "translations": {
+      "en": "Unknown day",
+      "ja": "日付不明",
+      "zh-Hans": "日期未知",
+      "zh-Hant": "日期未知",
+      "es": "Día desconocido",
+      "fr": "Jour inconnu",
+      "ko": "날짜 모름",
+      "ru": "День неизвестен"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/clock-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Unlocks",
       "ja": "解放",
       "zh-Hans": "解锁",
@@ -10322,6 +10520,28 @@
   },
   {
     "translations": {
+      "en": "Year",
+      "ja": "年目",
+      "zh-Hans": "年份",
+      "zh-Hant": "年份",
+      "es": "Año",
+      "fr": "Année",
+      "ko": "연차",
+      "ru": "Год"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/clock-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Yep, same farm",
       "ja": "はい、同じ農場です",
       "zh-Hans": "是的，同一个农场",
@@ -11275,6 +11495,63 @@
         "file": "src/lib/components/ledger/ledger-row.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "in {0} place",
+        "in {0} places"
+      ],
+      "ja": [
+        "{0}か所で"
+      ],
+      "zh-Hans": [
+        "在 {0} 个地点"
+      ],
+      "zh-Hant": [
+        "在 {0} 個地點"
+      ],
+      "es": [
+        "en {0} lugar",
+        "en {0} lugares",
+        "en {0} lugares"
+      ],
+      "fr": [
+        "dans {0} lieu",
+        "dans {0} lieux",
+        "dans {0} lieux"
+      ],
+      "ko": [
+        "{0}곳에서"
+      ],
+      "ru": [
+        "в {0} месте",
+        "в {0} местах",
+        "в {0} местах",
+        "в {0} местах"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "placeCount"
+              ],
+              [
+                "0",
+                "placeCount"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -12486,6 +12763,71 @@
   {
     "translations": {
       "en": [
+        "{0} thing {1}, with nothing known in the way",
+        "{0} things {1}, with nothing known in the way"
+      ],
+      "ja": [
+        "{1}できることが{0}件（確認できた制限なし）"
+      ],
+      "zh-Hans": [
+        "{1}有 {0} 件事，暂无已知限制"
+      ],
+      "zh-Hant": [
+        "{1}有 {0} 件事，暫無已知限制"
+      ],
+      "es": [
+        "{0} cosa {1}, sin obstáculos conocidos",
+        "{0} cosas {1}, sin obstáculos conocidos",
+        "{0} cosas {1}, sin obstáculos conocidos"
+      ],
+      "fr": [
+        "{0} activité {1}, sans obstacle connu",
+        "{0} activités {1}, sans obstacle connu",
+        "{0} activités {1}, sans obstacle connu"
+      ],
+      "ko": [
+        "{1}할 일 {0}개 (알려진 제한 없음)"
+      ],
+      "ru": [
+        "{0} дело {1}, без известных препятствий",
+        "{0} дела {1}, без известных препятствий",
+        "{0} дел {1}, без известных препятствий",
+        "{0} дела {1}, без известных препятствий"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/routes/todays-places.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "number"
+              ],
+              [
+                "1",
+                "where"
+              ],
+              [
+                "0",
+                "number"
+              ],
+              [
+                "1",
+                "where"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
         "{0} to do",
         "{0} to do"
       ],
@@ -12531,23 +12873,6 @@
               [
                 "0",
                 "count"
-              ]
-            ]
-          }
-        ]
-      },
-      {
-        "file": "src/routes/todays-places.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "formatted"
-              ],
-              [
-                "0",
-                "formatted"
               ]
             ]
           }

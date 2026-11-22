@@ -24,7 +24,7 @@ export const prerender = true;
 export const load: LayoutLoad = async ({ route, url }) => {
   const locale = localeFromPath(url.pathname) ?? getLocale();
   const usesAcquisitionCopy =
-    route.id === "/everything" || route.id?.startsWith("/(category)/") === true;
+    route.id === "/" || route.id === "/everything" || route.id?.startsWith("/(category)/") === true;
   const [, catalogLoadFailed] = await Promise.all([
     loadNames(locale, ["ui"]),
     Promise.all([
