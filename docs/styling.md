@@ -110,10 +110,10 @@ silhouette: “out of season” isn’t “never discovered”.
 
 ### Meters
 
-Specified, not built yet. A meter’s frame is printed, and only its fill is the player’s. The fill is
-the category color with the pencil filter, and the count beside it is in the hand face. Ticks stay
-faint & unlabeled, so the fill is the loudest thing on the meter. Each meter shows its direction
-before there’s any progress, so an empty one already says which way it runs:
+A meter’s frame is printed, and only its fill is the player’s. The fill is the category color with
+the pencil filter, and the count beside it is in the hand face. Minor ticks stay faint & unlabeled.
+Each meter shows its direction before there’s any progress, so an empty one already says which way
+it runs:
 
 - **Skills** is a horizontal ruler (`--color-meter-rule`, `--size-meter-rule`, the
   `--size-meter-tick*` sizes): a heavy stop at zero and an arrow at the open end.
@@ -127,6 +127,10 @@ before there’s any progress, so an empty one already says which way it runs:
 
 The options sheet ([`token-options.html`](design/field-guide/token-options.html), section 5) draws
 each one, empty & partway, in both themes.
+
+Skills attaches `meterInput` to the focusable slider. The attachment previews a drag and commits
+once on release. Use `showMeterUndo` after the hand edit applies so rapid changes to the same meter
+share an Undo. Give the slider and step buttons 44 px targets on coarse pointers.
 
 ### Category colors
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import AnimalsContent from "#lib/components/animals-content.svelte";
+  import CategoryLedger from "#lib/components/ledger/category-ledger.svelte";
 
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>
 
-<AnimalsContent locale={data.locale} />
+<CategoryLedger category="animals" locale={data.locale} />

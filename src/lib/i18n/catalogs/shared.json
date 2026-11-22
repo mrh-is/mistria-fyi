@@ -779,6 +779,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/mount-appearances-section.svelte",
         "refs": [
           null
@@ -924,6 +930,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -1182,6 +1194,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -1340,6 +1358,28 @@
       },
       {
         "file": "src/routes/todays-places.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Bundle",
+      "ja": "詰め合わせ",
+      "zh-Hans": "礼包",
+      "zh-Hant": "組合包",
+      "es": "Lote",
+      "fr": "Lot",
+      "ko": "묶음",
+      "ru": "Набор"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -2255,6 +2295,28 @@
   },
   {
     "translations": {
+      "en": "Colors",
+      "ja": "毛色",
+      "zh-Hans": "毛色",
+      "zh-Hant": "毛色",
+      "es": "Colores",
+      "fr": "Couleurs",
+      "ko": "색상",
+      "ru": "Окрасы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Comes back by waiting, {0}.",
       "ja": "{0}まで待つと、また手に入ります。",
       "zh-Hans": "等到{0}就能再次获得。",
@@ -2387,6 +2449,12 @@
     "references": [
       {
         "file": "src/lib/components/animal-cosmetics-section.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -2927,43 +2995,6 @@
   },
   {
     "translations": {
-      "en": "Edit {0} level, currently {1} of {2}",
-      "ja": "{0}レベルを編集、現在{2}中{1}",
-      "zh-Hans": "编辑{0}等级，当前为{1}/{2}级",
-      "zh-Hant": "編輯{0}等級，目前為{1}級（共{2}級）",
-      "es": "Editar nivel de {0}, actualmente {1} de {2}",
-      "fr": "Modifier le niveau de {0}, actuellement {1} sur {2}",
-      "ko": "{0} 레벨 편집, 현재 {2} 중 {1}",
-      "ru": "Изменить уровень «{0}», сейчас {1} из {2}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ],
-              [
-                "1",
-                "level"
-              ],
-              [
-                "2",
-                "MAX_SKILL_LEVEL"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Email me back",
       "ja": "メールで返信希望",
       "zh-Hans": "发邮件回复我",
@@ -3151,6 +3182,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -3212,6 +3249,12 @@
       "ru": "Задания на доставку"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/quests-content.svelte",
         "refs": [
@@ -3282,6 +3325,63 @@
         "file": "src/lib/components/sync/courier-note.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "Filter, {0} source off",
+        "Filter, {0} sources off"
+      ],
+      "ja": [
+        "フィルター：入手先{0}件を非表示"
+      ],
+      "zh-Hans": [
+        "筛选：已隐藏 {0} 类来源"
+      ],
+      "zh-Hant": [
+        "篩選：已隱藏 {0} 類來源"
+      ],
+      "es": [
+        "Filtro: {0} fuente oculta",
+        "Filtro: {0} fuentes ocultas",
+        "Filtro: {0} fuentes ocultas"
+      ],
+      "fr": [
+        "Filtre : {0} source masquée",
+        "Filtre : {0} sources masquées",
+        "Filtre : {0} sources masquées"
+      ],
+      "ko": [
+        "필터: 획득처 {0}개 숨김"
+      ],
+      "ru": [
+        "Фильтр: скрыт {0} источник",
+        "Фильтр: скрыто {0} источника",
+        "Фильтр: скрыто {0} источников",
+        "Фильтр: скрыто {0} источника"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3805,6 +3905,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -3882,6 +3988,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -4588,6 +4700,35 @@
   },
   {
     "translations": {
+      "en": "Learned from {0}",
+      "ja": "入手先：{0}",
+      "zh-Hans": "学习途径：{0}",
+      "zh-Hant": "學習途徑：{0}",
+      "es": "Se aprende en {0}",
+      "fr": "S’apprend auprès de {0}",
+      "ko": "습득처: {0}",
+      "ru": "Источник рецепта: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "origins"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Let us read it",
       "ja": "読み込みを許可",
       "zh-Hans": "允许读取",
@@ -4666,28 +4807,6 @@
     "references": [
       {
         "file": "src/lib/components/install-nudge-dialog.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Level",
-      "ja": "レベル",
-      "zh-Hans": "等级",
-      "zh-Hant": "等級",
-      "es": "Nivel",
-      "fr": "Niveau",
-      "ko": "레벨",
-      "ru": "Уровень"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
         "refs": [
           null
         ]
@@ -6121,6 +6240,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/mount-appearances-section.svelte",
         "refs": [
           null
@@ -6184,6 +6309,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/pet-collectibles-section.svelte",
         "refs": [
           null
@@ -6234,6 +6365,12 @@
       "ru": "Скины питомца"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/pet-collectibles-section.svelte",
         "refs": [
@@ -6372,6 +6509,28 @@
       "fr": "Entrées précédentes",
       "ko": "이전 항목",
       "ru": "Предыдущие записи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Price",
+      "ja": "価格",
+      "zh-Hans": "价格",
+      "zh-Hant": "價格",
+      "es": "Precio",
+      "fr": "Prix",
+      "ko": "가격",
+      "ru": "Цена"
     },
     "references": [
       {
@@ -6573,6 +6732,28 @@
   },
   {
     "translations": {
+      "en": "Reached",
+      "ja": "到達済み",
+      "zh-Hans": "已达到",
+      "zh-Hant": "已達到",
+      "es": "Alcanzado",
+      "fr": "Atteint",
+      "ko": "도달함",
+      "ru": "Уровень достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reading your save file…",
       "ja": "セーブデータを読み込み中…",
       "zh-Hans": "正在读取你的存档…",
@@ -6686,6 +6867,28 @@
     "references": [
       {
         "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Record perk purchases in Everything",
+      "ja": "「すべて」で購入したスキルボーナスを記録",
+      "zh-Hans": "在“全部”中记录已购买的技能特长",
+      "zh-Hant": "在「全部」中記錄已購買的技能特長",
+      "es": "Registrar los dones comprados en «Todo»",
+      "fr": "Enregistrer les bonus achetés dans « Tout »",
+      "ko": "‘전체’에서 구매한 스킬 특성 기록",
+      "ru": "Отметить купленные навыки в разделе «Всё»"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skills-content.svelte",
         "refs": [
           null
         ]
@@ -7061,6 +7264,28 @@
   },
   {
     "translations": {
+      "en": "Reveal section",
+      "ja": "項目を表示",
+      "zh-Hans": "显示章节",
+      "zh-Hant": "顯示章節",
+      "es": "Mostrar sección",
+      "fr": "Afficher la section",
+      "ko": "섹션 보기",
+      "ru": "Показать раздел"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/confirm-spoiler-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reveal spoiler",
       "ja": "ネタバレを表示",
       "zh-Hans": "显示剧透",
@@ -7073,6 +7298,50 @@
     "references": [
       {
         "file": "src/lib/components/spoiler.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reveal spoilered section",
+      "ja": "ネタバレのある項目を表示",
+      "zh-Hans": "显示含剧透的章节",
+      "zh-Hant": "顯示含劇透的章節",
+      "es": "Mostrar sección con spoilers",
+      "fr": "Afficher la section avec divulgâcheurs",
+      "ko": "스포일러가 포함된 섹션 보기",
+      "ru": "Показать раздел со спойлерами"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reveal this section?",
+      "ja": "この項目を表示しますか？",
+      "zh-Hans": "要显示这一章节吗？",
+      "zh-Hant": "要顯示這一章節嗎？",
+      "es": "¿Mostrar esta sección?",
+      "fr": "Afficher cette section ?",
+      "ko": "이 섹션을 볼까요?",
+      "ru": "Показать этот раздел?"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/confirm-spoiler-dialog.svelte",
         "refs": [
           null
         ]
@@ -7759,6 +8028,28 @@
   },
   {
     "translations": {
+      "en": "Sections",
+      "ja": "項目一覧",
+      "zh-Hans": "章节",
+      "zh-Hant": "章節",
+      "es": "Secciones",
+      "fr": "Sections",
+      "ko": "섹션",
+      "ru": "Разделы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": [
         "See {0} place",
         "All {0} places"
@@ -7973,6 +8264,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -8353,6 +8650,28 @@
         "file": "src/lib/components/tracker-row.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Spoilered perk",
+      "ja": "未公開のスキルボーナス",
+      "zh-Hans": "隐藏的技能特长",
+      "zh-Hant": "隱藏的技能特長",
+      "es": "Don de habilidad oculto",
+      "fr": "Bonus de compétence masqué",
+      "ko": "숨겨진 스킬 특성",
+      "ru": "Скрытый навык"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
+        "refs": [
           null
         ]
       }
@@ -9019,6 +9338,28 @@
   },
   {
     "translations": {
+      "en": "This section contains things you haven’t reached yet.",
+      "ja": "この項目には、まだたどり着いていない内容が含まれています。",
+      "zh-Hans": "这一章节包含你尚未解锁的内容。",
+      "zh-Hant": "這一章節包含你尚未解鎖的內容。",
+      "es": "Esta sección contiene cosas que aún no has descubierto.",
+      "fr": "Cette section contient des éléments que vous n’avez pas encore découverts.",
+      "ko": "이 섹션에는 아직 발견하지 못한 내용이 있어요.",
+      "ru": "В этом разделе есть то, что вам еще не открылось."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/confirm-spoiler-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "This will reveal hidden content throughout the guide.",
       "ja": "ガイド全体の非表示コンテンツが表示されるようになります。",
       "zh-Hans": "这将显示指南中所有隐藏的内容。",
@@ -9097,6 +9438,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -9460,6 +9807,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Unreached",
+      "ja": "未到達",
+      "zh-Hans": "尚未达到",
+      "zh-Hant": "尚未達到",
+      "es": "Aún no alcanzado",
+      "fr": "Pas encore atteint",
+      "ko": "아직 도달하지 않음",
+      "ru": "Уровень ещё не достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
         "refs": [
           null
         ]
@@ -10421,6 +10790,28 @@
     "references": [
       {
         "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Wing",
+      "ja": "展示棟",
+      "zh-Hans": "展馆",
+      "zh-Hant": "展館",
+      "es": "Ala",
+      "fr": "Aile",
+      "ko": "전시관",
+      "ru": "Крыло"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -11895,6 +12286,115 @@
   },
   {
     "translations": {
+      "en": [
+        "{0} / {1} perk",
+        "{0} / {1} perks"
+      ],
+      "ja": [
+        "スキルボーナス {0} / {1}"
+      ],
+      "zh-Hans": [
+        "技能特长 {0} / {1}"
+      ],
+      "zh-Hant": [
+        "技能特長 {0} / {1}"
+      ],
+      "es": [
+        "{0} / {1} don",
+        "{0} / {1} dones",
+        "{0} / {1} dones"
+      ],
+      "fr": [
+        "{0} / {1} bonus",
+        "{0} / {1} bonus",
+        "{0} / {1} bonus"
+      ],
+      "ko": [
+        "스킬 특성 {0} / {1}"
+      ],
+      "ru": [
+        "{0} / {1} навык",
+        "{0} / {1} навыка",
+        "{0} / {1} навыков",
+        "{0} / {1} навыка"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ],
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} / {1} perk reached",
+        "{0} / {1} perks reached"
+      ],
+      "ja": ["到達したスキルボーナス {0} / {1}"],
+      "zh-Hans": ["已达到 {0} / {1} 项技能特长"],
+      "zh-Hant": ["已達到 {0} / {1} 項技能特長"],
+      "es": ["{0} / {1} don alcanzado", "{0} / {1} dones alcanzados", "{0} / {1} dones alcanzados"],
+      "fr": ["{0} / {1} bonus accessible", "{0} / {1} bonus accessibles", "{0} / {1} bonus accessibles"],
+      "ko": ["도달한 스킬 특성 {0} / {1}"],
+      "ru": ["Доступен {0} / {1} навык", "Доступно {0} / {1} навыка", "Доступно {0} / {1} навыков", "Доступно {0} / {1} навыка"]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ],
+              [
+                "0",
+                "formattedCount"
+              ],
+              [
+                "1",
+                "formattedTotal"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} / {1} unlocked",
       "ja": "{0}/{1} 解放済み",
       "zh-Hans": "已解锁 {0}/{1}",
@@ -11999,14 +12499,6 @@
       {
         "file": "src/lib/components/skill-record.svelte",
         "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "name"
-              ]
-            ]
-          },
           {
             "placeholders": [
               [
@@ -12156,39 +12648,6 @@
               [
                 "0",
                 "locked"
-              ]
-            ]
-          }
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "{0} of {1}",
-      "ja": "{1}中{0}",
-      "zh-Hans": "{0}/{1}级",
-      "zh-Hant": "{0}級（共{1}級）",
-      "es": "{0} de {1}",
-      "fr": "{0} sur {1}",
-      "ko": "{1} 중 {0}",
-      "ru": "{0} из {1}"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/skill-record.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "level"
-              ],
-              [
-                "1",
-                "MAX_SKILL_LEVEL"
               ]
             ]
           }
@@ -12985,6 +13444,39 @@
   },
   {
     "translations": {
+      "en": "{0} · Lv {1}",
+      "ja": "{0}・Lv {1}",
+      "zh-Hans": "{0} · {1}级",
+      "zh-Hant": "{0} · {1}級",
+      "es": "{0} · Niv. {1}",
+      "fr": "{0} · Niv. {1}",
+      "ko": "{0} · 레벨 {1}",
+      "ru": "{0} · Ур. {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-tier-prints.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "tierName"
+              ],
+              [
+                "1",
+                "threshold"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} · {1}",
       "ja": "{0}・{1}",
       "zh-Hans": "{0} · {1}",
@@ -13007,6 +13499,43 @@
               [
                 "1",
                 "rewardRecipeName"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}, level {1} of {2}",
+      "ja": "{0}、レベル{1}（最大{2}）",
+      "zh-Hans": "{0}，当前{1}级，最高{2}级",
+      "zh-Hant": "{0}，目前{1}級，最高{2}級",
+      "es": "{0}, nivel {1} de {2}",
+      "fr": "{0}, niveau {1} sur {2}",
+      "ko": "{0}, 현재 레벨 {1}, 최대 레벨 {2}",
+      "ru": "{0}, уровень {1} из {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/skill-record.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "formattedLevel"
+              ],
+              [
+                "2",
+                "formattedMax"
               ]
             ]
           }

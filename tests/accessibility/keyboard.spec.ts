@@ -216,17 +216,20 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(initialT).toHaveAttribute("data-scrub-target", "false");
   });
 
-  test("specialized numeric records support direct keyboard editing", async ({ page }) => {
+  test("skill rulers support keyboard editing", async ({ page }) => {
     await gotoApplication(page, "/skills");
-    await page
-      .getByRole("button", { name: /Edit .+ level, currently 0 of 60/ })
-      .first()
-      .press("Enter");
-    const skillInput = page.getByRole("spinbutton").first();
-    await skillInput.fill("22");
-    await skillInput.press("Enter");
-    await expect(page.getByText("22 / 60").first()).toBeVisible();
+    const ruler = page.getByRole("slider", { name: "Archaeology level" });
+    await ruler.press("PageUp");
+    await ruler.press("ArrowRight");
+    await expect(ruler).toHaveAttribute("aria-valuenow", "16");
+    await ruler.press("End");
+    await expect(ruler).toHaveAttribute("aria-valuetext", "Archaeology, level 60 of 60");
+    await ruler.press("Home");
+    await expect(ruler).toHaveAttribute("aria-valuenow", "0");
+    await expect(ruler).toBeFocused();
+  });
 
+  test("specialized numeric records support direct keyboard editing", async ({ page }) => {
     await gotoApplication(page, "/mines");
     const floorInput = page.getByRole("spinbutton", { name: "Mine floor" });
     await floorInput.fill("19");

@@ -55,7 +55,7 @@ function settingsButton() {
 }
 
 function visibilityButton() {
-  return screen.getByRole("button", { name: "Visibility filters" });
+  return screen.getByRole("button", { name: /^(Visibility filters|Filter, \d+ sources? off)$/ });
 }
 
 beforeEach(() => {
@@ -403,6 +403,13 @@ describe("ToolbarFooter filters", () => {
 
     await waitFor(() => {
       expect(visibilityButton()).toHaveClass("floating-tool--filtered");
+      expect(visibilityButton()).toHaveAccessibleName("Filter, 1 source off");
+      expect(visibilityButton().querySelector(".filter-tool__dot")).toBeInTheDocument();
+    });
+    toolbarState.resetSourceFilters();
+    await waitFor(() => {
+      expect(visibilityButton()).toHaveAccessibleName("Visibility filters");
+      expect(visibilityButton().querySelector(".filter-tool__dot")).toBeNull();
     });
   });
 });

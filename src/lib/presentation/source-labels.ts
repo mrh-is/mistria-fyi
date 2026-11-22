@@ -3,12 +3,13 @@ import { nameCollator } from "#lib/data/names.js";
 import { sourceFilterLabel } from "#lib/data/source-filters.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { inLocale } from "#lib/i18n/locale-runtime.js";
-import { buildSourceSegments } from "#lib/sources/source-segments.js";
+import { buildCraftingStationLabel, buildSourceSegments } from "#lib/sources/source-segments.js";
 
 import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { SourceSection, SourceTypeGroup } from "#lib/presentation/source-groups.js";
 import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
+import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 export function sourceTypeLabel(group: SourceTypeGroup, locale: LocaleCode): string {
@@ -23,16 +24,24 @@ function formatSourceTypeLabel(group: SourceTypeGroup, locale: LocaleCode): stri
   return sourceFilterLabel(group, locale);
 }
 
-/** Names come from the same localized tables & gated sentences as acquisition cards. */
-export function sourceSectionLabel(
-  section: SourceSection<SourceChecklistRow>,
-  lookups: SegmentLookups,
-  progression: UserProgressionState,
-): { name: string; spoilered: boolean } {
-  const { source } = section;
-  if (!source) {
-    return { name: sourceTypeLabel("progress", lookups.locale), spoilered: false };
+/** The place named by a source, using its first location or water type when it has several. */
+export function sourcePlaceName(source: Source, lookups: SegmentLookups): string | undefined {
+  if (source.type === "recipe") return buildCraftingStationLabel(source.recipeId, lookups);
+  if (source.type === "station") return lookups.stationNames[source.stationId];
+  if (source.type === "animal_product" && source.animalId) {
+    return lookups.animalNames[source.animalId];
   }
+  if (
+    source.type === "secret_chest" ||
+    (source.type === "date_inspiration_drop" && "locationId" in source)
+  ) {
+    return lookups.locationNames[source.locationId];
+  }
+  if (source.type === "museum_donation") return lookups.museumWingNames[source.wingId];
+  return namedSourceInstance(source, lookups);
+}
+
+function namedSourceInstance(source: Source, lookups: SegmentLookups): string | undefined {
   let name: string | undefined;
   if ("storeId" in source && source.type !== "festival") {
     name = lookups.stores[source.storeId]?.name;
@@ -51,6 +60,20 @@ export function sourceSectionLabel(
   } else if (source.type === "spouseGift" || source.type === "proposal") {
     name = lookups.villagerNames[source.villagerId];
   }
+  return name;
+}
+
+/** Names come from the same localized tables & gated sentences as acquisition cards. */
+export function sourceSectionLabel(
+  section: SourceSection<SourceChecklistRow>,
+  lookups: SegmentLookups,
+  progression: UserProgressionState,
+): { name: string; spoilered: boolean } {
+  const { source } = section;
+  if (!source) {
+    return { name: sourceTypeLabel("progress", lookups.locale), spoilered: false };
+  }
+  const name = namedSourceInstance(source, lookups);
   if (name !== undefined) return { name, spoilered: section.spoilered };
 
   let spoilered = section.spoilered;

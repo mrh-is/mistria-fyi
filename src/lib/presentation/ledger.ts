@@ -22,6 +22,40 @@ export function ledgerSourceFamily(source: Source): SourceFilterId | undefined {
   return sourceFamilies.get(source.type);
 }
 
+export type LedgerColumn = "bundle" | "price" | "wing" | SourceFilterId;
+
+export function ledgerColumnFamily(column: LedgerColumn): SourceFilterId {
+  if (column === "wing") return "museum";
+  if (column === "bundle") return "stores";
+  if (column === "price") return "offerings";
+  return column;
+}
+
+export function ledgerColumn(source: Source, details: boolean): LedgerColumn | undefined {
+  if (details) {
+    if (source.type === "museum_donation") return "wing";
+    if (source.type === "scroll_bundle") return "bundle";
+    if ("cost" in source) return "price";
+  }
+  return ledgerSourceFamily(source);
+}
+
+/** Prefer the first named source available today, with an ordered fallback for waiting rows. */
+export function ledgerFirstPlace(
+  sources: readonly Source[],
+  available: (source: Source) => boolean,
+  place: (source: Source) => string | undefined,
+): undefined | { name: string; source: Source } {
+  let first: undefined | { name: string; source: Source };
+  for (const source of sources) {
+    const name = place(source);
+    if (!name) continue;
+    if (available(source)) return { name, source };
+    first ??= { name, source };
+  }
+  return first;
+}
+
 export interface LedgerPlacement {
   allSources: readonly Source[];
   completed: boolean;

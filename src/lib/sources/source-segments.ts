@@ -105,6 +105,14 @@ const STORE_ACTION_CLAUSES: Record<StoreUpgradeAction, LocalizedLabel> = {
 
 const SLOT_MARKER = /(\d+)/;
 
+export function buildCraftingStationLabel(
+  recipeId: keyof SegmentLookups["recipeStations"],
+  lookups: SegmentLookups,
+): string {
+  const stationId = requireEntry(lookups.recipeStations, recipeId, "recipeStations");
+  return inLocale(lookups.locale, CRAFTING_STATION_LABELS[stationId]);
+}
+
 export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups): Segments {
   return inLocale(lookups.locale, () => formatBiomeLabel(biomeId, lookups));
 }

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import MuseumContent from "#lib/components/museum-content.svelte";
+  import CategoryLedger from "#lib/components/ledger/category-ledger.svelte";
 
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>
 
-<MuseumContent locale={data.locale} />
+<CategoryLedger category="museum" locale={data.locale} />
