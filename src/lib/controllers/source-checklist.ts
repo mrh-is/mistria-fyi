@@ -42,11 +42,13 @@ const FACT_FIELDS = {
 /** One category row, with its original identity, presentation, & reversible store action. */
 export interface SourceChecklistRow extends SourceGroupRow {
   category: CategoryKey;
+  disabled?: boolean;
   /** The row's `factKey`, which picks its checkbox's mark. */
   fact: string;
   id: string;
   name: string;
   questState?: QuestState;
+  questType?: QuestType;
   reportCategory: ReportCategory;
   searchNames?: string[];
   /** Secondary words matched with the names, such as an almanac variant (“white window”). */
@@ -67,11 +69,19 @@ export function buildSourceChecklist(
   locale: LocaleCode,
   /** Decides each row's spoiler mask. Availability never reads it. */
   showSpoilers = false,
+  category?: CategoryKey,
 ): SourceChecklistRow[] {
-  return collectSourceRows(ctx, showSpoilers, locale).map(({ describe, ...row }) => {
-    if (!describe) throw new Error(`No checklist description for ${row.key}`);
-    return { ...row, ...describe(locale) };
-  });
+  return collectSourceRows(
+    ctx,
+    showSpoilers,
+    !category || category === "quests" ? locale : undefined,
+    category === "quests",
+  )
+    .filter((row) => category === undefined || row.category === category)
+    .map(({ describe, ...row }) => {
+      if (!describe) throw new Error(`No checklist description for ${row.key}`);
+      return { ...row, ...describe(locale) };
+    });
 }
 
 /** Home needs the same facts & placements without loading item names or acquisition messages. */
@@ -83,6 +93,7 @@ function collectSourceRows(
   ctx: ProgressContext,
   showSpoilers: boolean,
   questLocale?: LocaleCode,
+  includeCravingPlaceholder = false,
 ): SourceChecklistDraft[] {
   const rows: SourceChecklistDraft[] = [];
   function add(
@@ -344,6 +355,7 @@ function collectSourceRows(
         fact: factKey("questStates", questId),
         locked: !completed && questAvailability.get(questId) === false,
         questState,
+        questType,
         toggle: () => {
           const completion = userState.completeQuestWithRecipes(questId);
           return () => {
@@ -361,6 +373,23 @@ function collectSourceRows(
           addQuest(row.id, questType, row.sources, row.visibility, description);
         } else if (row.questId) {
           addQuest(row.questId, questType, [], undefined, description);
+        } else if (includeCravingPlaceholder) {
+          add(
+            "quests",
+            row.id,
+            () => description,
+            { sources: [] },
+            false,
+            "quest",
+            () => undefined,
+            {
+              disabled: true,
+              locked: true,
+              questType,
+              reportCategory: "craving-quest",
+              spoilered: true,
+            },
+          );
         }
       }
     }

@@ -9,12 +9,14 @@
   export type CheckboxState = "checked" | "obtained" | "unchecked";
 
   let {
+    disabled = false,
     fact,
     label,
     onclick,
     provenance,
     state,
   }: {
+    disabled?: boolean;
     /** The fact's key: it seeds the mark, and a quest's X takes two moments. */
     fact: string;
     label: string;
@@ -49,6 +51,7 @@
   class:tracker-checkbox--obtained={isObtained}
   type="button"
   aria-label={label}
+  {disabled}
   {onclick}
 >
   <svg class="tracker-checkbox__icon" viewBox="0 0 28 28" fill="none" aria-hidden="true">

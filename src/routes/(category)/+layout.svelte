@@ -23,7 +23,10 @@
 
   // The fraction ignores the filters. The bar's To do tint follows them, like the sections below.
   let progress = $derived(
-    getCategoryProgress(key, userState.progressContext, { showsSource: toolbarState.showsSource }),
+    getCategoryProgress(key, userState.progressContext, {
+      excludeSpoileredSections: !userState.state.showSpoilers,
+      showsSource: toolbarState.showsSource,
+    }),
   );
 </script>
 

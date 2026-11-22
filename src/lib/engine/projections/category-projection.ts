@@ -17,6 +17,8 @@ export interface CategoryProjection {
 
 /** Options every projection accepts. Categories may accept more, such as the almanac's filters. */
 export interface CategoryProjectionOptions {
+  /** Omit gated sections from the category ledger header, even after a local reveal. */
+  excludeSpoileredSections?: boolean;
   /** Flags rows whose visibility condition is unmet; omitted, no row is spoilered. */
   progressionState?: UserProgressionState;
   /** A page's source type filters; omitted, every source shows. */

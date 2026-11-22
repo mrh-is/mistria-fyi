@@ -12,12 +12,20 @@
   import SourceCard from "#lib/components/source-card.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
+  import { trackerData } from "#lib/data/index.js";
   import { sourceFilterLabel } from "#lib/data/source-filters.js";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
+  import { isSourceDoable, isSourceVisible } from "#lib/engine/availability.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import plural from "#lib/i18n/catalogs/plural.js";
-  import { ledgerCellText, ledgerSourceFamily } from "#lib/presentation/ledger.js";
+  import {
+    ledgerCellText,
+    ledgerColumn,
+    ledgerFirstPlace,
+    ledgerSourceFamily,
+  } from "#lib/presentation/ledger.js";
+  import { sourcePlaceName } from "#lib/presentation/source-labels.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -27,11 +35,10 @@
 
   import type { LedgerSpriteTreatment } from "#lib/components/ledger/ledger-sprite.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
-  import type { SourceFilterId } from "#lib/data/source-filters.js";
   import type { CategoryKey } from "#lib/engine/categories.js";
   import type { Shelf } from "#lib/engine/shelves.js";
   import type { ReportCategory } from "#lib/feedback/types.js";
-  import type { LedgerPlacement } from "#lib/presentation/ledger.js";
+  import type { LedgerColumn, LedgerPlacement } from "#lib/presentation/ledger.js";
   import type { SegmentLookups } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { Season } from "#lib/types/tracker-data.js";
@@ -41,6 +48,7 @@
     category,
     columns,
     completed,
+    disabled = false,
     discovery,
     fact,
     highlighted,
@@ -60,8 +68,9 @@
   }: {
     active?: boolean;
     category: CategoryKey;
-    columns: readonly SourceFilterId[];
+    columns: readonly LedgerColumn[];
     completed: boolean;
+    disabled?: boolean;
     discovery: boolean;
     fact: string;
     highlighted: boolean;
@@ -129,13 +138,13 @@
   });
   /** Each timetable column's text: the first shown source in that family, in plain words. */
   let cells = $derived(
-    columns.map((family) => {
+    columns.map((column) => {
       const source = placement.visibleSources.find(
         (candidate) =>
-          toolbarState.showsSource(candidate) && ledgerSourceFamily(candidate) === family,
+          toolbarState.showsSource(candidate) &&
+          ledgerColumn(candidate, section?.categoryDetails ?? false) === column,
       );
-      if (!source) return { family, present: false, source, text: undefined };
-      return { family, present: true, source, text: cellText(source) };
+      return { column, source, text: source ? timetableText(source) : undefined };
     }),
   );
 
@@ -143,6 +152,26 @@
     return ledgerCellText(buildSourceSegments(source, lookups), (condition) =>
       isConditionVisible(condition, userState.progressionState),
     );
+  }
+
+  function timetableText(source: Source): string | undefined {
+    const text = cellText(source);
+    if (!text || !section?.categoryDetails) return text;
+    if (source.type === "recipe" || source.type === "museum_donation") {
+      return sourcePlaceName(source, lookups);
+    }
+    if (source.type === "scroll_bundle") return lookups.itemNames[source.bundleItemId];
+    if ("cost" in source) return formatNumber(source.cost, lookups.locale);
+    return text;
+  }
+
+  function namedPlace(source: Source): string | undefined {
+    if (!isSourceVisible(source, userState.progressionState)) return undefined;
+    return sourcePlaceName(source, lookups);
+  }
+
+  function availableToday(source: Source): boolean {
+    return isSourceDoable(source, userState.progressContext);
   }
 
   /*
@@ -158,8 +187,37 @@
     ),
   );
   let tableShown = $derived(wideTable.current && columns.length > 0);
-  let blank = $derived(cells.every(({ present }) => !present));
+  let blank = $derived(cells.every(({ source }) => !source));
   let firstFamily = $derived(firstSource ? ledgerSourceFamily(firstSource) : undefined);
+  let phonePlace = $derived.by(() => {
+    if (tableShown || !section?.categoryDetails || covered) return undefined;
+    return (
+      ledgerFirstPlace(sources, availableToday, namedPlace) ??
+      ledgerFirstPlace(
+        placement.visibleSources.filter(toolbarState.showsSource),
+        availableToday,
+        cellText,
+      )
+    );
+  });
+  let recipeOrigins = $derived(
+    section?.categoryDetails
+      ? [
+          ...new Set(
+            sources.flatMap((source) => {
+              if (source.type !== "recipe") return [];
+              const recipe = trackerData.recipes[source.recipeId];
+              if (!isConditionVisible(recipe.visibility, userState.progressionState)) return [];
+              return recipe.sources.flatMap((origin) =>
+                isSourceVisible(origin, userState.progressionState)
+                  ? (namedPlace(origin) ?? cellText(origin) ?? [])
+                  : [],
+              );
+            }),
+          ),
+        ]
+      : [],
+  );
 
   /*
    * The opened sheet holds what the cells can't: sources without a column, ones with seasons or
@@ -168,8 +226,13 @@
   let inCells = $derived.by(() => {
     // A cell whose words are behind a spoiler prints only an icon, so its source stays in the sheet.
     if (tableShown) {
-      return new Set(cells.flatMap(({ source, text }) => (source && text ? [source] : [])));
+      return new Set(
+        cells.flatMap(({ source, text }) =>
+          source && text && text === cellText(source) ? [source] : [],
+        ),
+      );
     }
+    if (section?.categoryDetails) return new Set<Source>();
     // Without the table, the line under the name prints the first source.
     // A source whose words are still behind a spoiler shows only its family there, so it stays.
     return new Set(firstSource && cellText(firstSource) ? [firstSource] : []);
@@ -191,7 +254,9 @@
   let sheetHasContent = $derived(
     placement.visibleSources.some(
       (source) => toolbarState.showsSource(source) && sheetHolds(source),
-    ) || waits,
+    ) ||
+      waits ||
+      recipeOrigins.length > 0,
   );
   let opensSources = $derived(
     active && !covered && placement.allSources.length > 0 && sheetHasContent,
@@ -248,6 +313,7 @@
   <div class="line" class:opens={opensSources} onclick={openFromLine}>
     {#if active}
       <TrackerCheckbox
+        {disabled}
         {fact}
         provenance={userState.provenanceOf(fact)}
         state={checkState}
@@ -293,7 +359,11 @@
       {:else}
         {@render label()}
       {/if}
-      {#if !covered && firstSource}
+      {#if !covered && phonePlace}
+        <span class="where place">
+          <Icon.Source type={phonePlace.source.type} class="size-3.5 shrink-0" />{phonePlace.name}
+        </span>
+      {:else if !covered && firstSource && (tableShown || !section?.categoryDetails)}
         {@const text = cellText(firstSource)}
         {#if !tableShown && (text || firstFamily)}
           <span class="where"
@@ -312,12 +382,9 @@
         {/if}
       {/if}
     </div>
-    {#each cells as { family, text, present }, column (family)}
-      {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
-      <span class="cell" class:first={column === 0} aria-hidden="true">
-        {#if present}
-          {#if text}{text}{:else}<FamilyIcon class="size-4" />{/if}
-        {/if}
+    {#each cells as { column, text }, i (column)}
+      <span class="cell" class:first={i === 0} aria-hidden="true">
+        {text}
       </span>
     {/each}
     {#if discovery}
@@ -354,6 +421,10 @@
                 sourceSegments={sheetSources.map((source) => buildSourceSegments(source, lookups))}
                 sourceBadges={sheetSources.map((source) => badgesOf(source))}
               />
+            {/if}
+            {#if recipeOrigins.length > 0}
+              {@const origins = new Intl.ListFormat(lookups.locale).format(recipeOrigins)}
+              <p class="recipe-origin">Learned from {origins}</p>
             {/if}
           {/if}
         </div>
@@ -495,6 +566,17 @@
     font-family: var(--font-annotation);
     font-size: var(--text-xs);
     line-height: 1.25;
+  }
+
+  .place {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .recipe-origin {
+    margin-block-start: 0.25rem;
+    font-family: var(--font-annotation);
   }
 
   .also {
