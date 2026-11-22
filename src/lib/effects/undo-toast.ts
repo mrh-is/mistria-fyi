@@ -19,6 +19,8 @@ export const VISIBLE_TOASTS = 3;
  * for a name replaces that name's toast instead of stacking beside it.
  */
 const undoToasts = new Map<string, number | string>();
+const meterEdits = new Map<string, { after: number; before: number; time: number }>();
+const METER_UNDO_WINDOW_MS = 1500;
 
 /** The toast copy for a quest toggle that landed on `state`, unlocking `newlyAdded` recipes. */
 export function questToastMessage(
@@ -107,6 +109,58 @@ function undoMessage(itemName: string, completed: boolean, covered: boolean): st
   return completed ? `Checked off “${itemName}”` : `Unchecked “${itemName}”`;
 }
 
+/** Combine successive changes to one meter into the shell's existing undo surface. */
+export function showMeterUndo(
+  {
+    after,
+    before,
+    id,
+    locale,
+    name,
+    undo,
+  }: {
+    after: number;
+    before: number;
+    id: string;
+    locale: LocaleCode;
+    name: string;
+    undo: (value: number) => void;
+  },
+  focus = captureUndoFocus(),
+): void {
+  const key = `meter:${id}`;
+  const time = Date.now();
+  const previous = meterEdits.get(key);
+  const first =
+    undoToasts.has(key) &&
+    previous?.after === before &&
+    time - previous.time <= METER_UNDO_WINDOW_MS
+      ? previous.before
+      : before;
+  if (first === after) {
+    const toastId = undoToasts.get(key);
+    if (toastId !== undefined) toast.dismiss(toastId);
+    undoToasts.delete(key);
+    meterEdits.delete(key);
+    return;
+  }
+  const edit = { after, before: first, time };
+  meterEdits.set(key, edit);
+  inLocale(locale, () => {
+    showStackedUndoToast(
+      key,
+      `${name}: ${first} → ${after}`,
+      () => {
+        undo(first);
+      },
+      focus,
+      () => {
+        if (meterEdits.get(key) === edit) meterEdits.delete(key);
+      },
+    );
+  });
+}
+
 /** The starter batch keeps its own Undo while the player continues checking things off. */
 export function showStarterItemsToast(
   count: number,
@@ -126,6 +180,7 @@ export function showStarterItemsToast(
 export function clearUndoToasts(): void {
   for (const id of undoToasts.values()) toast.dismiss(id);
   undoToasts.clear();
+  meterEdits.clear();
 }
 
 interface UndoFocus {
@@ -177,6 +232,7 @@ function showStackedUndoToast(
   message: string,
   onUndo: () => void,
   focus: undefined | UndoFocus,
+  onClose?: () => void,
 ): void {
   // An edit waiting for a tracking lane hasn't happened, so there's nothing to undo yet.
   if (userState.trackingLaneNeeded) return;
@@ -194,9 +250,11 @@ function showStackedUndoToast(
     if (undoToasts.size < room) break;
     toast.dismiss(oldestId);
     undoToasts.delete(oldestKey);
+    meterEdits.delete(oldestKey);
   }
   const forget = (): void => {
     if (undoToasts.get(key) === id) undoToasts.delete(key);
+    onClose?.();
   };
   const id = toast(message, {
     cancel: {
