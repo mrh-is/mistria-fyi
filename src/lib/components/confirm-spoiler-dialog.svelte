@@ -12,22 +12,34 @@
     onComplete,
     onCompleteAndUpdate,
     open = $bindable(false),
+    revealSection = false,
     subject,
   }: {
-    condition: VisibilityCondition;
+    condition?: VisibilityCondition;
     onCancel: () => void;
     onComplete: () => void;
     onCompleteAndUpdate: () => void;
     open?: boolean;
+    revealSection?: boolean;
     /** What the dialog asks about; absent for an item whose name is still covered. */
     subject?: GuardSubject;
   } = $props();
 
-  const invertible = $derived(canPlanConditionMutations(condition));
+  const invertible = $derived(
+    !revealSection && condition !== undefined && canPlanConditionMutations(condition),
+  );
   // Checking off an item whose name is still covered gets the playful wording; anything the player
   // can see gets the plain question. Without the update button, "just this" has nothing to
   // contrast with.
   const copy = $derived.by(() => {
+    if (revealSection) {
+      return {
+        complete: "Reveal section",
+        completeAndUpdate: "",
+        description: "This section contains things you haven’t reached yet.",
+        title: "Reveal this section?",
+      };
+    }
     if (subject === undefined) {
       return {
         complete: invertible ? "YOLO (just this one thing)" : /* @wc-include */ "YOLO",

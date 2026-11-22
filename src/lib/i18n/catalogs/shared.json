@@ -779,6 +779,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/mount-appearances-section.svelte",
         "refs": [
           null
@@ -902,6 +908,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -1160,6 +1172,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -1312,6 +1330,28 @@
     "references": [
       {
         "file": "src/lib/data/source-filters.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Bundle",
+      "ja": "詰め合わせ",
+      "zh-Hans": "礼包",
+      "zh-Hant": "組合包",
+      "es": "Lote",
+      "fr": "Lot",
+      "ko": "묶음",
+      "ru": "Набор"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]
@@ -2227,6 +2267,28 @@
   },
   {
     "translations": {
+      "en": "Colors",
+      "ja": "毛色",
+      "zh-Hans": "毛色",
+      "zh-Hant": "毛色",
+      "es": "Colores",
+      "fr": "Couleurs",
+      "ko": "색상",
+      "ru": "Окрасы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Comes back by waiting, {0}.",
       "ja": "{0}まで待つと、また手に入ります。",
       "zh-Hans": "等到{0}就能再次获得。",
@@ -2359,6 +2421,12 @@
     "references": [
       {
         "file": "src/lib/components/animal-cosmetics-section.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -3052,6 +3120,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -3113,6 +3187,12 @@
       "ru": "Задания на доставку"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/quests-content.svelte",
         "refs": [
@@ -3183,6 +3263,63 @@
         "file": "src/lib/components/sync/courier-note.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "Filter, {0} source off",
+        "Filter, {0} sources off"
+      ],
+      "ja": [
+        "フィルター：入手先{0}件を非表示"
+      ],
+      "zh-Hans": [
+        "筛选：已隐藏 {0} 类来源"
+      ],
+      "zh-Hant": [
+        "篩選：已隱藏 {0} 類來源"
+      ],
+      "es": [
+        "Filtro: {0} fuente oculta",
+        "Filtro: {0} fuentes ocultas",
+        "Filtro: {0} fuentes ocultas"
+      ],
+      "fr": [
+        "Filtre : {0} source masquée",
+        "Filtre : {0} sources masquées",
+        "Filtre : {0} sources masquées"
+      ],
+      "ko": [
+        "필터: 획득처 {0}개 숨김"
+      ],
+      "ru": [
+        "Фильтр: скрыт {0} источник",
+        "Фильтр: скрыто {0} источника",
+        "Фильтр: скрыто {0} источников",
+        "Фильтр: скрыто {0} источника"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/toolbar-footer.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3700,6 +3837,12 @@
         "refs": [
           null
         ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
       }
     ],
     "urlAdapters": [],
@@ -3777,6 +3920,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -4475,6 +4624,35 @@
         "file": "src/lib/components/install-nudge-dialog.svelte",
         "refs": [
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Learned from {0}",
+      "ja": "入手先：{0}",
+      "zh-Hans": "学习途径：{0}",
+      "zh-Hant": "學習途徑：{0}",
+      "es": "Se aprende en {0}",
+      "fr": "S’apprend auprès de {0}",
+      "ko": "습득처: {0}",
+      "ru": "Источник рецепта: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-row.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "origins"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -5972,6 +6150,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/mount-appearances-section.svelte",
         "refs": [
           null
@@ -6035,6 +6219,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/pet-collectibles-section.svelte",
         "refs": [
           null
@@ -6085,6 +6275,12 @@
       "ru": "Скины питомца"
     },
     "references": [
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/pet-collectibles-section.svelte",
         "refs": [
@@ -6201,6 +6397,28 @@
       "fr": "Entrées précédentes",
       "ko": "이전 항목",
       "ru": "Предыдущие записи"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Price",
+      "ja": "価格",
+      "zh-Hans": "价格",
+      "zh-Hant": "價格",
+      "es": "Precio",
+      "fr": "Prix",
+      "ko": "가격",
+      "ru": "Цена"
     },
     "references": [
       {
@@ -6928,6 +7146,28 @@
   },
   {
     "translations": {
+      "en": "Reveal section",
+      "ja": "項目を表示",
+      "zh-Hans": "显示章节",
+      "zh-Hant": "顯示章節",
+      "es": "Mostrar sección",
+      "fr": "Afficher la section",
+      "ko": "섹션 보기",
+      "ru": "Показать раздел"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/confirm-spoiler-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Reveal spoiler",
       "ja": "ネタバレを表示",
       "zh-Hans": "显示剧透",
@@ -6940,6 +7180,50 @@
     "references": [
       {
         "file": "src/lib/components/spoiler.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reveal spoilered section",
+      "ja": "ネタバレのある項目を表示",
+      "zh-Hans": "显示含剧透的章节",
+      "zh-Hant": "顯示含劇透的章節",
+      "es": "Mostrar sección con spoilers",
+      "fr": "Afficher la section avec divulgâcheurs",
+      "ko": "스포일러가 포함된 섹션 보기",
+      "ru": "Показать раздел со спойлерами"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Reveal this section?",
+      "ja": "この項目を表示しますか？",
+      "zh-Hans": "要显示这一章节吗？",
+      "zh-Hant": "要顯示這一章節嗎？",
+      "es": "¿Mostrar esta sección?",
+      "fr": "Afficher cette section ?",
+      "ko": "이 섹션을 볼까요?",
+      "ru": "Показать этот раздел?"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/confirm-spoiler-dialog.svelte",
         "refs": [
           null
         ]
@@ -7626,6 +7910,28 @@
   },
   {
     "translations": {
+      "en": "Sections",
+      "ja": "項目一覧",
+      "zh-Hans": "章节",
+      "zh-Hant": "章節",
+      "es": "Secciones",
+      "fr": "Sections",
+      "ko": "섹션",
+      "ru": "Разделы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Send",
       "ja": "送信",
       "zh-Hans": "发送",
@@ -7783,6 +8089,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -8851,6 +9163,28 @@
   },
   {
     "translations": {
+      "en": "This section contains things you haven’t reached yet.",
+      "ja": "この項目には、まだたどり着いていない内容が含まれています。",
+      "zh-Hans": "这一章节包含你尚未解锁的内容。",
+      "zh-Hant": "這一章節包含你尚未解鎖的內容。",
+      "es": "Esta sección contiene cosas que aún no has descubierto.",
+      "fr": "Cette section contient des éléments que vous n’avez pas encore découverts.",
+      "ko": "이 섹션에는 아직 발견하지 못한 내용이 있어요.",
+      "ru": "В этом разделе есть то, что вам еще не открылось."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/confirm-spoiler-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "This will reveal hidden content throughout the guide.",
       "ja": "ガイド全体の非表示コンテンツが表示されるようになります。",
       "zh-Hans": "这将显示指南中所有隐藏的内容。",
@@ -8929,6 +9263,12 @@
     "references": [
       {
         "file": "src/lib/components/cosmetics-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/ledger/category-sections-messages.ts",
         "refs": [
           null
         ]
@@ -10253,6 +10593,28 @@
     "references": [
       {
         "file": "src/lib/components/feedback-panel.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Wing",
+      "ja": "展示棟",
+      "zh-Hans": "展馆",
+      "zh-Hant": "展館",
+      "es": "Ala",
+      "fr": "Aile",
+      "ko": "전시관",
+      "ru": "Крыло"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
         ]

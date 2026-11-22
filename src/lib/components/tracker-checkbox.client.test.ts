@@ -32,6 +32,37 @@ describe("TrackerCheckbox", () => {
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 
+  it("keeps a disabled tracker control as a disabled button", () => {
+    const onclick = vi.fn();
+    render(TrackerCheckbox, {
+      disabled: true,
+      fact: "almanac/tomato",
+      label: "Tomato",
+      onclick,
+      provenance: undefined,
+      state: "unchecked",
+    });
+
+    const button = screen.getByRole("button", { name: "Tomato" });
+    expect(button).toBeDisabled();
+    button.click();
+    expect(onclick).not.toHaveBeenCalled();
+  });
+
+  it("draws a completed read-only mark without animation", () => {
+    render(TrackerCheckbox, {
+      fact: "almanac/tomato",
+      label: "Reached",
+      provenance: { source: "manual" },
+      state: "checked",
+    });
+
+    const mark = screen.getByRole("img", { name: "Reached" });
+    expect(mark.querySelectorAll("path")).toHaveLength(2);
+    expect(mark.querySelector(".tracker-checkbox__crossing-stroke")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it.each([
     ["unchecked", 0],
     ["obtained", 1],

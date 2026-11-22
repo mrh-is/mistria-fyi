@@ -22,6 +22,7 @@ const sectionKey = Symbol("ledger-section");
 
 /** What a section tells its rows: the source family its place already names, if any. */
 export interface LedgerSectionContext {
+  readonly categoryDetails: boolean;
   readonly contextualFamily: SourceFilterId | undefined;
 }
 

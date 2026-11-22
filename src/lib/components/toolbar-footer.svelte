@@ -22,12 +22,13 @@
   import SyncStatusPanel from "#lib/components/sync/sync-status-panel.svelte";
   import { trackingReminders } from "#lib/controllers/tracking-reminders.svelte.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import plural from "#lib/i18n/catalogs/plural.js";
   import { stripLocale } from "#lib/i18n/locale-path.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { syncCourier } from "#lib/sync/courier-state.svelte.js";
   import { syncReceiver } from "#lib/sync/receiver-state.svelte.js";
-  import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
+  import { formatNumber, seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
@@ -252,6 +253,16 @@
       (toolbarState.hasAlmanacFilters && toolbarState.showUnobtainable),
   );
 
+  let sourcesOff = $derived(
+    toolbarState.sourceFilters.length - toolbarState.enabledSourceFilterIds.size,
+  );
+
+  function filterLabel(): string {
+    if (sourcesOff === 0) return "Visibility filters";
+    const count = formatNumber(sourcesOff, page.data.locale);
+    return plural(sourcesOff, [`Filter, ${count} source off`, `Filter, ${count} sources off`]);
+  }
+
   function resetFilters(): void {
     toolbarState.resetSourceFilters();
     toolbarState.showUnobtainable = false;
@@ -363,7 +374,7 @@
               ? 'floating-tool--filtered'
               : ''}"
           type="button"
-          aria-label="Visibility filters"
+          aria-label={filterLabel()}
           aria-expanded={panels.active === "visibility"}
           aria-controls="filter-panel"
           onclick={(event) => {
@@ -637,7 +648,9 @@
 
   .filter-tool__dot {
     right: 5px;
-    background: var(--primary);
+    width: 6px;
+    height: 6px;
+    background: var(--color-guide-voice);
   }
 
   .sync-tool__slip {

@@ -8,6 +8,7 @@ import dimensions from "./fixtures/sprite-dimensions.json" with { type: "json" }
 import type { BrowserContext, Request } from "@playwright/test";
 
 const spriteDimensions: Readonly<Record<string, null | string>> = dimensions;
+const offlineContexts = new WeakSet<BrowserContext>();
 const sprites = new Map<string, Buffer>();
 const fontDirectory = new URL("../../src/lib/fonts/", import.meta.url);
 /** Present in CI (`scripts/playwright-satoshi.ts`) & optional locally; never committed. */
@@ -31,6 +32,17 @@ for (const size of new Set(Object.values(spriteDimensions))) {
 }
 
 export { expect } from "@playwright/test";
+
+export function setNetworkIsolationOffline(context: BrowserContext, offline: boolean): void {
+  if (offline) offlineContexts.add(context);
+  else offlineContexts.delete(context);
+}
+
+function spriteFixtureSize(url: URL): null | string | undefined {
+  if (url.origin !== PRODUCTION_ASSET_ORIGIN) return undefined;
+  const key = /^\/sprites\/(items|villagers)\/([^/]+)\.webp$/.exec(url.pathname);
+  return key ? spriteDimensions[`${key[1]}/${key[2]}`] : undefined;
+}
 
 /** Installs before any page opens, including pages created by the service-worker tests. */
 export async function isolateNetwork(
@@ -56,7 +68,15 @@ export async function isolateNetwork(
   // A fallback font is aborted on purpose. A controlled page's request for one fails without ever
   // reaching routing, once the worker's own fetch is aborted (or never sent, offline).
   context.on("requestfailed", (request) => {
-    if (fallbackFonts.has(request.url())) external.delete(request);
+    const url = request.url();
+    // Offline tests deliberately abort worker fetches. A controlled frame then sees the worker's
+    // error instead of the local fixture. Unknown sprite paths still fail the network guard.
+    if (
+      fallbackFonts.has(url) ||
+      (offlineContexts.has(context) && spriteFixtureSize(new URL(url)) !== undefined)
+    ) {
+      external.delete(request);
+    }
   });
   await context.route("**/*", async (route) => {
     const request = route.request();
@@ -66,8 +86,7 @@ export async function isolateNetwork(
       return;
     }
     if (url.origin === PRODUCTION_ASSET_ORIGIN) {
-      const key = /^\/sprites\/(items|villagers)\/([^/]+)\.webp$/.exec(url.pathname);
-      const size = key ? spriteDimensions[`${key[1]}/${key[2]}`] : undefined;
+      const size = spriteFixtureSize(url);
       if (size !== undefined) {
         external.delete(request);
         await route.fulfill({
