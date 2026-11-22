@@ -3,7 +3,10 @@
   import { onMount, untrack } from "svelte";
 
   import { Icon } from "#lib/components/icon/index.js";
-  import { getLedgerIndexContext } from "#lib/components/ledger/ledger-context.js";
+  import {
+    getLedgerIndexContext,
+    LEDGER_ARRIVAL_EVENT,
+  } from "#lib/components/ledger/ledger-context.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
   import type { Snippet } from "svelte";
@@ -45,9 +48,21 @@
   $effect(() => {
     if (revealTarget) open = true;
   });
+
+  // A repeated link to this group or a place inside it reopens the group the reader folded.
+  function reopen(): void {
+    open = true;
+  }
+
+  function listenForArrival(element: HTMLElement): () => void {
+    element.addEventListener(LEDGER_ARRIVAL_EVENT, reopen);
+    return () => {
+      element.removeEventListener(LEDGER_ARRIVAL_EVENT, reopen);
+    };
+  }
 </script>
 
-<section aria-labelledby={id} hidden={!visible}>
+<section aria-labelledby={id} hidden={!visible} {@attach listenForArrival}>
   <h2
     {id}
     tabindex="-1"

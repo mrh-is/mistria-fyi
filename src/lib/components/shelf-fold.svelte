@@ -2,6 +2,7 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
 
+  import { LEDGER_ARRIVAL_EVENT } from "#lib/components/ledger/ledger-context.js";
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
 
   import type { Snippet } from "svelte";
@@ -17,6 +18,7 @@
     forceOpen = false,
     level = 4,
     matchCount,
+    openOnArrival = false,
     shelf,
   }: {
     children: Snippet;
@@ -28,11 +30,31 @@
     forceOpen?: boolean;
     level?: 2 | 3 | 4;
     matchCount?: number;
+    /**
+     * Opens the fold when a link targets something inside it. The reader can fold it again while
+     * the link stays in the URL, and a repeated link opens it again.
+     */
+    openOnArrival?: boolean;
     shelf: Shelf;
   } = $props();
 
   let open = $state(false);
   let isOpen = $derived(open || forceOpen);
+
+  $effect(() => {
+    if (openOnArrival) open = true;
+  });
+
+  function reopen(): void {
+    open = true;
+  }
+
+  function listenForArrival(element: HTMLElement): () => void {
+    element.addEventListener(LEDGER_ARRIVAL_EVENT, reopen);
+    return () => {
+      element.removeEventListener(LEDGER_ARRIVAL_EVENT, reopen);
+    };
+  }
 </script>
 
 <ShelfHeading
@@ -48,6 +70,7 @@
   <div
     hidden={isOpen ? undefined : "until-found"}
     onbeforematch={() => (open = true)}
+    {@attach listenForArrival}
     transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
   >
     {@render children()}

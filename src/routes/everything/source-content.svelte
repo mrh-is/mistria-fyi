@@ -436,7 +436,7 @@
     <ShelfFold
       explains
       findable
-      forceOpen={anchorInCompleted}
+      openOnArrival={anchorInCompleted}
       level={2}
       matchCount={completedMatches}
       shelf="completed"

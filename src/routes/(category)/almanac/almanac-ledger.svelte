@@ -40,6 +40,13 @@
    * entry's state, so Back returns to the page as it was left and a fresh visit starts with none.
    */
   const opened = new SvelteSet<string>(untrack(() => page.state.almanacOpened ?? []));
+  /*
+   * Back returns to an entry whose saved folds already include what its link opened, so that link
+   * doesn't open its section again over a fold the reader made. A later link opens normally.
+   */
+  let restoredHash = $state(
+    untrack(() => (page.state.almanacOpened === undefined ? "" : page.url.hash.slice(1))),
+  );
   // Phones open on the list of sections, as production & round 10 do; a tap opens one in place.
   const phone = new MediaQuery("max-width: 47.99rem", false);
 
@@ -103,6 +110,10 @@
 
   let hash = $derived(building ? "" : new SvelteURL(page.url.href).hash.slice(1));
   useLedgerArrival(() => (ledger.ready ? hash : ""), restoringScroll);
+  let arrival = $derived(hash === restoredHash ? "" : hash);
+  $effect(() => {
+    if (hash !== untrack(() => restoredHash)) restoredHash = "";
+  });
 
   // A hash link starts a new history entry, so the set is written again whenever the hash moves.
   $effect(() => {
@@ -168,7 +179,7 @@
       {visible}
       divider={id !== unfinished[0]?.id && id !== completed[0]?.id}
       folded={finished(section) || phone.current}
-      openOnArrival={hash === id}
+      openOnArrival={arrival === id}
       bind:open={
         () => opened.has(id) || !(finished(section) || phone.current),
         (value) => {

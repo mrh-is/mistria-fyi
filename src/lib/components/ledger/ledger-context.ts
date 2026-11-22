@@ -38,4 +38,8 @@ export function getLedgerSectionContext(): LedgerSectionContext | undefined {
  * Back & search clear do before restoring the reading position on that row.
  */
 export const LEDGER_MOUNT_EVENT = "ledgermount";
+/**
+ * Asks a linked section, and the folds around it, to open, as a repeated click on the current
+ * fragment does. It bubbles so each containing fold can open itself.
+ */
 export const LEDGER_ARRIVAL_EVENT = "ledgerarrival";

@@ -2,7 +2,7 @@ import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LEDGER_MOUNT_EVENT } from "#lib/components/ledger/ledger-context.js";
+import { LEDGER_ARRIVAL_EVENT, LEDGER_MOUNT_EVENT } from "#lib/components/ledger/ledger-context.js";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import * as celebration from "#lib/effects/celebrate.js";
@@ -72,6 +72,33 @@ it("splits source types around a single Completed divider and opens an anchored 
   expect(view.container.querySelectorAll("#store-balor")).toHaveLength(1);
   await tick();
   expect(view.getAllByRole("button", { name: "Stores" })).toHaveLength(1);
+});
+
+it("lets the reader fold Completed after a link into it, and a repeated link reopens it", async () => {
+  vi.spyOn(sourceChecklist, "buildSourceChecklist").mockReturnValue([
+    checklistRow("Acorn", true, [{ type: "store", storeId: "balor" as StoreId }]),
+    checklistRow("Anchovy", false, [{ type: "fish", waterTypes: ["ocean" as WaterType] }]),
+  ]);
+  const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
+  await tick();
+  const fold = within(view.getByTestId("everything-completed")).getByRole("button", {
+    name: "Completed",
+  });
+  expect(fold).toHaveAttribute("aria-expanded", "true");
+  const stores = within(view.getByTestId("everything-completed")).getByRole("button", {
+    name: "Stores",
+  });
+  await fireEvent.click(stores);
+  expect(stores).toHaveAttribute("aria-expanded", "false");
+  await fireEvent.click(fold);
+  expect(fold).toHaveAttribute("aria-expanded", "false");
+
+  view.container
+    .querySelector("#store-balor [data-ledger-section]")
+    ?.dispatchEvent(new Event(LEDGER_ARRIVAL_EVENT, { bubbles: true }));
+  await tick();
+  expect(fold).toHaveAttribute("aria-expanded", "true");
+  expect(stores).toHaveAttribute("aria-expanded", "true");
 });
 
 function checklistRow(id: string, completed: boolean, sources: Source[]) {

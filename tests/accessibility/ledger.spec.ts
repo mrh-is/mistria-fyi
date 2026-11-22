@@ -561,6 +561,27 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
   await expect(bugsHead).toHaveAttribute("aria-expanded", "false");
 });
 
+test("Back keeps a linked section folded after the reader folds it", async ({ page }) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: lateGameAlmanac() } }),
+  );
+  await gotoApplication(page, "/almanac#bugs");
+  const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
+  const bugsHead = bugs.getByRole("button", { exact: true, name: "Bugs" });
+  await expect(bugsHead).toHaveAttribute("aria-expanded", "true");
+  await bugsHead.click();
+  await expect(bugsHead).toHaveAttribute("aria-expanded", "false");
+
+  const thumbIndex = page.getByRole("navigation", { name: "Thumb index" });
+  await thumbIndex.getByRole("link", { name: "Museum" }).click();
+  await expect(page).toHaveURL(/\/museum/u);
+  await page.goBack();
+  await expect(page).toHaveURL(/#bugs$/u);
+  await expect(bugsHead).toHaveAttribute("aria-expanded", "false");
+});
+
 /** A field guide fixture's checked Almanac items. */
 function fixtureAlmanac(preset: "day-one" | "late-game" | "mid-game"): string[] {
   const fixtures = JSON.parse(

@@ -87,7 +87,7 @@ async function reopenLinkedSection(section: HTMLElement, signal: AbortSignal): P
   const ledgerSection = section.matches("[data-source-section]")
     ? section.querySelector("[data-ledger-section]")
     : section;
-  ledgerSection?.dispatchEvent(new Event(LEDGER_ARRIVAL_EVENT));
+  ledgerSection?.dispatchEvent(new Event(LEDGER_ARRIVAL_EVENT, { bubbles: true }));
   await tick();
   if (!signal.aborted && section.isConnected) focusHeading(section);
 }
