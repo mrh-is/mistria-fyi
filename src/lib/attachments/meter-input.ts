@@ -50,8 +50,8 @@ export function meterInput({
       "pointerdown",
       (event) => {
         if (pointer !== undefined || !event.isPrimary || event.button !== 0) return;
+        element.setPointerCapture(event.pointerId);
         pointer = event.pointerId;
-        element.setPointerCapture(pointer);
         element.focus({ preventScroll: true });
         onPreview(valueAt(event));
       },

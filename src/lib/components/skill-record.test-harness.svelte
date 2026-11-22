@@ -9,13 +9,11 @@
   import type { SkillId } from "#lib/types/tracker-data.js";
 
   let {
-    compact = false,
     feedbackContext,
     id,
     locale = "en",
     name,
   }: {
-    compact?: boolean;
     feedbackContext: FeedbackContext;
     id: SkillId;
     locale?: LocaleCode;
@@ -26,5 +24,5 @@
 </script>
 
 <ul>
-  <SkillRecord {compact} {id} {locale} {name} />
+  <SkillRecord {id} {locale} {name} />
 </ul>

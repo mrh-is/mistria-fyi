@@ -81,20 +81,24 @@ it("gathers complete sections into the completed list and moves a reopened secti
 it("partitions compact skill records only after both their level and perks are finished", async () => {
   const id = Object.keys(trackerData.skills)[0] as SkillId;
   const name = getName("skills", id, "en");
-  const perks = perksOfSkill(id);
-  expect(perks.length).toBeGreaterThan(0);
+  const [lastPerk, ...otherPerks] = perksOfSkill(id);
+  const lastPerkName = getName("perks", lastPerk, "en");
+  expect(otherPerks.length).toBeGreaterThan(0);
   userState.setSkillLevel(id, MAX_SKILL_LEVEL);
+  for (const perk of otherPerks) userState.togglePerk(perk);
   const view = renderWithFeedback(CompletionLists, { categories: ["skills"] });
   const completed = view.getByTestId("everything-completed");
   expect(within(completed).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
-  for (const perk of perks) userState.togglePerk(perk);
+  await fireEvent.click(view.getByRole("button", { name: new RegExp(`^${name} perks,`) }));
+  await fireEvent.click(view.getByRole("button", { name: `Check ${lastPerkName}` }));
+  expect(userState.state.progress.unlockedPerks.has(lastPerk)).toBe(true);
   await finishRowLeaving();
   const finishedSkills = within(completed).getByRole("button", { name: "Skills" });
   expect(finishedSkills).toHaveAttribute("aria-expanded", "false");
   await fireEvent.click(finishedSkills);
   expect(within(completed).getAllByRole("slider")).toHaveLength(1);
   expect(within(completed).getByRole("heading", { name })).toBeInTheDocument();
-  userState.togglePerk(perks[0]);
+  userState.togglePerk(lastPerk);
   await finishRowLeaving();
   expect(within(completed).queryByRole("button", { name: "Skills" })).not.toBeInTheDocument();
   expect(

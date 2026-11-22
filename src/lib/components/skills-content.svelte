@@ -2,7 +2,9 @@
   import CompletionSection from "#lib/components/completion-section.svelte";
   import LedgerIndex from "#lib/components/ledger/ledger-index.svelte";
   import SkillRecord from "#lib/components/skill-record.svelte";
+  import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
+  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
@@ -14,6 +16,7 @@
   import type { LocaleCode } from "#lib/types/locale.js";
 
   let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
+  const spoilerGuard = createSpoilerGuard();
 
   let entries = $derived(
     recordKeys(trackerData.skills).map((skillId) => {
@@ -40,7 +43,7 @@
     {#each skills as skill (skill.id)}
       {#if compact}
         <CompletionSection complete={isSkillComplete(skill.skillId, userState.state.progress)}>
-          <SkillRecord {compact} id={skill.skillId} {locale} name={skill.name} />
+          <SkillRecord id={skill.skillId} {locale} name={skill.name} {spoilerGuard} />
         </CompletionSection>
       {:else}
         <SkillRecord anchor={skill.id} id={skill.skillId} {locale} name={skill.name} />
@@ -51,6 +54,7 @@
 
 {#if compact}
   {@render ledger()}
+  <SpoilerGuardDialog guard={spoilerGuard} />
 {:else}
   <LedgerIndex sections={entries}>
     {@render ledger()}

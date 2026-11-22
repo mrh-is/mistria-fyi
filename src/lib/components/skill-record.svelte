@@ -1,10 +1,12 @@
 <script lang="ts">
   import { meterInput } from "#lib/attachments/meter-input.js";
   import SkillPerks from "#lib/components/skill-perks.svelte";
+  import SkillTierPrints from "#lib/components/skill-tier-prints.svelte";
   import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { trackerData } from "#lib/data/index.js";
   import { captureUndoFocus, showMeterUndo } from "#lib/effects/undo-toast.js";
   import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+  import { perksOfSkill } from "#lib/engine/projections/skills.js";
   import { factKey } from "#lib/engine/provenance.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import plural from "#lib/i18n/catalogs/plural.js";
@@ -13,21 +15,22 @@
   import { recordKeys } from "#lib/utils/record.js";
   import { page } from "$app/state";
 
+  import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { SkillId } from "#lib/types/tracker-data.js";
 
   let {
     anchor,
-    compact = false,
     id,
     locale,
     name,
+    spoilerGuard,
   }: {
     anchor?: string;
-    compact?: boolean;
     id: SkillId;
     locale: LocaleCode;
     name: string;
+    spoilerGuard?: SpoilerGuard;
   } = $props();
 
   const minorStep = 5;
@@ -48,7 +51,12 @@
   let reached = $derived(
     tiers.reduce((count, tier) => count + (level >= tier.level ? tier.ids.length : 0), 0),
   );
-  let formattedReached = $derived(formatNumber(reached, locale));
+  let perkCount = $derived(
+    spoilerGuard
+      ? perksOfSkill(id).filter((perk) => userState.state.progress.unlockedPerks.has(perk)).length
+      : reached,
+  );
+  let formattedCount = $derived(formatNumber(perkCount, locale));
   let formattedTotal = $derived(formatNumber(total, locale));
   let formattedLevel = $derived(formatNumber(shownLevel, locale));
   let formattedMax = $derived(formatNumber(MAX_SKILL_LEVEL, locale));
@@ -127,13 +135,13 @@
     </div>
     <span class="count"
       >{plural(total, [
-        `${formattedReached} / ${formattedTotal} perk`,
-        `${formattedReached} / ${formattedTotal} perks`,
+        `${formattedCount} / ${formattedTotal} perk`,
+        `${formattedCount} / ${formattedTotal} perks`,
       ])}</span
     >
   </div>
 
-  <div class="ruler-and-tiers" class:compact>
+  <div class="ruler-and-tiers" class:compact={!!spoilerGuard}>
     <div
       class="ruler"
       class:scrubbing={preview !== undefined}
@@ -165,7 +173,11 @@
         aria-hidden="true"
       ></span>
     </div>
-    <SkillPerks {id} {locale} {level} {tiers} />
+    {#if spoilerGuard}
+      <SkillPerks {id} {locale} {name} {spoilerGuard} />
+    {:else}
+      <SkillTierPrints {id} {locale} {level} {tiers} />
+    {/if}
   </div>
 </li>
 

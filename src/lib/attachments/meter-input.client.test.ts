@@ -15,9 +15,11 @@ it("previews a drag, commits once on release, and discards a canceled drag", () 
 
   pointer("pointerdown", 30);
   pointer("pointermove", 70);
+  element.dispatchEvent(new KeyboardEvent("keydown", { key: "End" }));
   expect(onPreview.mock.calls).toEqual([[10], [30]]);
   expect(onCommit).not.toHaveBeenCalled();
   pointer("pointerup", 130);
+  pointer("lostpointercapture", 130);
   expect(onPreview).toHaveBeenLastCalledWith(undefined);
   expect(onCommit).toHaveBeenCalledExactlyOnceWith(60);
 
