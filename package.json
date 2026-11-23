@@ -41,6 +41,7 @@
     "test:accessibility:critical": "playwright test --grep @critical",
     "test:app": "vitest run --project=app --project=isolated --project=cold --project=client --project=client-isolated",
     "test:client": "vitest run --project=client --project=client-isolated",
+    "test:localization": "playwright test --config playwright.localization.config.ts",
     "test:pipeline": "vitest run --project=pipeline",
     "test:pwa": "playwright test --config playwright.pwa.config.ts",
     "test:pipeline:assets": "vitest run --project=assets",

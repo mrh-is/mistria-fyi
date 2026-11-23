@@ -350,6 +350,17 @@ heuristics. Check the extracted references after changing display text. CI check
 structure; it can’t tell whether a translation is correct or whether an English game-data field
 should have come from a name chunk.
 
+Run `pnpm run test:localization` to audit Japanese and Russian copy in a production build with
+Playwright. It scans every public page after hydration and exercises quick settings, spoiler
+confirmations, feedback validation, empty search, and computer sync status. It reports unapproved
+Latin text in painted copy, `aria-label`, `title`, `placeholder`, and `alt`. Verbatim elements such
+as `code` and `kbd` are excluded.
+
+Keep exceptions literal and document why each is needed in
+[`allowed-latin.ts`](../tests/localization/allowed-latin.ts). Use
+`pnpm run test:localization --grep 'ja.*route /almanac'` to rerun one route. The suite builds the
+current checkout by default and runs locally on demand.
+
 ## Fonts
 
 The base typefaces cover Latin only. `ja`, `zh-Hans`, `zh-Hant`, `ko`, and `ru` swap every font role
