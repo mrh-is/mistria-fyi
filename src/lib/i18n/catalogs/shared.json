@@ -7612,6 +7612,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/mines-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/spoiler.svelte",
         "refs": [
           null

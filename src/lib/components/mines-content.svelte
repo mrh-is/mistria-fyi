@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { tick } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
+
   import CompletionSection from "#lib/components/completion-section.svelte";
   import MineDepthChart from "#lib/components/mine-depth-chart.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
@@ -30,6 +33,7 @@
   import type { SpellId } from "#lib/types/tracker-data.js";
 
   const sectionGrouping = createSectionGrouping<"spells">();
+  const revealedSpells = new SvelteSet<SpellId>();
   // Floor seals and spell spoilers share one dialog, which this page owns.
   const spoilerGuard = createSpoilerGuard();
   const checkOff = createCheckOff<SpellId, "spells">({
@@ -45,6 +49,13 @@
   function isSpellSpoilered(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
     return !isConditionVisible(visibility, userState.progressionState);
+  }
+
+  async function revealSpell(id: SpellId, button: HTMLButtonElement): Promise<void> {
+    const row = button.parentElement;
+    revealedSpells.add(id);
+    await tick();
+    row?.querySelector("button")?.focus({ preventScroll: true });
   }
 
   let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
@@ -98,7 +109,8 @@
     nameFilter
       ? spells.filter(
           ({ completed, id, name }) =>
-            (completed || !isSpellSpoilered(id)) && matchesName(name, nameFilter, locale),
+            (completed || !isSpellSpoilered(id) || (!compact && revealedSpells.has(id))) &&
+            matchesName(name, nameFilter, locale),
         )
       : spells,
   );
@@ -121,7 +133,10 @@
 {#snippet spellRow(spell: (typeof spells)[number])}
   <TrackerRow
     fact={factKey("spells", spell.id)}
-    display={checkOff.rowDisplay(spell.id, trackerData.mines.spells[spell.id].visibility)}
+    display={checkOff.rowDisplay(
+      spell.id,
+      compact ? trackerData.mines.spells[spell.id].visibility : undefined,
+    )}
     name={spell.name}
     reportCategory="spell"
     reportEntityId={spell.id}
@@ -158,14 +173,19 @@
         <ul data-tracker-list>
           {#each visibleSpells as spell (spell.id)}
             <li>
-              {#if spell.completed || !isSpellSpoilered(spell.id)}
+              {#if spell.completed || !isSpellSpoilered(spell.id) || revealedSpells.has(spell.id)}
                 {@render spellRow(spell)}
               {:else}
-                <span class="unfound">
+                <button
+                  type="button"
+                  class="unfound"
+                  aria-label="Reveal spoiler"
+                  onclick={(event) => void revealSpell(spell.id, event.currentTarget)}
+                >
                   <span class="empty-box" aria-hidden="true"></span>
                   <span class="blank" aria-hidden="true"></span>
                   <span>A spell you haven’t found</span>
-                </span>
+                </button>
               {/if}
             </li>
           {/each}
@@ -267,10 +287,17 @@
 
   .unfound {
     display: flex;
+    inline-size: 100%;
     min-block-size: 44px;
     align-items: center;
     gap: 0.5rem;
     border-block-end: 1px solid var(--color-rule);
+    cursor: pointer;
+    text-align: start;
+  }
+
+  .unfound:is(:hover, :focus-visible) {
+    color: var(--color-category-mines-text);
   }
 
   .empty-box {

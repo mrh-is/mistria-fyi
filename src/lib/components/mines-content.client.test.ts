@@ -108,6 +108,30 @@ describe("Mines depth chart", () => {
     expect(screen.getByText("20–39")).toBeTruthy();
   });
 
+  it("reveals a single covered spell and keeps its prerequisite confirmation", async () => {
+    await fireEvent.click(screen.getAllByRole("button", { name: "Reveal spoiler" })[0]);
+    const check = screen.getByRole("button", { name: "Check Dragon's Breath" });
+    expect(check).toHaveFocus();
+    expect(screen.getAllByText("A spell you haven’t found")).toHaveLength(4);
+
+    await fireEvent.click(check);
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    await confirm("Yes, just this one");
+
+    expect(screen.getByRole("button", { name: "Uncheck Dragon's Breath" })).toBeTruthy();
+    expect(userState.state.progress.mineFloor).toBe(0);
+    expect(userState.state.showSpoilers).toBe(false);
+  });
+
+  it("can find and record a gated spell with Show spoilers enabled", async () => {
+    userState.toggleShowSpoilers();
+    toolbarState.setSearchQuery("Full Restore");
+    flushSync();
+    await fireEvent.click(screen.getByRole("button", { name: "Check Full Restore" }));
+    expect(screen.getByRole("button", { name: "Uncheck Full Restore" })).toBeTruthy();
+    expect(userState.state.progress.mineFloor).toBe(0);
+  });
+
   it("updates a reached biome’s counts when a ledger entry is checked off", async () => {
     userState.setMineFloor(19);
     flushSync();

@@ -16,12 +16,21 @@
   import { isBiomeSource } from "#lib/presentation/mine-biome-sources.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { formatNumber } from "#lib/utils/format.js";
+  import { formatNumber, requireEntry } from "#lib/utils/format.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { AlmanacCategoryId, MinesBiomeId } from "#lib/types/tracker-data.js";
+  import type { AlmanacCategory, MinesBiomeId } from "#lib/types/tracker-data.js";
+
+  function almanacItemIds(category: string): ReadonlySet<string> {
+    const { items } = requireEntry<string, AlmanacCategory>(
+      trackerData.almanac,
+      category,
+      "almanac category",
+    );
+    return new Set(items.map(({ itemIds }) => itemIds[0]));
+  }
 
   let {
     floor,
@@ -38,14 +47,8 @@
   const feedback = getFeedbackContext();
   const biomes = trackerData.mines.biomes;
   const expandedBiomes = new SvelteSet<MinesBiomeId>();
-  const furniture = new Set<string>(
-    trackerData.almanac["furniture" as AlmanacCategoryId].items.map(({ itemIds }) => itemIds[0]),
-  );
-  const dishes = new Set<string>(
-    trackerData.almanac["cooked_dishes" as AlmanacCategoryId].items.map(
-      ({ itemIds }) => itemIds[0],
-    ),
-  );
+  const furniture = almanacItemIds("furniture");
+  const dishes = almanacItemIds("cooked_dishes");
   let rungs = $derived(
     Array.from({ length: Math.floor(max / 20) }, (_, index) => (index + 1) * 20),
   );
