@@ -64,7 +64,7 @@ it.each(LOCALE_CODES)(
   },
 );
 
-it("orders festivals by calendar, biomes by depth, and completed sources last", () => {
+it("orders the upcoming festivals before past dates, and biomes by depth", () => {
   const sections = projectSourceGroups(
     buildSourceChecklist(userState.progressContext, "en"),
     userState.progressContext,
@@ -81,4 +81,15 @@ it("orders festivals by calendar, biomes by depth, and completed sources last", 
     // Finishing a section doesn't reorder its list while it waits to move to the completed list.
     compareSourceSections({ ...first, section: { ...first.section, state: "done" } }, second, "en"),
   ).toBeLessThan(0);
+
+  const festivals = sections
+    .filter(({ source }) => source && "festivalId" in source)
+    .map((section) => wrap(section.id))
+    .toSorted((a, b) => compareSourceSections(a, b, "en"));
+  expect(festivals.length).toBeGreaterThan(1);
+  const [earliest, later] = festivals;
+  const { source } = later.section;
+  if (!source || !("festivalId" in source)) throw new Error("Expected a festival");
+  const date = trackerData.festivals[source.festivalId].date;
+  expect(compareSourceSections(later, earliest, "en", date)).toBeLessThan(0);
 });

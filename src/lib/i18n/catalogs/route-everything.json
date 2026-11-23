@@ -1,51 +1,6 @@
 [
   {
     "translations": {
-      "en": "Category",
-      "ja": "カテゴリー",
-      "zh-Hans": "类别",
-      "zh-Hant": "類別",
-      "es": "Categoría",
-      "fr": "Catégorie",
-      "ko": "카테고리",
-      "ru": "Категории"
-    },
-    "references": [
-      {
-        "file": "src/routes/everything/+page.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Group by",
-      "ja": "グループ分け",
-      "zh-Hans": "分组方式",
-      "zh-Hant": "分組方式",
-      "es": "Agrupar por",
-      "fr": "Regrouper par",
-      "ko": "그룹 기준",
-      "ru": "Группировать по"
-    },
-    "references": [
-      {
-        "file": "src/routes/everything/+page.svelte",
-        "refs": [
-          null,
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Jump to a section",
       "ja": "セクションへ移動",
       "zh-Hans": "跳转到分区",
@@ -68,18 +23,18 @@
   },
   {
     "translations": {
-      "en": "Source",
-      "ja": "入手先",
-      "zh-Hans": "来源",
-      "zh-Hant": "來源",
-      "es": "Fuente",
-      "fr": "Source",
-      "ko": "획득처",
-      "ru": "Источнику"
+      "en": "Relationships",
+      "ja": "関係",
+      "zh-Hans": "关系",
+      "zh-Hant": "關係",
+      "es": "Relaciones",
+      "fr": "Relations",
+      "ko": "관계",
+      "ru": "Отношения"
     },
     "references": [
       {
-        "file": "src/routes/everything/+page.svelte",
+        "file": "src/routes/everything/villager-errands.svelte",
         "refs": [
           null
         ]

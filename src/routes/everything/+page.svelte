@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { SvelteURL } from "svelte/reactivity";
-
   import AllCompleted from "#lib/components/all-completed.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
   import PageSearchStatus from "#lib/components/page-search-status.svelte";
   import ShelfFold from "#lib/components/shelf-fold.svelte";
   import { createSharedReveals } from "#lib/controllers/completion-scope.svelte.js";
+  import { readEverythingGrouping } from "#lib/controllers/everything-grouping.js";
   import { useLedgerArrival } from "#lib/controllers/ledger-page.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { sortCategoryKeysByName } from "#lib/data/categories.js";
@@ -15,11 +14,12 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { building } from "$app/env";
-  import { goto } from "$app/navigation";
   import { page } from "$app/state";
 
   import CategorySection from "./category-section.svelte";
   import SourceContent from "./source-content.svelte";
+
+  import type { CategoryProgress } from "#lib/engine/progress.js";
 
   import type { PageProps } from "./$types";
 
@@ -51,48 +51,24 @@
   );
 
   let overallProgress = $derived(getOverallProgress(progress));
-  let grouping = $derived.by(() => {
-    const requested = building ? null : page.url.searchParams.get("group");
-    if (requested === "source" || requested === "category") return requested;
-    return userState.state.everythingGrouping;
-  });
+  let grouping = $derived(readEverythingGrouping());
   let anchor = $derived(building ? "" : page.url.hash.slice(1));
-
-  function changeGrouping(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
-    const next = value === "source" ? "source" : "category";
-    userState.setEverythingGrouping(next);
-    const url = new SvelteURL(page.url.href);
-    url.searchParams.set("group", next);
-    url.hash = "";
-    void goto(url, { reset: false });
-  }
+  let placeProgress = $state<CategoryProgress | undefined>(undefined);
+  let headerProgress = $derived(grouping === "source" ? placeProgress : overallProgress);
 
   useLedgerArrival(() => (grouping === "category" ? anchor : ""));
 </script>
 
-<PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>
+<PageHeader bind:ref={headerEl} title="Everything" progress={headerProgress}>
   {#snippet icon(cls)}
     <Icon.Category category="all" useCategoryColor class={cls} />
   {/snippet}
 </PageHeader>
 
 <div class="flex flex-col gap-6 px-4 pb-4" style="--section-header-sticky-top: {headerHeight}px">
-  <label class="flex items-center gap-3 self-start font-controls text-sm">
-    <span>Group by</span>
-    <select
-      class="min-h-11 rounded border border-border bg-background px-3 py-1 text-foreground"
-      aria-label="Group by"
-      value={grouping}
-      onchange={changeGrouping}
-    >
-      <option value="category">Category</option>
-      <option value="source">Source</option>
-    </select>
-  </label>
   <PageSearchStatus />
   {#if grouping === "source"}
-    <SourceContent locale={data.locale} {anchor} {progress} />
+    <SourceContent locale={data.locale} {anchor} {progress} bind:placeProgress />
   {:else}
     {#each orderedCategories as category (category)}
       <CategorySection key={category} locale={data.locale} progress={progress[category]} />

@@ -19,6 +19,7 @@ import type { LedgerPlacement } from "#lib/presentation/ledger.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 interface PageRow extends LedgerPlacement {
+  counted?: boolean;
   key: string;
   obtainable: boolean;
 }
@@ -54,7 +55,11 @@ export function createLedgerPage<Section extends { rows: readonly PageRow[]; spo
     for (const section of snapshot.value) {
       if (section.spoilered && !showSpoilers) continue;
       for (const row of section.rows) {
-        if (!visible(row) || (excludeCoveredFromFilterCounts && row.spoilered && !showSpoilers)) {
+        if (
+          row.counted === false ||
+          !visible(row) ||
+          (excludeCoveredFromFilterCounts && row.spoilered && !showSpoilers)
+        ) {
           continue;
         }
         const shown = toolbarState.matchesSourceFilters(row.sources);

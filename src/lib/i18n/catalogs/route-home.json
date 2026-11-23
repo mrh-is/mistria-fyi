@@ -23,28 +23,6 @@
   },
   {
     "translations": {
-      "en": "Birthdays this week",
-      "ja": "今週の誕生日",
-      "zh-Hans": "本周生日",
-      "zh-Hant": "本週生日",
-      "es": "Cumpleaños de esta semana",
-      "fr": "Anniversaires de la semaine",
-      "ko": "이번 주 생일",
-      "ru": "Дни рождения на этой неделе"
-    },
-    "references": [
-      {
-        "file": "src/routes/+page.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": "Contents",
       "ja": "目次",
       "zh-Hans": "目录",
@@ -53,28 +31,6 @@
       "fr": "Sommaire",
       "ko": "목차",
       "ru": "Оглавление"
-    },
-    "references": [
-      {
-        "file": "src/routes/+page.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Hearts to go",
-      "ja": "残りのハート",
-      "zh-Hans": "还差的爱心",
-      "zh-Hant": "還差的愛心",
-      "es": "Corazones que faltan",
-      "fr": "Cœurs restants",
-      "ko": "남은 하트",
-      "ru": "Осталось сердец"
     },
     "references": [
       {

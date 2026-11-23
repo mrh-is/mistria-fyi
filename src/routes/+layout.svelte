@@ -73,7 +73,8 @@
   // Toasts sit 8 pixels above the toolbar (12 pixels of inset plus 44-pixel buttons), or above an
   // open toolbar panel so they never cover it.
   const toastOffset = "calc(56px + env(safe-area-inset-bottom))";
-  const toastAboveToolbar = "calc(64px + env(safe-area-inset-bottom))";
+  const toastAboveToolbar =
+    "calc(64px + env(safe-area-inset-bottom) + var(--toolbar-extra-height, 0px))";
   let toastBottom = $derived(
     toolbarState.panelClearance > 0
       ? `max(${toastAboveToolbar}, ${toolbarState.panelClearance + 8}px)`
@@ -121,7 +122,7 @@
     <!-- Until each screen's redesign lands, its content keeps the phone-width column it was built for. -->
     <div
       class="mx-auto flex w-full max-w-lg flex-1 flex-col px-safe has-[[data-ledger-layout]]:max-w-6xl landscape-phone:max-w-none {hasToolbar
-        ? 'pb-safe-offset-18'
+        ? 'pb-[calc(4.5rem+env(safe-area-inset-bottom)+var(--toolbar-extra-height,0px))]'
         : ''}"
     >
       <SkipLink />

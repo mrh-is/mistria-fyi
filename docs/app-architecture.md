@@ -426,14 +426,16 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   hiding categories with no matching sections. A new category adds one map entry, not a new section
   file.
 
-The Everything page also offers a Source grouping. `controllers/source-checklist.ts` adapts the
-category projections into rows with their original completion identity, presentation, & reversible
-store action. `presentation/source-groups.ts` places each row under all of its source instances,
-merges stock facets within an instance, & classifies availability using only that instance’s
-sources. The `group=category|source` query overrides the device’s `everythingGrouping` preference.
-Choosing the control updates the preference & URL.
+The Everything toolbar switches between Place and Category grouping.
+`controllers/source-checklist.ts` adapts the category projections into rows with their original
+completion identity, presentation, & reversible store action. `presentation/source-groups.ts` places
+each row under all of its sources, merges stock facets within a place, & classifies availability
+using only that place’s sources. Crafted items share a station & fetch quests sit with the quest
+giver. Hidden sources contribute no progress to these totals. The `group=category|source` query
+overrides the device’s `everythingGrouping` preference. Choosing the control updates the preference
+& URL.
 
-In the Source grouping and on the Almanac page, the ledger captures its sections, shelves, & columns
+In the Place grouping and on the Almanac page, the ledger captures its sections, shelves, & columns
 after local progress loads. A check-off updates the mark at each placement of that fact. Placements
 & shelf counts hold until the page remounts or the reader refreshes the shelves. A calendar or
 weather change, save import, sync receipt, backup restore, reset, or progress replacement from
