@@ -9,6 +9,20 @@ import type { FS } from "wuchale";
 
 const viteQueryParams = new Set(["v", "t", "sentry-auto-wrap", "tsr-split"]);
 const routeCatalogsModule = "\0virtual:mistria-route-catalogs";
+const sourceLiteralEscapes = new Map([
+  ["<", String.raw`\u003C`],
+  [">", String.raw`\u003E`],
+  ["\u2028", String.raw`\u2028`],
+  ["\u2029", String.raw`\u2029`],
+]);
+
+function javascriptStringLiteral(value: string): string {
+  // JSON handles quotes and backslashes. Escape HTML delimiters and JS line separators too.
+  return JSON.stringify(value).replaceAll(
+    /[<>\u2028\u2029]/gu,
+    (character) => sourceLiteralEscapes.get(character) ?? character,
+  );
+}
 
 export function wuchaleForVite(configPath: string, snapshot: boolean): Plugin[] {
   const root = path.dirname(configPath);
@@ -33,7 +47,7 @@ export function wuchaleForVite(configPath: string, snapshot: boolean): Plugin[] 
         .toSorted()
         .map((file) => {
           const specifier = normalizePath(path.join(generated, file));
-          return `${JSON.stringify(file)}: () => import(${JSON.stringify(specifier)})`;
+          return `${javascriptStringLiteral(file)}: () => import(${javascriptStringLiteral(specifier)})`;
         });
       return `export default {${imports.join(",")}};`;
     },

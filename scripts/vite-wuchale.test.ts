@@ -1,10 +1,48 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createServer } from "vite";
 import { expect, it } from "vitest";
 import { getConfig, Hub } from "wuchale";
 
 import { wuchaleForVite } from "./vite-wuchale.js";
+
+import type routeCatalogsModule from "virtual:mistria-route-catalogs";
+
+it("escapes catalog filenames in the generated module without changing their import paths", async () => {
+  const root = await mkdtemp(path.resolve("node_modules/.wuchale-test-"));
+  try {
+    const configPath = path.join(root, "wuchale.config.mjs");
+    const directory = path.join(root, "locales", ".wuchale");
+    const filename = "route.1.line\u2028paragraph\u2029.compiled.js";
+    await mkdir(directory, { recursive: true });
+    await writeFile(path.join(directory, filename), "export const c = ['fixture'];");
+    await writeFile(configPath, 'export default { localesDir: "locales" };');
+
+    const [routeCatalogs] = wuchaleForVite(configPath, false);
+    const server = await createServer({
+      configFile: false,
+      plugins: [routeCatalogs],
+      root,
+      server: { middlewareMode: true, watch: null, ws: false },
+    });
+    try {
+      const id = "\0virtual:mistria-route-catalogs";
+      const loaded = await server.environments.ssr.pluginContainer.load(id);
+      const source = typeof loaded === "string" ? loaded : (loaded?.code ?? "");
+      expect(source).toContain(String.raw`route.1.line\u2028paragraph\u2029.compiled.js`);
+      expect(source).not.toContain(filename);
+      const { default: loaders } = (await server.ssrLoadModule(id)) as {
+        default: typeof routeCatalogsModule;
+      };
+      expect(Object.keys(loaders)).toEqual([filename]);
+      await expect(loaders[filename]?.()).resolves.toMatchObject({ c: ["fixture"] });
+    } finally {
+      await server.close();
+    }
+  } finally {
+    await rm(root, { force: true, recursive: true });
+  }
+});
 
 it("transforms messages against the current catalog while another process owns the disk catalog", async () => {
   const root = await mkdtemp(path.resolve("node_modules/.wuchale-test-"));
