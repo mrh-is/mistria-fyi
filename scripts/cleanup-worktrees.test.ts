@@ -289,4 +289,58 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
     expect(existsSync(path)).toBe(false);
     expect(branches()).toContain("unpushed");
   });
+
+  it("previews and removes only standalone branches at a finished PR's head", () => {
+    const { branches, primary, run, worktree } = fixture();
+    for (const [branch, state, headMatches] of [
+      ["merged", "MERGED", true],
+      ["closed", "CLOSED", true],
+      ["open", "OPEN", true],
+      ["no-pr", undefined, true],
+      ["unpushed", "MERGED", false],
+      ["broken", "MERGED", true],
+      ["next", "MERGED", true],
+    ] as const) {
+      const path = worktree(branch, state, { headMatches });
+      gitIn(primary, "worktree", "remove", path);
+    }
+    const checkedOut = worktree("checked-out", "MERGED");
+    gitIn(primary, "worktree", "lock", checkedOut);
+
+    expect(run([], "120").stdout).not.toContain("would delete branch");
+    const preview = run();
+    expect(preview.status).toBe(0);
+    expect(preview.stdout).toContain("would delete branch merged (PR MERGED)");
+    expect(preview.stdout).toContain("would delete branch closed (PR CLOSED)");
+    expect(branches()).toContain("merged");
+
+    const result = run(["--apply"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("deleted branch merged (PR MERGED)");
+    expect(result.stdout).toContain("deleted branch closed (PR CLOSED)");
+    expect(branches().toSorted()).toEqual([
+      "broken",
+      "checked-out",
+      "main",
+      "next",
+      "no-pr",
+      "open",
+      "unpushed",
+    ]);
+    expect(existsSync(checkedOut)).toBe(true);
+  });
+
+  it("keeps a recently created branch at an old commit", () => {
+    const { directory, primary, prs, run } = fixture();
+    const path = join(directory, "old");
+    gitIn(primary, "worktree", "add", "--detach", path);
+    commit(path, "old", "2000-01-01T00:00:00Z");
+    const head = gitIn(path, "rev-parse", "HEAD");
+    gitIn(primary, "branch", "recent", head);
+    gitIn(primary, "worktree", "remove", path);
+    writeFileSync(join(prs, "recent"), `MERGED ${head}\n`);
+
+    expect(run([], "120").stdout).not.toContain("would delete branch recent");
+    expect(run().stdout).toContain("would delete branch recent (PR MERGED)");
+  });
 });

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Remove linked worktrees whose work is finished: clean, idle, & on a branch whose PR is merged or
 # closed, or detached at a commit on a current remote branch. Previews by default; pass --apply to
-# remove. A branch goes too only when its tip is the PR's head, so unpushed commits survive. Then
-# prune registrations whose folders are gone.
+# remove. A branch goes too only when its tip is the PR's head, so unpushed commits survive.
+# Check idle local branches without a worktree, then prune missing worktree registrations.
 # Removal deletes ignored files, so a worktree stays while it holds any ignored file that isn't a
 # link, a build or dependency output, or an unchanged copy of the primary checkout's.
 set -uo pipefail
@@ -51,6 +51,14 @@ disposable() {
   [ -e "$primary/$2" ] && diff -rq "$1/$2" "$primary/$2" >/dev/null 2>&1
 }
 
+latest_pr() {
+  # gh can read stdin. A fork's PR can share the branch name.
+  gh pr list --head "$1" --state all --limit 20 \
+    --json state,headRefOid,isCrossRepository \
+    --jq 'map(select(.isCrossRepository | not)) | .[0] // empty | "\(.state) \(.headRefOid)"' \
+    </dev/null 2>/dev/null
+}
+
 while IFS=$'\t' read -r path branch_type locked; do
   [ -d "$path" ] || continue
   [ "$locked" != true ] || { echo "keep $path: locked"; continue; }
@@ -94,11 +102,8 @@ while IFS=$'\t' read -r path branch_type locked; do
     fi
     reason="detached, reachable from $remote"
   else
-    # gh reads stdin, which here is the worktree list. A fork's PR can share the branch name.
-    read -r state pr_head < <(gh pr list --head "$branch" --state all --limit 20 \
-      --json state,headRefOid,isCrossRepository \
-      --jq 'map(select(.isCrossRepository | not)) | .[0] // empty | "\(.state) \(.headRefOid)"' \
-      </dev/null 2>/dev/null)
+    pr=$(latest_pr "$branch") || pr=
+    read -r state pr_head <<< "$pr"
     case "${state:-}" in
       MERGED | CLOSED) ;;
       *) echo "keep $path: PR ${state:-not found}"; continue ;;
@@ -126,5 +131,40 @@ done < <(git worktree list --porcelain | awk -v RS= '
     locked = $0 ~ /\nlocked([ \t]|$)/ ? "true" : "false"
     print path "\t" branch "\t" locked
   }')
-[ "$apply" = true ] && git worktree prune -v
+branch_refs=$(git for-each-ref \
+  --format='%(refname) %(objectname) %(committerdate:unix) %(if)%(worktreepath)%(then)checked-out%(end)' \
+  refs/heads) || exit 1
+while read -r ref head latest checked_out; do
+  [ -n "$ref" ] && [ -z "$checked_out" ] || continue
+  branch=${ref#refs/heads/}
+  case "$branch" in main | next) continue ;; esac
+  # A branch can have moved recently even when its tip commit is old.
+  reflog_entry=$(git reflog show -1 --date=unix --format=%gD "$ref") || continue
+  reflog_time=${reflog_entry##*@\{}
+  reflog_time=${reflog_time%\}}
+  if [[ "$reflog_time" =~ ^[0-9]+$ ]] && [ "$reflog_time" -gt "$latest" ]; then
+    latest=$reflog_time
+  fi
+  [ $((now - latest)) -ge "$idle_seconds" ] || continue
+  if ! pr=$(latest_pr "$branch"); then
+    echo "keep branch $branch: couldn't verify PR"
+    continue
+  fi
+  read -r state pr_head <<< "$pr"
+  case "$state" in MERGED | CLOSED) ;; *) continue ;; esac
+  [ "$head" = "$pr_head" ] || continue
+  if [ "$apply" = false ]; then
+    echo "would delete branch $branch (PR $state)"
+  elif [ "$(git rev-parse --verify "$ref")" != "$head" ]; then
+    echo "keep branch $branch: tip changed"
+  elif git branch -D -q -- "$branch"; then
+    echo "deleted branch $branch (PR $state)"
+  else
+    echo "failed to delete branch $branch"
+    failed=1
+  fi
+done <<< "$branch_refs"
+if [ "$apply" = true ]; then
+  git worktree prune -v || failed=1
+fi
 exit "$failed"

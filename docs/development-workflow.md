@@ -833,13 +833,18 @@ helper exit nonzero. The helper deletes the local branch too, but only when its 
 request’s head commit, so unpushed commits survive. It then prunes registrations whose folders are
 gone, such as Codex worktrees under a cleared `/tmp`.
 
+The same command also previews or deletes local branches without a worktree. A branch qualifies
+after the same idle period, measured from its tip commit or latest reflog entry, whichever is newer.
+Its tip must match the head of its most recent same-repository PR, which must be merged or closed.
+The branch sweep always keeps `main` & `next`.
+
 ### Automatic housekeeping
 
-An hourly macOS job keeps the worktree list short. `pnpm run housekeeping:install`, run from the
-primary checkout, installs a launchd agent that runs `scripts/housekeeping.sh` hourly, which runs
-the cleanup helper above with `--apply`. It needs only `git` & `gh`, whose directories the agent's
-`PATH` records. It logs to `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping
-runs skip. Remove it with `pnpm run housekeeping:install -- --uninstall`.
+An hourly macOS job cleans up worktrees & local branches. `pnpm run housekeeping:install`, run from
+the primary checkout, installs a launchd agent that runs `scripts/housekeeping.sh` hourly, which
+runs the cleanup helper above with `--apply`. It needs only `git` & `gh`, whose directories the
+agent's `PATH` records. It logs to `~/Library/Logs/mistria-housekeeping.log` and holds a lock so
+overlapping runs skip. Remove it with `pnpm run housekeeping:install -- --uninstall`.
 
 ---
 
