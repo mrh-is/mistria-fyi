@@ -10,7 +10,7 @@ import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import { buildSourceChecklist } from "./source-checklist.js";
 
-import type { ItemId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId } from "#lib/types/tracker-data.js";
 
 beforeEach(() => {
   userState.resetAll();
@@ -33,6 +33,22 @@ it("keeps quest start gates in every source placement", () => {
   expect(fennelPlacements().some(({ doable }) => doable)).toBe(true);
   userState.toggleAlmanacItem("fennel" as ItemId);
   expect(fennelPlacements().every(({ doable }) => !doable)).toBe(true);
+});
+
+it("hides Song Crystals until the vendor introduction in Everything by source", () => {
+  const crystal = "song_crystal_reinas_theme";
+  const hasCrystal = (showSpoilers = false) =>
+    buildSourceChecklist(userState.progressContext, "en", showSpoilers).some(
+      (row) => row.id === crystal && row.category === "almanac",
+    );
+
+  expect(hasCrystal()).toBe(false);
+  expect(hasCrystal(true)).toBe(true);
+
+  userState.setQuestState("upgrade_the_saturday_market_plaza" as QuestId, "completed");
+  expect(hasCrystal()).toBe(false);
+  userState.setQuestState("meet_the_new_vendors" as QuestId, "completed");
+  expect(hasCrystal()).toBe(true);
 });
 
 it("preserves variant discovery spoilers & species context outside the animal’s section", () => {

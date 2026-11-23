@@ -62,7 +62,7 @@ export interface SourceChecklistRow extends SourceGroupRow {
 export function buildSourceChecklist(
   ctx: ProgressContext,
   locale: LocaleCode,
-  /** Decides each row's spoiler mask. Availability never reads it. */
+  /** Reveals spoilered sections and rows. Availability never reads it. */
   showSpoilers = false,
 ): SourceChecklistRow[] {
   const rows: SourceChecklistRow[] = [];
@@ -95,7 +95,10 @@ export function buildSourceChecklist(
       ...extra,
     });
   }
-  for (const row of projectAlmanac(ctx).rows) {
+  const { rows: almanacRows } = projectAlmanac(ctx, {
+    progressionState: { ...ctx.progressionState, showSpoilers },
+  });
+  for (const row of almanacRows) {
     const variant = getAlmanacEntryVariant(row.entry, locale);
     add(
       "almanac",

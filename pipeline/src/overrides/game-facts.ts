@@ -48,9 +48,10 @@ export const VILLAGER_GATES_ENTRIES = entriesFromRecord<VisibilityCondition>(
 );
 export const VILLAGER_GATES = entriesToRecord(VILLAGER_GATES_ENTRIES);
 
-// The quest can only be turned in after talking to Stillwell and Zorel.
-// See the met_npc requirement in quests/story_quests.toml.
-export const SONG_CRYSTAL_INTRO_QUEST = "meet_the_new_vendors" as QuestId;
+export const ALMANAC_SECTION_UNLOCK_QUESTS: Record<string, QuestId> = {
+  // The met_npc requirement in quests/story_quests.toml checks both Stillwell and Zorel.
+  song_crystal: "meet_the_new_vendors" as QuestId,
+};
 
 export const SECRET_CHEST_UNLOCK_QUESTS = new Map<string, QuestId>([
   // world_mod.toml: the tower door opens in repair_the_bell_tower_pt_2.

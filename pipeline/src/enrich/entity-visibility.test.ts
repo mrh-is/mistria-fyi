@@ -13,6 +13,7 @@ import {
 
 import type { Source } from "#lib/types/acquisition.js";
 import type {
+  AlmanacCategoryId,
   AnimalId,
   CosmeticId,
   ItemId,
@@ -72,7 +73,7 @@ const DEFAULT_QUESTS = { cooking: {}, crown: {}, fetch: {}, heart: {}, mission: 
 function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
   const { quests: questOverrides, ...rest } = overrides;
   return {
-    almanac: {},
+    almanac: { ["song_crystal" as AlmanacCategoryId]: { items: [] } },
     animals: {},
     categoryVisibility: {},
     cosmetics: {},
@@ -337,6 +338,14 @@ describe("assignEntityVisibility — Almanac sections", () => {
         visibility: { type: "questCompleted", questId: "meet_the_new_vendors" },
       },
     });
+  });
+
+  it("rejects a missing Almanac section with a reviewed gate", () => {
+    const trackerData = makeTrackerData({ almanac: { renamed_song_crystal: { items: [] } } });
+
+    expect(() => {
+      assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    }).toThrow(/missing Almanac section "song_crystal"/i);
   });
 });
 

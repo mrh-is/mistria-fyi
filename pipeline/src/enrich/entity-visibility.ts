@@ -2,10 +2,10 @@ import { mapNonEmpty } from "#lib/utils/record.js";
 
 import { resolveToVisibility } from "../acquisition/requirement-projector.js";
 import {
+  ALMANAC_SECTION_UNLOCK_QUESTS,
   CROWN_QUEST_GATE,
   HAYDENS_BARN_GATE,
   SECRET_CHEST_UNLOCK_QUESTS,
-  SONG_CRYSTAL_INTRO_QUEST,
   SPELL_MINE_FLOORS,
   SPELL_SOURCES,
   STORE_UNLOCK_QUESTS,
@@ -83,9 +83,10 @@ export function assignEntityVisibility(
 
   assignRecipeVisibility(trackerData, ctx);
   assignItemVisibility(trackerData, ctx);
-  const songCrystals = trackerData.almanac["song_crystal" as AlmanacCategoryId];
-  if (songCrystals) {
-    songCrystals.visibility = { type: "questCompleted", questId: SONG_CRYSTAL_INTRO_QUEST };
+  for (const [id, questId] of Object.entries(ALMANAC_SECTION_UNLOCK_QUESTS)) {
+    const section = trackerData.almanac[id as AlmanacCategoryId];
+    if (!section) throw new Error(`Missing Almanac section "${id}" for reviewed visibility gate`);
+    section.visibility = { type: "questCompleted", questId };
   }
   assignCosmeticVisibility(trackerData, ctx);
   assignMountVisibility(trackerData, ctx);
