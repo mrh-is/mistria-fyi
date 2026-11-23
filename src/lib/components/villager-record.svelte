@@ -30,6 +30,7 @@
     anchorId,
     birthdaySoon = false,
     compact = false,
+    hidden = false,
     id,
     ledgerLocale,
     name,
@@ -39,6 +40,7 @@
     anchorId?: string;
     birthdaySoon?: boolean;
     compact?: boolean;
+    hidden?: boolean;
     id: VillagerId;
     ledgerLocale?: LocaleCode;
     /** Already resolved for the active locale by the roster via `getName("villagers", id, locale)`. */
@@ -149,6 +151,7 @@
   class:villager-record--spoilered={isSpoilered}
   data-villager-record
   data-compact={compact}
+  {hidden}
   id={anchorId ?? `villager-${id}`}
   tabindex="-1"
 >
@@ -300,11 +303,15 @@
     color: var(--color-ink);
   }
 
-  .villager-record:first-child {
+  .villager-record[hidden] {
+    display: none;
+  }
+
+  .villager-record:nth-child(1 of :not([hidden])) {
     border-radius: var(--radius) var(--radius) 0 0;
   }
 
-  .villager-record:last-child {
+  .villager-record:nth-last-child(1 of :not([hidden])) {
     border-bottom: 1px solid var(--color-ink-hairline);
     border-radius: 0 0 var(--radius) var(--radius);
   }

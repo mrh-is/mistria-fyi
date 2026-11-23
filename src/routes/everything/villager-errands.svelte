@@ -33,10 +33,13 @@
   let roster = $derived(buildVillagerRoster(locale));
   let today = $derived(userState.state.worldState);
   let met = $derived(
-    roster.filter(
-      ({ id, name }) =>
-        userState.progressContext.progressionState.knownVillagers.has(id) &&
-        matchesName(name, toolbarState.searchQuery, locale),
+    roster.filter(({ id }) => userState.progressContext.progressionState.knownVillagers.has(id)),
+  );
+  let matchingVillagers = $derived(
+    new Set(
+      met
+        .filter(({ name }) => matchesName(name, toolbarState.searchQuery, locale))
+        .map(({ id }) => id),
     ),
   );
 
@@ -65,10 +68,9 @@
     ),
   );
   let finished = $derived(met.filter(({ id }) => isVillagerComplete(id, userState.state.progress)));
-  let villagerCount = $derived(
-    completed
-      ? finished.length
-      : new Set([...birthdays, ...heartsToGo, ...relationships].map(({ id }) => id)).size,
+  let groupRows = $derived(completed ? finished : [...birthdays, ...heartsToGo, ...relationships]);
+  let matchCount = $derived(
+    new Set(groupRows.filter(({ id }) => matchingVillagers.has(id)).map(({ id }) => id)).size,
   );
   let groupId = $derived(completed ? "sources-villagers-completed" : "sources-villagers");
   let name = $derived(categoryForKey("villagers", locale).name);
@@ -76,21 +78,23 @@
 
   $effect.pre(() => {
     void relationships;
+    void matchingVillagers;
     if (!completed) restoreFocus = captureFocusFallback();
   });
   $effect(() => {
     void relationships;
+    void matchingVillagers;
     const restore = restoreFocus;
     restoreFocus = undefined;
     if (restore) void restore();
   });
 
   $effect(() => {
-    shown = villagerCount > 0;
+    shown = matchCount > 0;
   });
   registerPageSearch(() => ({
     filtered: { completed: 0, notNow: 0, todo: 0 },
-    visible: villagerCount,
+    visible: matchCount,
   }));
 </script>
 
@@ -100,6 +104,7 @@
       <VillagerRecord
         anchorId="{groupId}-{place}-{villager.id}"
         birthdaySoon={urgent}
+        hidden={!matchingVillagers.has(villager.id)}
         id={villager.id}
         ledgerLocale={locale}
         name={villager.name}
@@ -112,35 +117,35 @@
 
 {#snippet place(title: string, list: VillagerRosterEntry[], key: string, urgent = false)}
   {#if list.length > 0}
-    <section aria-labelledby="{groupId}-{key}" class="border-rule-faint border-t">
+    {@const count = list.filter(({ id }) => matchingVillagers.has(id)).length}
+    <section
+      aria-labelledby="{groupId}-{key}"
+      class="border-rule-faint border-t"
+      hidden={count === 0}
+    >
       <div class="place-head">
         <h3 id="{groupId}-{key}" class:taped={urgent} class="font-body text-xl">{title}</h3>
-        <ShelfHeading
-          class="running-shelf"
-          shelf="todo"
-          level={4}
-          explains={false}
-          count={list.length}
-        />
+        <ShelfHeading class="running-shelf" shelf="todo" level={4} explains={false} {count} />
       </div>
       {@render rows(list, key, urgent)}
     </section>
   {/if}
 {/snippet}
 
-{#if villagerCount > 0}
+{#if groupRows.length > 0}
   <GroupSection
     id={groupId}
     {name}
     {completed}
     findable
     placeGroup
+    visible={matchCount > 0}
     revealTarget={anchor === groupId ? anchor : ""}
   >
     {#snippet icon()}<Icon.Category category="villagers" class="size-4 shrink-0" />{/snippet}
     {#snippet count()}
       <span class="font-data text-sm font-normal text-muted-foreground"
-        >{formatNumber(villagerCount, locale)}</span
+        >{formatNumber(matchCount, locale)}</span
       >
     {/snippet}
 

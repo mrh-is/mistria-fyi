@@ -14,7 +14,7 @@
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
-  import { getName, nameCollator } from "#lib/data/names.js";
+  import { nameCollator } from "#lib/data/names.js";
   import { captureUndoFocus, showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
@@ -103,13 +103,12 @@
     ),
   ]);
   let completedVillagers = $derived(
-    [...userState.progressContext.progressionState.knownVillagers].some(
-      (id) =>
-        isVillagerComplete(id, userState.state.progress) &&
-        matchesName(getName("villagers", id, locale), toolbarState.searchQuery, locale),
+    [...userState.progressContext.progressionState.knownVillagers].some((id) =>
+      isVillagerComplete(id, userState.state.progress),
     ),
   );
   let villagerGroupShown = $state(false);
+  let completedVillagerGroupShown = $state(false);
   const {
     restoringScroll,
     snapshot: ledger,
@@ -201,7 +200,7 @@
     ),
   );
   let hasCompletedContent = $derived(
-    completedVillagers ||
+    (completedVillagers && (!toolbarState.searchQuery || completedVillagerGroupShown)) ||
       (progressCompletions.includes(true) &&
         (!toolbarState.searchQuery || progressCategoryShown(true))) ||
       groups.some(({ sections: groupSections }) =>
@@ -509,7 +508,7 @@
     >
       <div class="flex flex-col gap-6">
         {#if completedVillagers}
-          <VillagerErrands {anchor} {locale} completed />
+          <VillagerErrands {anchor} {locale} completed bind:shown={completedVillagerGroupShown} />
         {/if}
         {@render sourceGroups(true)}
       </div>

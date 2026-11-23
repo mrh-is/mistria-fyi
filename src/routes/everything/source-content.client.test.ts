@@ -107,6 +107,47 @@ it("brings the Progress group back when the search clears", async () => {
   expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
 });
 
+it("keeps the same place and villager rows through search clear", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "store-balor", locale: "en" });
+  const acorn = await view.findByRole("button", { name: "Check Acorn" });
+  const adeline = view.getByRole("slider", { name: "Adeline heart level" });
+
+  toolbarState.setSearchQuery("Adeline");
+  await tick();
+  expect(acorn).toBeInTheDocument();
+  expect(acorn).not.toBeVisible();
+  expect(adeline).toBeVisible();
+
+  toolbarState.setSearchQuery("Acorn");
+  await tick();
+  expect(acorn).toBeInTheDocument();
+  expect(adeline).toBeInTheDocument();
+  expect(adeline).not.toBeVisible();
+
+  toolbarState.setSearchQuery("");
+  await tick();
+  expect(view.getByRole("button", { name: "Check Acorn" })).toBe(acorn);
+  expect(view.getByRole("slider", { name: "Adeline heart level" })).toBe(adeline);
+});
+
+it("keeps focus on a matching villager and moves it when the query hides the record", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  const heartMark = await view.findByRole("slider", { name: "Adeline heart level" });
+  heartMark.focus();
+
+  // A debounced search can apply after the reader has already moved focus into a record.
+  toolbarState.setSearchQuery("Adeline");
+  await tick();
+  await tick();
+  expect(heartMark).toHaveFocus();
+
+  toolbarState.setSearchQuery("Acorn");
+  await tick();
+  await tick();
+  expect(heartMark).not.toBeVisible();
+  expect(view.getByRole("button", { name: "Stores" })).toHaveFocus();
+});
+
 it("lists this week’s birthdays and shares editable marks with Hearts to go", async () => {
   const showMeterUndo = vi.spyOn(undoToast, "showMeterUndo");
   const adeline = "adeline" as VillagerId;
@@ -158,5 +199,13 @@ it("keeps a villager with full hearts available until their relationship is sett
   const completed = within(view.getByTestId("everything-completed"));
   await fireEvent.click(completed.getByRole("button", { name: "Completed" }));
   await fireEvent.click(completed.getByRole("button", { name: "Villagers" }));
-  expect(completed.getByRole("slider", { name: "Adeline heart level" })).toBeVisible();
+  const finishedMark = completed.getByRole("slider", { name: "Adeline heart level" });
+  expect(finishedMark).toBeVisible();
+  toolbarState.setSearchQuery("Acorn");
+  await tick();
+  expect(finishedMark).toBeInTheDocument();
+  expect(finishedMark).not.toBeVisible();
+  toolbarState.setSearchQuery("");
+  await tick();
+  expect(completed.getByRole("slider", { name: "Adeline heart level" })).toBe(finishedMark);
 });

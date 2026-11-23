@@ -144,7 +144,7 @@
   );
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
   let todoCount = $derived(groups.todo.filter(countsRow).length);
-  let expanded = $derived(open || isSearching);
+  let expanded = $derived(open || (isSearching && (!place || hasRows)));
   let showTable = $derived(open || (isSearching && hasRows));
   /**
    * A search that matches only one closed shelf here (Not now or Completed) prints as one line
