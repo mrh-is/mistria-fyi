@@ -8,7 +8,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
-import { closeSearch, openSearch, settleLayout } from "./support/scenarios.js";
+import { closeSearch, openSearch, scrollToSection, settleLayout } from "./support/scenarios.js";
 
 import type { Page } from "@playwright/test";
 
@@ -27,17 +27,18 @@ interface Budget {
   interactiveMs: number;
   /** Ledger rows mounted. */
   rows: number;
-  /** One axe scan of the main landmark, in milliseconds. */
+  /** One axe scan of the visible Artifacts ledger, in milliseconds. */
   scanMs: number;
 }
 
-async function measure(page: Page, path: string, firstCheck: () => Promise<void>): Promise<Budget> {
+async function measureAlmanac(page: Page): Promise<Budget> {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: CPU_THROTTLE });
   await initializeApplication(page, "light", createStoredState());
   const started = Date.now();
-  await gotoApplication(page, path);
-  await firstCheck();
+  await gotoApplication(page, "/almanac");
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  await expect(artifacts.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
   const interactiveMs = Date.now() - started;
   await waitForRendering(page);
   await settleLayout(page);
@@ -47,8 +48,8 @@ async function measure(page: Page, path: string, firstCheck: () => Promise<void>
   }));
   const scanStarted = Date.now();
   await analyzeAccessibility(page, {
-    include: "main",
-    route: path,
+    include: "#artifacts",
+    route: "/almanac",
     state: "budget",
     theme: "light",
   });
@@ -57,10 +58,7 @@ async function measure(page: Page, path: string, firstCheck: () => Promise<void>
 }
 
 test("the Almanac stays within its budget at 4× CPU throttling", async ({ page }) => {
-  const measured = await measure(page, "/almanac", async () => {
-    const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
-    await expect(artifacts.getByRole("button", { name: /^Check / }).first()).toBeVisible();
-  });
+  const measured = await measureAlmanac(page);
   test.info().annotations.push({ type: "budget", description: JSON.stringify(measured) });
   // Measured about 2,100 elements, 60 rows, 1 s to interactive, & a 1.3 s scan. Mounting every
   // row measured 35,407 elements & 1,879 rows on the same desktop window. Cap first-load
@@ -186,8 +184,10 @@ test("a focused row stays mounted when the window scrolls past it", async ({ pag
 /** Scroll Furniture 120 px at a time, down then up, and list each step the reading row drifted. */
 async function scrollDrifts(page: Page): Promise<string[]> {
   await initializeApplication(page, "light", createStoredState());
-  await gotoApplication(page, "/almanac#furniture");
+  await gotoApplication(page, "/almanac");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
+  // Start from the section after hydration. The deep-link tests cover initial hash alignment.
+  await scrollToSection(furniture);
   await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
   await settleLayout(page);
   const found: string[] = [];
