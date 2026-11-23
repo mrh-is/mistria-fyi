@@ -9,7 +9,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
-import { wuchale } from "wuchale/vite";
 
 import { getAppVersion } from "./scripts/app-version.js";
 import {
@@ -22,6 +21,7 @@ import {
   sharedLocaleFiles,
   sharedScriptFiles,
 } from "./scripts/lib/wuchale-source-files.js";
+import { wuchaleForVite } from "./scripts/vite-wuchale.js";
 import SharedClientSequencer from "./scripts/vitest-client-sequencer.js";
 import { svelteCssCachePlugin } from "./scripts/vitest-svelte-css-cache.js";
 import {
@@ -174,7 +174,10 @@ export default defineConfig(({ command }) => ({
     __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
   },
   plugins: [
-    wuchale({ configPath: path.join(import.meta.dirname, "wuchale.config.ts") }),
+    wuchaleForVite(
+      path.join(import.meta.dirname, "wuchale.config.ts"),
+      command === "build" || process.env.VITEST === "true",
+    ),
     tailwindcss(),
     sveltekit({
       adapter: withBarePathStubs(
