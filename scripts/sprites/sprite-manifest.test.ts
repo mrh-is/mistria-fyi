@@ -45,6 +45,23 @@ describe("sprite manifest", () => {
     });
   });
 
+  it("adds the other kinds' keys once, sorted with the rest", () => {
+    expect(
+      spriteKeys({ items: { a: {} }, villagers: {} }, [
+        "cosmetics/hat",
+        "items/a",
+        "animal-variants/cow/gold",
+      ]),
+    ).toEqual(["animal-variants/cow/gold", "cosmetics/hat", "items/a"]);
+  });
+
+  it("refuses a sprite tree missing a kind its keys name", async () => {
+    const root = stagedSprites({ "items/acorn": "18x18", "villagers/adeline": "24x20" });
+    await expect(buildSpriteManifest(root, ["items/acorn", "cosmetics/hat"])).rejects.toThrow(
+      "No staged cosmetics sprites",
+    );
+  });
+
   it("refuses a sprite tree missing a kind", async () => {
     const root = stagedSprites({ "villagers/adeline": "24x20" });
     await expect(buildSpriteManifest(root, ["villagers/adeline"])).rejects.toThrow(

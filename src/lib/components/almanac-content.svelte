@@ -17,6 +17,7 @@
   import { filteredCounts, rowShelf } from "#lib/engine/shelves.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
+  import { itemSprite } from "#lib/sprites/sprite-url.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
@@ -126,7 +127,7 @@
             reportCategory="almanac-item"
             reportEntityId={canonicalId}
             {sources}
-            sprite={canonicalId}
+            sprite={itemSprite(canonicalId)}
             spriteClass="text-(--color-category-almanac)"
             onToggle={(covered) => {
               checkOff.onToggle(

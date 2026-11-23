@@ -4,6 +4,7 @@
   import SourcePaper from "#lib/components/source-paper.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import SpritePreviewButton from "#lib/components/sprite-preview-button.svelte";
+  import SpriteSlot from "#lib/components/sprite-slot.svelte";
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
@@ -19,6 +20,7 @@
   import type { CategoryKey } from "#lib/engine/categories.js";
   import type { ReportCategory } from "#lib/feedback/types.js";
   import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
+  import type { SpriteRef } from "#lib/sprites/sprite-url.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -37,6 +39,7 @@
     sources = [],
     sprite,
     spriteClass = "text-primary",
+    spritePlaceholder = false,
     subtitle,
     variant,
   }: {
@@ -52,8 +55,10 @@
     reportExtra?: Record<string, number | string>;
     segmentLookups?: SegmentLookups;
     sources?: Source[];
-    sprite?: string;
+    sprite?: SpriteRef;
     spriteClass?: string;
+    /** Without a sprite: shows the category's placeholder glyph, for art the game doesn't have. */
+    spritePlaceholder?: boolean;
     subtitle?: string;
     /** Distinguishes same-name rows in the checkbox label, independently of the subtitle. */
     variant?: string;
@@ -209,6 +214,8 @@
         class={spriteClass}
         label={`Show ${name} in color`}
       />
+    {:else if spritePlaceholder && category}
+      <SpriteSlot placeholder={category} state={spriteState} class={spriteClass} />
     {/if}
 
     <span class="tracker-row__label">

@@ -93,7 +93,9 @@ function syntheticFiddle() {
       animals: {
         horse: {
           core: { name: "Horse" },
-          variants: { mistmare: { acquirable: false, name: "Mistmare" } },
+          variants: {
+            mistmare: { acquirable: false, female: { ui_key: "mistmare" }, name: "Mistmare" },
+          },
         },
       },
     },
@@ -102,7 +104,13 @@ function syntheticFiddle() {
     ui: {
       character_customization: {},
       menus: { sub_menus: { almanac: { categories: [{ key: "crops", tags: ["crop"] }] } } },
-      skill_menu: { mount: { tier_1: [{ essence: 200, perk: "horsepower" }] } },
+      skill_menu: {
+        mount: {
+          tier_1: [
+            { essence: 200, icon: "spr_ui_skills_mount_icon_horsepower", perk: "horsepower" },
+          ],
+        },
+      },
     },
   });
 }

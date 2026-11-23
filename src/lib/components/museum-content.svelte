@@ -25,6 +25,7 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
+  import { itemSprite } from "#lib/sprites/sprite-url.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -201,7 +202,7 @@
                     reportCategory="museum-item"
                     reportEntityId={itemId}
                     sources={museumItemSources}
-                    sprite={itemId}
+                    sprite={itemSprite(itemId)}
                     spriteClass="text-(--color-category-museum)"
                     onToggle={(covered) => {
                       const wing = trackerData.museum[wingId];

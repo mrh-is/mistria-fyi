@@ -56,6 +56,7 @@
     "game-term": "cd pipeline && tsx src/game-term.ts",
     "r2:check": "node scripts/r2-check.ts",
     "sprites:manifest": "tsx scripts/sprites/sprite-manifest.ts",
+    "sprites:report": "tsx scripts/sprites/sprite-report.ts",
     "sprites:upload": "node scripts/sprites/upload-sprites.ts",
     "sprites:villagers": "pnpm run pipeline -- --villager-sprites-only"
   },

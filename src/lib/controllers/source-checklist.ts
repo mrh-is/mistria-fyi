@@ -9,6 +9,7 @@ import { projectQuests } from "#lib/engine/projections/quests.js";
 import { recipePlacements } from "#lib/engine/projections/recipes.js";
 import { factKey } from "#lib/engine/provenance.js";
 import { buildQuestSections } from "#lib/presentation/quest-sections.js";
+import { everythingRowArt } from "#lib/sprites/everything-sprites.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -16,6 +17,7 @@ import type { CategoryKey } from "#lib/engine/categories.js";
 import type { ProgressContext } from "#lib/engine/progress.js";
 import type { ReportCategory } from "#lib/feedback/types.js";
 import type { SourceGroupRow } from "#lib/presentation/source-groups.js";
+import type { RowArt } from "#lib/sprites/everything-sprites.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, RecipeId } from "#lib/types/tracker-data.js";
@@ -40,6 +42,8 @@ const FACT_FIELDS = {
 
 /** One category row, with its original identity, presentation, & reversible store action. */
 export interface SourceChecklistRow extends SourceGroupRow {
+  /** The sprite slot's art, or the designed placeholder; undefined only for an unlisted gap. */
+  art?: RowArt;
   category: CategoryKey;
   /** The row's `factKey`, which picks its checkbox's mark. */
   fact: string;
@@ -50,7 +54,6 @@ export interface SourceChecklistRow extends SourceGroupRow {
   searchNames?: string[];
   /** Secondary words matched with the names, such as an almanac variant (“white window”). */
   searchTerms?: string[];
-  sprite?: string;
   subtitle?: string;
   /** Apply the category action and return its exact undo, including any recipe grants. */
   toggle: () => () => void;
@@ -73,8 +76,10 @@ export function buildSourceChecklist(
     toggle: () => void,
     extra: Partial<SourceChecklistRow> = {},
   ): void {
+    const art = everythingRowArt(reportCategory, id);
     rows.push({
       ...entity,
+      ...(art ? { art } : {}),
       category,
       completed,
       fact: factKey(FACT_FIELDS[reportCategory], id),
@@ -105,7 +110,6 @@ export function buildSourceChecklist(
       {
         obtainable: row.obtainable,
         searchNames: getAlmanacEntryNames(row.entry, locale),
-        sprite: row.canonicalId,
         ...(variant ? { searchTerms: [variant], subtitle: variant } : {}),
       },
     );
@@ -121,28 +125,27 @@ export function buildSourceChecklist(
       () => {
         userState.toggleMuseumItem(row.id);
       },
-      { obtainable: row.obtainable, sprite: row.id },
+      { obtainable: row.obtainable },
     );
   }
-  const recipeSprites = new Map<RecipeId, ItemId>();
+  const recipeItems = new Map<RecipeId, ItemId>();
   for (const { recipes } of recipePlacements()) {
     for (const { itemId, recipeId } of recipes) {
-      if (!recipeSprites.has(recipeId)) recipeSprites.set(recipeId, itemId);
+      if (!recipeItems.has(recipeId)) recipeItems.set(recipeId, itemId);
     }
   }
   for (const [id, recipe] of recordEntries(trackerData.recipes)) {
-    const sprite = recipeSprites.get(id);
+    const itemId = recipeItems.get(id);
     add(
       "recipes",
       id,
-      sprite ? getName("items", sprite, locale) : getName("recipes", id, locale),
+      itemId ? getName("items", itemId, locale) : getName("recipes", id, locale),
       recipe,
       ctx.progress.almanacRecipes.has(id),
       "recipe",
       () => {
         userState.toggleAlmanacRecipe(id);
       },
-      { sprite },
     );
   }
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {

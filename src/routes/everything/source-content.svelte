@@ -412,8 +412,9 @@
                       .join(" · ")}
                     reportCategory={entry.reportCategory}
                     reportEntityId={entry.id}
-                    sprite={entry.sprite}
+                    sprite={entry.art?.kind === "sprite" ? entry.art.sprite : undefined}
                     spriteClass="text-primary"
+                    spritePlaceholder={entry.art?.kind === "none"}
                     {sources}
                     segmentLookups={{ ...lookups, entityVisibility: entry.visibility }}
                     onToggle={(covered) => toggle(entry, covered)}

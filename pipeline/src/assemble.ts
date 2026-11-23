@@ -45,6 +45,10 @@ import { extractAnimals } from "./extract/animals.js";
 import { extractCosmetics } from "./extract/cosmetics.js";
 import { buildCutsceneQuestMap } from "./extract/cutscene-quest-map.js";
 import { extractDates } from "./extract/dates.js";
+import {
+  extractEntitySpriteCandidates,
+  renownRewardItemSprites,
+} from "./extract/entity-sprites.js";
 import { extractFestivals } from "./extract/festivals.js";
 import { extractLocationNames } from "./extract/locations.js";
 import { extractMines } from "./extract/mines.js";
@@ -80,6 +84,7 @@ import type { Item, ItemId, QuestId, TrackerData, VillagerId } from "#lib/types/
 import type { ReviewedOverrides } from "./acquisition/reviewed-overrides.js";
 import type { ReviewedPipelineDiagnostic } from "./diagnostics.js";
 import type { ItemIconSpriteIndex } from "./extract/almanac.js";
+import type { EntitySpriteCandidates } from "./extract/entity-sprites.js";
 import type { VillagerIconSpriteIndex } from "./extract/villagers.js";
 import type { Localizer } from "./localize/localize.js";
 import type { ItemVariantSet } from "./overrides/item-variants.js";
@@ -103,6 +108,7 @@ export interface LocaleChunk {
 
 export interface AssembledTrackerData {
   /** Inputs for the optional sprite-extraction step. */
+  entitySpriteCandidates: EntitySpriteCandidates;
   iconSpritesByItemId: ItemIconSpriteIndex;
   iconSpritesByVillagerId: VillagerIconSpriteIndex;
   /** Locale chunks in their staging order. */
@@ -422,7 +428,12 @@ export function assembleTrackerData(
   console.log("  Tracker data validation passed");
 
   return {
-    iconSpritesByItemId,
+    entitySpriteCandidates: extractEntitySpriteCandidates(fiddle, trackerData),
+    // Renown rewards picture items the almanac may not list, such as the Golden Treasure Box.
+    iconSpritesByItemId: {
+      ...renownRewardItemSprites(fiddle, trackerData),
+      ...iconSpritesByItemId,
+    },
     iconSpritesByVillagerId,
     localeChunks: [
       { byLocale: villagerLocaleNames, category: "villagers" },

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
+import { itemSprite } from "#lib/sprites/sprite-url.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
@@ -22,7 +23,7 @@ describe("TrackerRow", () => {
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
-        sprite: "spr_ui_item_cherry_cobbler",
+        sprite: itemSprite("cherry_cobbler"),
       },
     });
     const cover = queries.getByRole("button", { name: "Reveal spoiler" });
@@ -41,7 +42,7 @@ describe("TrackerRow", () => {
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
-        sprite: "spr_ui_item_cherry_cobbler",
+        sprite: itemSprite("cherry_cobbler"),
       },
     });
 
@@ -59,7 +60,7 @@ describe("TrackerRow", () => {
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
-        sprite: "spr_ui_item_cherry_cobbler",
+        sprite: itemSprite("cherry_cobbler"),
       },
     });
 
@@ -68,6 +69,43 @@ describe("TrackerRow", () => {
     expect(container.querySelector<HTMLElement>("[data-sprite-slot]")?.dataset.spriteSlot).toBe(
       "ready",
     );
+  });
+
+  it("draws the category placeholder for a row the game has no art for", () => {
+    const { container } = renderToFragmentWithFeedback(TrackerRow, {
+      props: {
+        category: "quests",
+        display: { mode: "completed" },
+        fact: "questStates/a_new_friend",
+        name: "A New Friend",
+        onToggle: vi.fn(),
+        reportCategory: "quest",
+        reportEntityId: "a_new_friend",
+        spritePlaceholder: true,
+      },
+    });
+
+    const slot = container.querySelector<HTMLElement>("[data-sprite-slot]");
+    expect(slot?.dataset.spriteSlot).toBe("complete");
+    expect(slot?.dataset.spritePlaceholder).toBe("quests");
+    expect(slot?.querySelector("svg")).toBeTruthy();
+    expect(slot?.querySelector("image")).toBeNull();
+    // Nothing to preview in color.
+    expect(container.querySelector(".sprite-preview-button")).toBeNull();
+  });
+
+  it("leaves the slot out when a row has neither a sprite nor a placeholder", () => {
+    const { container } = renderToFragmentWithFeedback(TrackerRow, {
+      props: {
+        category: "quests",
+        display: { mode: "incomplete" },
+        ...reportProps,
+        name: "Cherry Cobbler",
+        onToggle: vi.fn(),
+      },
+    });
+
+    expect(container.querySelector("[data-sprite-slot]")).toBeNull();
   });
 
   it("marks a completed row for uncheck", () => {
