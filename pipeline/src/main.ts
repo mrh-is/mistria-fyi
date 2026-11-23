@@ -8,12 +8,18 @@ import "../../scripts/lib/require-pinned-node.js";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { NO_ART_ENTITIES } from "#lib/sprites/no-art.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { assembleTrackerData } from "./assemble.js";
 import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
 import { publishFiles } from "./emit/publish.js";
-import { extractSprites, extractVillagerSprites, publishSprites } from "./emit/sprites.js";
+import {
+  extractEntitySprites,
+  extractSprites,
+  extractVillagerSprites,
+  publishSprites,
+} from "./emit/sprites.js";
 import { requireCraftingMenus } from "./extract/recipe-menus.js";
 import { extractVillagerIconSprites } from "./extract/villagers.js";
 import { assertGameLanguageMapExhaustive } from "./localize/locale-codes.js";
@@ -171,8 +177,13 @@ async function main(): Promise<void> {
   validateReviewedGameFacts(fiddle);
   console.log();
 
-  const { iconSpritesByItemId, iconSpritesByVillagerId, localeChunks, trackerData } =
-    assembleTrackerData(fiddle, createAssetsLocalizer(assetsDir), { version });
+  const {
+    entitySpriteCandidates,
+    iconSpritesByItemId,
+    iconSpritesByVillagerId,
+    localeChunks,
+    trackerData,
+  } = assembleTrackerData(fiddle, createAssetsLocalizer(assetsDir), { version });
 
   // Pretty-printed so a regeneration's Git diff is reviewable; Vite re-emits imported JSON, so the
   // whitespace never reaches the bundle.
@@ -193,7 +204,7 @@ async function main(): Promise<void> {
 
   let stagedSprites: StagedSprite[] = [];
   if (options.sprites) {
-    console.log("\nStep 6: Extracting item and villager sprites...");
+    console.log("\nStep 6: Extracting item, villager, & Everything sprites...");
     const zipPath = resolveSpriteArchivePath(assetsDir, version);
     const itemSpriteResult = await extractSprites(
       assetsDir,
@@ -207,11 +218,35 @@ async function main(): Promise<void> {
       SPRITES_OUTPUT_ROOT,
       zipPath,
     );
+    const entitySpriteResult = await extractEntitySprites(
+      assetsDir,
+      entitySpriteCandidates,
+      NO_ART_ENTITIES,
+      SPRITES_OUTPUT_ROOT,
+      zipPath,
+    );
     logSpriteExtraction("Items", itemSpriteResult);
     logSpriteExtraction("Villagers", villagerSpriteResult);
-    const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
+    logSpriteExtraction("Everything's other kinds", entitySpriteResult);
+    const missing = [
+      ...itemSpriteResult.missing,
+      ...villagerSpriteResult.missing,
+      ...entitySpriteResult.missing,
+    ];
     if (reportMissingSprites(missing)) return;
-    stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
+    if (entitySpriteResult.staleNoArt.length > 0) {
+      fail(
+        `  ❌ ${entitySpriteResult.staleNoArt.length} stale entries in src/lib/sprites/no-art.ts:`,
+        ...entitySpriteResult.staleNoArt.map((entry) => `    - ${entry}`),
+        "  Aborting before publish: no tracked output file was written.",
+      );
+      return;
+    }
+    stagedSprites = [
+      ...itemSpriteResult.staged,
+      ...villagerSpriteResult.staged,
+      ...entitySpriteResult.staged,
+    ];
   }
 
   console.log(`\nStep ${options.sprites ? "7" : "6"}: Publishing outputs...`);

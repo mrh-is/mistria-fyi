@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { itemSprite } from "#lib/sprites/sprite-url.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { SPRITE_PREVIEW_FADE_MS, SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
@@ -117,7 +118,7 @@ describe("TrackerRow reportable metadata", () => {
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
       reportEntityId: "turnip",
-      sprite: "spr_ui_item_turnip",
+      sprite: itemSprite("turnip"),
     });
 
     expect(view.container.querySelector("[data-sprite-slot='spoilered']")).toBeTruthy();
@@ -312,7 +313,7 @@ describe("TrackerRow sprite preview", () => {
     name: "Animated Clouds Window",
     reportCategory: "almanac-item",
     reportEntityId: "animated_clouds_window_blue",
-    sprite: "spr_ui_item_animated_clouds_window_blue",
+    sprite: itemSprite("animated_clouds_window_blue"),
   } as const;
 
   it("reveals the full sprite for a few seconds without toggling the row", async () => {

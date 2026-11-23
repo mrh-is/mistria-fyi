@@ -6,6 +6,8 @@ import { open } from "yauzl-promise";
 import { compareStrings } from "../ordering.js";
 import { resolveAssetsZipPath } from "../parse/assets-zip.js";
 
+import type { EntitySpriteCandidates, EntitySpriteKind } from "../extract/entity-sprites.js";
+
 const ITEM_SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),
   join("animations", "Placeables"),
@@ -110,6 +112,93 @@ export async function extractVillagerSprites(
     false,
     zipPath,
   );
+}
+
+/** Where Everything's other kinds keep their icons: the item icons, then the menu art. */
+// "Item Icons" includes Archaeology, home of the one reviewed cosmetic exception's artifact icon.
+const ENTITY_SPRITE_SEARCH_DIRS = [join("animations", "Item Icons"), join("animations", "UI NEW")];
+
+const ENTITY_SPRITE_KIND: SpriteKind = {
+  matchesFilename: (basename) => !basename.endsWith("_outline.png"),
+  outputSubdir: "",
+  searchDirs: ENTITY_SPRITE_SEARCH_DIRS,
+};
+
+export interface EntitySpriteExtractionResult extends SpriteExtractionResult {
+  /** No-art entries naming an entity that has art, or one the tracker data doesn't have. */
+  staleNoArt: string[];
+}
+
+/**
+ * Converts the icon of every entity in `candidates` to webp at `outputDir/<kind>/<id>.webp`,
+ * taking each entity's first candidate the assets hold, & defers writes to {@link publishSprites}
+ * like {@link extractSprites}. An entity without art is `missing` unless `noArt` lists it; a listed
+ * entity that has art, or isn't in `candidates`, is `staleNoArt`. Either fails the run.
+ */
+export async function extractEntitySprites(
+  assetsDir: string,
+  candidates: EntitySpriteCandidates,
+  noArt: Readonly<Partial<Record<EntitySpriteKind, Readonly<Record<string, string>>>>>,
+  outputDir: string,
+  zipPath?: string,
+): Promise<EntitySpriteExtractionResult> {
+  const wanted = new Set(Object.values(candidates).flatMap((map) => Object.values(map).flat()));
+  const resolvedZipPath = zipPath ?? resolveAssetsZipPath(assetsDir);
+  const pngs = resolvedZipPath
+    ? await readZipSprites(ENTITY_SPRITE_KIND, resolvedZipPath, wanted)
+    : readFilesystemSprites(ENTITY_SPRITE_KIND, assetsDir, wanted);
+
+  const missing: string[] = [];
+  const staleNoArt: string[] = [];
+  const staged: StagedSprite[] = [];
+  let extracted = 0;
+  let skipped = 0;
+  let total = 0;
+  for (const kind of Object.keys(candidates).toSorted(compareStrings) as EntitySpriteKind[]) {
+    const listed = noArt[kind] ?? {};
+    for (const id of Object.keys(listed).toSorted(compareStrings)) {
+      if (!Object.hasOwn(candidates[kind], id)) staleNoArt.push(`${kind}/${id} (no such entity)`);
+    }
+    for (const [id, names] of Object.entries(candidates[kind]).toSorted(([a], [b]) =>
+      compareStrings(a, b),
+    )) {
+      const name = names.find((candidate) => pngs.has(candidate));
+      if (Object.hasOwn(listed, id)) {
+        if (name) staleNoArt.push(`${kind}/${id} (has ${name})`);
+        continue;
+      }
+      if (!name) {
+        missing.push(`${kind}/${id} (${names.length > 0 ? names.join(" | ") : "no art named"})`);
+        continue;
+      }
+      total++;
+      const data = pngs.get(name);
+      if (!data) continue;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- sprites stage sequentially so the staged output order and peak memory stay deterministic
+      const counts = await stageEntitiesForSprite(
+        [id],
+        join(outputDir, kind),
+        () => convertToWebp(data),
+        staged,
+      );
+      extracted += counts.extracted;
+      skipped += counts.skipped;
+    }
+  }
+  console.log(
+    `  Sprites: ${total.toString()} entities across ${Object.keys(candidates).length.toString()} kinds, ` +
+      `${pngs.size.toString()} source PNGs found`,
+  );
+  return {
+    extracted,
+    missing,
+    overridden: 0,
+    skipped,
+    source: resolvedZipPath ? "zip" : "filesystem",
+    staged,
+    staleNoArt,
+    total,
+  };
 }
 
 /** Writes staged sprite conversions to disk. Call only after every pipeline validation passes. */
@@ -340,6 +429,69 @@ async function extractSpritesFromZip(
     staged,
     total,
   };
+}
+
+/** Reads each wanted sprite's PNG from the extracted search directories, by sprite name. */
+function readFilesystemSprites(
+  kind: SpriteKind,
+  assetsDir: string,
+  wanted: ReadonlySet<string>,
+): Map<string, Buffer> {
+  const index = new Map<string, string>();
+  for (const subdir of kind.searchDirs) {
+    const dir = resolve(assetsDir, subdir);
+    if (existsSync(dir) && statSync(dir).isDirectory()) buildSpriteIndex(kind, dir, index);
+  }
+  if (index.size === 0) {
+    throw new Error(
+      `No sprite PNGs found in any search directory.\n` +
+        `The full assets directory must be extracted (not just fiddle/).`,
+    );
+  }
+  const result = new Map<string, Buffer>();
+  for (const name of wanted) {
+    const path = index.get(name);
+    if (path) result.set(name, readFileSync(path));
+  }
+  return result;
+}
+
+/** Reads each wanted sprite's PNG from `assets.zip`, by search-directory priority then path. */
+async function readZipSprites(
+  kind: SpriteKind,
+  zipPath: string,
+  wanted: ReadonlySet<string>,
+): Promise<Map<string, Buffer>> {
+  const zipPrefixes = kind.searchDirs.map((d) => `assets/${d.replaceAll("\\", "/")}/`);
+  const zipFile = await open(zipPath);
+  console.log(`  Reading entity sprites from ${zipPath}`);
+  const selected = new Map<string, { path: string; priority: number }>();
+  const result = new Map<string, Buffer>();
+  try {
+    for await (const entry of zipFile) {
+      if (!entry.filename.endsWith(".png")) continue;
+      const priority = zipPrefixes.findIndex((prefix) => entry.filename.startsWith(prefix));
+      if (priority === -1) continue;
+      const basename = posix.basename(entry.filename);
+      if (!kind.matchesFilename(basename)) continue;
+      const name = basename.slice(0, -4);
+      if (!wanted.has(name)) continue;
+      const current = selected.get(name);
+      const preferred =
+        !current ||
+        priority < current.priority ||
+        (priority === current.priority && compareStrings(entry.filename, current.path) < 0);
+      if (!preferred) continue;
+      selected.set(name, { path: entry.filename, priority });
+      const stream = await entry.openReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(chunk as Buffer);
+      result.set(name, Buffer.concat(chunks));
+    }
+  } finally {
+    await zipFile.close();
+  }
+  return result;
 }
 
 /** Stages one output file per entity ID sharing `spriteName`, converting the source data once. */

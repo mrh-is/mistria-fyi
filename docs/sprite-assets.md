@@ -8,10 +8,16 @@ service worker from precaching every sprite on install.
 
 ## Resolver
 
-`src/lib/sprites/sprite-url.ts` is the single place in `src/` that builds a sprite URL:
+`src/lib/sprites/sprite-url.ts` is the single place in `src/` that builds a sprite URL. A
+`SpriteRef` names an entity kind & the entity’s own ID:
 
-- `itemSpriteUrl(itemId)` → `<origin>/sprites/items/<itemId>.webp?g=<generation>`
-- `villagerSpriteUrl(villagerId)` → `<origin>/sprites/villagers/<villagerId>.webp?g=<generation>`
+- `spriteUrl({ kind, id })` → `<origin>/sprites/<kind>/<id>.webp?g=<generation>`
+- `itemSpriteUrl(itemId)` & `villagerSpriteUrl(villagerId)` are the `items` & `villagers` cases.
+
+The kinds are `items`, `villagers`, & the kinds Everything pictures beside items: `cosmetics`,
+`animal-variants`, `animal-cosmetics`, `mount-appearances`, `mount-perks`, `pet-skins`,
+`pet-cosmetics`, & `spells`. An animal row’s ID holds a slash (`alpaca/bowtie`), so its object nests
+a level deeper.
 
 The path is keyed by the entity's own ID, not the game version: icons change far more rarely than
 the game does, and this layout means a patch that doesn't touch an icon doesn't invalidate its cache
@@ -30,6 +36,38 @@ Villager icons come from a different source than items: each `fiddle/npcs/<id>.t
 file, the same way an item's `icon_sprite` is — the output is still keyed by villager ID
 (`sprites/villagers/<villagerId>.webp`), not by the sprite name.
 
+## Everything’s rows
+
+`src/lib/sprites/everything-sprites.ts` gives every Everything row its art: a `SpriteRef`, or the
+designed placeholder (the category’s glyph in the sprite slot) for a row the game ships no picture
+of. The pipeline resolves each kind’s source PNG in `pipeline/src/extract/entity-sprites.ts`:
+
+| Kind                | Source PNG                                                                  |
+| ------------------- | --------------------------------------------------------------------------- |
+| `cosmetics`         | `spr_ui_item_wearable_<id>`, else `<that>_merged` (a look drawn on a head)  |
+| `animal-cosmetics`  | `spr_ui_item_<animal>_cosmetic_<id>`                                        |
+| `animal-variants`   | `spr_ui_icon_animal_<animal>_<ui_key>`, for a variant with its own look     |
+| `mount-appearances` | `spr_ui_icon_animal_horse_<ui_key>`                                         |
+| `mount-perks`       | the perk’s `icon` in `ui/skill_menu/mount.toml`                             |
+| `pet-skins`         | the `icon_sprite` of the item that unlocks the skin                         |
+| `pet-cosmetics`     | the set’s `ui_icon` in `pets.toml`                                          |
+| `spells`            | the spell’s `icon_key` with `_main`, as the journal draws a learned spell   |
+| `items` (Renown)    | each Renown reward item’s `icon_sprite`, for items the almanac doesn’t list |
+
+Rows without art are listed, with a reason, in `src/lib/sprites/no-art.ts`: quests (the game has no
+quest icon) & the animal variants the game only recolors at runtime. Keep the list exact:
+
+- The pipeline fails on a row with no art that the list doesn’t name, & on a listed row that has art
+  or no longer exists.
+- In CI, `source-checklist.test.ts` fails when an Everything row maps to neither a sprite nor an
+  entry, & `tests/browser/fixtures.test.ts` fails when a mapped sprite outside `items/` &
+  `villagers/` has no staged file in the manifest.
+
+`pnpm run sprites:report` prints the audit as Markdown: every row without a sprite, by category &
+reason, & each Renown reward’s sprite. Add `-- --staged` to check each sprite against
+`pipeline/output/sprites/`, or `-- --remote` to check it against the production bucket after an
+upload.
+
 ## Production hosting
 
 Objects are overwritten in place at a stable, entity-ID-keyed path and served with a revalidating
@@ -41,10 +79,10 @@ https://assets.mistria.fyi/sprites/items/<itemId>.webp
 https://assets.mistria.fyi/sprites/villagers/<villagerId>.webp
 ```
 
-The type directories (`items/`, `villagers/`) exist so entity kinds can't shadow one another, and
-map one-to-one onto the resolver's two functions. Duplicates are expected and left alone: sprites
-shared by more than one item (Aldarian artifact pairs, `stone_cup`, `vegetablesoup`) are written
-once per item ID rather than deduplicated.
+The kind directories (`items/`, `villagers/`, `cosmetics/`, & the rest) exist so entity kinds can't
+shadow one another, and map one-to-one onto the resolver's `SpriteKind`. Duplicates are expected and
+left alone: sprites shared by more than one item (Aldarian artifact pairs, `stone_cup`,
+`vegetablesoup`) are written once per item ID rather than deduplicated.
 
 Set it up in Cloudflare as follows:
 
@@ -76,11 +114,11 @@ pipeline run:
 pnpm run pipeline -- <path-to-extracted-assets> --sprites
 ```
 
-This writes converted WebP files to `pipeline/output/sprites/items/<itemId>.webp` and
-`pipeline/output/sprites/villagers/<villagerId>.webp` (both gitignored), resolving each entity's
-source PNG from the game's own `icon_sprite` name internally — that name never reaches
-`tracker-data.json` or the app, since the resolver builds URLs from the entity's own ID alone. A
-missing sprite fails the run before anything is published, the same way for both entity kinds.
+This writes converted WebP files to `pipeline/output/sprites/<kind>/<id>.webp` (gitignored) for
+items, villagers, & [Everything’s other kinds](#everythings-rows), resolving each entity's source
+PNG from the game's own `icon_sprite` name internally — that name never reaches `tracker-data.json`
+or the app, since the resolver builds URLs from the entity's own ID alone. A missing sprite fails
+the run before anything is published, the same way for both entity kinds.
 
 To regenerate only villager sprites — no `fiddle/` extraction needed, works directly off a Steam
 install's `assets.zip` — use the narrower command instead (see

@@ -66,8 +66,9 @@ export async function isolateNetwork(
       return;
     }
     if (url.origin === PRODUCTION_ASSET_ORIGIN) {
-      const key = /^\/sprites\/(items|villagers)\/([^/]+)\.webp$/.exec(url.pathname);
-      const size = key ? spriteDimensions[`${key[1]}/${key[2]}`] : undefined;
+      // `<kind>/<id>`, where an ID may nest (`animal-variants/alpaca/gold`).
+      const key = /^\/sprites\/([a-z-]+\/.+)\.webp$/.exec(url.pathname);
+      const size = key ? spriteDimensions[key[1]] : undefined;
       if (size !== undefined) {
         await route.fulfill({
           body: size === null ? "" : sprites.get(size),

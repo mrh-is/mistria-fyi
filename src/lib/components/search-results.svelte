@@ -15,6 +15,7 @@
   import plural from "#lib/i18n/catalogs/plural.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
+  import { itemSprite } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -290,7 +291,7 @@
                 reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
                 reportEntityId={result.id}
                 sources={getSources(result)}
-                sprite={result.sprite}
+                sprite={result.sprite ? itemSprite(result.sprite) : undefined}
                 onToggle={() => {
                   if (result.category === "quests") {
                     handleQuestToggle(result);

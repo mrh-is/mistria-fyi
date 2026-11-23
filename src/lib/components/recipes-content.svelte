@@ -17,6 +17,7 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
+  import { itemSprite } from "#lib/sprites/sprite-url.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -148,7 +149,7 @@
             reportCategory="recipe"
             reportEntityId={entry.id}
             sources={entry.sources}
-            sprite={entry.itemId}
+            sprite={itemSprite(entry.itemId)}
             spriteClass="text-(--color-category-recipes)"
             onToggle={(covered) => {
               checkOff.onToggle(

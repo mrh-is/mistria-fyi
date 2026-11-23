@@ -1,9 +1,10 @@
-import { beforeEach, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
 import { CATEGORIES, CATEGORY_KEYS } from "#lib/engine/categories.js";
 import { projectSourceGroups } from "#lib/presentation/source-groups.js";
+import { everythingSpriteRows } from "#lib/sprites/everything-sprites.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
@@ -126,6 +127,44 @@ it("carries an almanac row’s variant as its subtitle & a search term", () => {
   const turnip = rows.find((row) => row.category === "almanac" && row.id === "turnip");
   expect(turnip?.subtitle).toBeUndefined();
   expect(turnip?.searchTerms).toBeUndefined();
+});
+
+function revealedChecklist() {
+  return buildSourceChecklist(userState.progressContext, "en", true);
+}
+
+describe("sprite coverage", () => {
+  // A new row kind, or a new row of a kind without art, fails here until it gets a sprite or a
+  // reasoned entry in `src/lib/sprites/no-art.ts`. The pipeline checks that each sprite exists.
+  it("gives every Everything row a sprite or a no-art entry", () => {
+    const gaps = revealedChecklist()
+      .filter(({ art }) => !art)
+      .map(({ id, reportCategory }) => `${reportCategory}:${id}`);
+    expect(gaps).toEqual([]);
+  });
+
+  it("lists the same rows the sprite report enumerates", () => {
+    const report = new Set(everythingSpriteRows().map(({ id, kind }) => `${kind}:${id}`));
+    const missing = revealedChecklist()
+      // A craving row before marriage has a placeholder ID & no quest of its own.
+      .filter(({ reportCategory }) => reportCategory !== "quest")
+      .map(({ id, reportCategory }) => `${reportCategory}:${id}`)
+      .filter((key) => !report.has(key));
+    expect(missing).toEqual([]);
+  });
+
+  it("pictures a cosmetic with its wardrobe icon & a recolored animal with the placeholder", () => {
+    const all = revealedChecklist();
+    const cosmetic = all.find(({ reportCategory }) => reportCategory === "cosmetic");
+    expect(cosmetic?.art).toEqual({
+      kind: "sprite",
+      sprite: { id: cosmetic?.id, kind: "cosmetics" },
+    });
+    expect(all.find(({ id }) => id === "alpaca/white")?.art).toMatchObject({ kind: "none" });
+    expect(all.find(({ reportCategory }) => reportCategory === "quest")?.art).toMatchObject({
+      kind: "none",
+    });
+  });
 });
 
 it("lists rows for exactly the categories the registry marks as sourced", () => {

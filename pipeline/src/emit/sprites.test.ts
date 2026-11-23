@@ -4,7 +4,14 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { writeStoredZipFixture } from "../test-helpers.js";
-import { extractSprites, extractVillagerSprites, publishSprites } from "./sprites.js";
+import {
+  extractEntitySprites,
+  extractSprites,
+  extractVillagerSprites,
+  publishSprites,
+} from "./sprites.js";
+
+import type { EntitySpriteCandidates } from "../extract/entity-sprites.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -323,5 +330,123 @@ describe("extractVillagerSprites", () => {
     await expect(
       extractVillagerSprites(assetsDir, { adeline: "spr_ui_generic_icon_npc_adeline" }, outputDir),
     ).rejects.toThrow("No sprite PNGs found in any search directory");
+  });
+});
+
+function candidates(overrides: Partial<EntitySpriteCandidates> = {}): EntitySpriteCandidates {
+  return {
+    "animal-cosmetics": {},
+    "animal-variants": {},
+    cosmetics: {},
+    "mount-appearances": {},
+    "mount-perks": {},
+    "pet-cosmetics": {},
+    "pet-skins": {},
+    spells: {},
+    ...overrides,
+  };
+}
+
+function assetsWith(files: Record<string, Buffer>): string {
+  const assetsDir = makeTempDir();
+  for (const [path, data] of Object.entries(files)) {
+    const full = join(assetsDir, "animations", path);
+    mkdirSync(join(full, ".."), { recursive: true });
+    writeFileSync(full, data);
+  }
+  return assetsDir;
+}
+
+describe("extractEntitySprites", () => {
+  it("stages each entity's first available candidate under its kind, nesting slashed IDs", async () => {
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    const assetsDir = assetsWith({
+      "Item Icons/Animals/spr_ui_item_alpaca_cosmetic_bowtie.png": TINY_PNG,
+      "Item Icons/Wearable/spr_ui_item_wearable_hair_afro_merged.png": TINY_PNG,
+      "UI NEW/Skills/spr_ui_skills_mount_icon_horsepower.png": TINY_PNG,
+    });
+    const outputDir = makeTempDir();
+    const result = await extractEntitySprites(
+      assetsDir,
+      candidates({
+        "animal-cosmetics": { "alpaca/bowtie": ["spr_ui_item_alpaca_cosmetic_bowtie"] },
+        cosmetics: {
+          hair_afro: ["spr_ui_item_wearable_hair_afro", "spr_ui_item_wearable_hair_afro_merged"],
+        },
+        "mount-perks": { horsepower: ["spr_ui_skills_mount_icon_horsepower"] },
+      }),
+      {},
+      outputDir,
+    );
+
+    expect(result.missing).toEqual([]);
+    expect(result.staleNoArt).toEqual([]);
+    expect(result.staged.map(({ outPath }) => outPath).toSorted()).toEqual(
+      [
+        join(outputDir, "animal-cosmetics", "alpaca/bowtie.webp"),
+        join(outputDir, "cosmetics", "hair_afro.webp"),
+        join(outputDir, "mount-perks", "horsepower.webp"),
+      ].toSorted(),
+    );
+  });
+
+  it("reports art missing unless the no-art list names it, & stale no-art entries", async () => {
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    const assetsDir = assetsWith({
+      "UI NEW/Ranching/spr_ui_icon_animal_cow_gold_female.png": TINY_PNG,
+    });
+    const result = await extractEntitySprites(
+      assetsDir,
+      candidates({
+        "animal-variants": {
+          "cow/gold": ["spr_ui_icon_animal_cow_gold_female"],
+          "cow/pink": [],
+          "cow/white": [],
+        },
+        spells: { growth: ["spr_ui_journal_magic_growth_spell_icon_main"] },
+      }),
+      {
+        "animal-variants": {
+          "cow/gold": "recolored",
+          "cow/pink": "recolored",
+          "cow/plaid": "recolored",
+        },
+      },
+      makeTempDir(),
+    );
+
+    expect(result.missing).toEqual([
+      "animal-variants/cow/white (no art named)",
+      "spells/growth (spr_ui_journal_magic_growth_spell_icon_main)",
+    ]);
+    expect(result.staleNoArt).toEqual([
+      "animal-variants/cow/plaid (no such entity)",
+      "animal-variants/cow/gold (has spr_ui_icon_animal_cow_gold_female)",
+    ]);
+    expect(result.staged).toEqual([]);
+  });
+
+  it("reads the same icons from assets.zip, preferring item icons over menu art", async () => {
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    const zip = writeStoredZipFixture({
+      "assets/animations/Item Icons/Pet Unlock/spr_ui_item_pet_unlock_sapling.png": TINY_PNG,
+      "assets/animations/Player/spr_ui_item_pet_cosmetic_halo.png": TINY_PNG,
+      "assets/animations/UI NEW/Pets/spr_ui_item_pet_unlock_sapling.png": "not a PNG",
+    });
+    const result = await extractEntitySprites(
+      makeTempDir(),
+      candidates({
+        "pet-cosmetics": { halo: ["spr_ui_item_pet_cosmetic_halo"] },
+        "pet-skins": { sapling: ["spr_ui_item_pet_unlock_sapling"] },
+      }),
+      {},
+      makeTempDir(),
+      zip,
+    );
+
+    expect(result.source).toBe("zip");
+    // Outside the search directories, so not found.
+    expect(result.missing).toEqual(["pet-cosmetics/halo (spr_ui_item_pet_cosmetic_halo)"]);
+    expect(result.staged).toHaveLength(1);
   });
 });

@@ -2,8 +2,12 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
-  import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import { spriteUrl } from "#lib/sprites/sprite-url.js";
   import { SPRITE_PREVIEW_FADE_MS } from "#lib/utils/row-timing.js";
+
+  import type { CategoryKey } from "#lib/engine/categories.js";
+  import type { SpriteRef } from "#lib/sprites/sprite-url.js";
 
   // SVG filter input, never displayed.
   const sourceAlpha = /* @wc-ignore */ "SourceAlpha";
@@ -12,15 +16,18 @@
 
   let {
     class: className = "",
+    placeholder,
     previewing = false,
     sprite,
     spriteClass = "text-primary",
     state: slotState,
   }: {
     class?: string;
+    /** Without a sprite: the category whose glyph stands in for art the game doesn't have. */
+    placeholder?: CategoryKey;
     /** Overlays the full-color sprite on a ready silhouette. */
     previewing?: boolean;
-    sprite: string;
+    sprite?: SpriteRef;
     spriteClass?: string;
     state: SpriteSlotState;
   } = $props();
@@ -30,7 +37,7 @@
   const tintFilterId = `${instanceId}-sprite-tint`;
 
   let imageFailed = $state(false);
-  let source = $derived(itemSpriteUrl(sprite));
+  let source = $derived(sprite ? spriteUrl(sprite) : undefined);
 
   function handleImageError(): void {
     imageFailed = true;
@@ -42,52 +49,109 @@
   class:sprite-slot--active={slotState === "ready"}
   class:sprite-slot--complete={slotState === "complete"}
   data-sprite-slot={slotState}
+  data-sprite-placeholder={source ? undefined : placeholder}
   aria-hidden="true"
 >
-  <svg class="sprite-slot__svg {spriteClass}" viewBox="0 0 18 18" role="presentation">
-    <defs>
-      <filter id={grayFilterId} color-interpolation-filters="sRGB">
-        <feFlood flood-color="var(--color-ink-muted)" result="gray" />
-        <feComposite in="gray" in2={sourceAlpha} operator="in" />
-      </filter>
+  {#if !source}
+    <!-- No game art: the category's glyph, inked like a sticker once complete -->
+    <span
+      class="sprite-slot__placeholder {spriteClass}"
+      class:sprite-slot__placeholder--complete={slotState === "complete"}
+    >
+      {#if placeholder}
+        <Icon.Category category={placeholder} class="sprite-slot__glyph" stroke={1.5} />
+      {/if}
+    </span>
+  {:else}
+    <svg class="sprite-slot__svg {spriteClass}" viewBox="0 0 18 18" role="presentation">
+      <defs>
+        <filter id={grayFilterId} color-interpolation-filters="sRGB">
+          <feFlood flood-color="var(--color-ink-muted)" result="gray" />
+          <feComposite in="gray" in2={sourceAlpha} operator="in" />
+        </filter>
 
-      <filter id={tintFilterId} color-interpolation-filters="sRGB">
-        <!-- Lighter fill: erode slightly to create the inner shape -->
-        <feMorphology in={sourceAlpha} operator="erode" radius="0.15" result="innerShape" />
-        <!-- Darker outline: difference between full alpha and eroded shape -->
-        <feComposite in={sourceAlpha} in2="innerShape" operator="out" result="outline" />
-        <!-- Fill the inner shape with a lighter version of the category color -->
-        <feFlood flood-color="currentColor" flood-opacity="0.25" result="lightFill" />
-        <feComposite in="lightFill" in2="innerShape" operator="in" result="filledInner" />
-        <!-- Fill the outline with the full category color -->
-        <feFlood flood-color="currentColor" result="darkFill" />
-        <feComposite in="darkFill" in2="outline" operator="in" result="filledOutline" />
-        <!-- Combine both layers -->
-        <feMerge>
-          <feMergeNode in="filledInner" />
-          <feMergeNode in="filledOutline" />
-        </feMerge>
-      </filter>
-    </defs>
+        <filter id={tintFilterId} color-interpolation-filters="sRGB">
+          <!-- Lighter fill: erode slightly to create the inner shape -->
+          <feMorphology in={sourceAlpha} operator="erode" radius="0.15" result="innerShape" />
+          <!-- Darker outline: difference between full alpha and eroded shape -->
+          <feComposite in={sourceAlpha} in2="innerShape" operator="out" result="outline" />
+          <!-- Fill the inner shape with a lighter version of the category color -->
+          <feFlood flood-color="currentColor" flood-opacity="0.25" result="lightFill" />
+          <feComposite in="lightFill" in2="innerShape" operator="in" result="filledInner" />
+          <!-- Fill the outline with the full category color -->
+          <feFlood flood-color="currentColor" result="darkFill" />
+          <feComposite in="darkFill" in2="outline" operator="in" result="filledOutline" />
+          <!-- Combine both layers -->
+          <feMerge>
+            <feMergeNode in="filledInner" />
+            <feMergeNode in="filledOutline" />
+          </feMerge>
+        </filter>
+      </defs>
 
-    {#if !imageFailed}
-      {#if slotState === "ready"}
-        <image
-          data-sprite-layer="silhouette"
-          href={source}
-          crossorigin="anonymous"
-          x="0"
-          y="0"
-          width="18"
-          height="18"
-          filter="url(#{tintFilterId})"
-          onerror={handleImageError}
-          style="image-rendering: pixelated;"
-        />
-        {#if previewing}
-          <!-- Same alpha as the silhouette, so the full-color sprite covers it exactly -->
+      {#if !imageFailed}
+        {#if slotState === "ready"}
           <image
-            data-sprite-layer="preview"
+            data-sprite-layer="silhouette"
+            href={source}
+            crossorigin="anonymous"
+            x="0"
+            y="0"
+            width="18"
+            height="18"
+            filter="url(#{tintFilterId})"
+            onerror={handleImageError}
+            style="image-rendering: pixelated;"
+          />
+          {#if previewing}
+            <!-- Same alpha as the silhouette, so the full-color sprite covers it exactly -->
+            <image
+              data-sprite-layer="preview"
+              href={source}
+              crossorigin="anonymous"
+              x="0"
+              y="0"
+              width="18"
+              height="18"
+              onerror={handleImageError}
+              style="image-rendering: pixelated;"
+              transition:fade={{
+                duration: prefersReducedMotion.current ? 0 : SPRITE_PREVIEW_FADE_MS,
+              }}
+            />
+          {/if}
+        {:else if slotState === "spoilered"}
+          <image
+            data-sprite-layer="silhouette"
+            href={source}
+            crossorigin="anonymous"
+            x="0"
+            y="0"
+            width="18"
+            height="18"
+            filter="url(#{grayFilterId})"
+            opacity="0.2"
+            onerror={handleImageError}
+            style="image-rendering: pixelated;"
+          />
+        {:else}
+          <!-- Complete: gray silhouette underneath -->
+          <image
+            data-sprite-layer="silhouette"
+            href={source}
+            crossorigin="anonymous"
+            x="0"
+            y="0"
+            width="18"
+            height="18"
+            filter="url(#{grayFilterId})"
+            opacity="0.2"
+            onerror={handleImageError}
+            style="image-rendering: pixelated;"
+          />
+          <!-- Full-color sticker on top -->
+          <image
+            data-sprite-layer="sticker"
             href={source}
             crossorigin="anonymous"
             x="0"
@@ -95,65 +159,21 @@
             width="18"
             height="18"
             onerror={handleImageError}
-            style="image-rendering: pixelated;"
-            transition:fade={{
-              duration: prefersReducedMotion.current ? 0 : SPRITE_PREVIEW_FADE_MS,
-            }}
+            style="filter: drop-shadow(var(--shadow-sticker)); image-rendering: pixelated; transform: rotate(2.5deg); transform-box: fill-box; transform-origin: center;"
           />
         {/if}
-      {:else if slotState === "spoilered"}
-        <image
-          data-sprite-layer="silhouette"
-          href={source}
-          crossorigin="anonymous"
-          x="0"
-          y="0"
-          width="18"
-          height="18"
-          filter="url(#{grayFilterId})"
-          opacity="0.2"
-          onerror={handleImageError}
-          style="image-rendering: pixelated;"
-        />
       {:else}
-        <!-- Complete: gray silhouette underneath -->
-        <image
-          data-sprite-layer="silhouette"
-          href={source}
-          crossorigin="anonymous"
-          x="0"
-          y="0"
-          width="18"
-          height="18"
-          filter="url(#{grayFilterId})"
-          opacity="0.2"
-          onerror={handleImageError}
-          style="image-rendering: pixelated;"
-        />
-        <!-- Full-color sticker on top -->
-        <image
-          data-sprite-layer="sticker"
-          href={source}
-          crossorigin="anonymous"
-          x="0"
-          y="0"
-          width="18"
-          height="18"
-          onerror={handleImageError}
-          style="filter: drop-shadow(var(--shadow-sticker)); image-rendering: pixelated; transform: rotate(2.5deg); transform-box: fill-box; transform-origin: center;"
+        <path
+          d="M9 3.5 14.5 9 9 14.5 3.5 9Z"
+          fill="none"
+          stroke="var(--color-ink-muted)"
+          stroke-width="0.75"
+          stroke-dasharray="1.5 1.5"
+          opacity="0.3"
         />
       {/if}
-    {:else}
-      <path
-        d="M9 3.5 14.5 9 9 14.5 3.5 9Z"
-        fill="none"
-        stroke="var(--color-ink-muted)"
-        stroke-width="0.75"
-        stroke-dasharray="1.5 1.5"
-        opacity="0.3"
-      />
-    {/if}
-  </svg>
+    </svg>
+  {/if}
 </span>
 
 <style>
@@ -183,5 +203,25 @@
   .sprite-slot__svg {
     width: calc(var(--tracker-sprite-size, 40px) - 6px);
     height: calc(var(--tracker-sprite-size, 40px) - 6px);
+  }
+
+  /* Reads as "no picture" beside real sprites: a quiet glyph, never a silhouette. */
+  .sprite-slot__placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    opacity: 0.55;
+  }
+
+  .sprite-slot__placeholder--complete {
+    color: var(--color-ink-muted);
+    opacity: 1;
+  }
+
+  .sprite-slot__placeholder :global(.sprite-slot__glyph) {
+    width: 50%;
+    height: 50%;
   }
 </style>

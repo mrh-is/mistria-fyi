@@ -21,6 +21,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "r2:check": "writes & deletes a probe object in production storage",
   "saves:fetch": "downloads private player saves with stored Cloudflare credentials",
   "saves:upload": "publishes private player saves to storage",
+  "sprites:report": "with --remote, requests every sprite from production storage",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",
   "start-work": "changes GitHub issue and pull request ownership",

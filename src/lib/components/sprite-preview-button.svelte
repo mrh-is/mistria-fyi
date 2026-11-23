@@ -3,6 +3,7 @@
   import { SPRITE_PREVIEW_HOLD_MS } from "#lib/utils/row-timing.js";
 
   import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
+  import type { SpriteRef } from "#lib/sprites/sprite-url.js";
 
   let {
     class: className = "",
@@ -12,7 +13,7 @@
   }: {
     class?: string;
     label: string;
-    sprite: string;
+    sprite: SpriteRef;
     state: SpriteSlotState;
   } = $props();
 
