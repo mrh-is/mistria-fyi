@@ -79,7 +79,7 @@
 </script>
 
 <div class="contents" style="--primary: var(--color-category-{key})">
-  <SectionHeader {key} {progress} {completed} {visible}>
+  <SectionHeader {key} {locale} {progress} {completed} {visible}>
     {#if content.compact}
       <content.component compact {locale} />
     {:else}
