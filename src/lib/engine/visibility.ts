@@ -15,6 +15,84 @@ import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { QuestVisibility, VisibilityCondition } from "#lib/types/visibility.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
+type VisibilityReferences = Pick<
+  TrackerData,
+  | "categoryVisibility"
+  | "mines"
+  | "mount"
+  | "perkTierLevels"
+  | "quests"
+  | "recipes"
+  | "renown"
+  | "skills"
+  | "stores"
+>;
+type ReferenceCondition = Extract<
+  VisibilityCondition,
+  {
+    type:
+      | "biomeReached"
+      | "heartQuestLevel"
+      | "mountVisible"
+      | "perkTierReached"
+      | "previousTownRank"
+      | "questCategoryVisible"
+      | "recipeVisible"
+      | "storeUnlock";
+  }
+>;
+
+function resolveReference(
+  condition: ReferenceCondition,
+  data: undefined | VisibilityReferences,
+): undefined | VisibilityCondition {
+  switch (condition.type) {
+    case "biomeReached": {
+      const biome = data?.mines.biomes.find(({ id }) => id === condition.biomeId);
+      return biome && { type: "mineFloor", floor: biome.floors.start };
+    }
+    case "heartQuestLevel": {
+      const quest = data?.quests.heart[condition.questId];
+      return (
+        quest && { type: "heartLevel", level: quest.heartLevel, villagerId: condition.villagerId }
+      );
+    }
+    case "mountVisible":
+      return data?.mount.appearances[condition.mountAppearanceId]?.visibility;
+    case "perkTierReached":
+      if (!data) return undefined;
+      for (const [skillId, skill] of recordEntries(data.skills)) {
+        const tier = skill.perkTiers.findIndex((perks) => Object.hasOwn(perks, condition.perkId));
+        if (tier !== -1) return { type: "skillLevel", level: data.perkTierLevels[tier], skillId };
+      }
+      return undefined;
+
+    case "previousTownRank": {
+      const target = data?.quests.story[condition.questId]?.townRankLevel;
+      if (target === undefined || !data) return undefined;
+      const ranks = data.renown.townRanks;
+      const index = ranks.findIndex(({ levels }) => levels.start === target);
+      return index > 0 ? { type: "renownLevel", level: ranks[index - 1].levels.start } : undefined;
+    }
+    case "questCategoryVisible":
+      return data?.categoryVisibility[condition.questType];
+    case "recipeVisible": {
+      const recipe = data?.recipes[condition.recipeId];
+      return recipe?.visibility;
+    }
+    case "storeUnlock": {
+      const store = data?.stores[condition.storeId];
+      if (!store) return undefined;
+      const questId = store.visibility?.questId;
+      if (!questId) return { type: "always" };
+      return {
+        type: condition.state === "available" ? "questAvailable" : "questCompleted",
+        questId,
+      };
+    }
+  }
+}
+
 export interface UserProgressionState {
   hasUpperFloor: boolean;
   heartLevels: Partial<Record<VillagerId, number>>;
@@ -24,6 +102,7 @@ export interface UserProgressionState {
   mineFloor: number;
   questVisibility: Record<QuestId, QuestVisibility>;
   reachedSeason: Season;
+  references?: VisibilityReferences;
   renown: number;
   showSpoilers: boolean;
   skillLevels: Readonly<Partial<Record<SkillId, number>>>;
@@ -67,6 +146,7 @@ export function deriveProgressionState(
     mineFloor: recorded.mineFloor,
     questVisibility,
     reachedSeason: recorded.reachedSeason,
+    references: trackerData,
     renown: recorded.renown,
     showSpoilers,
     skillLevels: recorded.skillLevels,
@@ -77,7 +157,10 @@ export function deriveProgressionState(
 
 // ─── Core evaluator ─────────────────────────────────────────────────
 
-export function canPlanConditionMutations(condition: VisibilityCondition): boolean {
+export function canPlanConditionMutations(
+  condition: VisibilityCondition,
+  references?: VisibilityReferences,
+): boolean {
   switch (condition.type) {
     case "always":
     case "hasUpperFloor":
@@ -92,9 +175,20 @@ export function canPlanConditionMutations(condition: VisibilityCondition): boole
     case "skillLevel":
     case "station":
       return true;
+    case "biomeReached":
+    case "heartQuestLevel":
+    case "mountVisible":
+    case "perkTierReached":
+    case "previousTownRank":
+    case "questCategoryVisible":
+    case "recipeVisible":
+    case "storeUnlock": {
+      const target = resolveReference(condition, references);
+      return target !== undefined && canPlanConditionMutations(target, references);
+    }
     case "and":
     case "or":
-      return condition.conditions.every(canPlanConditionMutations);
+      return condition.conditions.every((child) => canPlanConditionMutations(child, references));
     case "isDating":
     case "villagerKnown":
       return false;
@@ -133,6 +227,17 @@ function evaluateCondition(
       return true;
     case "and":
       return condition.conditions.every((c) => evaluateCondition(c, state));
+    case "biomeReached":
+    case "heartQuestLevel":
+    case "mountVisible":
+    case "perkTierReached":
+    case "previousTownRank":
+    case "questCategoryVisible":
+    case "recipeVisible":
+    case "storeUnlock": {
+      const target = resolveReference(condition, state.references);
+      return target !== undefined && evaluateCondition(target, state);
+    }
     case "hasUpperFloor":
       return state.hasUpperFloor;
     case "heartLevel":
@@ -267,6 +372,18 @@ function planConditionMutationsInDraft(
         planConditionMutationsInDraft(sub, completed, trackerData);
       }
       return;
+    case "biomeReached":
+    case "heartQuestLevel":
+    case "mountVisible":
+    case "perkTierReached":
+    case "previousTownRank":
+    case "questCategoryVisible":
+    case "recipeVisible":
+    case "storeUnlock": {
+      const target = resolveReference(condition, trackerData);
+      if (target) planConditionMutationsInDraft(target, completed, trackerData);
+      return;
+    }
     case "hasUpperFloor":
       completed.hasUpperFloor = true;
       return;
@@ -289,7 +406,8 @@ function planConditionMutationsInDraft(
       // The UI is expected to let the user pick a branch and call `planConditionMutations` with just
       // that branch. If handed the whole `or`, fall back to the first invertible branch.
       const branch =
-        condition.conditions.find(canPlanConditionMutations) ?? condition.conditions.at(0);
+        condition.conditions.find((child) => canPlanConditionMutations(child, trackerData)) ??
+        condition.conditions.at(0);
       if (branch) planConditionMutationsInDraft(branch, completed, trackerData);
       return;
     }
@@ -367,6 +485,7 @@ function recordedProgressContext(
       }
     },
     reachedSeason: completed.reachedSeason,
+    references: trackerData,
     renown: completed.renown,
     skillLevels: completed.skillLevels,
     stations: trackerData.stations,

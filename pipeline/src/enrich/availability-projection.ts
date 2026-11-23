@@ -44,19 +44,28 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
 export function toAvailableVisibility(condition: VisibilityCondition): VisibilityCondition {
   switch (condition.type) {
     case "always":
+    case "biomeReached":
     case "hasUpperFloor":
     case "heartLevel":
+    case "heartQuestLevel":
     case "isDating":
     case "married":
     case "mineFloor":
+    case "mountVisible":
+    case "perkTierReached":
     case "perkUnlocked":
+    case "previousTownRank":
     case "questAvailable":
+    case "questCategoryVisible":
     case "reachedSeason":
+    case "recipeVisible":
     case "renownLevel":
     case "skillLevel":
     case "villagerKnown":
     case "station":
       return condition;
+    case "storeUnlock":
+      return { ...condition, state: "available" };
     case "and":
     case "or":
       return simplifyCondition({

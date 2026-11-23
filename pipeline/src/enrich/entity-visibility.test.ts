@@ -341,10 +341,11 @@ describe("assignEntityVisibility — items", () => {
 
     const gate = { type: "station", stationId };
     expect(trackerData.recipes["product" as RecipeId].visibility).toEqual(gate);
-    expect(trackerData.items["product" as ItemId].visibility).toEqual(gate);
+    const recipeGate = { type: "recipeVisible", recipeId: "product" };
+    expect(trackerData.items["product" as ItemId].visibility).toEqual(recipeGate);
     const alternate = trackerData.items["alternate" as ItemId];
     expect(alternate.visibility).toBeUndefined();
-    expect(alternate.sources[1]).toHaveProperty("visibility", gate);
+    expect(alternate.sources[1]).toHaveProperty("visibility", recipeGate);
   });
 
   it("leaves a non-gated item always visible", () => {
@@ -380,8 +381,9 @@ describe("assignEntityVisibility — items", () => {
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.items["fancy_seed" as ItemId].visibility).toEqual({
-      type: "questCompleted",
-      questId: "repair_the_general_store",
+      type: "storeUnlock",
+      state: "completed",
+      storeId: "general",
     });
   });
 
@@ -408,7 +410,7 @@ describe("assignEntityVisibility — items", () => {
     expect(trackerData.items["dual_source_item" as ItemId].visibility).toEqual({
       type: "or",
       conditions: [
-        { type: "questCompleted", questId: "repair_the_general_store" },
+        { type: "storeUnlock", state: "completed", storeId: "general" },
         { type: "questCompleted", questId: "find_the_thing" },
       ],
     });
@@ -443,7 +445,7 @@ describe("assignEntityVisibility — items", () => {
     expect(item.visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "questCompleted", questId: "upgrade_the_carpenters_shop" },
+        { type: "storeUnlock", state: "completed", storeId: "carpenter" },
         { type: "skillLevel", level: 15, skillId: "woodcrafting" },
       ],
     });
@@ -451,7 +453,7 @@ describe("assignEntityVisibility — items", () => {
       visibility: {
         type: "and",
         conditions: [
-          { type: "questAvailable", questId: "upgrade_the_carpenters_shop" },
+          { type: "storeUnlock", state: "available", storeId: "carpenter" },
           { type: "skillLevel", level: 15, skillId: "woodcrafting" },
         ],
       },
@@ -571,7 +573,7 @@ describe("assignEntityVisibility — recipes", () => {
     });
   });
 
-  it("gives a perk-sourced recipe an entity gate of perkUnlocked and a source gate of skillLevel", () => {
+  it("gates a perk-sourced recipe on the perk and its source on the perk tier", () => {
     const trackerData = makeTrackerData({
       recipes: {
         stew: {
@@ -594,13 +596,12 @@ describe("assignEntityVisibility — recipes", () => {
     assertSourceWithDetails(source);
     expect(source).not.toHaveProperty("stockGate");
     expect(source.visibility).toEqual({
-      type: "skillLevel",
-      level: 20,
-      skillId: "cooking",
+      type: "perkTierReached",
+      perkId: "taste_maker",
     });
   });
 
-  it("gives a store-sourced recipe entity questCompleted and source questAvailable", () => {
+  it("references the store's unlock quest with distinct entity and source thresholds", () => {
     const trackerData = makeTrackerData({
       recipes: {
         stairs: {
@@ -618,16 +619,18 @@ describe("assignEntityVisibility — recipes", () => {
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["stairs" as RecipeId];
     expect(recipe.visibility).toEqual({
-      type: "questCompleted",
-      questId: "upgrade_the_carpenters_shop",
+      type: "storeUnlock",
+      state: "completed",
+      storeId: "carpenter",
     });
     const source = recipe.sources?.[0];
     assert(source);
     assertSourceWithDetails(source);
     expect(source).not.toHaveProperty("stockGate");
     expect(source.visibility).toEqual({
-      type: "questAvailable",
-      questId: "upgrade_the_carpenters_shop",
+      type: "storeUnlock",
+      state: "available",
+      storeId: "carpenter",
     });
   });
 
@@ -674,7 +677,7 @@ describe("assignEntityVisibility — recipes", () => {
     });
   });
 
-  it("gives a mines_chest source an and(mineFloor, perkUnlocked) entity gate and a bare mineFloor source gate", () => {
+  it("gates a chest source on reaching the biome and its recipe on the biome and perk", () => {
     const trackerData = makeTrackerData({
       mines: {
         biomes: [
@@ -701,7 +704,7 @@ describe("assignEntityVisibility — recipes", () => {
     expect(recipe.visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "mineFloor", floor: 1 },
+        { type: "biomeReached", biomeId: "upper_mines" },
         { type: "perkUnlocked", perkId: "taste_maker" },
       ],
     });
@@ -709,7 +712,7 @@ describe("assignEntityVisibility — recipes", () => {
     assert(source);
     assertSourceWithDetails(source);
     expect(source).not.toHaveProperty("stockGate");
-    expect(source.visibility).toEqual({ type: "mineFloor", floor: 1 });
+    expect(source.visibility).toEqual({ type: "biomeReached", biomeId: "upper_mines" });
   });
 
   it("leaves a museum_donation source's entity and source both always", () => {
@@ -758,16 +761,18 @@ describe("assignEntityVisibility — recipes", () => {
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["bundle_recipe" as RecipeId];
     expect(recipe.visibility).toEqual({
-      type: "questCompleted",
-      questId: "upgrade_the_saturday_market_plaza",
+      type: "storeUnlock",
+      state: "completed",
+      storeId: "zorel",
     });
     const source = recipe.sources?.[0];
     assert(source);
     assertSourceWithDetails(source);
     expect(source).not.toHaveProperty("stockGate");
     expect(source.visibility).toEqual({
-      type: "questAvailable",
-      questId: "upgrade_the_saturday_market_plaza",
+      type: "storeUnlock",
+      state: "available",
+      storeId: "zorel",
     });
   });
 
@@ -839,7 +844,7 @@ describe("assignEntityVisibility — recipes", () => {
     expect(recipe.visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "questCompleted", questId: "repair_the_bridge" },
+        { type: "storeUnlock", state: "completed", storeId: "darcy" },
         { type: "questCompleted", questId: "repair_the_general_store" },
       ],
     });
@@ -850,7 +855,7 @@ describe("assignEntityVisibility — recipes", () => {
     expect(source.visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "questAvailable", questId: "repair_the_bridge" },
+        { type: "storeUnlock", state: "available", storeId: "darcy" },
         { type: "questAvailable", questId: "repair_the_general_store" },
       ],
     });
@@ -1023,8 +1028,9 @@ describe("assignEntityVisibility — cosmetics", () => {
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.cosmetics["fancy_hat" as CosmeticId].visibility).toEqual({
-      type: "questCompleted",
-      questId: "upgrade_the_saturday_market",
+      type: "storeUnlock",
+      state: "completed",
+      storeId: "wheedle",
     });
   });
 
@@ -1092,7 +1098,7 @@ describe("assignEntityVisibility — spells", () => {
 });
 
 describe("assignEntityVisibility — quests", () => {
-  it("gates a heart quest behind villagerKnown, heartLevel, and the prerequisite quest", () => {
+  it("gates a heart quest on its villager, its own heart threshold, and the prerequisite quest", () => {
     const trackerData = makeTrackerData({
       quests: { heart: { bird_song: { name: "Bird Song" } } },
     });
@@ -1113,13 +1119,13 @@ describe("assignEntityVisibility — quests", () => {
       type: "and",
       conditions: [
         { type: "villagerKnown", villagerId: "ryis" },
-        { type: "heartLevel", level: 4, villagerId: "ryis" },
+        { type: "heartQuestLevel", questId: "bird_song", villagerId: "ryis" },
         { type: "questCompleted", questId: "bird_song_prereq" },
       ],
     });
   });
 
-  it("gates the first crown quest behind renownLevel and the second behind renownLevel + the prior quest", () => {
+  it("references the crown category gate alongside the prior quest", () => {
     const trackerData = makeTrackerData({
       quests: {
         crown: {
@@ -1133,13 +1139,13 @@ describe("assignEntityVisibility — quests", () => {
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.crown["first_crown_quest" as QuestId].visibility).toEqual({
-      type: "renownLevel",
-      level: CROWN_QUEST_RENOWN_LEVEL,
+      type: "questCategoryVisible",
+      questType: "crown",
     });
     expect(trackerData.quests.crown["second_crown_quest" as QuestId].visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL },
+        { type: "questCategoryVisible", questType: "crown" },
         { type: "questCompleted", questId: "first_crown_quest" },
       ],
     });
@@ -1218,8 +1224,8 @@ describe("assignEntityVisibility — quests", () => {
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
 
     expect(Object.keys(trackerData.quests.story)).toHaveLength(9);
-    for (const [index, id] of ids.entries()) {
-      const gate = { type: "renownLevel", level: starts[index + 1] };
+    for (const id of ids) {
+      const gate = { type: "previousTownRank", questId: `reach_${id}` };
       expect(trackerData.quests.story[`reach_${id}` as QuestId].visibility).toEqual(
         id === "ruby"
           ? {
@@ -1245,8 +1251,8 @@ describe("assignEntityVisibility — quests", () => {
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.quests.story["rank_quest" as QuestId].visibility).toEqual({
-      type: "renownLevel",
-      level: 7,
+      type: "previousTownRank",
+      questId: "rank_quest",
     });
   });
 
@@ -1284,7 +1290,7 @@ describe("assignEntityVisibility — mount appearances", () => {
     expect(trackerData.mount.appearances["mistmare" as MountAppearanceId].visibility).toEqual(gate);
     expect(
       trackerData.mount.appearances["giant_chicken_gold" as MountAppearanceId].visibility,
-    ).toEqual(gate);
+    ).toEqual({ type: "mountVisible", mountAppearanceId: "mistmare" });
   });
 
   it("hides the Mistmare's perks until the Mistmare itself is revealed", () => {
@@ -1304,8 +1310,8 @@ describe("assignEntityVisibility — mount appearances", () => {
     });
     assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.mount.perks["horsepower" as PerkId].visibility).toEqual({
-      type: "questAvailable",
-      questId: "find_the_weathervane",
+      type: "mountVisible",
+      mountAppearanceId: "mistmare",
     });
   });
 });

@@ -45,6 +45,7 @@ export type AnimalVariant = v.InferOutput<typeof schemas.AnimalVariantSchema>;
 export type AnimalVariantTier = v.InferOutput<typeof schemas.AnimalVariantTierSchema>;
 export type Cosmetic = v.InferOutput<typeof schemas.CosmeticSchema>;
 export type CosmeticSlotMeta = v.InferOutput<typeof schemas.CosmeticSlotMetaSchema>;
+export type Festival = v.InferOutput<typeof schemas.FestivalSchema>;
 export type Item = v.InferOutput<typeof schemas.ItemSchema>;
 export type MinesBiome = v.InferOutput<typeof schemas.MinesBiomeSchema>;
 export type MineSeal = v.InferOutput<typeof schemas.MineSealSchema>;

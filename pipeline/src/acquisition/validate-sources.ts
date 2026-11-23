@@ -97,19 +97,27 @@ const AVAILABILITY_FIELDS = {
 const VISIBILITY_FIELDS = {
   always: [],
   and: ["conditions"],
+  biomeReached: ["biomeId"],
   hasUpperFloor: [],
   heartLevel: ["level", "villagerId"],
+  heartQuestLevel: ["questId", "villagerId"],
   isDating: [],
   married: ["villagerId"],
   mineFloor: ["floor"],
+  mountVisible: ["mountAppearanceId"],
   or: ["conditions"],
+  perkTierReached: ["perkId"],
   perkUnlocked: ["perkId"],
+  previousTownRank: ["questId"],
   questAvailable: ["questId"],
+  questCategoryVisible: ["questType"],
   questCompleted: ["questId"],
   reachedSeason: ["season"],
+  recipeVisible: ["recipeId"],
   renownLevel: ["level"],
   skillLevel: ["level", "skillId"],
   station: ["stationId"],
+  storeUnlock: ["state", "storeId"],
   villagerKnown: ["villagerId"],
 } as const satisfies Record<VisibilityCondition["type"], readonly string[]>;
 
@@ -171,7 +179,7 @@ const SOURCE_FIELDS = {
   perk_drop: ["activity", "perkId"],
   proposal: ["villagerId"],
   quest: ["challengeRecipeId", "choiceId", "questId", "questType", "requestedItemId", "trigger"],
-  reach_day: ["triggerDate"],
+  reach_day: ["festivalId", "triggerDate"],
   recipe: ["recipeId"],
   renown: ["level"],
   ritual_chamber: ["perkId"],
@@ -1312,7 +1320,11 @@ function validateVariantFields(
       }
       break;
     case "reach_day":
-      validateReachedDay(source, targetId, fieldPath, diagnostics);
+      if (source.festivalId === undefined) {
+        validateReachedDay(source, targetId, fieldPath, diagnostics);
+      } else {
+        stringReferences.push(["festivalId", "festival"]);
+      }
       break;
     case "letter":
       stringReferences.push(["letterId", "letter"]);
@@ -1796,18 +1808,48 @@ function validateVisibility(
       case "villagerKnown":
         visibilityReference("villagerId", "villager");
         return;
+      case "biomeReached":
+        visibilityReference("biomeId", "biome");
+        return;
+      case "recipeVisible":
+        visibilityReference("recipeId", "recipe");
+        return;
+      case "mountVisible":
+        visibilityReference("mountAppearanceId", "mountAppearance");
+        return;
       case "mineFloor":
         requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
         return;
       case "perkUnlocked":
+      case "perkTierReached":
         visibilityReference("perkId", "perk");
+        return;
+      case "heartQuestLevel":
+        visibilityReference("questId", "quest");
+        visibilityReference("villagerId", "villager");
         return;
       case "questAvailable":
       case "questCompleted":
+      case "previousTownRank":
         visibilityReference("questId", "quest");
+        return;
+      case "questCategoryVisible":
+        visibilityReference("questType", "questType");
         return;
       case "station":
         visibilityReference("stationId", "station");
+        return;
+      case "storeUnlock":
+        visibilityReference("storeId", "store");
+        if (value.state !== "available" && value.state !== "completed") {
+          malformed(
+            diagnostics,
+            targetId,
+            `${fieldPath}.state`,
+            "Expected a store unlock state",
+            source,
+          );
+        }
         return;
       case "reachedSeason":
         if (

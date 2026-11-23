@@ -2,11 +2,34 @@ import * as v from "valibot";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import trackerDataJson from "../data/tracker-data.json";
-import { ItemSchema, TrackerDataSchema } from "./tracker-data-schema.js";
+import {
+  ItemSchema,
+  SourceSchema,
+  TrackerDataSchema,
+  VisibilityLeafSchema,
+} from "./tracker-data-schema.js";
 
 import type { ItemId, Source, TrackerData } from "./tracker-data.js";
 
 describe("TrackerDataSchema", () => {
+  it.each([
+    { type: "biomeReached", biomeId: "ancient_ruins", floor: 80 },
+    { type: "storeUnlock", state: "obtained", storeId: "merri" },
+    { type: "recipeVisible", recipeId: 12 },
+    { type: "heartQuestLevel", level: 2, questId: "bird_song" },
+    { type: "perkTierReached", level: 20, perkId: "taste_maker" },
+  ])("rejects malformed visibility references: %j", (condition) => {
+    expect(v.safeParse(VisibilityLeafSchema, condition).success).toBe(false);
+  });
+
+  it("requires a single owner for a letter trigger date", () => {
+    const source = { type: "reach_day", festivalId: "shooting_star" };
+    expect(v.parse(SourceSchema, source)).toEqual(source);
+    expect(
+      v.safeParse(SourceSchema, { ...source, triggerDate: { day: 28, season: "summer" } }).success,
+    ).toBe(false);
+  });
+
   it("preserves fixed-scroll grants while allowing items without them", () => {
     for (const recipeUnlocks of [undefined, ["engagement_ring"], ["chair", "table"]]) {
       const item = {

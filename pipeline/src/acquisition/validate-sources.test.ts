@@ -1094,6 +1094,16 @@ describe("validateAcquisitionSources on assembled tracker data", () => {
     },
     {
       expected: {
+        fieldPath: "items.honey.visibility.biomeId",
+        kind: "unresolved-reference",
+        message: 'Unknown biome ID "missing_biome"',
+      },
+      name: "an unknown biome in item visibility",
+      path: ["items", "honey", "visibility"],
+      value: { type: "biomeReached", biomeId: "missing_biome" },
+    },
+    {
+      expected: {
         fieldPath: "items.honey.sources[0].visibility.questId",
         kind: "unresolved-reference",
         message: 'Unknown quest ID "missing_quest"',

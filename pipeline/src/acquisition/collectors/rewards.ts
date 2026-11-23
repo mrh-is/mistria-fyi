@@ -17,6 +17,7 @@ import type {
   AnimalId,
   CosmeticId,
   DateId,
+  Festival,
   FestivalId,
   ItemId,
   MuseumWingId,
@@ -129,6 +130,7 @@ function classifyLetterTrigger(
   context: SourceFieldLocation,
   recipes: RecipeAcquisitionContext,
   requirementContext: RequirementContext,
+  festival?: Festival & { id: FestivalId },
 ): LetterRewardSource | undefined {
   const letterId = context.entityId ?? context.fieldPath;
   const sourceWithRemainder = (source: LetterRewardSource, key: string): LetterRewardSource => {
@@ -202,6 +204,16 @@ function classifyLetterTrigger(
               }),
         },
       };
+      if (festival) {
+        if (
+          source.triggerDate.day !== festival.date.day ||
+          source.triggerDate.season !== festival.date.season ||
+          source.triggerDate.year !== undefined
+        ) {
+          throw new Error(`Letter "${letterId}" date differs from festival "${festival.id}"`);
+        }
+        return sourceWithRemainder({ type: "reach_day", festivalId: festival.id }, "reached_date");
+      }
       return sourceWithRemainder(source, "reached_date");
     } catch (error) {
       throw new Error(`unparseable-reached-date: ${(error as Error).message}`, { cause: error });
@@ -471,6 +483,17 @@ function collectLetterRewardSources(
     if (items.length === 0) continue;
 
     const reqs = letter.requirements as Record<string, unknown> | undefined;
+    // Josephine sends the festival decoration recipes on the morning of the festival.
+    const festivalId =
+      letterId === "shooting_star_morning_letter" ? ("shooting_star" as FestivalId) : undefined;
+    const festival = festivalId
+      ? (fiddle.festivals as Record<FestivalId, Festival> | undefined)?.[festivalId]
+      : undefined;
+    if (festivalId && (!festival?.date || reqs?.reached_date === undefined)) {
+      throw new Error(
+        `Letter "${letterId}" is missing its trigger date or festival "${festivalId}"`,
+      );
+    }
     const source = classifyLetterTrigger(
       reqs,
       {
@@ -480,6 +503,7 @@ function collectLetterRewardSources(
       },
       recipes,
       requirementContext,
+      festivalId && festival ? { ...festival, id: festivalId } : undefined,
     );
     if (!source) continue;
 
