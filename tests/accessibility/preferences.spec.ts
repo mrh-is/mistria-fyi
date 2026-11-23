@@ -26,6 +26,27 @@ test.describe("browser accessibility preferences", () => {
     ).toHaveAttribute("data-locale-switch-probe", "mounted");
   });
 
+  test("a locale switch preserves the Everything place link", async ({ page }) => {
+    await initializeApplication(page, "light", createStoredState());
+    await gotoApplication(page, "/en/everything?group=source#store-balor");
+    await page.getByRole("button", { name: "Quick settings" }).click();
+    await page.getByRole("button", { name: "Choose language" }).click();
+    await page.getByRole("button", { name: /^Français/u }).click();
+
+    await expect(page).toHaveURL(/\/fr\/everything\?group=source#store-balor$/u);
+    await expect(page.getByRole("button", { name: "Chariot de Balor" })).toBeVisible();
+  });
+
+  test("a locale switch preserves the Almanac anchor", async ({ page }) => {
+    await gotoApplication(page, "/en/almanac#furniture");
+    await page.getByRole("button", { name: "Quick settings" }).click();
+    await page.getByRole("button", { name: "Choose language" }).click();
+    await page.getByRole("button", { name: /^Français/u }).click();
+
+    await expect(page).toHaveURL(/\/fr\/almanac#furniture$/u);
+    await expect(page.getByRole("link", { name: /^Mobilier/u })).toBeVisible();
+  });
+
   for (const theme of ["light", "dark"] as const) {
     test(`theme, season, and weather share an inset hover outline in ${theme} mode`, async ({
       page,
