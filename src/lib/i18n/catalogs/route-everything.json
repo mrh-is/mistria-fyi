@@ -20,5 +20,27 @@
     ],
     "urlAdapters": [],
     "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Relationships",
+      "ja": "関係",
+      "zh-Hans": "关系",
+      "zh-Hant": "關係",
+      "es": "Relaciones",
+      "fr": "Relations",
+      "ko": "관계",
+      "ru": "Отношения"
+    },
+    "references": [
+      {
+        "file": "src/routes/everything/villager-errands.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
   }
 ]

@@ -8,6 +8,7 @@
   import { birthdayOffset, buildVillagerRoster } from "#lib/engine/villager-roster.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { matchesName } from "#lib/utils/name-match.js";
 
@@ -57,12 +58,32 @@
       .filter(({ id }) => hearts(id) < MAX_HEART_LEVEL)
       .toSorted((a, b) => hearts(b.id) - hearts(a.id)),
   );
+  let relationships = $derived(
+    met.filter(
+      ({ id }) =>
+        hearts(id) >= MAX_HEART_LEVEL && !isVillagerComplete(id, userState.state.progress),
+    ),
+  );
   let finished = $derived(met.filter(({ id }) => isVillagerComplete(id, userState.state.progress)));
   let villagerCount = $derived(
-    completed ? finished.length : new Set([...birthdays, ...heartsToGo].map(({ id }) => id)).size,
+    completed
+      ? finished.length
+      : new Set([...birthdays, ...heartsToGo, ...relationships].map(({ id }) => id)).size,
   );
   let groupId = $derived(completed ? "sources-villagers-completed" : "sources-villagers");
   let name = $derived(categoryForKey("villagers", locale).name);
+  let restoreFocus: (() => Promise<void>) | undefined;
+
+  $effect.pre(() => {
+    void relationships;
+    if (!completed) restoreFocus = captureFocusFallback();
+  });
+  $effect(() => {
+    void relationships;
+    const restore = restoreFocus;
+    restoreFocus = undefined;
+    if (restore) void restore();
+  });
 
   $effect(() => {
     shown = villagerCount > 0;
@@ -128,6 +149,7 @@
     {:else}
       {@render place("Birthdays this week", birthdays, "birthdays", true)}
       {@render place("Hearts to go", heartsToGo, "hearts")}
+      {@render place("Relationships", relationships, "relationships")}
     {/if}
   </GroupSection>
 {/if}

@@ -6,7 +6,7 @@ import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import * as undoToast from "#lib/effects/undo-toast.js";
-import { getMaxRenownLevel, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+import { getMaxRenownLevel, MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -131,4 +131,32 @@ it("lists this week’s birthdays and shares editable marks with Hearts to go", 
   edit?.undo(edit.before);
   await tick();
   expect(heartMark).toHaveAttribute("aria-valuenow", "2");
+});
+
+it("keeps a villager with full hearts available until their relationship is settled", async () => {
+  const adeline = "adeline" as VillagerId;
+  userState.setHeartLevel(adeline, MAX_HEART_LEVEL);
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  const relationships = await view.findByRole("region", { name: "Relationships" });
+  expect(
+    within(relationships).getByRole("slider", { name: "Adeline heart level" }),
+  ).toHaveAttribute("aria-valuenow", String(MAX_HEART_LEVEL));
+  expect(
+    within(view.getByRole("region", { name: "Hearts to go" })).queryByRole("slider", {
+      name: "Adeline heart level",
+    }),
+  ).toBeNull();
+
+  const settle = within(relationships).getByRole("button", {
+    name: getName("ui", "best_friend", "en"),
+  });
+  settle.focus();
+  await fireEvent.click(settle);
+  expect(view.queryByRole("region", { name: "Relationships" })).toBeNull();
+  expect(view.getByRole("button", { name: "Stores" })).toHaveFocus();
+
+  const completed = within(view.getByTestId("everything-completed"));
+  await fireEvent.click(completed.getByRole("button", { name: "Completed" }));
+  await fireEvent.click(completed.getByRole("button", { name: "Villagers" }));
+  expect(completed.getByRole("slider", { name: "Adeline heart level" })).toBeVisible();
 });
