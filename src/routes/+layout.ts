@@ -31,15 +31,14 @@ export const load: LayoutLoad = async ({ route, url }) => {
       loadSharedUi(locale),
       loadRouteUi(locale, url.pathname),
       usesAcquisitionCopy ? loadAcquisitionUi(locale) : undefined,
-    ]).then(
-      () => false,
-      (error: unknown) => {
+    ])
+      .then(() => false)
+      .catch((error: unknown) => {
         // Keep the root layout available when a browser cannot fetch a catalog.
         // A broken build still needs to fail during server rendering and prerendering.
         if (import.meta.env.SSR) throw error;
         return true;
-      },
-    ),
+      }),
   ]);
   return catalogLoadFailed ? { catalogLoadFailed, locale } : { locale };
 };

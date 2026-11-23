@@ -20,11 +20,7 @@ allowBuilds:
   esbuild: true
   workerd: true
 
-# Wrangler's miniflare pins undici 7.29.1 exactly, which `pnpm audit` flags
-# (GHSA-xjj6-f33q-929c and others, patched in 7.30.1). Drop it once the resolved
-# Wrangler's miniflare pins 7.30.1 or later (Wrangler 4.153.0 does).
 overrides:
-  "undici@7": "^7.30.1"
   # Vitest's jsdom 30.1.0 allows undici ^8.10.2, which admits releases `pnpm audit` flags
   # (GHSA-xjj6-f33q-929c and others, patched in 8.12.2). Drop it once jsdom's own range excludes
   # the vulnerable releases.
@@ -70,7 +66,7 @@ peerDependencyRules:
 # this exact version, so a SvelteKit bump fails the install; then check whether the release includes
 # the upstream fix, & drop the patch & its `patches/` file if it does.
 patchedDependencies:
-  "@sveltejs/kit@3.1.1": patches/@sveltejs__kit@3.1.1.patch
+  "@sveltejs/kit@3.4.0": patches/@sveltejs__kit@3.4.0.patch
   # Jiti treats Knip's directory argument as a filename when tsconfigPaths is true, so
   # it starts looking one level above the worktree (#597). Drop when Knip anchors the lookup.
-  knip@6.43.0: patches/knip@6.43.0.patch
+  knip@6.47.0: patches/knip@6.47.0.patch

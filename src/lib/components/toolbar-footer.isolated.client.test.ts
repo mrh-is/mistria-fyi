@@ -76,9 +76,9 @@ describe("ToolbarFooter panels", () => {
       const feedback = screen.getByRole("button", { name: "Send feedback" });
       feedback.focus();
       await fireEvent.click(feedback);
-      await waitFor(() =>
-        expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus(),
-      );
+      await waitFor(() => {
+        expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus();
+      });
       const trigger = screen.getByRole("button", { name: replacement });
       trigger.focus();
       await fireEvent.click(trigger);

@@ -94,9 +94,9 @@ An item entry shows the common value conventions:
 
 ```toml
 [example_statue]
-	value = { bin = "self.recipe*1.1" }
-	object = "example_statue"
-	recipe = [{ count = 10, item = "refined_stone" }, { hours = 0, minutes = 30 }]
+value = { bin = "self.recipe*1.1" }
+object = "example_statue"
+recipe = [{ count = 10, item = "refined_stone" }, { hours = 0, minutes = 30 }]
 ```
 
 ### Value conventions

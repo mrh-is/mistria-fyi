@@ -64,9 +64,9 @@ it("opens an editable draft without submitting, and cancels without sending", as
     expect(screen.queryByRole("dialog")).toBeNull();
   });
   expect(fetchMock).not.toHaveBeenCalled();
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Report this error" })).toHaveFocus(),
-  );
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "Report this error" })).toHaveFocus();
+  });
 });
 
 it("submits only reviewed text and existing versions by default", async () => {

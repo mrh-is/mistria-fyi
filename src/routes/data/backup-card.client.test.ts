@@ -29,7 +29,7 @@ describe("BackupCard export", () => {
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const [blob] = createObjectURL.mock.calls[0];
-    if (!(blob instanceof Blob)) throw new Error("Expected the backup download to use a Blob");
+    if (!(blob instanceof Blob)) throw new TypeError("Expected the backup download to use a Blob");
     expect(blob.type).toBe("application/json");
     expect(await blob.text()).toBe(userState.exportBackup());
 
@@ -142,7 +142,9 @@ describe("BackupCard unreadable data", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Download unreadable data" }));
 
     const [blob] = createObjectURL.mock.calls[0];
-    if (!(blob instanceof Blob)) throw new Error("Expected the unreadable download to use a Blob");
+    if (!(blob instanceof Blob)) {
+      throw new TypeError("Expected the unreadable download to use a Blob");
+    }
     expect(await blob.text()).toBe(invalid);
     const anchor = click.mock.instances[0] as HTMLAnchorElement;
     expect(anchor.download).toMatch(/^mistria-field-guide-unreadable-\d{4}-\d{2}-\d{2}\.json$/);

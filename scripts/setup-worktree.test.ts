@@ -25,6 +25,22 @@ function git(cwd: string, ...args: string[]) {
   return execFileSync("git", ["-C", cwd, ...args], { encoding: "utf8" }).trim();
 }
 
+function commit(cwd: string, message: string) {
+  git(cwd, "add", ".");
+  git(
+    cwd,
+    "-c",
+    "user.name=Test",
+    "-c",
+    "user.email=test@example.invalid",
+    "-c",
+    "commit.gpgsign=false",
+    "commit",
+    "-m",
+    message,
+  );
+}
+
 /**
  * Points the script's pnpm launcher at a fake. Windows environment keys are case-insensitive and
  * pnpm may export `NPM_EXECPATH`, so drop every spelling before setting it.
@@ -123,27 +139,10 @@ function fixture() {
   const main = join(root, "main");
   const worktree = join(root, "worktree");
   mkdirSync(main);
-  git(main, "init");
+  git(main, "init", "-b", "main");
   writeFileSync(join(main, ".gitignore"), "pipeline/input/\n.env\n");
   writeFileSync(join(main, ".worktreeinclude"), ".env\r\n.dev.vars\r\n");
-  git(main, "add", ".");
-  execFileSync(
-    "git",
-    [
-      "-C",
-      main,
-      "-c",
-      "user.name=Test",
-      "-c",
-      "user.email=test@example.invalid",
-      "-c",
-      "commit.gpgsign=false",
-      "commit",
-      "-m",
-      "Fixture",
-    ],
-    { stdio: "pipe" },
-  );
+  commit(main, "Fixture");
   mkdirSync(join(main, "pipeline/input/assets"), { recursive: true });
   writeFileSync(join(main, "pipeline/input/assets/misc.toml"), "version = 1\n");
   writeFileSync(join(main, ".env"), "SECRET=1\n");
@@ -187,6 +186,7 @@ describe("setup-worktree", () => {
     const { log, main, run, worktree } = fixture();
     const result = run();
     expect(result.status, result.stderr).toBe(0);
+    expect(result.stderr).toBe("");
     expect(readFileSync(join(worktree, "pipeline/input/assets/misc.toml"), "utf8")).toBe(
       "version = 1\n",
     );
@@ -194,6 +194,43 @@ describe("setup-worktree", () => {
     expect(existsSync(join(worktree, ".dev.vars"))).toBe(false);
     expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
     expect(git(main, "worktree", "list", "--porcelain")).not.toContain("prunable");
+  });
+
+  it("warns about agent config and hook changes on origin/main without blocking setup", () => {
+    const { log, main, run, worktree } = fixture();
+    for (const directory of [".claude", ".codex", "scripts"]) {
+      mkdirSync(join(worktree, directory));
+    }
+    writeFileSync(join(worktree, ".claude/settings.json"), "{}\n");
+    writeFileSync(join(worktree, ".codex/hooks.json"), "{}\n");
+    writeFileSync(join(worktree, "scripts/agent-tool-hook.ts"), "export {};\n");
+    writeFileSync(join(worktree, "README.md"), "Unrelated change\n");
+    commit(worktree, "Update agent configuration");
+    git(main, "update-ref", "refs/remotes/origin/main", git(worktree, "rev-parse", "HEAD"));
+    const localMain = git(main, "rev-parse", "HEAD");
+
+    const result = run();
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stderr).toContain("warning:");
+    expect(result.stderr).toContain(".claude/settings.json");
+    expect(result.stderr).toContain(".codex/hooks.json");
+    expect(result.stderr).toContain("scripts/agent-tool-hook.ts");
+    expect(result.stderr).not.toContain("README.md");
+    expect(readFileSync(log, "utf8")).toBe("install --frozen-lockfile\nrun prepare\n");
+    expect(git(main, "rev-parse", "HEAD")).toBe(localMain);
+  });
+
+  it("is quiet when origin/main changes only unrelated files", () => {
+    const { main, run, worktree } = fixture();
+    writeFileSync(join(worktree, "README.md"), "Unrelated change\n");
+    commit(worktree, "Update README");
+    git(main, "update-ref", "refs/remotes/origin/main", git(worktree, "rev-parse", "HEAD"));
+
+    const result = run();
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stderr).toBe("");
   });
 
   it("skips already-linked entries on a rerun", () => {

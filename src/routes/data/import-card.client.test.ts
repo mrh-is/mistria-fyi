@@ -68,7 +68,9 @@ describe("save import", () => {
     const dialog = await screen.findByRole("dialog", { name: "This save is for a different farm" });
     expect(userState.exportBackup()).toBe(before);
     await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
-    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    await waitFor(() => {
+      expect(dialog).not.toBeInTheDocument();
+    });
     expect(userState.exportBackup()).toBe(before);
 
     await fireEvent.change(screen.getByLabelText("Choose save files to import"), {
@@ -121,7 +123,9 @@ describe("save import", () => {
     expect(dialog).toHaveTextContent(
       "We can’t tell which farm this save belongs to. If you merge it, we’ll add its progress to what you’ve already tracked.",
     );
-    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    await waitFor(() => {
+      expect(dialog).not.toBeInTheDocument();
+    });
 
     expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBe(stored);
     userState.loadFromStorage();

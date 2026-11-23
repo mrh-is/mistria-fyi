@@ -77,7 +77,7 @@ function nested(value: unknown, label: string, childPath: (child: unknown) => un
 }
 
 function arrayOf(value: unknown, label: string): unknown[] {
-  if (!Array.isArray(value)) throw new Error(`Expected ${label} to be a list.`);
+  if (!Array.isArray(value)) throw new TypeError(`Expected ${label} to be a list.`);
   return value;
 }
 
@@ -131,7 +131,9 @@ function almanacItems(value: unknown, label: string): [string, Record<string, un
   const rows: [string, Record<string, unknown>][] = [];
   for (const [category, entry] of Object.entries(record(value, label))) {
     const items = record(entry, `${label}.${category}`).items;
-    if (!Array.isArray(items)) throw new Error(`Expected ${label}.${category}.items to be a list.`);
+    if (!Array.isArray(items)) {
+      throw new TypeError(`Expected ${label}.${category}.items to be a list.`);
+    }
     for (const item of items) {
       if (!isRecord(item) || !Array.isArray(item.itemIds) || item.itemIds.length === 0) {
         throw new Error(`Expected every ${label}.${category} entry to have item IDs.`);
@@ -185,7 +187,9 @@ export const DOMAINS: readonly Domain[] = [
       uniqueEntries(
         Object.entries(record(data.animals, "animals")).flatMap(([animalId, animal]) => {
           const tiers = record(animal, `animals.${animalId}`).variantTiers;
-          if (!Array.isArray(tiers)) throw new Error(`Expected animals.${animalId}.variantTiers.`);
+          if (!Array.isArray(tiers)) {
+            throw new TypeError(`Expected animals.${animalId}.variantTiers.`);
+          }
           return tiers.flatMap((tier) =>
             Object.entries(record(tier, `animals.${animalId}.variantTiers`)).map(
               ([variantId, variant]): [string, unknown] => [`${animalId}/${variantId}`, variant],

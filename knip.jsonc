@@ -7,10 +7,10 @@
   "workspaces": {
     ".": {
       "entry": [
-        // SvelteKit's universal hooks module (`reroute`), loaded by the framework.
-        "src/hooks.ts",
         // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
         "relay/worker.ts",
+        // The on-demand localization audit passes its config directly to Playwright.
+        "playwright.localization.config.ts",
         // Historical Wuchale comparison probes are run directly.
         "spikes/wuchale/compare-cold-app.js",
         "spikes/wuchale/compare-warm-app.ts",
@@ -27,11 +27,6 @@
         // Throwaway mockup generators kept beside a design package; run by hand, never imported.
         "docs/design/*/generator/**",
       ],
-      "ignoreDependencies": [
-        // `cloudflare:workers` is a Workers runtime module, but Knip reads the `cloudflare` prefix as
-        // the npm SDK of the same name & reports it unlisted. We do not use that package.
-        "cloudflare",
-      ],
     },
     "pipeline": {
       // Knip does not follow package scripts that start with `cd pipeline`.
@@ -39,6 +34,9 @@
     },
   },
   "ignoreIssues": {
+    // SvelteKit generates the `$app/tsconfig` extensions during sync.
+    "tsconfig.json": ["unlisted"],
+    "src/service-worker/tsconfig.json": ["unlisted"],
     // The ui/ barrels follow shadcn-svelte's namespace pattern: `Root`, `DialogContent`, & other
     // aliases, plus the prop & variant types (`ButtonProps`, `ToggleVariant`), so some exported names
     // are intentionally unused. Only the barrels are covered; the components themselves are not.

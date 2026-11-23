@@ -191,6 +191,40 @@ function git(...args: string[]): string {
   return result.stdout.trim();
 }
 
+function warnAboutAgentConfig(repoRoot: string): void {
+  // Compare the fetched refs. A missing ref (for example, in a local-only clone) is harmless.
+  const result = spawnSync(
+    "git",
+    [
+      "-C",
+      repoRoot,
+      "diff",
+      "--name-only",
+      "--no-ext-diff",
+      "--no-renames",
+      "refs/heads/main",
+      "refs/remotes/origin/main",
+      "--",
+      ".claude/",
+      ".codex/",
+      "scripts/agent-tool-hook.ts",
+      "scripts/claude-session-env.sh",
+      "scripts/format-agent-edit.ts",
+      "scripts/lib/agent-hook.ts",
+    ],
+    { encoding: "utf8" },
+  );
+  const changed = result.stdout?.trim();
+  if (result.status === 0 && changed) {
+    console.warn(
+      "warning: Claude Code or Codex hooks and configuration differ between local main and fetched " +
+        `origin/main:\n  ${changed.replaceAll("\n", "\n  ")}\n` +
+        "Agent sessions may be using stale configuration. " +
+        `Review the primary checkout at ${repoRoot} before starting another session.`,
+    );
+  }
+}
+
 function main(): number {
   // A session keeps its hooks until it restarts, so an old hook's flag can still arrive here.
   if (process.argv.length > 2) {
@@ -209,6 +243,7 @@ function main(): number {
 
   // Plan the install first: it refuses a misconfigured Codex store before anything is linked.
   const install = planInstall(process.platform, process.env);
+  warnAboutAgentConfig(repoRoot);
   const links = planLinks(repoRoot, worktreeDir, [
     ...SHARED_DIRECTORIES,
     ...readFileSync(join(repoRoot, ".worktreeinclude"), "utf8").split(/\r?\n/),

@@ -277,9 +277,9 @@ Each locale's target, as established from the game's own strings:
   Entrar).
 - **`fr` is France French**, not Quebec. The game uses myrtille, not bleuet; e-mail is fine.
 - **`zh-Hant` is Taiwan Traditional Chinese** (`zh-TW` usage), not Hong Kong. The game's strings use
-  Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs
-  (線, 為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating,
-  prompt for Taiwan usage explicitly, then check the output for Mainland terms that survive script
+  Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs (線,
+  為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating, prompt
+  for Taiwan usage explicitly, then check the output for Mainland terms that survive script
   conversion:
 
   | Avoid (Mainland or HK) | Use (Taiwan)           |
@@ -349,6 +349,16 @@ Extraction can miss strings assembled dynamically, passed from unscanned scripts
 heuristics. Check the extracted references after changing display text. CI checks completeness and
 structure; it can’t tell whether a translation is correct or whether an English game-data field
 should have come from a name chunk.
+
+Run `pnpm exec playwright test --config playwright.localization.config.ts` to audit Japanese and
+Russian copy in a production build. It scans every public page after hydration and exercises quick
+settings, spoiler confirmations, feedback validation, empty search, and computer sync status. It
+reports unapproved Latin text in painted copy, `aria-label`, `title`, `placeholder`, and `alt`.
+Verbatim elements such as `code` and `kbd` are excluded.
+
+Keep exceptions literal and document why each is needed in
+[`allowed-latin.ts`](../tests/localization/allowed-latin.ts). Append `--grep 'ja.*route /almanac'`
+to rerun one route. The suite builds the current checkout by default and runs locally on demand.
 
 ## Fonts
 
