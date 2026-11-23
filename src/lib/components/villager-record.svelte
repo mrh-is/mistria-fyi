@@ -27,6 +27,7 @@
   import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
   let {
+    anchorId,
     birthdaySoon = false,
     compact = false,
     id,
@@ -35,6 +36,7 @@
     spoilered,
     villager,
   }: {
+    anchorId?: string;
     birthdaySoon?: boolean;
     compact?: boolean;
     id: VillagerId;
@@ -147,7 +149,7 @@
   class:villager-record--spoilered={isSpoilered}
   data-villager-record
   data-compact={compact}
-  id="villager-{id}"
+  id={anchorId ?? `villager-${id}`}
   tabindex="-1"
 >
   {#if ledgerLocale}

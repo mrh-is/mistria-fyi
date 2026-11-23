@@ -14,12 +14,13 @@
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { categoryForKey, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
-  import { nameCollator } from "#lib/data/names.js";
+  import { getName, nameCollator } from "#lib/data/names.js";
   import { captureUndoFocus, showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { UNSOURCED_CATEGORY_KEYS } from "#lib/engine/categories.js";
   import { getMaxMineFloor, getMaxRenownLevel, isVillagerComplete } from "#lib/engine/progress.js";
-  import { sealsBefore } from "#lib/engine/projections/mines.js";
+  import { mineFloorProgress, sealsBefore } from "#lib/engine/projections/mines.js";
   import { isSkillComplete } from "#lib/engine/projections/skills.js";
+  import { addProgress, countShelfRows } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { ledgerSourceFamily, sourceLedgerPlacement } from "#lib/presentation/ledger.js";
   import { projectSourceGroups, SOURCE_TYPE_ORDER } from "#lib/presentation/source-groups.js";
@@ -33,24 +34,29 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { captureFocusFallback } from "#lib/utils/focus-fallback.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { matchesName, matchesTerms } from "#lib/utils/name-match.js";
 
   import CategorySection from "./category-section.svelte";
   import GroupSection from "./group-section.svelte";
+  import VillagerErrands from "./villager-errands.svelte";
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
   import type { AllProgress } from "#lib/engine/categories.js";
+  import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { SourceSection } from "#lib/presentation/source-groups.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { QuestId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
+  import type { QuestId, SkillId } from "#lib/types/tracker-data.js";
 
   let {
     anchor,
     locale,
+    placeProgress = $bindable(),
     progress,
   }: {
     anchor: string;
     locale: LocaleCode;
+    placeProgress?: CategoryProgress;
     /** The page's progress, so `/everything` computes it once per context. */
     progress: AllProgress;
   } = $props();
@@ -77,7 +83,7 @@
   const progressShown: Record<string, boolean> = $state({});
 
   function progressCategoryShown(completed: boolean): boolean {
-    return UNSOURCED_CATEGORY_KEYS.some((category) => progressShown[`${completed}:${category}`]);
+    return recordCategories.some((category) => progressShown[`${completed}:${category}`]);
   }
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
   let entries = $derived(buildSourceChecklist(userState.progressContext, locale));
@@ -86,17 +92,23 @@
     buildBaseSegmentLookups(computeSpoileredStoreIds(userState.progressionState), locale),
   );
   // Categories without sources have no source to sit under, so they share the Progress group.
-  let progressCategories = $derived(sortCategoryKeysByName(UNSOURCED_CATEGORY_KEYS, locale));
+  const recordCategories = UNSOURCED_CATEGORY_KEYS.filter((category) => category !== "villagers");
+  let progressCategories = $derived(sortCategoryKeysByName(recordCategories, locale));
   let progressCompletions = $derived([
     userState.state.progress.mineFloor >= getMaxMineFloor(),
     userState.state.progress.renown >= getMaxRenownLevel(),
     ...Object.keys(trackerData.skills).map((id) =>
       isSkillComplete(id as SkillId, userState.state.progress),
     ),
-    ...Object.keys(trackerData.villagers).map((id) =>
-      isVillagerComplete(id as VillagerId, userState.state.progress),
-    ),
   ]);
+  let completedVillagers = $derived(
+    [...userState.progressContext.progressionState.knownVillagers].some(
+      (id) =>
+        isVillagerComplete(id, userState.state.progress) &&
+        matchesName(getName("villagers", id, locale), toolbarState.searchQuery, locale),
+    ),
+  );
+  let villagerGroupShown = $state(false);
   const {
     restoringScroll,
     snapshot: ledger,
@@ -106,24 +118,62 @@
     () => {
       const day = userState.progressContext;
       const visibility = day.progressionState;
-      return projectSourceGroups(entries, day, undefined, visibility).map((section) => ({
-        section,
-        ...sourceSectionLabel(section, lookups, visibility),
-        rows: section.rows
-          .map((placement) => ({
-            entry: placement.entry,
-            key: placement.entry.key,
-            obtainable: placement.entry.obtainable,
-            ...sourceLedgerPlacement(placement, day),
-          }))
-          .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
-      }));
+      return projectSourceGroups(entries, day, undefined, visibility)
+        .map((section) => ({
+          section,
+          ...sourceSectionLabel(section, lookups, visibility),
+          rows: section.rows
+            .map((placement) => ({
+              counted: placement.counted,
+              entry: placement.entry,
+              key: placement.entry.key,
+              obtainable: placement.entry.obtainable,
+              ...sourceLedgerPlacement(placement, day),
+            }))
+            .toSorted((a, b) => nameCollator(locale).compare(a.entry.name, b.entry.name)),
+        }))
+        .toSorted(
+          (a, b) =>
+            SOURCE_TYPE_ORDER.indexOf(a.section.group) -
+              SOURCE_TYPE_ORDER.indexOf(b.section.group) ||
+            compareSourceSections(a, b, locale, day.worldState),
+        );
     },
     (row) => matchesSearch(row.entry),
     { excludeCoveredFromFilterCounts: true, scrollKey: "everything-source" },
   );
 
   useLedgerArrival(() => (ledger.ready ? anchor : ""), restoringScroll);
+
+  let countedProgress = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scratch totals for this snapshot.
+    const facts = new Map<string, { completed: boolean; doable: boolean }>();
+    for (const { rows, spoilered } of ledger.value) {
+      if (spoilered) continue;
+      for (const row of rows) {
+        if (!row.counted) continue;
+        facts.set(row.key, {
+          completed: row.completed,
+          doable: row.doable || facts.get(row.key)?.doable === true,
+        });
+      }
+    }
+    return addProgress([
+      countShelfRows(
+        [...facts.values()].map((fact) => ({
+          ...fact,
+          doableAnywhere: fact.doable,
+          shown: true,
+          sourceDisclosure: { hiddenCount: 0, visibleSources: [] },
+        })),
+      ),
+      mineFloorProgress(userState.state.progress),
+      ...UNSOURCED_CATEGORY_KEYS.map((category) => progress[category]),
+    ]);
+  });
+  $effect(() => {
+    placeProgress = ledger.ready ? countedProgress : undefined;
+  });
 
   function showsPlace({ rows, spoilered }: (typeof ledger.value)[number]): boolean {
     return (
@@ -135,24 +185,23 @@
   let groups = $derived(
     SOURCE_TYPE_ORDER.map((group) => ({
       group,
-      sections: ledger.value
-        .filter(
-          ({ rows, section }) =>
-            section.group === group &&
-            rows.some(
-              (row) =>
-                (row.obtainable || toolbarState.showUnobtainable) &&
-                toolbarState.matchesSourceFilters(row.sources),
-            ),
-        )
-        .toSorted((a, b) => compareSourceSections(a, b, locale)),
+      sections: ledger.value.filter(
+        ({ rows, section }) =>
+          section.group === group &&
+          rows.some(
+            (row) =>
+              (row.obtainable || toolbarState.showUnobtainable) &&
+              toolbarState.matchesSourceFilters(row.sources),
+          ),
+      ),
     })).filter(
       ({ group, sections: groupSections }) => group === "progress" || groupSections.length > 0,
     ),
   );
   let hasCompletedContent = $derived(
-    (progressCompletions.includes(true) &&
-      (!toolbarState.searchQuery || progressCategoryShown(true))) ||
+    completedVillagers ||
+      (progressCompletions.includes(true) &&
+        (!toolbarState.searchQuery || progressCategoryShown(true))) ||
       groups.some(({ sections: groupSections }) =>
         groupSections.some((entry) => isInCompletedList(entry) && showsPlace(entry)),
       ),
@@ -163,7 +212,10 @@
       groupSections
         .filter((entry) => isInCompletedList(entry) && showsPlace(entry))
         .flatMap(({ rows }) =>
-          rows.filter((row) => visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)),
+          rows.filter(
+            (row) =>
+              row.counted && visibleRow(row) && toolbarState.matchesSourceFilters(row.sources),
+          ),
         ),
     );
     const uniqueCount = new Set(matches.map(({ key }) => key)).size;
@@ -172,16 +224,17 @@
 
   // A link to a finished source has to reach it through the closed fold.
   let anchorInCompleted = $derived(
-    groups.some(({ sections: groupSections }) =>
-      groupSections.some(
-        (entry) =>
-          isInCompletedList(entry) &&
-          (entry.section.id === anchor ||
-            (entry.section.id === "progress" && anchor === "source-progress") ||
-            `sources-${entry.section.group}` === anchor ||
-            `sources-${entry.section.group}-completed` === anchor),
+    anchor === "sources-villagers-completed" ||
+      groups.some(({ sections: groupSections }) =>
+        groupSections.some(
+          (entry) =>
+            isInCompletedList(entry) &&
+            (entry.section.id === anchor ||
+              (entry.section.id === "progress" && anchor === "source-progress") ||
+              `sources-${entry.section.group}` === anchor ||
+              `sources-${entry.section.group}-completed` === anchor),
+        ),
       ),
-    ),
   );
 
   // Moving or removing a section blurs whatever it contains.
@@ -209,23 +262,18 @@
     return !spoilered && section.state === /* @wc-ignore */ "done";
   }
 
-  function measurePlaceHead(place: HTMLElement): (() => void) | undefined {
-    const head = place.querySelector<HTMLElement>("[data-ledger-head]");
-    if (!head) return undefined;
-    /*
-     * Read the size the observer already measured. Reading `offsetHeight` here forced a layout per
-     * place after the previous place's write, which froze a search clear for seconds on Everything.
-     */
-    const observer = new ResizeObserver(([entry]) => {
-      const height = entry?.borderBoxSize[0]?.blockSize;
-      if (height === undefined) return;
-      const value = `${height}px`;
-      if (place.style.getPropertyValue("--everything-place-head-height") !== value) {
-        place.style.setProperty("--everything-place-head-height", value);
+  function groupCount(sections: typeof ledger.value): number {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Deduplicate placements for one count.
+    const facts = new Set<string>();
+    for (const { rows, spoilered } of sections) {
+      if (spoilered) continue;
+      for (const row of rows) {
+        if (row.counted && visibleRow(row) && toolbarState.matchesSourceFilters(row.sources)) {
+          facts.add(row.key);
+        }
       }
-    });
-    observer.observe(head);
-    return () => observer.disconnect();
+    }
+    return facts.size;
   }
 
   function matchesSearch(entry: SourceChecklistRow): boolean {
@@ -267,10 +315,10 @@
         for (const {
           section: { rows },
         } of ledger.value) {
-          if (!rows.some(({ entry: row }) => row.key === entry.key)) continue;
+          if (!rows.some(({ counted, entry: row }) => counted && row.key === entry.key)) continue;
           sectionChecks.push(() =>
             rows.every(
-              ({ entry: row }) => !row.obtainable || liveEntries.get(row.key)?.completed === true,
+              ({ counted, entry: row }) => !counted || liveEntries.get(row.key)?.completed === true,
             ),
           );
         }
@@ -300,6 +348,10 @@
       (entry) => completed === isInCompletedList(entry),
     )}
     {@const hasProgress = group === "progress" && progressCompletions.includes(completed)}
+    {@const recordCount =
+      hasProgress && !toolbarState.searchQuery
+        ? progressCompletions.filter((done) => done === completed).length
+        : 0}
     {@const hasOutstanding =
       allGroupSections.some((entry) => !isInCompletedList(entry)) ||
       (group === "progress" && progressCompletions.includes(false))}
@@ -313,6 +365,7 @@
         name={sourceTypeLabel(group, locale)}
         {completed}
         findable
+        placeGroup
         visible={!toolbarState.searchQuery || searchMatches}
         revealTarget={anchor === groupId ||
         groupSections.some(
@@ -328,6 +381,11 @@
             class="size-4 text-muted-foreground"
           />
         {/snippet}
+        {#snippet count()}
+          <span class="font-data text-sm font-normal text-muted-foreground">
+            {formatNumber(groupCount(groupSections) + recordCount, locale)}
+          </span>
+        {/snippet}
 
         {#each groupSections as entry (entry.section.id)}
           {@const { section, name, spoilered, rows } = entry}
@@ -337,11 +395,12 @@
             data-source-section
             data-source-status={spoilered ? undefined : section.state}
             hidden={!showsPlace(entry)}
-            {@attach measurePlaceHead}
           >
             <SpoilerSection {name} spoilered={spoilered && !userState.state.showSpoilers}>
               <LedgerSection
                 collapsible
+                place
+                countsRow={(row) => row.counted && !spoilered}
                 {locale}
                 {name}
                 {rows}
@@ -380,9 +439,7 @@
                     obtained={entry.questState === "obtained" && !placement.spoilered}
                     name={entry.name}
                     variant={entry.category === "almanac" ? entry.subtitle : undefined}
-                    subtitle={[categoryForKey(entry.category, locale).name, entry.subtitle]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    subtitle={entry.category === "quests" ? undefined : entry.subtitle}
                     reportCategory={entry.reportCategory}
                     sprite={entry.sprite}
                     lookups={{ ...lookups, entityVisibility: entry.visibility }}
@@ -422,13 +479,19 @@
 {/snippet}
 
 <LedgerIndex
-  sections={groups
-    .filter(({ sections }) =>
-      sections.some((entry) => !isInCompletedList(entry) && showsPlace(entry)),
-    )
-    .map(({ group }) => ({ id: `sources-${group}`, name: sourceTypeLabel(group, locale) }))}
+  sections={[
+    ...(villagerGroupShown
+      ? [{ id: "sources-villagers", name: categoryForKey("villagers", locale).name }]
+      : []),
+    ...groups
+      .filter(({ sections }) =>
+        sections.some((entry) => !isInCompletedList(entry) && showsPlace(entry)),
+      )
+      .map(({ group }) => ({ id: `sources-${group}`, name: sourceTypeLabel(group, locale) })),
+  ]}
 >
   <div class="flex flex-col gap-6">
+    {#if ledger.ready}<VillagerErrands {anchor} {locale} bind:shown={villagerGroupShown} />{/if}
     {@render sourceGroups(false)}
   </div>
 
@@ -442,19 +505,11 @@
       shelf="completed"
     >
       <div class="flex flex-col gap-6">
+        {#if completedVillagers}
+          <VillagerErrands {anchor} {locale} completed />
+        {/if}
         {@render sourceGroups(true)}
       </div>
     </ShelfFold>
   </div>
 </LedgerIndex>
-
-<style>
-  @media (min-width: 60rem) {
-    [data-source-section] :global(.timetable) {
-      top: calc(
-        var(--ledger-sticky-top, 0px) + var(--ledger-group-head, 0px) +
-          var(--everything-place-head-height, var(--ledger-head-size))
-      );
-    }
-  }
-</style>

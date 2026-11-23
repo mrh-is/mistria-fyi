@@ -102,6 +102,27 @@ describe("source projection", () => {
     );
     expect(section.rows[0].doable).toBe(false);
     expect(section.spoilered).toBe(true);
+    expect(section.total).toBe(0);
+  });
+
+  it("counts a fact at the visible places only, even if another place is hidden", () => {
+    const sections = projectSourceGroups(
+      [
+        row(
+          "chair",
+          [
+            source({ type: "store", storeId: "balor" }),
+            source({ type: "store", storeId: "merri" }),
+          ],
+          true,
+        ),
+      ],
+      userState.progressContext,
+    );
+    expect(sections.map(({ completed, id, total }) => ({ completed, id, total }))).toEqual([
+      { completed: 1, id: "store-balor", total: 1 },
+      { completed: 0, id: "store-merri", total: 0 },
+    ]);
   });
 
   it("keeps source spoilers independent of row spoilers and rolls hidden rows into Later", () => {

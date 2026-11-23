@@ -36,6 +36,7 @@
     collapsible = false,
     contents,
     contextualFamily,
+    countsRow = () => true,
     covered = false,
     divider = false,
     explains = false,
@@ -46,6 +47,7 @@
     onReveal,
     open = $bindable(untrack(() => !collapsible && !folded)),
     openOnArrival = false,
+    place = false,
     progress,
     row,
     rows,
@@ -56,6 +58,7 @@
     collapsible?: boolean;
     contents?: Snippet;
     contextualFamily?: SourceFilterId;
+    countsRow?: (entry: T) => boolean;
     covered?: boolean;
     /** Draws the sprig divider above this section; the parent passes `index > 0`. */
     divider?: boolean;
@@ -73,6 +76,7 @@
     open?: boolean;
     /** Opens the section when its fragment becomes the navigation target. */
     openOnArrival?: boolean;
+    place?: boolean;
     progress?: { completed: number; total: number };
     row: Snippet<
       [
@@ -139,6 +143,7 @@
       : groups,
   );
   let hasRows = $derived(shelves.some((shelf) => matches[shelf].length > 0));
+  let todoCount = $derived(groups.todo.filter(countsRow).length);
   let expanded = $derived(open || isSearching);
   let showTable = $derived(open || (isSearching && hasRows));
   /**
@@ -568,6 +573,7 @@
   class:collapsible
   class:line
   class:subsection
+  class:place
   hidden={covered ? isSearching : !hasRows}
   aria-labelledby={`${instance}-name`}
   style:--ledger-head-measured={headHeight ? `${headHeight}px` : undefined}
@@ -630,9 +636,9 @@
           <Icon.UI type="disclosure" class="size-4 {expanded ? 'rotate-90' : ''}" />
           <span id={`${instance}-name`}>{name}</span>
           {#if progress}
-            {@const count = formatNumber(groups.todo.length, locale)}
-            <span class="remaining" id={`${instance}-remaining`}
-              >{plural(groups.todo.length, [`${count} to do`, `${count} to do`])}</span
+            {@const count = formatNumber(todoCount, locale)}
+            <span class="remaining" class:sr-only={place && expanded} id={`${instance}-remaining`}
+              >{plural(todoCount, [`${count} to do`, `${count} to do`])}</span
             >
           {/if}
         </button>
@@ -678,13 +684,13 @@
         <span aria-hidden="true"><span class="hand">{completed}</span> / {total}</span>
       </p>
     {/if}
-    {#if !collapsible && !line && !contents && matches[headShelf].length > 0}
+    {#if (!collapsible || (place && expanded)) && !line && !contents && matches[headShelf].length > 0}
       {#key headShelf}
         <ShelfHeading
           class="head-shelf"
           shelf={headShelf}
           explains={explains && headShelf === "todo"}
-          count={matches[headShelf].length}
+          count={matches[headShelf].filter(countsRow).length}
           level={4}
         />
       {/key}
@@ -707,13 +713,14 @@
       {:else}
         {#each shelves as shelf (shelf)}
           {@const entries = matches[shelf]}
+          {@const count = entries.filter(countsRow).length}
           {#if groups[shelf].length > 0}
             {#if shelf === "todo"}
               <div class="shelf" data-shelf={shelf} hidden={entries.length === 0}>
-                {#if expanded && collapsible}<ShelfHeading
+                {#if expanded && collapsible && !place}<ShelfHeading
                     {shelf}
                     {explains}
-                    count={progress && !isSearching ? undefined : entries.length}
+                    count={progress && !isSearching ? undefined : count}
                     level={4}
                   />{/if}
                 {@render shelfRows(shelf)}
@@ -736,10 +743,10 @@
                     <span>{shelfLabel(shelf)}</span>
                     <span class="shelf-count">
                       {#if isSearching}
-                        {@const count = formatNumber(entries.length, locale)}
-                        {plural(entries.length, [`${count} match`, `${count} matches`])}
+                        {@const label = formatNumber(count, locale)}
+                        {plural(count, [`${label} match`, `${label} matches`])}
                       {:else}
-                        {formatNumber(entries.length, locale)}
+                        {formatNumber(count, locale)}
                       {/if}
                     </span>
                   {/if}
@@ -945,10 +952,6 @@
    * Heads stick under the page header, and in Everything under the group's own sticky head too,
    * so a long place still says which place it is. The column heads stick right under them.
    */
-  section.collapsible {
-    --ledger-group-head: 2.75rem;
-  }
-
   .head {
     position: sticky;
     z-index: 2;
@@ -970,6 +973,16 @@
     font-family: var(--font-brand);
     font-size: var(--text-xl);
     line-height: 1.2;
+  }
+
+  .place h3 {
+    font-family: var(--font-body);
+  }
+
+  .place .head :global(.head-shelf),
+  .place summary[data-shelf-heading] {
+    font-family: var(--font-data);
+    font-size: var(--text-3xs);
   }
 
   section:not(.collapsible) h3 {

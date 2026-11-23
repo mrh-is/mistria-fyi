@@ -1,6 +1,7 @@
 import { tick } from "svelte";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import EverythingGroupingPicker from "#lib/components/everything-grouping-picker.svelte";
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -67,9 +68,12 @@ beforeEach(() => {
 
 it("offers both grouping lenses and renders source anchors from the device preference", async () => {
   userState.setEverythingGrouping("source");
+  const picker = renderWithFeedback(EverythingGroupingPicker);
+  expect(picker.getByRole("radiogroup", { name: "Group by" })).toBeInTheDocument();
+  expect(picker.getByRole("radio", { name: "Place" })).toHaveAttribute("aria-checked", "true");
+  expect(picker.getByRole("radio", { name: "Category" })).toHaveAttribute("aria-checked", "false");
   const view = renderWithFeedback(AllPage, props);
   await tick();
-  expect(view.getByLabelText("Group by")).toBeTruthy();
   expect(view.container.querySelector("#sources-stores")).not.toBeNull();
   expect(view.container.querySelector("#store-balor")).not.toBeNull();
   expect(view.container.querySelector("#fish-ocean")).not.toBeNull();

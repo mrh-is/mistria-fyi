@@ -1,9 +1,11 @@
+import { fireEvent, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import * as sourceChecklist from "#lib/controllers/source-checklist.js";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
+import * as undoToast from "#lib/effects/undo-toast.js";
 import { getMaxRenownLevel, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { perksOfSkill } from "#lib/engine/projections/skills.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -13,7 +15,7 @@ import { recordKeys } from "#lib/utils/record.js";
 
 import SourceContent from "./source-content.test-harness.svelte";
 
-import type { StoreId } from "#lib/types/tracker-data.js";
+import type { StoreId, VillagerId } from "#lib/types/tracker-data.js";
 
 const firstSkill = recordKeys(trackerData.skills)[0];
 
@@ -103,4 +105,30 @@ it("brings the Progress group back when the search clears", async () => {
   toolbarState.setSearchQuery("");
   await tick();
   expect(view.getByRole("button", { name: "Progress" })).toBeVisible();
+});
+
+it("lists this week’s birthdays and shares editable marks with Hearts to go", async () => {
+  const showMeterUndo = vi.spyOn(undoToast, "showMeterUndo");
+  const adeline = "adeline" as VillagerId;
+  const balor = "balor" as VillagerId;
+  const { day, season } = trackerData.villagers[adeline].birthday;
+  userState.setCalendarDate(season, day, 1);
+  userState.setHeartLevel(adeline, 2);
+  userState.setHeartLevel(balor, 5);
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  await tick();
+  const birthdays = within(view.getByRole("region", { name: "Birthdays this week" }));
+  const hearts = within(view.getByRole("region", { name: "Hearts to go" }));
+  const birthdayMark = birthdays.getByRole("slider", { name: "Adeline heart level" });
+  const heartMark = hearts.getByRole("slider", { name: "Adeline heart level" });
+
+  expect(birthdays.getAllByText("Soon").length).toBeGreaterThan(0);
+  expect(hearts.getAllByRole("slider")[0]).toHaveAccessibleName("Balor heart level");
+  await fireEvent.keyDown(birthdayMark, { key: "ArrowRight" });
+  expect(heartMark).toHaveAttribute("aria-valuenow", "3");
+  const edit = showMeterUndo.mock.lastCall?.[0];
+  expect(edit).toMatchObject({ after: 3, before: 2 });
+  edit?.undo(edit.before);
+  await tick();
+  expect(heartMark).toHaveAttribute("aria-valuenow", "2");
 });

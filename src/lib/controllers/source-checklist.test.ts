@@ -64,6 +64,45 @@ function fennelPlacements() {
     .filter(({ entry }) => entry.category === "quests" && entry.id === "request_for_fennel");
 }
 
+it("puts Josephine’s Chili Pepper request under Quests and the pepper under its store", () => {
+  const context = userState.progressContext;
+  const sections = projectSourceGroups(buildSourceChecklist(context, "en"), context);
+  const questPlaces = sections.filter(({ rows }) =>
+    rows.some(
+      ({ entry }) => entry.category === "quests" && entry.id === "request_for_chili_pepper",
+    ),
+  );
+  expect(questPlaces.map(({ group, id }) => [group, id])).toEqual([
+    ["quests", "quest-giver-josephine"],
+  ]);
+  expect(
+    sections.some(
+      ({ id, rows }) =>
+        id === "store-balor" &&
+        rows.some(({ entry }) => entry.category === "almanac" && entry.id === "chili_pepper"),
+    ),
+  ).toBe(true);
+});
+
+it("puts different crafted items at the same crafting station", () => {
+  const context = userState.progressContext;
+  const sections = projectSourceGroups(buildSourceChecklist(context, "en"), context);
+  const crafting = sections.filter(({ group }) => group === "crafting");
+  expect(crafting.length).toBeGreaterThan(1);
+  expect(crafting.some(({ rows }) => rows.length > 1)).toBe(true);
+  for (const { id, rows } of crafting) {
+    expect(
+      rows.every(({ sources }) =>
+        sources.every(
+          (source) =>
+            source.type === "recipe" &&
+            id === `crafting-${trackerData.recipes[source.recipeId].stationId}`,
+        ),
+      ),
+    ).toBe(true);
+  }
+});
+
 it("keeps quest start gates in every source placement", () => {
   const before = fennelPlacements();
   expect(before.length).toBeGreaterThan(0);

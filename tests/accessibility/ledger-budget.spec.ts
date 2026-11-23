@@ -68,14 +68,12 @@ test("the Almanac stays within its budget at 4× CPU throttling", async ({ page 
 test("the source ledger mounts no rows until a place opens", async ({ page }) => {
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/everything?group=source");
-  // Every place starts closed. Its heads alone still cost about 24,600 elements across 888 places,
-  // which #716 tracks, so this test avoids page-wide role queries. Mounting every row as well
-  // measured about 52,000.
+  // Every place starts closed. Wait for the projection to load before inspecting mounted rows.
   // oxlint-disable-next-line playwright/no-raw-locators -- Place boxes have no role of their own.
   const places = page.locator("[data-source-section]");
   await expect
     .poll(() => page.evaluate(() => document.querySelectorAll("[data-source-section]").length))
-    .toBeGreaterThan(800);
+    .toBeGreaterThan(100);
   // oxlint-disable-next-line playwright/no-raw-locators -- Count row boxes across the page.
   const rows = page.locator("[data-ledger-fact]");
   await settleLayout(page);

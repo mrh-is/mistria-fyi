@@ -1501,6 +1501,28 @@
   },
   {
     "translations": {
+      "en": "Category",
+      "ja": "カテゴリー",
+      "zh-Hans": "类别",
+      "zh-Hant": "類別",
+      "es": "Categoría",
+      "fr": "Catégorie",
+      "ko": "카테고리",
+      "ru": "Категория"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/everything-grouping-picker.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Change",
       "ja": "変更",
       "zh-Hans": "更改",
@@ -3903,6 +3925,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/got-it-note.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Group by",
+      "ja": "グループ分け",
+      "zh-Hans": "分组方式",
+      "zh-Hant": "分組方式",
+      "es": "Agrupar por",
+      "fr": "Regrouper par",
+      "ko": "그룹 기준",
+      "ru": "Группировать по"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/everything-grouping-picker.svelte",
         "refs": [
           null
         ]
@@ -6486,6 +6530,28 @@
         "file": "src/lib/components/feedback-picker.svelte",
         "refs": [
           null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Place",
+      "ja": "場所",
+      "zh-Hans": "地点",
+      "zh-Hant": "地點",
+      "es": "Lugar",
+      "fr": "Lieu",
+      "ko": "장소",
+      "ru": "Место"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/everything-grouping-picker.svelte",
+        "refs": [
           null
         ]
       }
@@ -12708,11 +12774,11 @@
             "placeholders": [
               [
                 "0",
-                "count"
+                "label"
               ],
               [
                 "0",
-                "count"
+                "label"
               ]
             ]
           }
