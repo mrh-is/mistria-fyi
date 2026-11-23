@@ -7,6 +7,7 @@ import {
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
 import { villagerRecord } from "./support/scenarios.js";
+import { useSmallAlmanac } from "./support/small-almanac.js";
 import { critical } from "./support/tags.js";
 
 test.describe("keyboard and focus accessibility", () => {
@@ -117,6 +118,7 @@ test.describe("keyboard and focus accessibility", () => {
     "checking a ledger row keeps focus and Undo is keyboard operable",
     critical,
     async ({ page }) => {
+      await useSmallAlmanac(page);
       await gotoApplication(page, "/almanac");
       const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
       const row = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
@@ -134,6 +136,7 @@ test.describe("keyboard and focus accessibility", () => {
   );
 
   test("the first check and the starter checks have separate Undo actions", async ({ page }) => {
+    await useSmallAlmanac(page);
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
     const row = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
