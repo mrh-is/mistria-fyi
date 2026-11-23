@@ -250,6 +250,23 @@ describe("restoreBackup validation", () => {
 });
 
 describe("mergeFromSave day", () => {
+  it("keeps the original save date across clock edits and backup restore", async () => {
+    await userState.mergeFromSave(
+      {},
+      { day: { day: 28, season: "winter", weather: "calm", year: 1 } },
+    );
+    userState.setCalendarDate("spring", 6, 2);
+    const backup = userState.exportBackup();
+    expect(userState.restoreBackup(backup).ok).toBe(true);
+    expect(userState.state.worldState).toEqual({
+      day: 6,
+      saveDate: { day: 28, season: "winter", year: 1 },
+      season: "spring",
+      weather: "calm",
+      year: 2,
+    });
+  });
+
   it("sets the date & weather from the save, and clears the day when the season changes", async () => {
     await userState.mergeFromSave({}, { day: { day: 10, season: "fall", weather: "special" } });
     expect(userState.state.worldState).toEqual({ day: 10, season: "fall", weather: "special" });

@@ -7,7 +7,12 @@ import {
   mergeFarmIdentity,
 } from "#lib/engine/save-identity.js";
 import { applyAdditiveSave, mergeProgress } from "#lib/engine/save-progress.js";
-import { applySaveDay, rebaseWorldDay, withoutRecordedDay } from "#lib/engine/world-state.js";
+import {
+  applySaveDay,
+  isWeatherInSeason,
+  rebaseWorldDay,
+  withoutRecordedDay,
+} from "#lib/engine/world-state.js";
 import { isRecord, recordEntries } from "#lib/utils/record.js";
 
 import {
@@ -106,7 +111,7 @@ export function planManualImport(
       createDefaultWorldState())
     : capturedClock;
   const clock = rebaseWorldDay(storedClock, clockBase, capturedClock);
-  loaded.worldState = resolveImportDay(storedClock, clock, day, farmChanged);
+  loaded.worldState = resolveImportDay(clock, day, farmChanged);
   // A manual import chooses its lane in the same durable write as its progress.
   loaded.local.trackingLane ??= loaded.local.syncLane ? "sync" : "manual";
   const json = serializeStoredProgress(loaded, loaded.local);
@@ -131,7 +136,7 @@ export function planManualImport(
   }
   const laterBase = readImportSnapshot(edits.clockBase)?.worldState ?? capturedClock;
   const liveClock = rebaseWorldDay(clock, laterBase, edits.clock);
-  live.worldState = resolveImportDay(storedClock, liveClock, day, farmChanged);
+  live.worldState = resolveImportDay(liveClock, day, farmChanged);
   return { json, kind: "write", live, local: loaded.local, result };
 }
 
@@ -352,24 +357,16 @@ function readImportSnapshot(json: null | string | undefined): LoadedProgress | u
 
 /** Apply the save & normalize once, after all clock edits have been combined. */
 function resolveImportDay(
-  stored: WorldState,
   clock: WorldState,
   day: SaveDay | undefined,
   farmChanged: boolean,
 ): WorldState {
-  if (
-    !day &&
-    !farmChanged &&
-    clock.season === stored.season &&
-    clock.weather === stored.weather &&
-    clock.day === stored.day
-  ) {
-    return stored;
-  }
-  return applySaveDay(
-    farmChanged ? withoutRecordedDay(clock) : clock,
-    day ?? { season: undefined, weather: undefined },
-  );
+  const next = farmChanged ? withoutRecordedDay(clock) : clock;
+  if (day) return applySaveDay(next, day);
+  return {
+    ...next,
+    weather: isWeatherInSeason(next.weather, next.season) ? next.weather : "calm",
+  };
 }
 
 function rebaseFields(

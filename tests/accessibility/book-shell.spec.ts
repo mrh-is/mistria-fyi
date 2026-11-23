@@ -63,6 +63,88 @@ function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+test.describe("Home before hydration", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("links to Everything without a placeholder count", async ({ page }) => {
+    await page.goto("/en");
+    const contents = page.getByRole("navigation", { name: "Contents" });
+    await expect(contents.getByRole("link", { exact: true, name: "Everything" })).toBeVisible();
+  });
+
+  test("keeps the farm clock neutral", async ({ page }) => {
+    await page.goto("/en");
+    await expect(page.getByRole("button", { name: "Which day is it?" })).toBeDisabled();
+    await expect(page.getByText("day-one defaults", { exact: true })).toBeHidden();
+    await expect(page.getByRole("link", { exact: true, name: "Load a save" })).toBeHidden();
+    await expect(page.getByRole("region", { name: "Birthdays this week" })).toBeHidden();
+  });
+});
+
+test("Home clock starts the picker on day one and keeps year one when the day changes", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light");
+  await gotoApplication(page, "/en");
+  await page.getByRole("button", { name: "Spring 1, Year 1" }).click();
+
+  const picker = page.getByRole("dialog", { name: "Season & weather" });
+  const day = picker.getByLabel("Day", { exact: true });
+  const year = picker.getByLabel("Year", { exact: true });
+  await expect(day).toHaveValue("1");
+  await expect(year).toHaveValue("1");
+  await day.selectOption("5");
+  await expect(year).toHaveValue("1");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Spring 5, Year 1" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Spring 5, Year 1" }).click();
+  await day.selectOption("");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Which day is it?" })).toBeVisible();
+});
+
+test("Home clock preserves an unknown year on an existing calendar", async ({ page }) => {
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ worldState: { day: 5, season: "spring", weather: "calm" } }),
+  );
+  await gotoApplication(page, "/en");
+  await page.getByRole("button", { exact: true, name: "Spring 5" }).click();
+  const picker = page.getByRole("dialog", { name: "Season & weather" });
+  await expect(picker.getByLabel("Year", { exact: true })).toHaveValue("");
+  await picker.getByLabel("Day", { exact: true }).selectOption("6");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { exact: true, name: "Spring 6" })).toBeVisible();
+});
+
+test("Home Contents gives Everything an overall completion count after hydration", async ({
+  page,
+}) => {
+  await initializeApplication(page, "light", createStoredState({ progress: { renown: 10 } }));
+  await gotoApplication(page, "/en");
+  const contents = page.getByRole("navigation", { name: "Contents" });
+  const everything = contents.getByRole("link", {
+    name: /^Everything, [\d,]+ of [\d,]+ completed$/u,
+  });
+  await expect(everything).toBeVisible();
+  await expect(everything).toHaveAttribute("href", "/en/everything?group=source");
+});
+
+test("Home opens available quests in Everything's category view", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/");
+  const quests = page
+    .getByRole("region", { name: "Places to go today" })
+    .getByRole("link", { name: /^Available quests Quests [\d,]+$/u });
+  await quests.click();
+  await expect(page).toHaveURL(/\/en\/everything\?group=category#category-quests$/u);
+  await expect(
+    page.getByRole("button", { exact: true, expanded: true, name: "Quests" }),
+  ).toBeVisible();
+});
+
 test("Home shows the last imported farmer and farm on its bookplate", async ({ page }) => {
   const state = createStoredState();
   state.progress.lastImport = {
@@ -73,14 +155,18 @@ test("Home shows the last imported farmer and farm on its bookplate", async ({ p
   };
   await initializeApplication(page, "light", state);
   await gotoApplication(page, "/");
-  const plate = page.getByText("Field notes of Dewey", { exact: true });
-  await expect(plate).toBeVisible();
-  await expect(page.getByText("Meadow Farm", { exact: true })).toBeVisible();
-  const field = page.getByPlaceholder("Search the field guide", { exact: true });
+  // oxlint-disable-next-line playwright/no-raw-locators -- The flyleaf plate is a layout box with no landmark role.
+  const plate = page.locator(".bookplate");
+  const farmer = plate.getByText("Dewey", { exact: true });
+  const farm = plate.getByText("Meadow Farm", { exact: true });
+  await expect(farmer).toBeVisible();
+  await expect(farm).toBeVisible();
+  const field = search(page);
   await field.fill("turnip");
   await expect(plate).toBeHidden();
   await field.press("Escape");
-  await expect(plate).toBeVisible();
+  await expect(farmer).toBeVisible();
+  await expect(farm).toBeVisible();
 });
 
 test.describe("book shell", () => {
@@ -312,14 +398,22 @@ test.describe("page header & tools", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
   });
 
-  for (const [path, header] of [
-    ["/", ".home-header"],
-    ["/animals", "[data-page-header]"],
-    ["/almanac", "[data-page-header]"],
-  ] as const) {
+  test("Home keeps the search tools beside the title and above today's date", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await gotoApplication(page, "/");
+    const title = await settledBox(page.getByRole("heading", { level: 1 }));
+    const field = await settledBox(search(page));
+    const clock = await settledBox(page.getByRole("button", { name: "Which day is it?" }));
+    expect(field.x).toBeGreaterThanOrEqual(title.x + title.width);
+    expect(field.y).toBeLessThan(title.y + title.height);
+    expect(field.y + field.height).toBeGreaterThan(title.y);
+    expect(field.y + field.height).toBeLessThanOrEqual(clock.y);
+  });
+
+  for (const path of ["/animals", "/almanac"]) {
     test(`${path} carries its tools in its own header row`, async ({ page }) => {
       await gotoApplication(page, path);
-      const row = await settledBox(headerPart(page, header));
+      const row = await settledBox(headerPart(page, "[data-page-header]"));
       const field = await settledBox(search(page));
       expect(field.y, "search below the header's top").toBeGreaterThanOrEqual(row.y);
       expect(field.y + field.height, "search above its foot").toBeLessThanOrEqual(

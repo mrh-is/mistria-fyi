@@ -111,7 +111,6 @@
       {
         "file": "src/routes/+page.svelte",
         "refs": [
-          null,
           null
         ]
       },
@@ -211,6 +210,64 @@
   },
   {
     "translations": {
+      "en": "{0} {1}, Year {2}",
+      "ja": "{2}年目{0}{1}日",
+      "zh-Hans": "第{2}年{0}{1}日",
+      "zh-Hant": "第{2}年{0}{1}日",
+      "es": "{1} de {0}, año {2}",
+      "fr": "{1} {0}, année {2}",
+      "ko": "{2}년차 {0} {1}일",
+      "ru": "{1}-й день сезона «{0}», год {2}"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "season"
+              ],
+              [
+                "1",
+                "dayNumber"
+              ],
+              [
+                "2",
+                "formatNumber(year, locale)"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "file": "src/routes/data/sync-card.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "getName(\"ui\", date.season, page.data.locale)"
+              ],
+              [
+                "1",
+                "String(date.day)"
+              ],
+              [
+                "2",
+                "String(date.year)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0}, {1} of {2} completed",
       "ja": "{0}、{2}件中{1}件完了",
       "zh-Hans": "{0}，已完成 {1}/{2}",
@@ -228,15 +285,31 @@
             "placeholders": [
               [
                 "0",
-                "\"Everything\""
+                "name"
               ],
               [
                 "1",
-                "totalCompleted"
+                "completed"
               ],
               [
                 "2",
-                "grandTotal"
+                "total"
+              ]
+            ]
+          },
+          {
+            "placeholders": [
+              [
+                "0",
+                "everythingName"
+              ],
+              [
+                "1",
+                "everythingCompleted"
+              ],
+              [
+                "2",
+                "everythingTotal"
               ]
             ]
           }

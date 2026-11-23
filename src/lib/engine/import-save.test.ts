@@ -62,12 +62,19 @@ function forecast(entries: Record<number, string>): string[] {
 describe("the save's day", () => {
   it("reads the current season past the first year & today's forecast entry", () => {
     // The example from a real v1.0.8 save: day 169 is the second day of the seventh season.
-    const { season, weather } = day({
+    const {
+      day: dayOfSeason,
+      season,
+      weather,
+      year,
+    } = day({
       date: 43_804_800,
       weather: { forecast: forecast({ 1: "special" }) },
     });
     expect(season.value).toBe("fall");
     expect(weather.value).toBe("special");
+    expect(dayOfSeason).toBe(2);
+    expect(year).toBe(2);
   });
 
   it("reads the last day of a season", () => {

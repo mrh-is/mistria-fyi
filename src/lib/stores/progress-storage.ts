@@ -79,6 +79,8 @@ export const MIGRATIONS: Readonly<Partial<Record<number, Migration>>> = {
   1: (document) => document,
   // Earlier clocks recorded the season but have no day number to backfill.
   10: (document) => document,
+  // Older clocks have no game year or original save date to backfill.
+  11: (document) => document,
   // Earlier builds recorded neither an identity nor an import timestamp. Do not invent either.
   2: (document) => ({ ...document, lastImport: null }),
   // Version 3 adds provenance & resolutions. Every fact a version 2 blob holds predates provenance,
@@ -284,6 +286,12 @@ const ResolutionSchema = v.object({
 });
 
 const ClockDaySchema = v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(DAYS_PER_SEASON));
+const ClockYearSchema = v.pipe(v.number(), v.safeInteger(), v.minValue(1));
+const SavedDateSchema = v.object({
+  day: ClockDaySchema,
+  season: v.picklist(SEASONS),
+  year: ClockYearSchema,
+});
 
 const StrictBlobSchema = v.object({
   lastImport: v.optional(LastImportSchema, null),
@@ -309,8 +317,10 @@ const StrictBlobSchema = v.object({
   version: VersionSchema,
   worldState: v.object({
     day: v.optional(ClockDaySchema),
+    saveDate: v.optional(SavedDateSchema),
     season: v.picklist(SEASONS),
     weather: v.picklist(WEATHERS),
+    year: v.optional(ClockYearSchema),
   }),
 });
 
@@ -341,8 +351,10 @@ const RepairBlobSchema = v.object({
   version: VersionSchema,
   worldState: v.object({
     day: v.fallback(v.optional(ClockDaySchema), undefined),
+    saveDate: v.fallback(v.optional(SavedDateSchema), undefined),
     season: v.fallback(v.picklist(SEASONS), "spring"),
     weather: v.fallback(v.picklist(WEATHERS), "calm"),
+    year: v.fallback(v.optional(ClockYearSchema), undefined),
   }),
 });
 
@@ -895,8 +907,10 @@ function serializedState({
     version: CURRENT_SERIALIZATION_VERSION,
     worldState: {
       ...(worldState.day === undefined ? {} : { day: worldState.day }),
+      ...(worldState.saveDate === undefined ? {} : { saveDate: worldState.saveDate }),
       season: worldState.season,
       weather: worldState.weather,
+      ...(worldState.year === undefined ? {} : { year: worldState.year }),
     },
   };
 }

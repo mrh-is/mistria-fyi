@@ -4,9 +4,11 @@
   import { weatherIcon } from "#lib/components/icon/icon-maps.js";
   import { Icon } from "#lib/components/icon/index.js";
   import SegmentedPicker from "#lib/components/segmented-picker.svelte";
+  import { readClockDisplay } from "#lib/controllers/clock-display.js";
+  import { DAYS_PER_SEASON } from "#lib/engine/game-calendar.js";
   import { weathersForSeason } from "#lib/engine/world-state.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { seasonLabel, weatherLabel } from "#lib/utils/format.js";
+  import { formatNumber, seasonLabel, weatherLabel } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
@@ -16,8 +18,11 @@
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
   const TRANSITION_MS = 180;
+  const days = Array.from({ length: DAYS_PER_SEASON }, (_, index) => index + 1);
 
-  let currentSeason = $derived(userState.state.worldState.season);
+  let clock = $derived(userState.state.worldState);
+  let calendar = $derived(readClockDisplay());
+  let currentSeason = $derived(clock.season);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
   let hasSpecialWeather = $derived(availableWeathers.includes("special"));
   let weatherColumns = $derived(
@@ -83,6 +88,48 @@
       </SegmentedPicker>
     </div>
 
+    <div class="calendar-fields">
+      <div>
+        <label for="clock-day">Day</label>
+        <select
+          id="clock-day"
+          value={calendar.day ?? ""}
+          onchange={({ currentTarget }) =>
+            userState.setCalendarDate(
+              currentSeason,
+              currentTarget.value ? Number(currentTarget.value) : undefined,
+              calendar.year,
+            )}
+        >
+          <option value="">Unknown day</option>
+          {#each days as day (day)}
+            <option value={day}>{formatNumber(day, page.data.locale)}</option>
+          {/each}
+        </select>
+      </div>
+      <div>
+        <label for="clock-year">Year</label>
+        <input
+          id="clock-year"
+          type="number"
+          min="1"
+          step="1"
+          value={calendar.year}
+          onchange={({ currentTarget }) => {
+            if (!currentTarget.validity.valid) {
+              currentTarget.value = String(calendar.year ?? "");
+              return;
+            }
+            userState.setCalendarDate(
+              currentSeason,
+              calendar.day,
+              currentTarget.value ? currentTarget.valueAsNumber : undefined,
+            );
+          }}
+        />
+      </div>
+    </div>
+
     <div>
       <p>Weather</p>
       <SegmentedPicker
@@ -128,13 +175,35 @@
     border-top: 1px solid color-mix(in srgb, var(--color-ink-hairline) 28%, transparent);
   }
 
-  .world-state-grid p {
+  .world-state-grid p,
+  .calendar-fields label {
     margin-bottom: 7px;
     color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-2xs);
     letter-spacing: 0.14em;
     text-transform: uppercase;
+  }
+
+  .calendar-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 0.5rem;
+  }
+
+  .calendar-fields > div {
+    display: grid;
+  }
+
+  .calendar-fields :is(select, input) {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding-inline: 0.375rem;
+    border: 1px solid var(--color-rule);
+    background: var(--color-paper-raised);
+    font-family: var(--font-controls);
+    font-size: var(--text-sm);
   }
 
   /*

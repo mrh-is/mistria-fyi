@@ -1,14 +1,14 @@
 [
   {
     "translations": {
-      "en": "<0/> Mistria Field Guide",
-      "ja": "<0/> Mistria Field Guide",
-      "zh-Hans": "<0/> Mistria Field Guide",
-      "zh-Hant": "<0/> Mistria Field Guide",
-      "es": "<0/> Mistria Field Guide",
-      "fr": "<0/> Mistria Field Guide",
-      "ko": "<0/> Mistria Field Guide",
-      "ru": "<0/> Mistria Field Guide"
+      "en": "<0>Load a save</0> to pick up on your farm’s day.",
+      "ja": "<0>セーブを読み込んで</0>、牧場の日付に合わせよう。",
+      "zh-Hans": "<0>载入存档</0>，接着过你农场的那一天。",
+      "zh-Hant": "<0>載入存檔</0>，接著過你農場的那一天。",
+      "es": "<0>Carga una partida</0> para retomar el día de tu granja.",
+      "fr": "<0>Chargez une sauvegarde</0> pour reprendre la journée de votre ferme.",
+      "ko": "<0>저장 파일을 불러와</0> 농장의 날짜에 맞추세요.",
+      "ru": "<0>Загрузите сохранение</0>, чтобы продолжить с текущего дня на ферме."
     },
     "references": [
       {
@@ -23,14 +23,193 @@
   },
   {
     "translations": {
-      "en": "Field notes of {0}",
-      "ja": "{0}のフィールドノート",
-      "zh-Hans": "{0}的田野笔记",
-      "zh-Hant": "{0}的田野筆記",
-      "es": "Notas de campo de {0}",
-      "fr": "Carnet de terrain de {0}",
-      "ko": "{0}의 현장 기록",
-      "ru": "Полевые заметки: {0}"
+      "en": "Birthdays this week",
+      "ja": "今週の誕生日",
+      "zh-Hans": "本周生日",
+      "zh-Hant": "本週生日",
+      "es": "Cumpleaños de esta semana",
+      "fr": "Anniversaires de la semaine",
+      "ko": "이번 주 생일",
+      "ru": "Дни рождения на этой неделе"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Contents",
+      "ja": "目次",
+      "zh-Hans": "目录",
+      "zh-Hant": "目錄",
+      "es": "Índice",
+      "fr": "Sommaire",
+      "ko": "목차",
+      "ru": "Оглавление"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Hearts to go",
+      "ja": "残りのハート",
+      "zh-Hans": "还差的爱心",
+      "zh-Hant": "還差的愛心",
+      "es": "Corazones que faltan",
+      "fr": "Cœurs restants",
+      "ko": "남은 하트",
+      "ru": "Осталось сердец"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "If found, please return to",
+      "ja": "拾った方は、こちらまでお届けください",
+      "zh-Hans": "如有拾获，请归还给",
+      "zh-Hant": "如有拾獲，請歸還給",
+      "es": "Si lo encuentras, devuélvelo a",
+      "fr": "Si vous trouvez ce guide, rapportez-le à",
+      "ko": "이 안내서를 발견하면 돌려주세요",
+      "ru": "Если найдёте этот справочник, верните его"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Load a newer save",
+      "ja": "新しいセーブを読み込む",
+      "zh-Hans": "载入更新的存档",
+      "zh-Hant": "載入更新的存檔",
+      "es": "Cargar una partida más reciente",
+      "fr": "Charger une sauvegarde plus récente",
+      "ko": "더 최근 저장 파일 불러오기",
+      "ru": "Загрузить более свежее сохранение"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Which day is it?",
+      "ja": "今日は何日？",
+      "zh-Hans": "今天是几号？",
+      "zh-Hant": "今天是幾號？",
+      "es": "¿Qué día es hoy?",
+      "fr": "Quel jour sommes-nous ?",
+      "ko": "오늘은 며칠인가요?",
+      "ru": "Какой сегодня день?"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "day-one defaults",
+      "ja": "初日の設定",
+      "zh-Hans": "默认使用第一天",
+      "zh-Hant": "預設使用第一天",
+      "es": "datos del primer día",
+      "fr": "réglages du premier jour",
+      "ko": "첫날 기본값",
+      "ru": "настройки первого дня"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "from a save {0} day old",
+        "from a save {0} days old"
+      ],
+      "ja": [
+        "{0}日前のセーブから"
+      ],
+      "zh-Hans": [
+        "来自 {0} 天前的存档"
+      ],
+      "zh-Hant": [
+        "來自 {0} 天前的存檔"
+      ],
+      "es": [
+        "de una partida de hace {0} día",
+        "de una partida de hace {0} días",
+        "de una partida de hace {0} días"
+      ],
+      "fr": [
+        "sauvegarde datant de {0} jour",
+        "sauvegarde datant de {0} jours",
+        "sauvegarde datant de {0} jours"
+      ],
+      "ko": [
+        "{0}일 전 저장 파일 기준"
+      ],
+      "ru": [
+        "из сохранения за {0} день до этой даты",
+        "из сохранения за {0} дня до этой даты",
+        "из сохранения за {0} дней до этой даты",
+        "из сохранения за {0} дня до этой даты"
+      ]
     },
     "references": [
       {
@@ -40,7 +219,147 @@
             "placeholders": [
               [
                 "0",
-                "bookOwner.playerName"
+                "age"
+              ],
+              [
+                "0",
+                "age"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "from your save",
+      "ja": "セーブから",
+      "zh-Hans": "来自你的存档",
+      "zh-Hant": "來自你的存檔",
+      "es": "de tu partida",
+      "fr": "d’après votre sauvegarde",
+      "ko": "저장 파일 기준",
+      "ru": "из вашего сохранения"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "of",
+      "ja": "／",
+      "zh-Hans": "／",
+      "zh-Hant": "／",
+      "es": "de",
+      "fr": "de",
+      "ko": "／",
+      "ru": "из"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "set by hand",
+      "ja": "手動で設定",
+      "zh-Hans": "手动设置",
+      "zh-Hant": "手動設定",
+      "es": "fecha puesta a mano",
+      "fr": "date réglée à la main",
+      "ko": "직접 설정",
+      "ru": "дата задана вручную"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} {1}",
+      "ja": "{0}{1}日",
+      "zh-Hans": "{0}{1}日",
+      "zh-Hant": "{0}{1}日",
+      "es": "{1} de {0}",
+      "fr": "{1} {0}",
+      "ko": "{0} {1}일",
+      "ru": "{1}-й день сезона «{0}»"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "season"
+              ],
+              [
+                "1",
+                "dayNumber"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}, {1} {2}",
+      "ja": "{0}、{1}{2}日",
+      "zh-Hans": "{0}，{1}{2}日",
+      "zh-Hant": "{0}，{1}{2}日",
+      "es": "{0}, {2} de {1}",
+      "fr": "{0}, le {2} {1}",
+      "ko": "{0}, {1} {2}일",
+      "ru": "{0}, {2}-й день сезона «{1}»"
+    },
+    "references": [
+      {
+        "file": "src/routes/+page.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "birthdaySeason"
+              ],
+              [
+                "2",
+                "birthdayDay"
               ]
             ]
           }
