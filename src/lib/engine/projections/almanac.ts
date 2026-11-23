@@ -93,16 +93,18 @@ export function projectAlmanac(
       id,
       progress: countShelfRows(applicableRows),
       rows,
+      spoilered: isSpoilered(category.visibility, options.progressionState),
       visibleRows: rows.filter((row) => row.visible),
     };
   });
   const totals = addProgress(sections.map(({ progress }) => progress));
+  const visibleSections = sections.filter((section) => !section.spoilered);
   // Some entries occur in several sections. Search addresses each canonical row once;
   // section progress intentionally counts every in-game section membership.
   const rows = [
     ...new Map(
-      sections.flatMap((section) => section.rows).map((row) => [row.canonicalId, row]),
+      visibleSections.flatMap((section) => section.rows).map((row) => [row.canonicalId, row]),
     ).values(),
   ];
-  return { rows, sections, totals };
+  return { rows, sections: visibleSections, totals };
 }

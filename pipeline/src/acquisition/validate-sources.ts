@@ -1456,6 +1456,17 @@ function validateAlmanac(
     const categoryPath = `almanac.${categoryId}`;
     const categoryRecord = requireRecord(category, categoryId, categoryPath, diagnostics);
     if (!categoryRecord) continue;
+    if (categoryRecord.visibility !== undefined) {
+      validateVisibility(
+        categoryRecord.visibility,
+        categoryId,
+        `${categoryPath}.visibility`,
+        undefined,
+        references,
+        diagnostics,
+        new Set(),
+      );
+    }
     const entries = getDenseJsonArrayValues(categoryRecord.items);
     if (!entries) {
       malformed(

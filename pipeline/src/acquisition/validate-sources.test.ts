@@ -932,6 +932,16 @@ describe("validateAcquisitionSources on assembled tracker data", () => {
   it.each([
     {
       expected: {
+        fieldPath: "almanac.cooking.visibility.questId",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "missing_quest"',
+      },
+      name: "an unknown almanac section unlock quest",
+      path: ["almanac", "cooking", "visibility"],
+      value: { type: "questCompleted", questId: "missing_quest" },
+    },
+    {
+      expected: {
         fieldPath: "almanac.cooking.items[0].itemIds[0]",
         kind: "unresolved-reference",
         message: 'Unknown item ID "missing_item"',

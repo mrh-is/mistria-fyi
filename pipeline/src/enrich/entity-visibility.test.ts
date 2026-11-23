@@ -322,7 +322,57 @@ describe("extractHeartLevelChanges", () => {
   });
 });
 
+describe("assignEntityVisibility — Almanac sections", () => {
+  it("gates Song Crystals on completing the vendor introductions", () => {
+    const trackerData = makeTrackerData({
+      almanac: { crops: { items: [] }, song_crystal: { items: [] } },
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+
+    expect(trackerData.almanac).toEqual({
+      crops: { items: [] },
+      song_crystal: {
+        items: [],
+        visibility: { type: "questCompleted", questId: "meet_the_new_vendors" },
+      },
+    });
+  });
+});
+
 describe("assignEntityVisibility — items", () => {
+  it.each([
+    ["bell_tower_f2", "repair_the_bell_tower"],
+    ["beach_secret", "breaking_the_fire_seal"],
+  ])("gates the %s chest independently of other sources", (locationId, questId) => {
+    const source = { type: "secret_chest", locationId };
+    const trackerData = makeTrackerData({
+      items: {
+        alternate: { sources: [{ type: "default" }, source] },
+        chest_only: { sources: [source] },
+      },
+    });
+
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+
+    const gate = { type: "questCompleted", questId };
+    const alternate = trackerData.items["alternate" as ItemId];
+    const chestOnly = trackerData.items["chest_only" as ItemId];
+    expect(alternate.visibility).toBeUndefined();
+    expect(alternate.sources[1]).toEqual({ ...source, visibility: gate });
+    expect(chestOnly.visibility).toEqual(gate);
+  });
+
+  it("rejects a secret chest without a reviewed location gate", () => {
+    const trackerData = makeTrackerData({
+      items: { unknown: { sources: [{ type: "secret_chest", locationId: "unknown_room" }] } },
+    });
+
+    expect(() => {
+      assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    }).toThrow(/secret chest.*unknown_room/i);
+  });
+
   it.each([
     ["stone_refinery", "stone_refinery"],
     ["dragon_forge", "find_the_magic_key"],

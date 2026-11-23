@@ -4,6 +4,8 @@ import { resolveToVisibility } from "../acquisition/requirement-projector.js";
 import {
   CROWN_QUEST_GATE,
   HAYDENS_BARN_GATE,
+  SECRET_CHEST_UNLOCK_QUESTS,
+  SONG_CRYSTAL_INTRO_QUEST,
   SPELL_MINE_FLOORS,
   SPELL_SOURCES,
   STORE_UNLOCK_QUESTS,
@@ -14,6 +16,7 @@ import { availabilityToVisibility, toAvailableVisibility } from "./availability-
 import { ALWAYS_VISIBLE, simplifyCondition } from "./visibility-condition.js";
 
 import type {
+  AlmanacCategoryId,
   MinesBiomeId,
   QuestId,
   SkillId,
@@ -80,6 +83,10 @@ export function assignEntityVisibility(
 
   assignRecipeVisibility(trackerData, ctx);
   assignItemVisibility(trackerData, ctx);
+  const songCrystals = trackerData.almanac["song_crystal" as AlmanacCategoryId];
+  if (songCrystals) {
+    songCrystals.visibility = { type: "questCompleted", questId: SONG_CRYSTAL_INTRO_QUEST };
+  }
   assignCosmeticVisibility(trackerData, ctx);
   assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
@@ -209,7 +216,6 @@ function acquisitionSourceCondition(
     case "museum_donation":
     case "proposal":
     case "reach_day":
-    case "secret_chest":
     case "ship_item":
     case "spouseGift":
     case "station":
@@ -218,6 +224,13 @@ function acquisitionSourceCondition(
     case "wedding":
     case "wishing_well":
       return ALWAYS_VISIBLE;
+    case "secret_chest": {
+      const questId = SECRET_CHEST_UNLOCK_QUESTS.get(source.locationId);
+      if (!questId) {
+        throw new Error(`No reviewed secret chest gate for location ${source.locationId}`);
+      }
+      return { type: "questCompleted", questId };
+    }
     case "recipe":
       return ctx.recipes[source.recipeId]?.visibility ?? ALWAYS_VISIBLE;
     case "bait_fish":
@@ -455,7 +468,6 @@ function acquisitionSourceConditions(
     case "reach_day":
     case "renown":
     case "ritual_chamber":
-    case "secret_chest":
     case "ship_item":
     case "spouseGift":
     case "station":
@@ -467,6 +479,7 @@ function acquisitionSourceConditions(
       return { entity, source: ALWAYS_VISIBLE };
     case "mine_floor":
     case "recipe":
+    case "secret_chest":
       return { entity, source: entity };
     case "mines_chest":
     case "mines_dig_site": {

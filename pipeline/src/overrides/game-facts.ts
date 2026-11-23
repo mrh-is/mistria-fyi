@@ -48,6 +48,17 @@ export const VILLAGER_GATES_ENTRIES = entriesFromRecord<VisibilityCondition>(
 );
 export const VILLAGER_GATES = entriesToRecord(VILLAGER_GATES_ENTRIES);
 
+// The quest can only be turned in after talking to Stillwell and Zorel.
+// See the met_npc requirement in quests/story_quests.toml.
+export const SONG_CRYSTAL_INTRO_QUEST = "meet_the_new_vendors" as QuestId;
+
+export const SECRET_CHEST_UNLOCK_QUESTS = new Map<string, QuestId>([
+  // world_mod.toml: the tower door opens in repair_the_bell_tower_pt_2.
+  ["bell_tower_f2", "repair_the_bell_tower" as QuestId],
+  // obj_beach_secret_build_mod_obj.gml: Fire Breath opens the Beach Cave.
+  ["beach_secret", "breaking_the_fire_seal" as QuestId],
+]);
+
 export const SPELL_SOURCES_ENTRIES = entriesFromRecord<QuestId>(
   {
     fire_breath: "breaking_the_fire_seal" as QuestId,
