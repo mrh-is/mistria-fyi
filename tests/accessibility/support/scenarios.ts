@@ -59,11 +59,6 @@ export function villagerRecord(page: Page, villagerId: string): Locator {
   return page.locator(`#villager-${villagerId}`);
 }
 
-/** The villager record card whose id starts with `prefix` and currently holds focus. */
-export function focusedVillagerRecord(page: Page, prefix: string): Locator {
-  return page.locator(`[id^="villager-${prefix}"]:focus`);
-}
-
 /** Visit each screen of a shelf in order, including rows already mounted just outside the view. */
 export async function visitLedgerShelf(
   section: Locator,

@@ -6,4 +6,4 @@
   let { data }: PageProps = $props();
 </script>
 
-<VillagersContent indexed locale={data.locale} />
+<VillagersContent locale={data.locale} />

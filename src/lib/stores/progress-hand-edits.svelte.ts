@@ -39,7 +39,11 @@ interface HandEdits {
     setBreakUpsDisabled: (value: boolean) => void;
     setChildChoice: (choice: ChildChoice) => void;
     setHasUpperFloor: (value: boolean) => void;
-    setHeartLevel: (id: VillagerId, level: number) => void;
+    setHeartLevel: (
+      id: VillagerId,
+      level: number,
+      onApplied?: (before: number, after: number) => void,
+    ) => void;
     setMineFloor: (floor: number) => void;
     setQuestState: (id: QuestId, state: QuestState) => void;
     setReachedSeason: (season: Season) => void;
@@ -242,8 +246,24 @@ export function createHandEdits(
           edits.setSimpleProgress(progress, "hasUpperFloor", value),
         );
       },
-      setHeartLevel(id: VillagerId, level: number) {
-        manual(factKey("heartLevels", id), (progress) => edits.setHeartLevel(progress, id, level));
+      setHeartLevel(
+        id: VillagerId,
+        level: number,
+        onApplied?: (before: number, after: number) => void,
+      ) {
+        handEdit(
+          () => {
+            const before = shell.state.progress.heartLevels[id] ?? 0;
+            commit(edits.setHeartLevel(shell.state.progress, id, level));
+            return before;
+          },
+          factKey("heartLevels", id),
+          true,
+          (before) => {
+            const after = shell.state.progress.heartLevels[id] ?? 0;
+            if (before !== after) onApplied?.(before, after);
+          },
+        );
       },
       setMineFloor(floor: number) {
         manual("mineFloor", (progress) => edits.setMineFloor(progress, floor));

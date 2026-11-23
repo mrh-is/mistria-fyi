@@ -29,3 +29,25 @@ it("previews a drag, commits once on release, and discards a canceled drag", () 
   expect(onCommit).toHaveBeenCalledTimes(1);
   if (typeof detach === "function") detach();
 });
+
+it("maps the whole width of each discrete mark and steps down when reselected", () => {
+  const element = document.createElement("div");
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 20, 240, 44));
+  Object.defineProperty(element, "setPointerCapture", { value: vi.fn() });
+  let level = 0;
+  const onCommit = vi.fn((value: number) => {
+    level = value;
+  });
+  meterInput({ discreteMarks: true, getValue: () => level, max: 10, min: 0, onCommit })(element);
+
+  function press(clientX: number): void {
+    for (const type of ["pointerdown", "pointerup"]) {
+      element.dispatchEvent(new PointerEvent(type, { clientX, isPrimary: true, pointerId: 1 }));
+    }
+  }
+
+  press(11);
+  press(249);
+  press(228);
+  expect(onCommit.mock.calls).toEqual([[1], [10], [9]]);
+});

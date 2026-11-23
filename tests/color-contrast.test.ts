@@ -68,6 +68,19 @@ describe("theme contrast tokens", () => {
 
   it.each([
     ["light", lightTokens],
+    ["dark", darkOverrides],
+  ] as const)("%s theme's pencil marks read on paper", (_, tokens) => {
+    for (let level = 1; level <= 10; level++) {
+      const ink = resolveColor(tokens, `color-heart-level-${level}`);
+      expect(
+        contrast(ink, resolveColor(tokens, "color-paper")),
+        `level ${level}`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it.each([
+    ["light", lightTokens],
     ["dark", darkTokens],
   ] as const)("%s theme meets intended text and non-text combinations", (_, tokens) => {
     const color = (token: string) => resolveColor(tokens, token);

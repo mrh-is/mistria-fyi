@@ -114,6 +114,7 @@ export function showMeterUndo(
   {
     after,
     before,
+    formatMessage,
     id,
     locale,
     name,
@@ -121,6 +122,7 @@ export function showMeterUndo(
   }: {
     after: number;
     before: number;
+    formatMessage?: (before: number, after: number) => string;
     id: string;
     locale: LocaleCode;
     name: string;
@@ -149,7 +151,7 @@ export function showMeterUndo(
   inLocale(locale, () => {
     showStackedUndoToast(
       key,
-      `${name}: ${first} → ${after}`,
+      formatMessage?.(first, after) ?? `${name}: ${first} → ${after}`,
       () => {
         undo(first);
       },

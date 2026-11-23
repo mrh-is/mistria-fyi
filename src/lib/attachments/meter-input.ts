@@ -1,12 +1,14 @@
 import type { Attachment } from "svelte/attachments";
 
 interface MeterInputOptions {
+  /** Divide the track into equal targets, with a second press on the top mark removing it. */
+  discreteMarks?: boolean;
   getValue: () => number;
   majorStep?: number;
   max: number;
   min: number;
   onCommit: (value: number) => void;
-  onPreview: (value: number | undefined) => void;
+  onPreview?: (value: number | undefined) => void;
   orientation?: "horizontal" | "vertical";
   /** Reverse the pointer axis, for example for a mine shaft that increases downwards. */
   reverse?: boolean;
@@ -15,6 +17,7 @@ interface MeterInputOptions {
 /** Attach to the focusable slider spanning the meter's value range. Set touch-action to pan
  * perpendicular to the meter so scrolling can cancel a gesture without committing. */
 export function meterInput({
+  discreteMarks = false,
   getValue,
   majorStep,
   max,
@@ -38,12 +41,14 @@ export function meterInput({
           ? (rect.bottom - event.clientY) / rect.height
           : (event.clientX - rect.left) / rect.width;
       if (!Number.isFinite(fraction)) return getValue();
-      return bound(Math.round(min + (reverse ? 1 - fraction : fraction) * (max - min)));
+      const position = (reverse ? 1 - fraction : fraction) * (max - min);
+      if (discreteMarks) return bound(min + Math.max(1, Math.floor(position) + 1));
+      return bound(min + Math.round(position));
     }
 
     function finish(): void {
       pointer = undefined;
-      onPreview(undefined);
+      onPreview?.(undefined);
     }
 
     element.addEventListener(
@@ -53,14 +58,14 @@ export function meterInput({
         element.setPointerCapture(event.pointerId);
         pointer = event.pointerId;
         element.focus({ preventScroll: true });
-        onPreview(valueAt(event));
+        onPreview?.(valueAt(event));
       },
       { signal },
     );
     element.addEventListener(
       "pointermove",
       (event) => {
-        if (event.pointerId === pointer) onPreview(valueAt(event));
+        if (event.pointerId === pointer) onPreview?.(valueAt(event));
       },
       { signal },
     );
@@ -68,9 +73,11 @@ export function meterInput({
       "pointerup",
       (event) => {
         if (event.pointerId !== pointer) return;
-        const value = valueAt(event);
+        const current = getValue();
+        const target = valueAt(event);
+        const value = discreteMarks && target === current ? Math.max(min, target - 1) : target;
         finish();
-        if (value !== getValue()) onCommit(value);
+        if (value !== current) onCommit(value);
       },
       { signal },
     );

@@ -4,10 +4,9 @@ import {
   gotoApplication,
   initializeApplication,
   switchTheme,
-  waitForRendering,
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
-import { focusedVillagerRecord, villagerRecord } from "./support/scenarios.js";
+import { villagerRecord } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
 test.describe("keyboard and focus accessibility", () => {
@@ -155,25 +154,23 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(artifacts.getByRole("button", { name: name ?? "" })).toBeVisible();
   });
 
-  test("Villager alphabet and relationship progression preserve keyboard focus", async ({
-    page,
-  }) => {
+  test("Villager marks and relationship progression preserve keyboard focus", async ({ page }) => {
     await initializeApplication(
       page,
       "light",
       createStoredState({
         progress: {
-          heartLevels: { adeline: 10 },
+          heartLevels: { adeline: 8 },
           villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,
       }),
     );
     await gotoApplication(page, "/villagers");
-    const letter = page.getByRole("button", { name: "Jump to A, first villager record" });
-    await letter.focus();
-    await page.keyboard.press("Enter");
-    await expect(villagerRecord(page, "adeline")).toBeFocused();
+    const meter = page.getByRole("slider", { name: "Adeline heart level" });
+    await meter.press("End");
+    await expect(meter).toHaveAttribute("aria-valuenow", "10");
+    await expect(meter).toBeFocused();
 
     const proposal = villagerRecord(page, "adeline").getByRole("button", {
       name: "Record proposal",
@@ -185,35 +182,27 @@ test.describe("keyboard and focus accessibility", () => {
     ).toBeFocused();
   });
 
-  test("Villager pointer scrubbing follows the active letter without snapping back", async ({
-    page,
-  }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
+  test("Villager marks accept edits during a fill and offer a single undo", async ({ page }) => {
     await initializeApplication(page, "light", createStoredState({ showSpoilers: true }));
     await gotoApplication(page, "/villagers");
 
-    const initialD = page.getByRole("button", { name: "Jump to D, first villager record" });
-    const initialO = page.getByRole("button", { name: "Jump to O, first villager record" });
-    const initialT = page.getByRole("button", { name: "Jump to T, first villager record" });
-    await initialO.click();
-    await expect(focusedVillagerRecord(page, "o")).toHaveCount(1);
-    await waitForRendering(page);
-    const dBox = await requireBox(initialD);
-    const tBox = await requireBox(initialT);
-
-    await page.mouse.move(dBox.x + 12, dBox.y + dBox.height / 2);
-    await page.mouse.down();
-    await expect(initialD).toHaveAttribute("data-scrub-target", "true");
-    await page.mouse.move(tBox.x + 12, tBox.y + tBox.height / 2, {
-      steps: 8,
-    });
-    await expect(focusedVillagerRecord(page, "t")).toHaveCount(1);
-    await expect(initialD).toHaveAttribute("data-scrub-target", "false");
-    await expect(initialT).toHaveAttribute("data-scrub-target", "true");
-
-    await page.mouse.up();
-    await expect(focusedVillagerRecord(page, "t")).toHaveCount(1);
-    await expect(initialT).toHaveAttribute("data-scrub-target", "false");
+    const meter = page.getByRole("slider", { name: "Adeline heart level" });
+    await meter.scrollIntoViewIfNeeded();
+    // oxlint-disable-next-line playwright/no-raw-locators -- Marks are visual targets inside one accessible slider.
+    const marks = meter.locator("[data-villager-mark]");
+    const ninth = await requireBox(marks.nth(8));
+    const third = await requireBox(marks.nth(2));
+    // oxlint-disable-next-line playwright/no-raw-locators -- The hatch state decorates each visual mark.
+    const reached = meter.locator('[data-reached="true"]');
+    await page.mouse.click(ninth.x + ninth.width / 2, ninth.y + ninth.height / 2);
+    await page.mouse.click(third.x + third.width / 2, third.y + third.height / 2);
+    await page.mouse.click(third.x + third.width / 2, third.y + third.height / 2);
+    await expect(meter).toHaveAttribute("aria-valuenow", "2");
+    await expect(reached).toHaveCount(2);
+    const toast = page.getByRole("listitem").filter({ hasText: "Adeline: 0 → 2 hearts" });
+    await toast.getByRole("button", { exact: true, name: "Undo" }).click();
+    await expect(meter).toHaveAttribute("aria-valuenow", "0");
+    await expect(reached).toHaveCount(0);
   });
 
   test("skill rulers support keyboard editing", async ({ page }) => {
