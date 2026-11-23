@@ -833,13 +833,28 @@ helper exit nonzero. The helper deletes the local branch too, but only when its 
 request’s head commit, so unpushed commits survive. It then prunes registrations whose folders are
 gone, such as Codex worktrees under a cleared `/tmp`.
 
+The same command also previews or deletes local branches without a worktree. A branch qualifies
+after the same idle period, measured from its tip commit or latest reflog entry, whichever is newer.
+The branch sweep keeps `main`, `next`, & branches with any open same-repository PR. For other
+branches, the tip must meet one of these conditions:
+
+- It’s reachable from a freshly fetched `origin` branch. The same branch name on `origin` counts
+  only if the local branch’s latest same-repository PR is merged or closed.
+- It exactly matches a merged or closed same-repository PR’s head.
+- It’s an ancestor of a merged same-repository PR’s head. The helper fetches missing merged PR heads
+  when the server still advertises them, so this check also works for squash merges.
+
+To keep a branch & its worktree for manual cleanup, run
+`git config branch.<branch>.mistria-keep true`. Clear the setting with
+`git config --unset branch.<branch>.mistria-keep`.
+
 ### Automatic housekeeping
 
-An hourly macOS job keeps the worktree list short. `pnpm run housekeeping:install`, run from the
-primary checkout, installs a launchd agent that runs `scripts/housekeeping.sh` hourly, which runs
-the cleanup helper above with `--apply`. It needs only `git` & `gh`, whose directories the agent's
-`PATH` records. It logs to `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping
-runs skip. Remove it with `pnpm run housekeeping:install -- --uninstall`.
+An hourly macOS job cleans up worktrees & local branches. `pnpm run housekeeping:install`, run from
+the primary checkout, installs a launchd agent that runs `scripts/housekeeping.sh` hourly, which
+runs the cleanup helper above with `--apply`. It needs only `git` & `gh`, whose directories the
+agent's `PATH` records. It logs to `~/Library/Logs/mistria-housekeeping.log` and holds a lock so
+overlapping runs skip. Remove it with `pnpm run housekeeping:install -- --uninstall`.
 
 ---
 
