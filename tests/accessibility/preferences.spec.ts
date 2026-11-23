@@ -27,6 +27,8 @@ test.describe("browser accessibility preferences", () => {
   });
 
   test("a locale switch preserves the Everything place link", async ({ page }) => {
+    // Skip the book-turn snapshot of the full ledger. This case checks the link and open place.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light", createStoredState());
     const placeAnchor = "#store-balor";
     await gotoApplication(page, `/en/everything?group=source${placeAnchor}`);
@@ -45,7 +47,9 @@ test.describe("browser accessibility preferences", () => {
     );
     // oxlint-disable-next-line playwright/no-raw-locators -- Resolve the destination by its URL anchor.
     const place = page.locator(placeAnchor);
-    await expect(place.getByRole("button", { name: "Chariot de Balor" })).toBeVisible();
+    await expect(
+      place.getByRole("button", { exact: true, name: "Chariot de Balor" }),
+    ).toHaveAttribute("aria-expanded", "true");
   });
 
   test("a locale switch preserves the Almanac anchor", async ({ page }) => {
