@@ -47,7 +47,9 @@ describe("VillagersContent localization", () => {
       const roster = view.getByTestId("villager-roster");
       expect(roster.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       userState.setBreakUpsDisabled(true);
-      await waitFor(() => expect(view.getByText("Break-ups disabled")).toBeVisible());
+      await waitFor(() => {
+        expect(view.getByText("Break-ups disabled")).toBeVisible();
+      });
       expect(view.queryByRole("switch")).not.toBeInTheDocument();
     },
   );

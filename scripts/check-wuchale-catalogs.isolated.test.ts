@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import { getConfig, Hub } from "wuchale";
 
 import { checkCatalogs } from "./check-wuchale-catalogs.js";
@@ -10,8 +10,6 @@ import { checkCatalogs } from "./check-wuchale-catalogs.js";
 import type { Config } from "wuchale";
 
 it("extracts a new UI message helper during development without registration", async () => {
-  // Wuchale imports its configuration once per process, so load it in an isolated test project.
-  vi.stubEnv("NODE_ENV", "development");
   const root = await mkdtemp(join(tmpdir(), "mistria-catalogs-"));
   try {
     const base = await getConfig(fileURLToPath(new URL("../wuchale.config.ts", import.meta.url)));
@@ -19,6 +17,7 @@ it("extracts a new UI message helper during development without registration", a
       ...base,
       adapters: { "shared-script": base.adapters["shared-script"] },
       ai: null,
+      dev: "add",
       locales: ["en", "es"],
     };
     const sourceDirectory = join(root, "src/routes/data");
@@ -39,7 +38,6 @@ it("extracts a new UI message helper during development without registration", a
       "Missing or incomplete es translation: Download a backup",
     );
   } finally {
-    vi.unstubAllEnvs();
     await rm(root, { force: true, recursive: true });
   }
 });

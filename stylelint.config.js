@@ -1,3 +1,5 @@
+import postcssHtml from "postcss-html";
+
 // Drift prevention for scoped CSS, not a style guide: these rules only keep colors, type sizes,
 // shadows, and radii on the design tokens in src/app.css. See docs/styling.md.
 /** @type {import("stylelint").Config} */
@@ -10,7 +12,7 @@ const config = {
     // Generated.
     "src/lib/fonts/**",
   ],
-  overrides: [{ customSyntax: "postcss-html", files: ["**/*.svelte"] }],
+  overrides: [{ customSyntax: postcssHtml, files: ["**/*.svelte"] }],
   // Every disable comment must say why (`-- reason`), name its rules, and still be needed.
   reportDescriptionlessDisables: true,
   reportInvalidScopeDisables: true,

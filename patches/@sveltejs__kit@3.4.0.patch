@@ -1,10 +1,9 @@
 diff --git a/src/core/sync/write_types/index.js b/src/core/sync/write_types/index.js
-index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde1910e5c1 100644
 --- a/src/core/sync/write_types/index.js
 +++ b/src/core/sync/write_types/index.js
-@@ -6,6 +6,18 @@ import { compact } from '../../../utils/array.js';
- import { posixify } from '../../../utils/os.js';
+@@ -7,6 +7,18 @@
  import { ts } from '../ts.js';
+ import { property_key } from '../utils.js';
  import { is_page_route } from '../create_manifest_data/index.js';
 +
 +// mistria-fyi patch (sveltejs/kit#17694): replace the file atomically, so a concurrent reader
@@ -21,7 +20,7 @@ index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde
  const remove_relative_parent_traversals = (/** @type {string} */ path) =>
  	path.replace(/\.\.\//g, '');
  const is_whitespace = (/** @type {string} */ char) => /\s/.test(char);
-@@ -136,7 +148,7 @@ export function write_all_types(config, manifest_data, root) {
+@@ -161,7 +173,7 @@
  		if (!current_route_ids.has(id)) delete meta_data[id];
  	}
  
@@ -30,7 +29,7 @@ index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde
  }
  
  /**
-@@ -368,7 +380,7 @@ function update_types(config, routes, route, root, to_delete = new Set()) {
+@@ -396,7 +408,7 @@
  		.filter(Boolean)
  		.join('\n\n');
  
@@ -39,7 +38,7 @@ index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde
  	to_delete.delete('$types.d.ts');
  
  	for (const file of to_delete) {
-@@ -406,7 +418,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
+@@ -434,7 +446,7 @@
  		const basename = path.basename(node.server);
  		const proxy = proxies.server;
  		if (proxy?.modified) {
@@ -48,7 +47,7 @@ index 83f8eed24bd4db9b23ac64bab75b6cb00323c7fa..fa2d836950d8ccc9dd75cd3bffb43fde
  		}
  
  		server_data = get_data_type(node.server, 'null', proxy, true);
-@@ -459,7 +471,7 @@ function process_node(node, outdir, is_page, proxies, root, all_pages_have_load
+@@ -487,7 +499,7 @@
  	if (node.universal) {
  		const proxy = proxies.universal;
  		if (proxy?.modified) {

@@ -47,7 +47,9 @@ describe("About page navigation and disclosures", () => {
     const close = within(dialog).getByRole("button", { name: "Close" });
     expect(within(dialog).getAllByRole("button", { name: /close/iu })).toHaveLength(1);
     await fireEvent.click(close);
-    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    await waitFor(() => {
+      expect(dialog).not.toBeInTheDocument();
+    });
   });
 
   it("renders the AI disclosure in the About catalog's locale", async () => {

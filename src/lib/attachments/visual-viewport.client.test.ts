@@ -18,7 +18,7 @@ function attach(): { dispose: () => void; element: HTMLElement; viewport: FakeVi
   vi.stubGlobal("visualViewport", viewport);
   const element = document.createElement("div");
   const dispose = trackVisualViewport(element);
-  if (typeof dispose !== "function") throw new Error("Expected a cleanup function");
+  if (typeof dispose !== "function") throw new TypeError("Expected a cleanup function");
   return { dispose, element, viewport };
 }
 

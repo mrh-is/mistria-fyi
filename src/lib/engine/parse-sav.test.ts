@@ -18,10 +18,7 @@ async function expectSavArchiveError(
   detail: SavArchiveErrorDetail,
   message?: string,
 ): Promise<void> {
-  const rejected: unknown = await parsing.then(
-    () => undefined,
-    (error: unknown) => error,
-  );
+  const rejected: unknown = await parsing.then(() => undefined).catch((error: unknown) => error);
   expect(rejected).toBeInstanceOf(SavArchiveError);
   expect(rejected).toHaveProperty("detail", detail);
   expect(rejected).toHaveProperty("message", expect.stringContaining(message ?? ""));

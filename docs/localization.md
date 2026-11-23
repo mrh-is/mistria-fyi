@@ -277,9 +277,9 @@ Each locale's target, as established from the game's own strings:
   Entrar).
 - **`fr` is France French**, not Quebec. The game uses myrtille, not bleuet; e-mail is fine.
 - **`zh-Hant` is Taiwan Traditional Chinese** (`zh-TW` usage), not Hong Kong. The game's strings use
-  Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs
-  (線, 為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating,
-  prompt for Taiwan usage explicitly, then check the output for Mainland terms that survive script
+  Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs (線,
+  為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating, prompt
+  for Taiwan usage explicitly, then check the output for Mainland terms that survive script
   conversion:
 
   | Avoid (Mainland or HK) | Use (Taiwan)           |

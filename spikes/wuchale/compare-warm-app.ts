@@ -128,7 +128,9 @@ async function measureWarm(build: (typeof builds)[number], serviceWorkers: "allo
 async function measureClick(target: Locator, pathname: string, selector: string) {
   return target.evaluate(
     async (element, destination) => {
-      if (!(element instanceof HTMLElement)) throw new Error("Expected a clickable HTML element");
+      if (!(element instanceof HTMLElement)) {
+        throw new TypeError("Expected a clickable HTML element");
+      }
       const start = performance.now();
       // Activate the control without hover preloading.
       element.click();
