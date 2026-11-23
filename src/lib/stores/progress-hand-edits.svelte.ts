@@ -25,6 +25,8 @@ import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-pro
 
 import type { ProgressShell } from "./progress-shell.svelte.js";
 
+type MeterApplied = (before: number, after: number) => void;
+
 interface StarterItemsNotice {
   count: number;
   dismiss: () => void;
@@ -39,15 +41,11 @@ interface HandEdits {
     setBreakUpsDisabled: (value: boolean) => void;
     setChildChoice: (choice: ChildChoice) => void;
     setHasUpperFloor: (value: boolean) => void;
-    setHeartLevel: (
-      id: VillagerId,
-      level: number,
-      onApplied?: (before: number, after: number) => void,
-    ) => void;
-    setMineFloor: (floor: number) => void;
+    setHeartLevel: (id: VillagerId, level: number, onApplied?: MeterApplied) => void;
+    setMineFloor: (floor: number, onApplied?: MeterApplied) => void;
     setQuestState: (id: QuestId, state: QuestState) => void;
     setReachedSeason: (season: Season) => void;
-    setRenown: (level: number) => void;
+    setRenown: (level: number, onApplied?: MeterApplied) => void;
     setSkillLevel: (
       id: SkillId,
       level: number,
@@ -200,6 +198,26 @@ export function createHandEdits(
     }, key);
   }
 
+  function setMeter(
+    field: "mineFloor" | "renown",
+    edit: (progress: ProgressState) => ProgressState,
+    onApplied?: MeterApplied,
+  ): void {
+    handEdit(
+      () => {
+        const before = shell.state.progress[field];
+        commit(edit(shell.state.progress));
+        return before;
+      },
+      field,
+      true,
+      (before) => {
+        const after = shell.state.progress[field];
+        if (before !== after) onApplied?.(before, after);
+      },
+    );
+  }
+
   function toggleFact<Field extends ProgressListField>(
     field: Field,
     id: CollectionItem<Field>,
@@ -265,8 +283,8 @@ export function createHandEdits(
           },
         );
       },
-      setMineFloor(floor: number) {
-        manual("mineFloor", (progress) => edits.setMineFloor(progress, floor));
+      setMineFloor(floor: number, onApplied?: MeterApplied) {
+        setMeter("mineFloor", (progress) => edits.setMineFloor(progress, floor), onApplied);
       },
       setQuestState(id: QuestId, state: QuestState) {
         manual(factKey("questStates", id), (progress) => edits.setQuestState(progress, id, state));
@@ -274,8 +292,8 @@ export function createHandEdits(
       setReachedSeason(season: Season) {
         manual("reachedSeason", (progress) => edits.setReachedSeason(progress, season));
       },
-      setRenown(level: number) {
-        manual("renown", (progress) => edits.setRenown(progress, level));
+      setRenown(level: number, onApplied?: MeterApplied) {
+        setMeter("renown", (progress) => edits.setRenown(progress, level), onApplied);
       },
       setSkillLevel(
         id: SkillId,

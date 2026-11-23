@@ -432,6 +432,28 @@
   },
   {
     "translations": {
+      "en": "A spell you haven’t found",
+      "ja": "まだ見つけていない魔法",
+      "zh-Hans": "尚未发现的魔法咒语",
+      "zh-Hant": "尚未發現的魔法咒語",
+      "es": "Un hechizo que aún no has encontrado",
+      "fr": "Un sort que vous n’avez pas encore trouvé",
+      "ko": "아직 찾지 못한 마법 주문",
+      "ru": "Вы ещё не нашли это заклинание"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mines-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "About",
       "ja": "このガイドについて",
       "zh-Hans": "关于",
@@ -584,6 +606,29 @@
       {
         "file": "src/lib/components/og-share-card.svelte",
         "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "All rewards",
+      "ja": "すべての報酬",
+      "zh-Hans": "全部奖励",
+      "zh-Hant": "全部獎勵",
+      "es": "Todas las recompensas",
+      "fr": "Toutes les récompenses",
+      "ko": "모든 보상",
+      "ru": "Все награды"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/renown-content.svelte",
+        "refs": [
+          null,
           null
         ]
       }
@@ -2807,6 +2852,28 @@
   },
   {
     "translations": {
+      "en": "Deepest floor",
+      "ja": "到達した最深階",
+      "zh-Hans": "到达的最深层",
+      "zh-Hant": "抵達的最深層",
+      "es": "Piso más profundo",
+      "fr": "Étage le plus profond",
+      "ko": "도달한 최심층",
+      "ru": "Самый глубокий этаж"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Default",
       "ja": "初期",
       "zh-Hans": "初始",
@@ -3556,16 +3623,50 @@
     },
     "references": [
       {
-        "file": "src/lib/components/mine-floor-record.svelte",
+        "file": "src/lib/components/mine-depth-chart.svelte",
         "refs": [
           null,
           null
         ]
       },
       {
-        "file": "src/lib/components/mines-content.svelte",
+        "file": "src/lib/components/mine-floor-record.svelte",
         "refs": [
+          null,
           null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Floor {0} of {1}",
+      "ja": "全{1}階中の{0}階",
+      "zh-Hans": "第 {0} 层，共 {1} 层",
+      "zh-Hant": "第 {0} 層，共 {1} 層",
+      "es": "Piso {0} de {1}",
+      "fr": "Étage {0} sur {1}",
+      "ko": "총 {1}층 중 {0}층",
+      "ru": "Этаж {0} из {1}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "printed"
+              ],
+              [
+                "1",
+                "total"
+              ]
+            ]
+          }
         ]
       }
     ],
@@ -3795,6 +3896,12 @@
     },
     "references": [
       {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/mine-floor-record.svelte",
         "refs": [
           null
@@ -3845,6 +3952,12 @@
       "ru": "Подняться на один этаж"
     },
     "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/mine-floor-record.svelte",
         "refs": [
@@ -4862,6 +4975,43 @@
   },
   {
     "translations": {
+      "en": "Level {0}, {1}: {2}",
+      "ja": "レベル{0}、{1}：{2}",
+      "zh-Hans": "等级 {0}，{1}：{2}",
+      "zh-Hant": "等級 {0}，{1}：{2}",
+      "es": "Nivel {0}, {1}: {2}",
+      "fr": "Niveau {0}, {1} : {2}",
+      "ko": "레벨 {0}, {1}: {2}",
+      "ru": "Уровень {0}, {1}: {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/renown-rewards-messages.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "printed"
+              ],
+              [
+                "1",
+                "rank"
+              ],
+              [
+                "2",
+                "name"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Light",
       "ja": "ライト",
       "zh-Hans": "浅色",
@@ -5830,6 +5980,34 @@
   },
   {
     "translations": {
+      "en": "Not yet reached",
+      "ja": "未到達",
+      "zh-Hans": "尚未达到",
+      "zh-Hant": "尚未達到",
+      "es": "Aún sin alcanzar",
+      "fr": "Pas encore atteint",
+      "ko": "아직 도달하지 않음",
+      "ru": "Ещё не достигнут"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/renown-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/renown-reward-grid.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Nothing here can happen today. It’s waiting on a season, the weather, or your progress.",
       "ja": "今日できるものはありません。季節、天気、または進捗を待っています。",
       "zh-Hans": "今天这里的都做不了，需要等待季节、天气或你的进度。",
@@ -5842,6 +6020,28 @@
     "references": [
       {
         "file": "src/lib/components/shelf-explainer.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Nothing left",
+      "ja": "すべて完了",
+      "zh-Hans": "已全部完成",
+      "zh-Hant": "已全部完成",
+      "es": "No queda nada",
+      "fr": "Tout est terminé",
+      "ko": "모두 완료",
+      "ru": "Всё собрано"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
         "refs": [
           null
         ]
@@ -6781,6 +6981,18 @@
     },
     "references": [
       {
+        "file": "src/lib/components/renown-content.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/components/renown-reward-grid.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
         "file": "src/lib/components/skill-tier-prints.svelte",
         "refs": [
           null
@@ -7047,6 +7259,49 @@
           null,
           null
         ]
+      },
+      {
+        "file": "src/lib/components/renown-pole.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Renown level {0} of {1}, {2}",
+      "ja": "名声レベル{0}／{1}、{2}",
+      "zh-Hans": "声望等级 {0}／{1}，{2}",
+      "zh-Hant": "聲望等級 {0}／{1}，{2}",
+      "es": "Nivel de reputación {0} de {1}, {2}",
+      "fr": "Niveau de renommée {0} sur {1}, {2}",
+      "ko": "명성 레벨 {0}/{1}, {2}",
+      "ru": "Уровень репутации {0} из {1}, {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/renown-pole.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "printed"
+              ],
+              [
+                "1",
+                "total"
+              ],
+              [
+                "2",
+                "rank"
+              ]
+            ]
+          }
+        ]
       }
     ],
     "urlAdapters": [],
@@ -7066,6 +7321,28 @@
     "references": [
       {
         "file": "src/lib/components/renown-current-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Renown rewards",
+      "ja": "名声の報酬",
+      "zh-Hans": "声望奖励",
+      "zh-Hant": "聲望獎勵",
+      "es": "Recompensas de reputación",
+      "fr": "Récompenses de renommée",
+      "ko": "명성 보상",
+      "ru": "Награды за репутацию"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/renown-reward-grid.svelte",
         "refs": [
           null
         ]
@@ -7334,6 +7611,12 @@
       "ru": "Показать спойлер"
     },
     "references": [
+      {
+        "file": "src/lib/components/mines-content.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/spoiler.svelte",
         "refs": [
@@ -9196,6 +9479,39 @@
   },
   {
     "translations": {
+      "en": "The mines are {0} floors with {1} spells. Biomes below your deepest floor stay unnamed, and a spell’s name shows once you can learn it.",
+      "ja": "鉱山には全{0}階と{1}つの魔法があります。まだ到達していないエリアの名前は伏せられ、魔法の名前は習得できるようになると表示されます。",
+      "zh-Hans": "矿井共有 {0} 层和 {1} 个魔法咒语。尚未到达的区域不会显示名称，可以学习某个咒语时才会显示它的名称。",
+      "zh-Hant": "礦井共有 {0} 層和 {1} 個魔法咒語。尚未抵達的區域不會顯示名稱，可以學習某個咒語時才會顯示它的名稱。",
+      "es": "Las minas tienen {0} pisos y {1} hechizos. Los biomas más profundos que el último piso que alcanzaste aparecen sin nombre. El nombre de cada hechizo se muestra cuando puedes aprenderlo.",
+      "fr": "Les mines comptent {0} étages et {1} sorts. Les biomes au-delà de l’étage le plus profond atteint restent anonymes. Le nom d’un sort apparaît dès que vous pouvez l’apprendre.",
+      "ko": "광산에는 {0}개 층과 {1}개의 마법 주문이 있습니다. 도달한 층보다 깊은 구역의 이름은 숨겨지며, 주문의 이름은 배울 수 있을 때 표시됩니다.",
+      "ru": "В шахтах {0} этажей и {1} заклинаний. Названия биомов глубже достигнутого этажа скрыты. Название заклинания появляется, когда его можно выучить."
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mines-content.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "floorReadout"
+              ],
+              [
+                "1",
+                "spellReadout"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "The source types shown in the filter panel.",
       "ja": "フィルターパネルに表示される入手方法の種類。",
       "zh-Hans": "筛选面板中显示的来源类型。",
@@ -9504,28 +9820,6 @@
       },
       {
         "file": "src/lib/components/ledger/category-sections-messages.ts",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Town rank register",
-      "ja": "タウンランク台帳",
-      "zh-Hans": "城镇等级名册",
-      "zh-Hant": "城鎮段位名冊",
-      "es": "Registro de categorías de la aldea",
-      "fr": "Registre du classement de la ville",
-      "ko": "마을 등급 명부",
-      "ru": "Реестр рангов города"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/renown-content.svelte",
         "refs": [
           null
         ]
@@ -9899,6 +10193,28 @@
   },
   {
     "translations": {
+      "en": "Unreached biome",
+      "ja": "未到達のエリア",
+      "zh-Hans": "尚未到达的区域",
+      "zh-Hant": "尚未抵達的區域",
+      "es": "Bioma sin alcanzar",
+      "fr": "Biome non atteint",
+      "ko": "아직 도달하지 않은 구역",
+      "ru": "Ещё не открытый биом"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Upcoming",
       "ja": "今後",
       "zh-Hans": "即将到来",
@@ -9911,6 +10227,12 @@
     "references": [
       {
         "file": "src/lib/components/rank-record.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/presentation/renown-rewards-messages.ts",
         "refs": [
           null
         ]
@@ -12539,6 +12861,35 @@
   },
   {
     "translations": {
+      "en": "{0} Tesserae",
+      "ja": "{0}テッセラ",
+      "zh-Hans": "{0} 特塞拉币",
+      "zh-Hant": "{0} 錢幣",
+      "es": "{0} téseras",
+      "fr": "{0} tesserae",
+      "ko": "{0} 테세라",
+      "ru": "Тессеры: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/presentation/renown-rewards-messages.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "amount"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} categories",
       "ja": "{0}のカテゴリー",
       "zh-Hans": "{0}分类",
@@ -12557,6 +12908,92 @@
               [
                 "0",
                 "shelfLabel(shelf)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} dish",
+        "{0} dishes"
+      ],
+      "ja": [
+        "料理{0}品"
+      ],
+      "zh-Hans": [
+        "{0} 道菜"
+      ],
+      "zh-Hant": [
+        "{0} 道菜"
+      ],
+      "es": [
+        "{0} plato",
+        "{0} platos",
+        "{0} platos"
+      ],
+      "fr": [
+        "{0} plat",
+        "{0} plats",
+        "{0} plats"
+      ],
+      "ko": [
+        "요리 {0}개"
+      ],
+      "ru": [
+        "{0} блюдо",
+        "{0} блюда",
+        "{0} блюд",
+        "{0} блюда"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} furniture",
+      "ja": "家具{0}点",
+      "zh-Hans": "{0} 件家具",
+      "zh-Hant": "{0} 件家具",
+      "es": "{0} de mobiliario",
+      "fr": "{0} en mobilier",
+      "ko": "가구 {0}개",
+      "ru": "Мебель: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatNumber(furnitureCount, locale)"
               ]
             ]
           }
@@ -13085,6 +13522,120 @@
   },
   {
     "translations": {
+      "en": [
+        "{0} pet skin",
+        "{0} pet skins"
+      ],
+      "ja": [
+        "ペットの外見{0}種"
+      ],
+      "zh-Hans": [
+        "{0} 款宠物外观"
+      ],
+      "zh-Hant": [
+        "{0} 款寵物外觀"
+      ],
+      "es": [
+        "{0} aspecto de mascota",
+        "{0} aspectos de mascota",
+        "{0} aspectos de mascota"
+      ],
+      "fr": [
+        "{0} apparence d’animal",
+        "{0} apparences d’animaux",
+        "{0} apparences d’animaux"
+      ],
+      "ko": [
+        "반려동물 외형 {0}개"
+      ],
+      "ru": [
+        "{0} облик питомца",
+        "{0} облика питомцев",
+        "{0} обликов питомцев",
+        "{0} облика питомца"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": [
+        "{0} recipe",
+        "{0} recipes"
+      ],
+      "ja": [
+        "レシピ{0}件"
+      ],
+      "zh-Hans": [
+        "{0} 份配方"
+      ],
+      "zh-Hant": [
+        "{0} 份配方"
+      ],
+      "es": [
+        "{0} receta",
+        "{0} recetas",
+        "{0} recetas"
+      ],
+      "fr": [
+        "{0} recette",
+        "{0} recettes",
+        "{0} recettes"
+      ],
+      "ko": [
+        "제작법 {0}개"
+      ],
+      "ru": [
+        "{0} рецепт",
+        "{0} рецепта",
+        "{0} рецептов",
+        "{0} рецепта"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "count"
+              ],
+              [
+                "0",
+                "count"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0} relationship level, {1} of {2}",
       "ja": "{0}との関係レベル、{2}中{1}",
       "zh-Hans": "与{0}的关系等级，{1}/{2}级",
@@ -13385,6 +13936,35 @@
               [
                 "1",
                 "where"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} to do",
+      "ja": "残り{0}件",
+      "zh-Hans": "还差 {0} 项",
+      "zh-Hant": "還差 {0} 項",
+      "es": "{0} por hacer",
+      "fr": "{0} à faire",
+      "ko": "남은 항목 {0}개",
+      "ru": "Осталось {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/mine-depth-chart.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "formatNumber(remaining, locale)"
               ]
             ]
           }
@@ -13971,6 +14551,43 @@
               [
                 "0",
                 "field"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}: {1} → {2} floors",
+      "ja": "{0}：{1} → {2}階",
+      "zh-Hans": "{0}：{1} → {2} 层",
+      "zh-Hant": "{0}：{1} → {2} 層",
+      "es": "{0}: del piso {1} al {2}",
+      "fr": "{0} : étage {1} → {2}",
+      "ko": "{0}: {1}층 → {2}층",
+      "ru": "{0}: этаж {1} → {2}"
+    },
+    "references": [
+      {
+        "file": "src/lib/effects/undo-toast.ts",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "start"
+              ],
+              [
+                "2",
+                "end"
               ]
             ]
           }

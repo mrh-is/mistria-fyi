@@ -72,6 +72,9 @@ export function buildSourceChecklist(
   /** Decides each row's spoiler mask. Availability never reads it. */
   showSpoilers = false,
   category?: CategoryKey,
+  includes: (
+    row: Pick<SourceChecklistRow, "id" | "reportCategory"> & SourceGroupRow,
+  ) => boolean = () => true,
 ): SourceChecklistRow[] {
   return collectSourceRows(
     ctx,
@@ -79,7 +82,7 @@ export function buildSourceChecklist(
     !category || category === "quests" ? locale : undefined,
     category === "quests",
   )
-    .filter((row) => category === undefined || row.category === category)
+    .filter((row) => (category === undefined || row.category === category) && includes(row))
     .map(({ describe, ...row }) => {
       if (!describe) throw new Error(`No checklist description for ${row.key}`);
       return { ...row, ...describe(locale) };

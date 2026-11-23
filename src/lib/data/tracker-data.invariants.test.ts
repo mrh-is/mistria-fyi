@@ -54,6 +54,13 @@ describe("non-empty collections", () => {
     expect(recordKeys(trackerData.almanac).length).toBeGreaterThan(0);
   });
 
+  it.each(["cooked_dishes", "furniture"])(
+    'has the "%s" almanac category used by the Mines depth chart',
+    (category) => {
+      expect(trackerData.almanac).toHaveProperty(category);
+    },
+  );
+
   it("has animals", () => {
     expect(recordKeys(trackerData.animals).length).toBeGreaterThan(0);
   });

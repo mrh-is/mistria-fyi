@@ -422,22 +422,20 @@ test.describe("tracker paper touch geometry", () => {
     }
 
     await gotoApplication(page, "/mines");
-    for (const control of await page
-      .locator("[data-mine-floor-record] button, [data-mine-floor-record] input")
-      .all()) {
-      const box = await control.boundingBox();
-      expect(box?.width).toBeGreaterThanOrEqual(44);
-      expect(box?.height).toBeGreaterThanOrEqual(44);
+    const mineControls = [
+      page.getByRole("slider", { name: "Deepest floor" }),
+      page.getByRole("button", { name: "Go up one floor" }),
+      page.getByRole("button", { name: "Go down one floor" }),
+    ];
+    for (const control of mineControls) {
+      const box = await requireBox(control);
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
     }
-
     await gotoApplication(page, "/renown");
-    for (const control of await page
-      .locator("[data-renown-current] button, [data-renown-current] input")
-      .all()) {
-      const box = await control.boundingBox();
-      expect(box?.width).toBeGreaterThanOrEqual(44);
-      expect(box?.height).toBeGreaterThanOrEqual(44);
-    }
+    const pole = await requireBox(page.getByRole("slider", { name: "Renown level" }));
+    expect(pole.width).toBeGreaterThanOrEqual(44);
+    expect(pole.height).toBeGreaterThanOrEqual(44);
   });
 });
 

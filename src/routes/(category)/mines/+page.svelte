@@ -6,4 +6,4 @@
   let { data }: PageProps = $props();
 </script>
 
-<MinesContent defaultOpen={true} locale={data.locale} />
+<MinesContent locale={data.locale} />
