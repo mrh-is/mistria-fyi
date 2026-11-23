@@ -20,17 +20,23 @@
   } = $props();
 
   let loaded = $state(false);
-  let image = $state<HTMLImageElement>();
-
-  // A server-rendered image can finish before hydration, so its load event never reaches us.
-  $effect(() => {
-    if (image?.complete && image.naturalWidth > 0) loaded = true;
-  });
   let previewing = $state(false);
   let holdTimer: ReturnType<typeof setTimeout> | undefined;
   let previewable = $derived(treatment === "todo" || treatment === "not-now");
   let shown = $derived(previewing ? "completed" : treatment);
   let masked = $derived(shown === "todo" || shown === "spoiler");
+
+  function watchImageLoad(image: HTMLImageElement): () => void {
+    // The attachment emits no inline handler and also catches loads that beat hydration.
+    if (image.complete && image.naturalWidth > 0) loaded = true;
+    const markLoaded = () => {
+      loaded = true;
+    };
+    image.addEventListener("load", markLoaded);
+    return () => {
+      image.removeEventListener("load", markLoaded);
+    };
+  }
 
   function preview(): void {
     clearTimeout(holdTimer);
@@ -57,14 +63,13 @@
     {@attach masked ? ledgerSpriteMask(url) : undefined}
   >
     <img
-      bind:this={image}
       src={url}
       alt=""
       crossorigin="anonymous"
       loading="lazy"
       width="30"
       height="30"
-      onload={() => (loaded = true)}
+      {@attach watchImageLoad}
     />
   </span>
 {/snippet}
