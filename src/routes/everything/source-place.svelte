@@ -15,23 +15,28 @@
     linked,
     status,
     visible,
+    width,
   }: {
     children: Snippet;
     id: string;
     linked: boolean;
     status?: string;
     visible: boolean;
+    width?: number;
   } = $props();
 
   let nearby = $state(false);
   let focused = $state(false);
   let retained = $state(false);
-  let closedHeight = $state<number>();
-  let searchHeight = $state<{ height: number; query: string }>();
+  let closedHeight = $state<{ height: number; width: number }>();
+  let searchHeight = $state<{ height: number; query: string; width: number }>();
   let mounted = $derived(nearby || linked || focused || retained);
-  let placeholderHeight = $derived(
-    searchHeight?.query === toolbarState.searchQuery ? searchHeight.height : closedHeight,
-  );
+  let placeholderHeight = $derived.by(() => {
+    if (searchHeight?.query === toolbarState.searchQuery && searchHeight.width === width) {
+      return searchHeight.height;
+    }
+    return closedHeight?.width === width ? closedHeight?.height : undefined;
+  });
 
   $effect(() => {
     if (linked) retain();
@@ -64,14 +69,18 @@
       },
       { rootMargin: "600px 0px" },
     );
-    watchers.set(element, ({ boundingClientRect: { height }, isIntersecting }) => {
-      if (nearby && !isIntersecting && !retained && !focused && !linked && height > 0) {
-        const query = toolbarState.searchQuery;
-        if (query) searchHeight = { height, query };
-        else closedHeight = height;
-      }
-      nearby = isIntersecting && height > 0;
-    });
+    watchers.set(
+      element,
+      ({ boundingClientRect: { height, width: measuredWidth }, isIntersecting }) => {
+        if (nearby && !isIntersecting && !retained && !focused && !linked && height > 0) {
+          const query = toolbarState.searchQuery;
+          const measurement = { height, width: Math.round(measuredWidth) };
+          if (query) searchHeight = { ...measurement, query };
+          else closedHeight = measurement;
+        }
+        nearby = isIntersecting && height > 0;
+      },
+    );
     observer.observe(element);
     return () => {
       observer?.unobserve(element);

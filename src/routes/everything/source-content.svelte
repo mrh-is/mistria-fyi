@@ -145,6 +145,7 @@
   );
 
   useLedgerArrival(() => (ledger.ready ? anchor : ""), restoringScroll);
+  let placeWidth = $state<number>();
 
   let countedProgress = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scratch totals for this snapshot.
@@ -394,6 +395,7 @@
           {@const linked = anchor === id || anchor === section.id}
           <SourcePlace
             {id}
+            width={placeWidth}
             status={spoilered ? undefined : section.state}
             {linked}
             visible={showsPlace(entry)}
@@ -491,7 +493,7 @@
       .map(({ group }) => ({ id: `sources-${group}`, name: sourceTypeLabel(group, locale) })),
   ]}
 >
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6" bind:clientWidth={placeWidth}>
     {#if ledger.ready}<VillagerErrands {anchor} {locale} bind:shown={villagerGroupShown} />{/if}
     {@render sourceGroups(false)}
   </div>

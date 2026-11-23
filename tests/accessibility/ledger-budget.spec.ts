@@ -140,6 +140,33 @@ test("a broad source search keeps the row budget", async ({ page }) => {
   expect(rows).toBeLessThanOrEqual(200);
 });
 
+test("resizing discards a source place height measured at the old width", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/everything?group=source");
+  await openSearch(page, "a");
+  // oxlint-disable-next-line playwright/no-raw-locators -- The place box outlives its heading.
+  const place = page.locator("#store-balor");
+  await expect(place).toBeVisible();
+  await place.evaluate((element) => {
+    element.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+  // oxlint-disable-next-line playwright/no-raw-locators -- Wait for the search result to mount.
+  await expect(place.locator("[data-ledger-fact]").first()).toBeAttached();
+  const placeHeight = () => place.evaluate((element) => element.getBoundingClientRect().height);
+  const expandedHeight = await placeHeight();
+  expect(expandedHeight).toBeGreaterThan(500);
+
+  await page.evaluate(() => {
+    window.scrollTo({ behavior: "instant", top: document.documentElement.scrollHeight });
+  });
+  await expect(place.getByRole("heading")).toHaveCount(0);
+  expect(await placeHeight()).toBeCloseTo(expandedHeight, 0);
+
+  await page.setViewportSize({ height: 844, width: 390 });
+  await expect(place.getByRole("heading")).toHaveCount(0);
+  await expect.poll(placeHeight).toBeLessThan(100);
+});
+
 test("a distant place opens from its fragment & Back restores its row", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
