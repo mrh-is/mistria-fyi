@@ -13,6 +13,7 @@
   import { getBookPanels } from "#lib/components/book/book-panels.svelte.js";
   import ThumbIndex from "#lib/components/book/thumb-index.svelte";
   import ClockPanel from "#lib/components/clock-panel.svelte";
+  import EverythingGroupingPicker from "#lib/components/everything-grouping-picker.svelte";
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FilterPanel from "#lib/components/filter-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
@@ -292,6 +293,7 @@
   <nav
     aria-label="Field guide tools"
     class="toolbar fixed right-0 bottom-0 left-0 z-[var(--z-toolbar)]"
+    class:toolbar--everything={pathname === "/everything"}
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
   >
@@ -366,61 +368,66 @@
         <span class="toolbar__spacer"></span>
       {/if}
 
-      {#if toolbar.filter}
-        <button
-          class="floating-tool {panels.active === 'visibility'
-            ? 'floating-tool--active'
-            : filtersActive
-              ? 'floating-tool--filtered'
+      <div class="toolbar__actions">
+        {#if toolbar.filter}
+          <button
+            class="floating-tool {panels.active === 'visibility'
+              ? 'floating-tool--active'
+              : filtersActive
+                ? 'floating-tool--filtered'
+                : ''}"
+            type="button"
+            aria-label={filterLabel()}
+            aria-expanded={panels.active === "visibility"}
+            aria-controls="filter-panel"
+            onclick={(event) => {
+              panels.toggle("visibility", event.currentTarget);
+            }}
+          >
+            <IconFilter class="size-5" />
+            {#if filtersActive}<span class="filter-tool__dot" aria-hidden="true"></span>{/if}
+          </button>
+        {/if}
+        {#if pathname === "/everything"}
+          <EverythingGroupingPicker />
+        {/if}
+        {#if toolbar.clock}
+          <button
+            class="floating-tool floating-tool--clock {panels.active === 'clock'
+              ? 'floating-tool--active'
               : ''}"
-          type="button"
-          aria-label={filterLabel()}
-          aria-expanded={panels.active === "visibility"}
-          aria-controls="filter-panel"
-          onclick={(event) => {
-            panels.toggle("visibility", event.currentTarget);
-          }}
-        >
-          <IconFilter class="size-5" />
-          {#if filtersActive}<span class="filter-tool__dot" aria-hidden="true"></span>{/if}
-        </button>
-      {/if}
-      {#if toolbar.clock}
-        <button
-          class="floating-tool floating-tool--clock {panels.active === 'clock'
-            ? 'floating-tool--active'
-            : ''}"
-          type="button"
-          aria-label={trackingReminders.clockHint
-            ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
-                userState.state.worldState.weather,
-                userState.state.worldState.season,
-              )}. This sorts your lists; set today’s day.`
-            : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
-                userState.state.worldState.weather,
-                userState.state.worldState.season,
-              )}`}
-          aria-expanded={panels.active === "clock"}
-          aria-controls="clock-panel"
-          onclick={(event) => {
-            panels.toggle("clock", event.currentTarget);
-          }}
-        >
-          <IconClock class="size-5" />
-          {#if trackingReminders.clockHint}
-            <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
-          {/if}
-          <!-- Today's season & weather, printed small inside the button after a hairline (F36). -->
-          <span class="clock-tab" data-clock-tab aria-hidden="true">
-            <Icon.Season season={userState.state.worldState.season} class="size-3" />
-            <Icon.Weather
-              season={userState.state.worldState.season}
-              weather={userState.state.worldState.weather}
-              class="size-3"
-            />
-          </span>
-        </button>
-      {/if}
+            type="button"
+            aria-label={trackingReminders.clockHint
+              ? `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                  userState.state.worldState.weather,
+                  userState.state.worldState.season,
+                )}. This sorts your lists; set today’s day.`
+              : `Season & weather: ${seasonLabel(userState.state.worldState.season, page.data.locale)}, ${weatherLabel(
+                  userState.state.worldState.weather,
+                  userState.state.worldState.season,
+                )}`}
+            aria-expanded={panels.active === "clock"}
+            aria-controls="clock-panel"
+            onclick={(event) => {
+              panels.toggle("clock", event.currentTarget);
+            }}
+          >
+            <IconClock class="size-5" />
+            {#if trackingReminders.clockHint}
+              <span class="clock-tool__dot" data-clock-dot aria-hidden="true"></span>
+            {/if}
+            <!-- Today's season & weather, printed small inside the button after a hairline (F36). -->
+            <span class="clock-tab" data-clock-tab aria-hidden="true">
+              <Icon.Season season={userState.state.worldState.season} class="size-3" />
+              <Icon.Weather
+                season={userState.state.worldState.season}
+                weather={userState.state.worldState.weather}
+                class="size-3"
+              />
+            </span>
+          </button>
+        {/if}
+      </div>
     </div>
   </nav>
 
@@ -430,7 +437,7 @@
       animateOut
       closeLabel="Close panel"
       onClose={closePanel}
-      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}; {panelAnchor}"
+      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}; bottom: calc(4rem + env(safe-area-inset-bottom) + var(--toolbar-extra-height, 0px)); {panelAnchor}"
     >
       {#if panels.active === "contents"}
         <FoldoutPanel id="contents-panel" title="Contents" onClose={closePanel}>
@@ -509,6 +516,28 @@
 
   .toolbar__spacer {
     flex: 1;
+  }
+
+  .toolbar__actions {
+    display: contents;
+  }
+
+  @media (max-width: 24rem) {
+    :global(html:has(.toolbar--everything)) {
+      --toolbar-extra-height: 3.125rem;
+    }
+
+    .toolbar--everything .toolbar__row {
+      flex-wrap: wrap;
+    }
+
+    .toolbar--everything .toolbar__actions {
+      display: flex;
+      flex: 1 0 100%;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.375rem;
+    }
   }
 
   /* The field is a ruled line to write on, not a box. */

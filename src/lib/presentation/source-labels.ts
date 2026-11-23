@@ -1,12 +1,14 @@
 import { trackerData } from "#lib/data/index.js";
-import { nameCollator } from "#lib/data/names.js";
+import { getName, nameCollator } from "#lib/data/names.js";
 import { sourceFilterLabel } from "#lib/data/source-filters.js";
+import { birthdayOffset } from "#lib/engine/villager-roster.js";
 import { isConditionVisible } from "#lib/engine/visibility.js";
 import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { buildCraftingStationLabel, buildSourceSegments } from "#lib/sources/source-segments.js";
 
 import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { WorldDay } from "#lib/engine/world-state.js";
 import type { SourceSection, SourceTypeGroup } from "#lib/presentation/source-groups.js";
 import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
 import type { Source } from "#lib/types/acquisition.js";
@@ -71,7 +73,22 @@ export function sourceSectionLabel(
 ): { name: string; spoilered: boolean } {
   const { source } = section;
   if (!source) {
+    if (section.questGiver) {
+      return {
+        name: getName("villagers", section.questGiver, lookups.locale),
+        spoilered: !progression.knownVillagers.has(section.questGiver),
+      };
+    }
+    if (section.group === "quests") {
+      return { name: sourceTypeLabel("quests", lookups.locale), spoilered: false };
+    }
     return { name: sourceTypeLabel("progress", lookups.locale), spoilered: false };
+  }
+  if (source.type === "recipe") {
+    return {
+      name: buildCraftingStationLabel(source.recipeId, lookups),
+      spoilered: section.spoilered,
+    };
   }
   const name = namedSourceInstance(source, lookups);
   if (name !== undefined) return { name, spoilered: section.spoilered };
@@ -97,23 +114,27 @@ export function sourceSectionLabel(
   };
 }
 
-/** Completed sources sort last; festivals & biomes use game order, others localized names. */
+/** Upcoming festivals and mine depths use game order. Other places use localized names. */
 export function compareSourceSections(
   a: { name: string; section: SourceSection<SourceChecklistRow> },
   b: { name: string; section: SourceSection<SourceChecklistRow> },
   locale: LocaleCode,
+  today?: Pick<WorldDay, "day" | "season">,
 ): number {
-  const aOrder = sourceGameOrder(a.section);
-  const bOrder = sourceGameOrder(b.section);
+  const aOrder = sourceGameOrder(a.section, today);
+  const bOrder = sourceGameOrder(b.section, today);
   if (aOrder !== undefined && bOrder !== undefined && aOrder !== bOrder) return aOrder - bOrder;
   return nameCollator(locale).compare(a.name, b.name) || a.section.id.localeCompare(b.section.id);
 }
 
-function sourceGameOrder(section: SourceSection<SourceChecklistRow>): number | undefined {
+function sourceGameOrder(
+  section: SourceSection<SourceChecklistRow>,
+  today: Pick<WorldDay, "day" | "season"> | undefined,
+): number | undefined {
   const { source } = section;
   if (source && "festivalId" in source) {
     const date = trackerData.festivals[source.festivalId].date;
-    return ["spring", "summer", "fall", "winter"].indexOf(date.season) * 28 + date.day;
+    return birthdayOffset(date, { day: today?.day ?? 1, season: today?.season ?? "spring" });
   }
   if (source && "biomeId" in source && source.biomeId) {
     return trackerData.mines.biomes.findIndex(({ id }) => id === source.biomeId);

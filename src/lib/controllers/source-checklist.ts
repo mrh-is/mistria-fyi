@@ -19,7 +19,7 @@ import type { ReportCategory } from "#lib/feedback/types.js";
 import type { SourceGroupRow } from "#lib/presentation/source-groups.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { ItemId, QuestId, QuestType, RecipeId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId, QuestType, RecipeId, VillagerId } from "#lib/types/tracker-data.js";
 import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
@@ -98,7 +98,7 @@ function collectSourceRows(
   ctx: ProgressContext,
   showSpoilers: boolean,
   questLocale?: LocaleCode,
-  includeCravingPlaceholder = false,
+  questCategory = false,
 ): SourceChecklistDraft[] {
   const rows: SourceChecklistDraft[] = [];
   function add(
@@ -346,11 +346,13 @@ function collectSourceRows(
         : (visibility ?? categoryVisibility);
     const questState = ctx.progress.questStates[questId] ?? "none";
     const completed = questState === "completed";
+    const quest = trackerData.quests[questType][questId];
+    const giver: null | VillagerId = "villager" in quest ? quest.villager : null;
     add(
       "quests",
       questId,
       description ? () => description : undefined,
-      { sources, visibility: combined },
+      { sources: questCategory ? sources : quest.sources, visibility: combined },
       completed,
       "quest",
       () => {
@@ -359,6 +361,7 @@ function collectSourceRows(
       {
         fact: factKey("questStates", questId),
         locked: !completed && questAvailability.get(questId) === false,
+        questGiver: questCategory ? undefined : giver,
         questState,
         questType,
         questVisibility: visibility,
@@ -379,7 +382,7 @@ function collectSourceRows(
           addQuest(row.id, questType, row.sources, row.visibility, description);
         } else if (row.questId) {
           addQuest(row.questId, questType, [], undefined, description);
-        } else if (includeCravingPlaceholder) {
+        } else if (questCategory) {
           add(
             "quests",
             row.id,

@@ -214,6 +214,26 @@ describe("while source shelves hold", () => {
     expect(view.queryByRole("button", { name: "Refresh shelves" })).toBeNull();
   });
 
+  it("shares a check-off and holds the counts at both places", async () => {
+    const entry = checklistRow("Anchovy", false, [
+      { type: "fish", waterTypes: ["ocean" as WaterType, "river" as WaterType] },
+    ]);
+    vi.spyOn(sourceChecklist, "buildSourceChecklist").mockImplementation(() => {
+      void userState.state.progress.almanac.size;
+      return [{ ...entry }];
+    });
+    const view = renderWithFeedback(SourceContent, { anchor: "fish-ocean", locale: "en" });
+    await tick();
+    await fireEvent.click(view.getByRole("button", { name: "River" }));
+    const ocean = within(view.getByRole("region", { name: "Ocean" }));
+    const river = within(view.getByRole("region", { name: "River" }));
+    await fireEvent.click(ocean.getByRole("button", { name: "Check Anchovy" }));
+    expect(ocean.getByRole("button", { name: "Uncheck Anchovy" })).toBeInTheDocument();
+    expect(river.getByRole("button", { name: "Uncheck Anchovy" })).toBeInTheDocument();
+    expect(ocean.getByText("0 of 1 completed")).toBeInTheDocument();
+    expect(river.getByText("0 of 1 completed")).toBeInTheDocument();
+  });
+
   it("moves a finished source section to Completed after refreshing the shelves", async () => {
     mockChecklist();
     const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
@@ -456,7 +476,7 @@ describe("while source shelves hold", () => {
     if (!place) throw new Error("Expected the Ocean section");
     const ocean = within(place);
     await fireEvent.click(ocean.getByText("Not now", { exact: true }));
-    await fireEvent.click(ocean.getByRole("button", { name: /Anchovy Almanac/u }));
+    await fireEvent.click(ocean.getByRole("button", { name: "Anchovy" }));
     expect(ocean.getByText("Comes back by waiting, in winter.")).toBeVisible();
   });
 

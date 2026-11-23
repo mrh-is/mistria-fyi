@@ -95,8 +95,7 @@ export function projectHomePlaces(ctx: ProgressContext): HomePlaces {
     return count > 0 ? [{ count, id: section.id, rank, source: section.source }] : [];
   });
 
-  // The source ledger files fetch quests under their item sources and story quests under
-  // Progress. The quest section in category view brings all currently available quests together.
+  // Home rolls newly available quests into one shortcut to the Quests category.
   const quests = projectQuests(ctx).rows.filter(
     ({ completed, doable, id }) =>
       !completed &&

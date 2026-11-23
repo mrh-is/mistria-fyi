@@ -20,6 +20,7 @@
     icon,
     id,
     name,
+    placeGroup = false,
     revealTarget = "",
     visible = true,
   }: {
@@ -31,6 +32,7 @@
     icon: Snippet;
     id: string;
     name: string;
+    placeGroup?: boolean;
     revealTarget?: string;
     visible?: boolean;
   } = $props();
@@ -60,6 +62,17 @@
       element.removeEventListener(LEDGER_ARRIVAL_EVENT, reopen);
     };
   }
+
+  function measureHeading(heading: HTMLElement): (() => void) | undefined {
+    const group = heading.parentElement;
+    if (!placeGroup || !group) return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry?.borderBoxSize[0]?.blockSize;
+      if (height !== undefined) group.style.setProperty("--ledger-group-head", `${height}px`);
+    });
+    observer.observe(heading);
+    return () => observer.disconnect();
+  }
 </script>
 
 <section aria-labelledby={id} hidden={!visible} {@attach listenForArrival}>
@@ -67,8 +80,10 @@
     {id}
     tabindex="-1"
     data-ledger-index-heading
+    class:place-group={placeGroup}
     class="sticky z-[var(--z-section-header)] flex scroll-mt-[var(--ledger-anchor-offset,8rem)] items-center bg-background"
     style="top: var(--section-header-sticky-top, 0px)"
+    {@attach measureHeading}
   >
     <button
       type="button"
@@ -91,7 +106,7 @@
           : ''}"
       />
       {@render icon()}
-      <span class="flex-1">{name}</span>
+      <span class="group-name flex-1">{name}</span>
       {#if count}{@render count()}{/if}
     </button>
     {#if index?.jumpList}
@@ -117,6 +132,19 @@
 </section>
 
 <style>
+  .place-group {
+    border-block-end: 1px solid var(--color-ink-hairline);
+    background: var(--color-paper);
+  }
+
+  .place-group .group-name {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1.15;
+  }
+
   h2[data-ledger-index-heading]:focus-visible {
     outline: none;
     text-decoration: underline;
