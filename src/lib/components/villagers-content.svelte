@@ -8,7 +8,7 @@
   import VillagerRecord from "#lib/components/villager-record.svelte";
   import { registerPageSearch } from "#lib/controllers/page-search.svelte.js";
   import { getName } from "#lib/data/names.js";
-  import { isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
+  import { isVillagerComplete } from "#lib/engine/progress.js";
   import { SHELVES } from "#lib/engine/shelves.js";
   import { birthdayOffset, buildVillagerRoster } from "#lib/engine/villager-roster.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -77,9 +77,10 @@
     const groups: Record<Shelf, VillagerRosterEntry[]> = { completed: [], notNow: [], todo: [] };
     for (const villager of visibleVillagers) {
       const known = userState.progressionState.knownVillagers.has(villager.id);
-      const level = userState.state.progress.heartLevels[villager.id] ?? 0;
       let shelf: Shelf = "notNow";
-      if (known) shelf = level >= MAX_HEART_LEVEL ? "completed" : "todo";
+      if (known) {
+        shelf = isVillagerComplete(villager.id, userState.state.progress) ? "completed" : "todo";
+      }
       groups[shelf].push(villager);
     }
     groups.todo.sort(byBirthday);

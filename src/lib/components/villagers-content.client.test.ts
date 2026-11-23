@@ -98,6 +98,7 @@ describe("VillagersContent ledger", () => {
   });
 
   it("moves a villager at ten hearts and keeps the same focused slider", async () => {
+    userState.setVillagerRelationship("adeline" as VillagerId, "platonic");
     const view = renderWithFeedback(VillagersContent, { locale: "en" });
     const slider = view.getByRole("slider", { name: "Adeline heart level" });
     slider.focus();
@@ -145,7 +146,12 @@ describe("VillagersContent completed shelf", () => {
     userState.setHeartLevel(dateable, MAX_HEART_LEVEL);
     const view = renderWithFeedback(VillagersContent, { locale: "en" });
     const record = view.container.querySelector<HTMLElement>(`#villager-${dateable}`);
-    const bestFriend = record?.querySelector<HTMLButtonElement>("[data-relationship-action]");
+    if (!record) throw new Error("Expected a villager row");
+    const completedHeading = view.getByRole("heading", { name: "Completed" });
+    expect(
+      record.compareDocumentPosition(completedHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const bestFriend = record.querySelector<HTMLButtonElement>("[data-relationship-action]");
     if (!bestFriend) throw new Error("Best Friend action missing");
     expect(bestFriend).toHaveTextContent("Best Friend");
     bestFriend.focus();
@@ -153,5 +159,8 @@ describe("VillagersContent completed shelf", () => {
     await fireEvent.click(bestFriend);
 
     await waitFor(() => expect(record).toHaveFocus());
+    expect(
+      record.compareDocumentPosition(completedHeading) & Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
   });
 });

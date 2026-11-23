@@ -29,25 +29,29 @@ export function meterInput({
 }: MeterInputOptions): Attachment<HTMLElement> {
   const bound = (value: number): number => Math.min(max, Math.max(min, value));
 
+  function valueAt(fraction: number): number {
+    if (!Number.isFinite(fraction)) return getValue();
+    const position = (reverse ? 1 - fraction : fraction) * (max - min);
+    if (discreteMarks) return bound(min + Math.max(1, Math.floor(position) + 1));
+    return bound(min + Math.round(position));
+  }
+
   return (element) => {
     const listeners = new AbortController();
     const { signal } = listeners;
     let pointer: number | undefined;
+    let pressedTopMark: number | undefined;
 
-    function valueAt(event: PointerEvent): number {
+    function pointerFraction(event: PointerEvent): number {
       const rect = element.getBoundingClientRect();
-      const fraction =
-        orientation === "vertical"
-          ? (rect.bottom - event.clientY) / rect.height
-          : (event.clientX - rect.left) / rect.width;
-      if (!Number.isFinite(fraction)) return getValue();
-      const position = (reverse ? 1 - fraction : fraction) * (max - min);
-      if (discreteMarks) return bound(min + Math.max(1, Math.floor(position) + 1));
-      return bound(min + Math.round(position));
+      return orientation === "vertical"
+        ? (rect.bottom - event.clientY) / rect.height
+        : (event.clientX - rect.left) / rect.width;
     }
 
     function finish(): void {
       pointer = undefined;
+      pressedTopMark = undefined;
       onPreview?.(undefined);
     }
 
@@ -58,14 +62,25 @@ export function meterInput({
         element.setPointerCapture(event.pointerId);
         pointer = event.pointerId;
         element.focus({ preventScroll: true });
-        onPreview?.(valueAt(event));
+        const fraction = pointerFraction(event);
+        const target = valueAt(fraction);
+        if (discreteMarks && fraction >= 0 && fraction <= 1 && target === getValue()) {
+          pressedTopMark = target;
+        }
+        onPreview?.(target);
       },
       { signal },
     );
     element.addEventListener(
       "pointermove",
       (event) => {
-        if (event.pointerId === pointer) onPreview?.(valueAt(event));
+        if (event.pointerId !== pointer) return;
+        const fraction = pointerFraction(event);
+        const target = valueAt(fraction);
+        if (target !== pressedTopMark || !(fraction >= 0 && fraction <= 1)) {
+          pressedTopMark = undefined;
+        }
+        onPreview?.(target);
       },
       { signal },
     );
@@ -74,8 +89,11 @@ export function meterInput({
       (event) => {
         if (event.pointerId !== pointer) return;
         const current = getValue();
-        const target = valueAt(event);
-        const value = discreteMarks && target === current ? Math.max(min, target - 1) : target;
+        const fraction = pointerFraction(event);
+        const target = valueAt(fraction);
+        const reselected =
+          target === pressedTopMark && target === current && fraction >= 0 && fraction <= 1;
+        const value = reselected ? bound(target - 1) : target;
         finish();
         if (value !== current) onCommit(value);
       },
