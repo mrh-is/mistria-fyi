@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { createServer } from "vite";
+import { build, createServer } from "vite";
 import { expect, it } from "vitest";
 import { getConfig, Hub } from "wuchale";
 
@@ -8,17 +8,45 @@ import { wuchaleForVite } from "./vite-wuchale.js";
 
 import type routeCatalogsModule from "virtual:mistria-route-catalogs";
 
-it("escapes catalog filenames in the generated module without changing their import paths", async () => {
+it("requires every configured route catalog at build time and ignores extra files", async () => {
   const root = await mkdtemp(path.resolve("node_modules/.wuchale-test-"));
   try {
     const configPath = path.join(root, "wuchale.config.mjs");
     const directory = path.join(root, "locales", ".wuchale");
-    const filename = "route.1.line\u2028paragraph\u2029.compiled.js";
     await mkdir(directory, { recursive: true });
-    await writeFile(path.join(directory, filename), "export const c = ['fixture'];");
-    await writeFile(configPath, 'export default { localesDir: "locales" };');
+    await writeFile(
+      path.join(directory, "route.1.en.compiled.js"),
+      "export const c = ['English'];",
+    );
+    await writeFile(path.join(directory, "route.2.en.compiled.js"), "export const c = ['Extra'];");
+    await writeFile(
+      configPath,
+      `export default {
+        adapters: { route: { loading: { group: ["entry.js"] } } },
+        locales: ["en", "ja"],
+        localesDir: "locales",
+      };`,
+    );
+    await writeFile(
+      path.join(root, "entry.js"),
+      'export { default } from "virtual:mistria-route-catalogs";',
+    );
 
     const [routeCatalogs] = wuchaleForVite(configPath, false);
+    await expect(
+      build({
+        build: { ssr: "entry.js", write: false },
+        configFile: false,
+        logLevel: "silent",
+        plugins: [routeCatalogs],
+        root,
+      }),
+    ).rejects.toThrow("route.1.ja.compiled.js");
+    await writeFile(
+      path.join(directory, "route.1.ja.compiled.js"),
+      "export const c = ['Japanese'];",
+    );
+
     const server = await createServer({
       configFile: false,
       plugins: [routeCatalogs],
@@ -26,16 +54,16 @@ it("escapes catalog filenames in the generated module without changing their imp
       server: { middlewareMode: true, watch: null, ws: false },
     });
     try {
-      const id = "\0virtual:mistria-route-catalogs";
-      const loaded = await server.environments.ssr.pluginContainer.load(id);
-      const source = typeof loaded === "string" ? loaded : (loaded?.code ?? "");
-      expect(source).toContain(String.raw`route.1.line\u2028paragraph\u2029.compiled.js`);
-      expect(source).not.toContain(filename);
-      const { default: loaders } = (await server.ssrLoadModule(id)) as {
+      const { default: loaders } = (await server.ssrLoadModule("/entry.js")) as {
         default: typeof routeCatalogsModule;
       };
-      expect(Object.keys(loaders)).toEqual([filename]);
-      await expect(loaders[filename]?.()).resolves.toMatchObject({ c: ["fixture"] });
+      expect(Object.keys(loaders)).toEqual(["route.1.en.compiled.js", "route.1.ja.compiled.js"]);
+      await expect(loaders["route.1.en.compiled.js"]?.()).resolves.toMatchObject({
+        c: ["English"],
+      });
+      await expect(loaders["route.1.ja.compiled.js"]?.()).resolves.toMatchObject({
+        c: ["Japanese"],
+      });
     } finally {
       await server.close();
     }
@@ -88,7 +116,8 @@ it("transforms messages against the current catalog while another process owns t
     await writeFile(
       path.join(root, "entry.js"),
       `import plural from "./locales/plural.js";
-       export const render = (count) => plural(count, ["one item", "many items"]);`,
+       export const render = (count) => plural(count, ["one item", "many items"]);
+       export const renderMissing = (count) => plural(count, ["one uncataloged item", "many uncataloged items"]);`,
     );
     await writeCatalog(messages);
     await Hub.create("build", await getConfig(configPath), root);
@@ -114,6 +143,15 @@ it("transforms messages against the current catalog while another process owns t
     } finally {
       await server.close();
     }
+    await build({
+      build: { ssr: "entry.js" },
+      configFile: false,
+      logLevel: "silent",
+      plugins: wuchaleForVite(configPath, true),
+      root,
+    });
+    const built = await readFile(path.join(root, "dist", "entry.js"), "utf8");
+    expect(built).toContain("many uncataloged items");
   } finally {
     await rm(root, { force: true, recursive: true });
   }

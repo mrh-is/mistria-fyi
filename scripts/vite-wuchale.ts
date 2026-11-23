@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { normalizePath } from "vite";
 import { generatedDir, getConfig, Hub } from "wuchale";
@@ -8,52 +8,44 @@ import type { Plugin } from "vite";
 import type { FS } from "wuchale";
 
 const viteQueryParams = new Set(["v", "t", "sentry-auto-wrap", "tsr-split"]);
-const routeCatalogsModule = "\0virtual:mistria-route-catalogs";
-const sourceLiteralEscapes = new Map([
-  ["<", String.raw`\u003C`],
-  [">", String.raw`\u003E`],
-  ["\u2028", String.raw`\u2028`],
-  ["\u2029", String.raw`\u2029`],
-]);
-
-function javascriptStringLiteral(value: string): string {
-  // JSON handles quotes and backslashes. Escape HTML delimiters and JS line separators too.
-  return JSON.stringify(value).replaceAll(
-    /[<>\u2028\u2029]/gu,
-    (character) => sourceLiteralEscapes.get(character) ?? character,
-  );
-}
+const routeCatalogsModule = "virtual:mistria-route-catalogs";
+const routeCatalogPrefix = `${routeCatalogsModule}/`;
 
 export function wuchaleForVite(configPath: string, snapshot: boolean): Plugin[] {
   const root = path.dirname(configPath);
   const modules = new Map<string, string>();
   let config: Awaited<ReturnType<typeof getConfig>>;
   let generated: string;
+  let routeFiles: Set<string>;
   const routeCatalogs: Plugin = {
     async config() {
       config = await getConfig(configPath);
       generated = path.resolve(root, config.localesDir, generatedDir);
+      for (const locale of config.locales) {
+        if (!/^[A-Za-z0-9-]+$/u.test(locale)) throw new Error(`Invalid locale for Vite: ${locale}`);
+      }
+      // Wuchale starts the configured group IDs at 1. Group zero duplicates every route message.
+      const groups = config.adapters.route?.loading.group ?? [];
+      routeFiles = new Set(
+        groups.flatMap((_, index) =>
+          config.locales.map((locale) => `route.${index + 1}.${locale}.compiled.js`),
+        ),
+      );
     },
-    async load(id) {
-      if (id !== routeCatalogsModule) return;
-      const files = snapshot
-        ? [...modules.keys()]
-            .filter((file) => path.dirname(file) === generated)
-            .map((file) => path.basename(file))
-        : await readdir(generated);
-      // Only load the route groups. Group zero duplicates every route message.
-      const imports = files
-        .filter((file) => /^route\.[1-9]\d*\.[^.]+\.compiled\.js$/u.test(file))
-        .toSorted()
-        .map((file) => {
-          const specifier = normalizePath(path.join(generated, file));
-          return `${javascriptStringLiteral(file)}: () => import(${javascriptStringLiteral(specifier)})`;
-        });
+    load(id) {
+      if (id !== `\0${routeCatalogsModule}`) return;
+      // Only fixed strings, numeric IDs, and validated locale tags enter the generated source.
+      const imports = [...routeFiles].map(
+        (file) => `"${file}": () => import("${routeCatalogPrefix}${file}")`,
+      );
       return `export default {${imports.join(",")}};`;
     },
     name: "mistria:route-catalogs",
     resolveId(id) {
-      return id === routeCatalogsModule.slice(1) ? routeCatalogsModule : undefined;
+      if (id === routeCatalogsModule) return `\0${routeCatalogsModule}`;
+      if (!id.startsWith(routeCatalogPrefix)) return;
+      const file = id.slice(routeCatalogPrefix.length);
+      return routeFiles.has(file) ? normalizePath(path.join(generated, file)) : undefined;
     },
   };
   if (!snapshot) {
@@ -98,8 +90,9 @@ export function wuchaleForVite(configPath: string, snapshot: boolean): Plugin[] 
       compilation ??= Hub.create(mode, { ...config, ai: null }, root, [], 0, fs, toViteError);
       await compilation;
     },
-    config(_, { command }) {
-      mode = command === "build" ? "build" : "dev";
+    config(_, { mode: viteMode }) {
+      // Match the upstream plugin so production builds keep source text for uncataloged messages.
+      mode = viteMode === "build" ? "build" : "dev";
       return {
         optimizeDeps: {
           exclude: [
