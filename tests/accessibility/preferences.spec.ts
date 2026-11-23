@@ -28,13 +28,24 @@ test.describe("browser accessibility preferences", () => {
 
   test("a locale switch preserves the Everything place link", async ({ page }) => {
     await initializeApplication(page, "light", createStoredState());
-    await gotoApplication(page, "/en/everything?group=source#store-balor");
-    await page.getByRole("button", { name: "Quick settings" }).click();
-    await page.getByRole("button", { name: "Choose language" }).click();
-    await page.getByRole("button", { name: /^Français/u }).click();
+    const placeAnchor = "#store-balor";
+    await gotoApplication(page, `/en/everything?group=source${placeAnchor}`);
+    // oxlint-disable-next-line playwright/no-raw-locators -- The desktop rail tools have no landmark.
+    const rail = page.locator(".book__rail-tools");
+    await rail.getByRole("button", { name: "Quick settings" }).click();
+    const settings = page.getByRole("dialog", { name: "Quick settings" });
+    await settings.getByRole("button", { name: "Choose language" }).click();
+    await settings
+      .getByRole("group", { name: "Languages" })
+      .getByRole("button", { name: /^Français/u })
+      .click();
 
-    await expect(page).toHaveURL(/\/fr\/everything\?group=source#store-balor$/u);
-    await expect(page.getByRole("button", { name: "Chariot de Balor" })).toBeVisible();
+    await expect(page).toHaveURL(
+      (url) => url.pathname + url.search + url.hash === `/fr/everything?group=source${placeAnchor}`,
+    );
+    // oxlint-disable-next-line playwright/no-raw-locators -- Resolve the destination by its URL anchor.
+    const place = page.locator(placeAnchor);
+    await expect(place.getByRole("button", { name: "Chariot de Balor" })).toBeVisible();
   });
 
   test("a locale switch preserves the Almanac anchor", async ({ page }) => {
