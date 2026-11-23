@@ -257,26 +257,63 @@ test("scrolling up through Furniture in WebKit keeps the reading row in place", 
   }
 });
 
-test("the next row control moves focus to the next unmounted entry", async ({ page }) => {
+test("paging focuses the row adjacent to the window before the control took focus", async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 800, width: 1280 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
-  const next = furniture.getByRole("button", { exact: true, name: "Next rows" }).first();
   await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
-  await expect(next).toBeAttached();
-  await next.press("Enter");
-  await expect
-    .poll(() =>
-      furniture.evaluate((section) => {
-        const focused = document.activeElement;
-        if (!focused || !section.contains(focused)) return "";
-        const { bottom, top } = focused.getBoundingClientRect();
-        return top >= 0 && bottom <= globalThis.innerHeight
-          ? focused.getAttribute("aria-label")
-          : "";
-      }),
-    )
-    .toMatch(/^Check /u);
+  await settleLayout(page);
+
+  for (const direction of ["Next rows", "Previous rows"]) {
+    const control = furniture.getByRole("button", { exact: true, name: direction }).first();
+    await expect(control).toBeAttached();
+    const adjacentIndex = await control.evaluate((button, next) => {
+      const list = button.closest(".row-window");
+      const before = list?.querySelector<HTMLElement>("[data-rows-before]");
+      const start = Number(before?.style.getPropertyValue("--unmounted"));
+      return next ? start + (list?.querySelectorAll("[data-ledger-key]").length ?? 0) : start - 1;
+    }, direction === "Next rows");
+    await control.focus();
+    await settleLayout(page);
+    if (direction === "Next rows") {
+      const windowStart = () =>
+        furniture.evaluate((section) =>
+          section
+            .querySelector<HTMLElement>("[data-rows-before]")
+            ?.style.getPropertyValue("--unmounted"),
+        );
+      const start = await windowStart();
+      await page.mouse.wheel(0, 2500);
+      await expect.poll(windowStart).not.toBe(start);
+    }
+    await expect(control).toBeFocused();
+    await page.keyboard.press("Enter");
+
+    const expectedKey = await furniture.evaluate((section, index) => {
+      const before = section.querySelector<HTMLElement>("[data-rows-before]");
+      const start = Number(before?.style.getPropertyValue("--unmounted"));
+      return before?.parentElement?.querySelectorAll<HTMLElement>("[data-ledger-key]")[
+        index - start
+      ]?.dataset.ledgerKey;
+    }, adjacentIndex);
+    expect(expectedKey).toBeTruthy();
+    await expect
+      .poll(() =>
+        furniture.evaluate((section) => {
+          const focused = document.activeElement;
+          if (!focused || !section.contains(focused)) return undefined;
+          const { bottom, top } = focused.getBoundingClientRect();
+          return top >= 0 && bottom <= globalThis.innerHeight
+            ? focused.closest<HTMLElement>("[data-ledger-key]")?.dataset.ledgerKey
+            : undefined;
+        }),
+      )
+      .toBe(expectedKey);
+  }
 });
 
 test("closing a search result shelf returns focus to its section button", async ({ page }) => {
