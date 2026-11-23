@@ -22,12 +22,13 @@ export const axeExceptions: AxeException[] = [];
 
 export async function analyzeAccessibility(
   page: Page,
-  context: AxeRunContext,
+  { include, ...context }: AxeRunContext & { include?: string },
   testInfo?: TestInfo,
   rules?: string[],
 ): Promise<AxeAssessment> {
   await waitForRendering(page);
   const builder = new AxeBuilder({ page });
+  if (include) builder.include(include);
   if (page.frames().length === 1) {
     // Finish single-frame scans in the page so axe can trim passing nodes before transfer.
     // The default scan collects results across frames, including cross-origin frames.
