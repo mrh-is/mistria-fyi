@@ -11,6 +11,8 @@
         "src/hooks.ts",
         // Standalone Worker, loaded by relay/wrangler.toml rather than the Pages build.
         "relay/worker.ts",
+        // The on-demand localization audit passes its config directly to Playwright.
+        "playwright.localization.config.ts",
         // Historical Wuchale comparison probes are run directly.
         "spikes/wuchale/compare-cold-app.js",
         "spikes/wuchale/compare-warm-app.ts",
