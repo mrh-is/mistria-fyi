@@ -103,7 +103,24 @@ test("keeps the tools and section index within reach in the middle of Furniture"
         ?.querySelector<HTMLElement>("[data-sprite-treatment]")
         ?.style.getPropertyValue("--sprite-url"),
     );
+  const fallbackMask = () =>
+    distantRow.evaluate((button) => {
+      const row = button.closest("[data-ledger-row]");
+      if (!row) return [];
+      return [
+        ...row.querySelectorAll<HTMLElement>(
+          '[data-sprite-treatment="todo"], [data-sprite-treatment="spoiler"]',
+        ),
+      ].map((treatment) => getComputedStyle(treatment, "::after").maskImage);
+    });
   expect(await spriteMask()).toBe("");
+  const fallbackMasks = await fallbackMask();
+  expect(fallbackMasks.length).toBeGreaterThan(0);
+  for (const mask of fallbackMasks) {
+    expect(mask).toMatch(/linear-gradient/u);
+    expect(mask).not.toBe("none");
+    expect(mask).toMatch(/transparent|rgba?\([^)]*,\s*0(?:\.0*)?\)/iu);
+  }
   await distantRow.scrollIntoViewIfNeeded();
   await expect.poll(spriteMask).toMatch(/^url\(/u);
   const contents = page.getByRole("navigation", { name: "Page sections" });

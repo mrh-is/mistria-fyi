@@ -748,7 +748,7 @@ html:lang(ru) {
     position: absolute;
     inset: 0;
     content: "";
-    mask: var(--sprite-url) center / contain no-repeat;
+    mask: var(--sprite-url, linear-gradient(transparent, transparent)) center / contain no-repeat;
   }
 
   [data-sprite-treatment="todo"]::after {
