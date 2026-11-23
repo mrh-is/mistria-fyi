@@ -1157,6 +1157,29 @@
   },
   {
     "translations": {
+      "en": "Birthdays next",
+      "ja": "もうすぐ誕生日",
+      "zh-Hans": "近期生日",
+      "zh-Hant": "近期生日",
+      "es": "Próximos cumpleaños",
+      "fr": "Prochains anniversaires",
+      "ko": "다가오는 생일",
+      "ru": "Ближайшие дни рождения"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villagers-content.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Blizzard",
       "ja": "吹雪",
       "zh-Hans": "暴风雪",
@@ -4004,6 +4027,28 @@
   },
   {
     "translations": {
+      "en": "Hearts",
+      "ja": "ハート",
+      "zh-Hans": "爱心",
+      "zh-Hant": "愛心",
+      "es": "Corazones",
+      "fr": "Cœurs",
+      "ko": "하트",
+      "ru": "Сердца"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villagers-content.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Hidden",
       "ja": "非表示",
       "zh-Hans": "已隐藏",
@@ -4509,35 +4554,6 @@
         "file": "src/lib/components/ledger/ledger-section.svelte",
         "refs": [
           null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
-      "en": "Jump to {0}, first villager record",
-      "ja": "{0}へジャンプ、最初の町の住民の記録",
-      "zh-Hans": "跳转到{0}，第一个村民记录",
-      "zh-Hant": "跳至{0}，第一個村民記錄",
-      "es": "Ir a {0}, primer registro de aldeano",
-      "fr": "Aller à {0}, premier habitant",
-      "ko": "{0}(으)로 이동, 첫 번째 마을 주민 기록",
-      "ru": "Перейти к {0}, первая запись жителя"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/villager-alphabet-index.svelte",
-        "refs": [
-          {
-            "placeholders": [
-              [
-                "0",
-                "entry.initial"
-              ]
-            ]
-          }
         ]
       }
     ],
@@ -5736,6 +5752,28 @@
     "references": [
       {
         "file": "src/lib/components/sync/sync-question-dialog.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Not met yet",
+      "ja": "まだ会っていない",
+      "zh-Hans": "尚未见面",
+      "zh-Hant": "尚未見面",
+      "es": "Aún por conocer",
+      "fr": "Pas encore rencontrés",
+      "ko": "아직 만나지 않음",
+      "ru": "Ещё не знакомы"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villagers-content.svelte",
         "refs": [
           null
         ]
@@ -8534,6 +8572,28 @@
   },
   {
     "translations": {
+      "en": "Soon",
+      "ja": "もうすぐ",
+      "zh-Hans": "将至",
+      "zh-Hant": "將至",
+      "es": "Pronto",
+      "fr": "Bientôt",
+      "ko": "곧",
+      "ru": "Скоро"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-record.svelte",
+        "refs": [
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "Sorted for {0}, {1}",
       "ja": "{0}・{1}で並べ替え",
       "zh-Hans": "按{0}、{1}排序",
@@ -9950,28 +10010,6 @@
   },
   {
     "translations": {
-      "en": "Villager alphabet",
-      "ja": "町の住民の五十音索引",
-      "zh-Hans": "村民字母索引",
-      "zh-Hant": "村民字母索引",
-      "es": "Índice alfabético de aldeanos",
-      "fr": "Index alphabétique des habitants",
-      "ko": "마을 주민 자모 색인",
-      "ru": "Алфавитный указатель жителей"
-    },
-    "references": [
-      {
-        "file": "src/lib/components/villager-alphabet-index.svelte",
-        "refs": [
-          null
-        ]
-      }
-    ],
-    "urlAdapters": [],
-    "attribs": {}
-  },
-  {
-    "translations": {
       "en": [
         "Villager hearts: +{0} relationship updated",
         "Villager hearts: +{0} relationships updated"
@@ -10066,6 +10104,29 @@
       "fr": "Liste des habitants",
       "ko": "마을 주민 명부",
       "ru": "Список жителей"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villagers-content.svelte",
+        "refs": [
+          null,
+          null
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "Villager · birthday",
+      "ja": "住人・誕生日",
+      "zh-Hans": "村民 · 生日",
+      "zh-Hant": "村民 · 生日",
+      "es": "Aldeano · cumpleaños",
+      "fr": "Villageois · anniversaire",
+      "ko": "마을 주민 · 생일",
+      "ru": "Житель · день рождения"
     },
     "references": [
       {
@@ -12355,13 +12416,34 @@
         "{0} / {1} perk reached",
         "{0} / {1} perks reached"
       ],
-      "ja": ["到達したスキルボーナス {0} / {1}"],
-      "zh-Hans": ["已达到 {0} / {1} 项技能特长"],
-      "zh-Hant": ["已達到 {0} / {1} 項技能特長"],
-      "es": ["{0} / {1} don alcanzado", "{0} / {1} dones alcanzados", "{0} / {1} dones alcanzados"],
-      "fr": ["{0} / {1} bonus accessible", "{0} / {1} bonus accessibles", "{0} / {1} bonus accessibles"],
-      "ko": ["도달한 스킬 특성 {0} / {1}"],
-      "ru": ["Доступен {0} / {1} навык", "Доступно {0} / {1} навыка", "Доступно {0} / {1} навыков", "Доступно {0} / {1} навыка"]
+      "ja": [
+        "到達したスキルボーナス {0} / {1}"
+      ],
+      "zh-Hans": [
+        "已达到 {0} / {1} 项技能特长"
+      ],
+      "zh-Hant": [
+        "已達到 {0} / {1} 項技能特長"
+      ],
+      "es": [
+        "{0} / {1} don alcanzado",
+        "{0} / {1} dones alcanzados",
+        "{0} / {1} dones alcanzados"
+      ],
+      "fr": [
+        "{0} / {1} bonus accessible",
+        "{0} / {1} bonus accessibles",
+        "{0} / {1} bonus accessibles"
+      ],
+      "ko": [
+        "도달한 스킬 특성 {0} / {1}"
+      ],
+      "ru": [
+        "Доступен {0} / {1} навык",
+        "Доступно {0} / {1} навыка",
+        "Доступно {0} / {1} навыков",
+        "Доступно {0} / {1} навыка"
+      ]
     },
     "references": [
       {
@@ -12475,6 +12557,35 @@
               [
                 "0",
                 "shelfLabel(shelf)"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0} heart level",
+      "ja": "{0}のハートレベル",
+      "zh-Hans": "{0}的爱心等级",
+      "zh-Hant": "{0}的愛心等級",
+      "es": "Nivel de corazones de {0}",
+      "fr": "Niveau de cœurs de {0}",
+      "ko": "{0}의 하트 레벨",
+      "ru": "Уровень сердец: {0}"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-marks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
               ]
             ]
           }
@@ -13510,6 +13621,80 @@
   },
   {
     "translations": {
+      "en": "{0}, dateable, {1} of {2} hearts",
+      "ja": "{0}、恋愛対象、ハート{2}個中{1}個",
+      "zh-Hans": "{0}，可约会，{2}颗爱心中的{1}颗",
+      "zh-Hant": "{0}，可約會，{2}顆愛心中的{1}顆",
+      "es": "{0}, romance, {1} de {2} corazones",
+      "fr": "{0}, romance, {1} cœurs sur {2}",
+      "ko": "{0}, 연애 가능, 하트 {2}개 중 {1}개",
+      "ru": "{0}, романтика, {1} из {2} сердец"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-marks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "current"
+              ],
+              [
+                "2",
+                "maximum"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}, friendship, {1} of {2} hearts",
+      "ja": "{0}、友情、ハート{2}個中{1}個",
+      "zh-Hans": "{0}，友情，{2}颗爱心中的{1}颗",
+      "zh-Hant": "{0}，友情，{2}顆愛心中的{1}顆",
+      "es": "{0}, amistad, {1} de {2} corazones",
+      "fr": "{0}, amitié, {1} cœurs sur {2}",
+      "ko": "{0}, 우정, 하트 {2}개 중 {1}개",
+      "ru": "{0}, дружба, {1} из {2} сердец"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-marks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "name"
+              ],
+              [
+                "1",
+                "current"
+              ],
+              [
+                "2",
+                "maximum"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
       "en": "{0}, level {1} of {2}",
       "ja": "{0}、レベル{1}（最大{2}）",
       "zh-Hans": "{0}，当前{1}级，最高{2}级",
@@ -13786,6 +13971,43 @@
               [
                 "0",
                 "field"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "urlAdapters": [],
+    "attribs": {}
+  },
+  {
+    "translations": {
+      "en": "{0}: {1} → {2} hearts",
+      "ja": "{0}：ハート{1} → {2}",
+      "zh-Hans": "{0}：爱心 {1} → {2}",
+      "zh-Hant": "{0}：愛心 {1} → {2}",
+      "es": "{0}: {1} → {2} corazones",
+      "fr": "{0} : {1} → {2} cœurs",
+      "ko": "{0}: 하트 {1} → {2}",
+      "ru": "{0}: {1} → {2} сердец"
+    },
+    "references": [
+      {
+        "file": "src/lib/components/villager-marks.svelte",
+        "refs": [
+          {
+            "placeholders": [
+              [
+                "0",
+                "displayName"
+              ],
+              [
+                "1",
+                "from"
+              ],
+              [
+                "2",
+                "to"
               ]
             ]
           }

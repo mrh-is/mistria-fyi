@@ -3,8 +3,10 @@
 
   import { imageError } from "#lib/attachments/image-error.js";
   import { Icon } from "#lib/components/icon/index.js";
+  import LedgerSprite from "#lib/components/ledger/ledger-sprite.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import Stepper from "#lib/components/stepper.svelte";
+  import VillagerMarks from "#lib/components/villager-marks.svelte";
   import { celebrateProgress } from "#lib/controllers/celebration.js";
   import { getName } from "#lib/data/names.js";
   import { isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
@@ -12,7 +14,7 @@
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
+  import { formatNumber, seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
   import { relationshipLevelColor } from "#lib/utils/palette.js";
   import { page } from "$app/state";
 
@@ -21,30 +23,36 @@
     RelationshipPrompt,
     RelationshipStatus,
   } from "#lib/engine/relationships.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
   import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
   let {
+    birthdaySoon = false,
     compact = false,
     id,
+    ledgerLocale,
     name,
     spoilered,
     villager,
   }: {
+    birthdaySoon?: boolean;
     compact?: boolean;
     id: VillagerId;
+    ledgerLocale?: LocaleCode;
     /** Already resolved for the active locale by the roster via `getName("villagers", id, locale)`. */
     name: string;
     spoilered: boolean;
     villager: Villager;
   } = $props();
 
+  let locale = $derived(ledgerLocale ?? page.data.locale);
   const instanceId = $props.id();
   const warningId = `${instanceId}-proposal-warning`;
   let relationshipStatusLabel: Record<RelationshipStatus, string> = $derived({
-    best_friends: getName("ui", "best_friend", page.data.locale),
-    dating: getName("ui", "dating", page.data.locale),
-    engaged: getName("ui", "engaged", page.data.locale),
-    married: getName("ui", "married", page.data.locale),
+    best_friends: getName("ui", "best_friend", locale),
+    dating: getName("ui", "dating", locale),
+    engaged: getName("ui", "engaged", locale),
+    married: getName("ui", "married", locale),
     married_child_free: "Married · child-free",
     married_kids: "Married · kids",
     path_not_chosen: "Path not chosen",
@@ -57,7 +65,7 @@
   let relationshipActionLabel: Record<RelationshipActionValue, string> = $derived({
     married: "Record marriage",
     no: "Child-free",
-    platonic: getName("ui", "best_friend", page.data.locale),
+    platonic: getName("ui", "best_friend", locale),
     proposed: "Record proposal",
     romantic: "Start dating",
     yes: "Kids",
@@ -134,6 +142,7 @@
   bind:this={recordElement}
   {@attach reportable}
   class="villager-record"
+  class:ledger-record={ledgerLocale !== undefined}
   class:villager-record--complete={completed}
   class:villager-record--spoilered={isSpoilered}
   data-villager-record
@@ -141,84 +150,110 @@
   id="villager-{id}"
   tabindex="-1"
 >
-  <header class="villager-identity">
-    <span class="villager-icon" aria-hidden="true">
-      {#if !imageFailed}
-        <img
-          src={villagerSpriteUrl(id)}
-          class:villager-silhouette={isSpoilered}
-          alt=""
-          width="44"
-          height="44"
-          crossorigin="anonymous"
-          {@attach imageError(() => (imageFailed = true))}
-        />
+  {#if ledgerLocale}
+    <div class="ledger-identity">
+      {#if isSpoilered}
+        <LedgerSprite name={visibleName} treatment="spoiler" url={villagerSpriteUrl(id)} />
+        <span class="blank"><span class="sr-only">{visibleName}</span></span>
       {:else}
-        <span data-testid="villager-icon-fallback">{isSpoilered ? "?" : name.charAt(0)}</span>
+        <LedgerSprite {name} treatment="completed" url={villagerSpriteUrl(id)} />
+        <div class="villager-copy">
+          <strong data-villager-name>{name}</strong>
+          <span class="ledger-birthday">
+            <Icon.Season season={villager.birthday.season} class="size-3 shrink-0" />
+            {seasonLabel(villager.birthday.season, locale)}
+            {formatNumber(villager.birthday.day, locale)}
+            {#if birthdaySoon}<span class="soon">Soon</span>{/if}
+          </span>
+          {#if villager.dateable && presentation.status}
+            <small>{relationshipStatusLabel[presentation.status]}</small>
+          {/if}
+        </div>
       {/if}
-    </span>
-
-    <span class="villager-copy">
-      <strong data-villager-name>
-        {#if isSpoilered}
-          <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
-        {:else}
-          {name}
-        {/if}
-      </strong>
-      {#if !isSpoilered && villager.dateable && presentation.status}
-        <small>{relationshipStatusLabel[presentation.status]}</small>
-      {/if}
-    </span>
-
+    </div>
     {#if !isSpoilered}
-      <span
-        class="villager-birthday"
-        aria-label={`Birthday: ${seasonLabel(villager.birthday.season, page.data.locale)} ${villager.birthday.day}`}
-      >
-        <Icon.Season season={villager.birthday.season} class="size-3" aria-hidden="true" />
-        {seasonLabelAbbr(villager.birthday.season)}
-        {String(villager.birthday.day).padStart(2, "0")}
-      </span>
-    {:else}
-      <span class="villager-birthday villager-birthday--spoilered">Birthday hidden</span>
+      <VillagerMarks dateable={!!villager.dateable} {id} {locale} {name} />
     {/if}
-  </header>
-
-  <Stepper
-    accentColor="var(--color-category-villagers)"
-    decrementDisabled={isSpoilered || storedLevel <= 0}
-    decrementLabel={`Decrease ${isSpoilered ? hiddenVillager : name} hearts`}
-    incrementDisabled={isSpoilered || storedLevel >= MAX_HEART_LEVEL}
-    incrementLabel={`Increase ${isSpoilered ? hiddenVillager : name} hearts`}
-    label={`${visibleName} relationship level, ${displayedLevel} of ${MAX_HEART_LEVEL}`}
-    onDecrement={() => {
-      setLevel(storedLevel - 1);
-    }}
-    onIncrement={() => {
-      setLevel(storedLevel + 1);
-    }}
-  >
-    <span class="sr-only" role="status">
-      {`${visibleName} relationship level, ${displayedLevel} of ${MAX_HEART_LEVEL}`}
-    </span>
-    <span class="villager-marks" aria-hidden="true">
-      {#each { length: MAX_HEART_LEVEL } as _, index (index)}
-        {@const filled = !isSpoilered && index < storedLevel}
-        <span
-          class="villager-mark"
-          data-villager-mark
-          data-villager-mark-filled={filled}
-          data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
-          style="--relationship-level-color: {relationshipLevelColor(index)}"
-        >
-          <Icon.ProgressMark
-            type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}
+  {:else}
+    <header class="villager-identity">
+      <span class="villager-icon" aria-hidden="true">
+        {#if !imageFailed}
+          <img
+            src={villagerSpriteUrl(id)}
+            class:villager-silhouette={isSpoilered}
+            alt=""
+            width="44"
+            height="44"
+            crossorigin="anonymous"
+            {@attach imageError(() => (imageFailed = true))}
           />
+        {:else}
+          <span data-testid="villager-icon-fallback">{isSpoilered ? "?" : name.charAt(0)}</span>
+        {/if}
+      </span>
+
+      <span class="villager-copy">
+        <strong data-villager-name>
+          {#if isSpoilered}
+            <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
+          {:else}
+            {name}
+          {/if}
+        </strong>
+        {#if !isSpoilered && villager.dateable && presentation.status}
+          <small>{relationshipStatusLabel[presentation.status]}</small>
+        {/if}
+      </span>
+
+      {#if !isSpoilered}
+        <span
+          class="villager-birthday"
+          aria-label={`Birthday: ${seasonLabel(villager.birthday.season, page.data.locale)} ${villager.birthday.day}`}
+        >
+          <Icon.Season season={villager.birthday.season} class="size-3" aria-hidden="true" />
+          {seasonLabelAbbr(villager.birthday.season)}
+          {String(villager.birthday.day).padStart(2, "0")}
         </span>
-      {/each}
-    </span>
-  </Stepper>
+      {:else}
+        <span class="villager-birthday villager-birthday--spoilered">Birthday hidden</span>
+      {/if}
+    </header>
+
+    <Stepper
+      accentColor="var(--color-category-villagers)"
+      decrementDisabled={isSpoilered || storedLevel <= 0}
+      decrementLabel={`Decrease ${isSpoilered ? hiddenVillager : name} hearts`}
+      incrementDisabled={isSpoilered || storedLevel >= MAX_HEART_LEVEL}
+      incrementLabel={`Increase ${isSpoilered ? hiddenVillager : name} hearts`}
+      label={`${visibleName} relationship level, ${displayedLevel} of ${MAX_HEART_LEVEL}`}
+      onDecrement={() => {
+        setLevel(storedLevel - 1);
+      }}
+      onIncrement={() => {
+        setLevel(storedLevel + 1);
+      }}
+    >
+      <span class="sr-only" role="status">
+        {`${visibleName} relationship level, ${displayedLevel} of ${MAX_HEART_LEVEL}`}
+      </span>
+      <span class="villager-marks" aria-hidden="true">
+        {#each { length: MAX_HEART_LEVEL } as _, index (index)}
+          {@const filled = !isSpoilered && index < storedLevel}
+          <span
+            class="villager-mark"
+            data-villager-mark
+            data-villager-mark-filled={filled}
+            data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
+            style="--relationship-level-color: {relationshipLevelColor(index)}"
+          >
+            <Icon.ProgressMark
+              type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}
+            />
+          </span>
+        {/each}
+      </span>
+    </Stepper>
+  {/if}
 
   {#if !isSpoilered && villager.dateable && presentation.actions.length > 0}
     <div class="relationship-decision">
@@ -281,6 +316,60 @@
 
   .villager-record--complete {
     color: var(--color-ink-muted);
+  }
+
+  .villager-record.ledger-record {
+    align-items: center;
+    gap: 4px 12px;
+    padding: 5px 0;
+    border: 0;
+    border-block-end: 1px solid var(--color-rule-faint);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .ledger-identity {
+    display: grid;
+    min-inline-size: 0;
+    grid-template-columns: 30px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ledger-identity strong {
+    white-space: normal;
+  }
+
+  .ledger-birthday {
+    display: flex;
+    align-items: center;
+    color: var(--color-ink-muted);
+    font-family: var(--font-annotation);
+    font-size: var(--text-2xs);
+    column-gap: 4px;
+  }
+
+  .blank {
+    inline-size: min(8rem, 100%);
+    border-block-end: 1px solid var(--color-rule);
+  }
+
+  .soon {
+    color: var(--color-tape-urgent);
+    font-family: var(--font-data);
+    font-size: var(--text-3xs);
+    text-transform: uppercase;
+  }
+
+  .ledger-record .relationship-decision {
+    grid-column: 1 / -1;
+  }
+
+  @container villager-roster (min-width: 28rem) {
+    .ledger-record {
+      grid-template-columns: var(--villager-columns);
+    }
   }
 
   .villager-identity {

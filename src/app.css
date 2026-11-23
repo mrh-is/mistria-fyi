@@ -235,6 +235,16 @@
    * needs it, for category-colored words.
    */
   --color-category-villagers: #a30017; /* red */
+  --color-heart-level-1: #8838a8;
+  --color-heart-level-2: #1878b8;
+  --color-heart-level-3: #1878b8;
+  --color-heart-level-4: #48982c;
+  --color-heart-level-5: #48982c;
+  --color-heart-level-6: #ad8218;
+  --color-heart-level-7: #ad8218;
+  --color-heart-level-8: #d06c24;
+  --color-heart-level-9: #d06c24;
+  --color-heart-level-10: #c83050;
   --color-category-quests: #a34704; /* orange */
   --color-category-renown: #956e00; /* gold */
   --color-category-museum: #288546; /* green */
@@ -388,6 +398,16 @@
   /* Category colors: the same hues, pale, so tabs hold dark letters & words read on the paper.
    * Only Mines' tab sits darker than its text, to match the other tabs' weight. */
   --color-category-villagers: #e86963;
+  --color-heart-level-1: #d39aeb;
+  --color-heart-level-2: #83c2ed;
+  --color-heart-level-3: #83c2ed;
+  --color-heart-level-4: #a2d683;
+  --color-heart-level-5: #a2d683;
+  --color-heart-level-6: #e5c261;
+  --color-heart-level-7: #e5c261;
+  --color-heart-level-8: #f1ad7d;
+  --color-heart-level-9: #f1ad7d;
+  --color-heart-level-10: #f7869d;
   --color-category-quests: #f68f59;
   --color-category-renown: #e5b23f;
   --color-category-museum: #5ac576;
