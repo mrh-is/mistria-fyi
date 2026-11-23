@@ -21,3 +21,24 @@ it("keeps generated modules out of the dev config's restart dependencies", async
     dependencies.filter((file) => /\/(?:i18n\/catalogs\/\.wuchale|\.svelte-kit)\//u.test(file)),
   ).toEqual([]);
 });
+
+it("disables automatic dependency discovery only for dev SSR", async () => {
+  const { stdout } = await promisify(execFile)(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      `import { resolveConfig } from "vite";
+       const { environments: { client, ssr } } = await resolveConfig({}, "serve");
+       console.log(JSON.stringify({
+         clientNoDiscovery: client.optimizeDeps.noDiscovery,
+         ssrNoDiscovery: ssr.optimizeDeps.noDiscovery,
+       }));`,
+    ],
+    { cwd: new URL("..", import.meta.url) },
+  );
+  expect(JSON.parse(stdout.trim())).toEqual({
+    clientNoDiscovery: false,
+    ssrNoDiscovery: true,
+  });
+});
