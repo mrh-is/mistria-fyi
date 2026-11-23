@@ -39,6 +39,7 @@
 
   import CategorySection from "./category-section.svelte";
   import GroupSection from "./group-section.svelte";
+  import SourcePlace from "./source-place.svelte";
   import VillagerErrands from "./villager-errands.svelte";
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
@@ -144,6 +145,7 @@
   );
 
   useLedgerArrival(() => (ledger.ready ? anchor : ""), restoringScroll);
+  let placeWidth = $state<number>();
 
   let countedProgress = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scratch totals for this snapshot.
@@ -389,12 +391,14 @@
 
         {#each groupSections as entry (entry.section.id)}
           {@const { section, name, spoilered, rows } = entry}
-          <div
-            id={section.id === "progress" ? "source-progress" : section.id}
-            class="scroll-mt-[var(--ledger-anchor-offset,8rem)]"
-            data-source-section
-            data-source-status={spoilered ? undefined : section.state}
-            hidden={!showsPlace(entry)}
+          {@const id = section.id === "progress" ? "source-progress" : section.id}
+          {@const linked = anchor === id || anchor === section.id}
+          <SourcePlace
+            {id}
+            width={placeWidth}
+            status={spoilered ? undefined : section.state}
+            {linked}
+            visible={showsPlace(entry)}
           >
             <SpoilerSection {name} spoilered={spoilered && !userState.state.showSpoilers}>
               <LedgerSection
@@ -407,8 +411,7 @@
                 contextualFamily={section.source && ledgerSourceFamily(section.source)}
                 progress={spoilered ? undefined : section}
                 visible={visibleRow}
-                openOnArrival={anchor === section.id ||
-                  (section.id === "progress" && anchor === "source-progress")}
+                openOnArrival={linked}
               >
                 {#snippet row(
                   placement,
@@ -448,7 +451,7 @@
                 {/snippet}
               </LedgerSection>
             </SpoilerSection>
-          </div>
+          </SourcePlace>
         {/each}
 
         {#if group === "progress"}
@@ -490,7 +493,7 @@
       .map(({ group }) => ({ id: `sources-${group}`, name: sourceTypeLabel(group, locale) })),
   ]}
 >
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6" bind:clientWidth={placeWidth}>
     {#if ledger.ready}<VillagerErrands {anchor} {locale} bind:shown={villagerGroupShown} />{/if}
     {@render sourceGroups(false)}
   </div>

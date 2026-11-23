@@ -94,25 +94,38 @@ test("Almanac search finds an unmounted Furniture row at 4× CPU throttling", as
   expect(await mountedRows()).toBe(0);
 });
 
-test("the source ledger mounts no rows until a place opens", async ({ page }) => {
+test("the source ledger stays within its budget at 4× CPU throttling", async ({ page }) => {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: CPU_THROTTLE });
   await initializeApplication(page, "light", createStoredState());
+  const started = Date.now();
   await gotoApplication(page, "/everything?group=source");
-  // All 721 places start closed. Their heads & wrappers still mount about 11,300 elements (#716).
-  // Keep the readiness floor near the full projection before inspecting mounted rows.
-  // oxlint-disable-next-line playwright/no-raw-locators -- Place boxes have no role of their own.
+  // oxlint-disable-next-line playwright/no-raw-locators -- Place boxes distinguish these disclosures from the group heads.
   const places = page.locator("[data-source-section]");
-  await expect
-    .poll(() => page.evaluate(() => document.querySelectorAll("[data-source-section]").length))
-    .toBeGreaterThanOrEqual(700);
+  const disclosure = places.getByRole("button", { expanded: false }).first();
+  await expect(disclosure).toBeVisible();
+  const interactiveMs = Date.now() - started;
+  await settleLayout(page);
+  const elements = await page.evaluate(() => document.querySelectorAll("*").length);
+  expect(elements).toBeLessThan(5000);
   // oxlint-disable-next-line playwright/no-raw-locators -- Count row boxes across the page.
   const rows = page.locator("[data-ledger-fact]");
-  await settleLayout(page);
   await expect(rows).toHaveCount(0);
-
-  const place = places.first();
-  await place.getByRole("button", { expanded: false }).first().click();
-  // oxlint-disable-next-line playwright/no-raw-locators -- Count the opened place's row boxes.
-  await expect.poll(() => place.locator("[data-ledger-fact]").count()).toBeGreaterThan(0);
+  const scanStarted = Date.now();
+  await analyzeAccessibility(page, {
+    route: "/everything",
+    state: "source-budget",
+    theme: "light",
+  });
+  const scanMs = Date.now() - scanStarted;
+  test.info().annotations.push({
+    type: "budget",
+    description: JSON.stringify({ elements, interactiveMs, scanMs }),
+  });
+  expect(interactiveMs).toBeLessThanOrEqual(10_000);
+  expect(scanMs).toBeLessThanOrEqual(10_000);
+  await disclosure.click();
+  await expect.poll(() => rows.count()).toBeGreaterThan(0);
 });
 
 test("a broad source search keeps the row budget", async ({ page }) => {
@@ -125,6 +138,72 @@ test("a broad source search keeps the row budget", async ({ page }) => {
   await settleLayout(page);
   const rows = await page.evaluate(() => document.querySelectorAll("[data-ledger-fact]").length);
   expect(rows).toBeLessThanOrEqual(200);
+});
+
+test("resizing discards a source place height measured at the old width", async ({ page }) => {
+  await initializeApplication(page, "light", createStoredState());
+  await gotoApplication(page, "/everything?group=source");
+  await openSearch(page, "a");
+  // oxlint-disable-next-line playwright/no-raw-locators -- The place box outlives its heading.
+  const place = page.locator("#store-balor");
+  await expect(place).toBeVisible();
+  await place.evaluate((element) => {
+    element.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+  // oxlint-disable-next-line playwright/no-raw-locators -- Wait for the search result to mount.
+  await expect(place.locator("[data-ledger-fact]").first()).toBeAttached();
+  const placeHeight = () => place.evaluate((element) => element.getBoundingClientRect().height);
+  const expandedHeight = await placeHeight();
+  expect(expandedHeight).toBeGreaterThan(500);
+
+  await page.evaluate(() => {
+    window.scrollTo({ behavior: "instant", top: document.documentElement.scrollHeight });
+  });
+  await expect(place.getByRole("heading")).toHaveCount(0);
+  expect(await placeHeight()).toBeCloseTo(expandedHeight, 0);
+
+  await page.setViewportSize({ height: 844, width: 390 });
+  await expect(place.getByRole("heading")).toHaveCount(0);
+  await expect.poll(placeHeight).toBeLessThan(100);
+});
+
+test("a distant place opens from its fragment & Back restores its row", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await initializeApplication(page, "light", createStoredState());
+  const source = "/everything?group=source";
+  await gotoApplication(page, source);
+  // oxlint-disable-next-line playwright/no-raw-locators -- Target the place's persistent fragment.
+  const place = page.locator("#artifact_dig");
+  const disclosure = place.getByRole("button", {
+    exact: true,
+    name: "Dig up at an artifact dig site",
+  });
+  await expect(place).toBeAttached();
+  await expect(disclosure).toHaveCount(0);
+
+  await gotoApplication(page, `${source}#artifact_dig`);
+  await expect(disclosure).toHaveAttribute("aria-expanded", "true");
+  await expect(disclosure).toBeInViewport();
+
+  // Revisit without a fragment so Back must restore the open row from the reading position.
+  await gotoApplication(page, source);
+  await place.evaluate((element) => {
+    element.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+  await disclosure.click();
+  // oxlint-disable-next-line playwright/no-raw-locators -- Distinguish the Almanac row from the Museum row.
+  const row = place.locator('[data-ledger-fact="almanac/black_tablet"]').getByRole("button", {
+    exact: true,
+    name: "Check Black Tablet",
+  });
+  await row.evaluate((button) => {
+    button.scrollIntoView({ behavior: "instant", block: "center" });
+  });
+  await expect(row).toBeInViewport();
+  await page.getByRole("link", { name: "Back to home" }).click();
+  await expect(page).toHaveURL(/\/en\/?$/u);
+  await page.goBack();
+  await expect(row).toBeInViewport();
 });
 
 test("jumping into Furniture mounts rows near the landing point", async ({ page }) => {
