@@ -1,4 +1,4 @@
-import { localizePath } from "#lib/i18n/locale-path.js";
+import { localizeUrl } from "#lib/i18n/locale-path.js";
 import { rememberLocale } from "#lib/i18n/locale-runtime.js";
 import { ensureLocaleCachedOffline } from "#lib/pwa/offline-locales.js";
 import { goto } from "$app/navigation";
@@ -20,8 +20,9 @@ export const localePreference = {
   async select(locale: LocaleCode): Promise<boolean> {
     if ((await ensureLocaleCachedOffline(locale)) === false) return false;
     rememberLocale(locale);
-    // The target is the page already being displayed, re-localized from the router's own path.
-    void goto(localizePath(page.url.pathname, locale));
+    // The target is the page already being displayed, re-localized with its URL composition intact.
+    const target = localizeUrl(page.url as URL, locale);
+    void goto(`${target.pathname}${target.search}${target.hash}`);
     return true;
   },
 };
