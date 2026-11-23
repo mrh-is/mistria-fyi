@@ -265,9 +265,10 @@ test("Tab right after Back keeps the newly focused control in view", async ({ pa
   await expect(page).toHaveURL(/\/en\/?$/u);
   await page.goBack();
   await expect(row).toBeInViewport();
-  await expect.poll(async () => Math.abs((await position()) - savedOffset)).toBeLessThan(8);
   // The restore pins the row for a moment. Tab from above the window lands on its first row, which
   // sits off-screen, so the browser scrolls to it, and the pin mustn't scroll it back out.
+  // Read the offset before Tab without polling, which could wait for the pin to expire.
+  const restoredOffset = await position();
   await previous.evaluate((button: HTMLElement) => {
     button.focus({ preventScroll: true });
   });
@@ -284,6 +285,7 @@ test("Tab right after Back keeps the newly focused control in view", async ({ pa
     const { bottom, top } = focused.getBoundingClientRect();
     return bottom > 0 && top < globalThis.innerHeight;
   });
+  expect(Math.abs(restoredOffset - savedOffset)).toBeLessThan(8);
   expect(focusedInView).toBe(true);
 });
 

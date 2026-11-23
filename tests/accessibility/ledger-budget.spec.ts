@@ -81,8 +81,10 @@ test("Almanac search finds an unmounted Furniture row at 4× CPU throttling", as
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   const fold = furniture.getByRole("button", { exact: true, name: "Furniture" });
   const doormat = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
+  const mountedRows = () =>
+    furniture.evaluate((section) => section.querySelectorAll("[data-ledger-fact]").length);
   await expect(fold).toHaveAttribute("aria-expanded", "false");
-  await expect(doormat).toHaveCount(0);
+  expect(await mountedRows()).toBe(0);
 
   const started = Date.now();
   await openSearch(page, "Basic Doormat");
@@ -91,7 +93,7 @@ test("Almanac search finds an unmounted Furniture row at 4× CPU throttling", as
 
   await closeSearch(page);
   await expect(fold).toHaveAttribute("aria-expanded", "false");
-  await expect(doormat).toHaveCount(0);
+  expect(await mountedRows()).toBe(0);
 });
 
 test("the source ledger mounts no rows until a place opens", async ({ page }) => {
