@@ -115,7 +115,17 @@ test("keeps the tools and section index within reach in the middle of Furniture"
         ?.querySelector<HTMLElement>("[data-sprite-treatment]")
         ?.style.getPropertyValue("--sprite-url"),
     );
+  const fallbackMask = () =>
+    distantRow.evaluate((button) => {
+      const treatment = button
+        .closest("[data-ledger-row]")
+        ?.querySelector<HTMLElement>(
+          '[data-sprite-treatment="todo"], [data-sprite-treatment="spoiler"]',
+        );
+      return treatment ? getComputedStyle(treatment, "::after").maskImage : null;
+    });
   expect(await spriteMask()).toBe("");
+  expect(await fallbackMask()).toContain("linear-gradient");
   await distantRow.scrollIntoViewIfNeeded();
   await expect.poll(spriteMask).toMatch(/^url\(/u);
   const contents = page.getByRole("navigation", { name: "Page sections" });
