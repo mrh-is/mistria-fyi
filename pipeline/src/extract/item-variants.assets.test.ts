@@ -1,7 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
+import acquisitionCatalog from "#lib/i18n/catalogs/acquisition.json" with { type: "json" };
 import { LOCALE_CODES } from "#lib/types/locale.js";
 import { ITEM_VARIANTS } from "#lib/types/tracker-data.js";
 
@@ -41,22 +40,26 @@ describe("item variants — real assets", () => {
         description: String(item.description),
       };
     });
-    const messages = Object.fromEntries(
-      LOCALE_CODES.map((locale) => [
-        locale,
-        JSON.parse(
-          readFileSync(resolve(import.meta.dirname, `../../../messages/${locale}.json`), "utf8"),
-        ) as Record<string, string>,
-      ]),
+    // Check the stored translations directly so an English fallback cannot satisfy the test.
+    const variantMessages: { translations: Partial<Record<LocaleCode, string | string[]>> }[] =
+      acquisitionCatalog.filter(({ references }) =>
+        references.some(({ file }) => file === "src/lib/data/item-variants.ts"),
+      );
+    expect(variantMessages).toHaveLength(ITEM_VARIANTS.length);
+    expect(new Set(variantMessages.map(({ translations }) => translations.en)).size).toBe(
+      ITEM_VARIANTS.length,
     );
-    const translatedLocales = LOCALE_CODES.filter((locale) => locale !== "en").toSorted();
-
-    for (const variant of ITEM_VARIANTS) {
+    for (const { translations } of variantMessages) {
       for (const locale of LOCALE_CODES) {
-        expect(messages[locale][`variant_${variant}`], `${locale} variant_${variant}`).toMatch(
-          /\S/,
-        );
+        expect(
+          translations[locale],
+          `${locale} variant label for ${String(translations.en)}`,
+        ).toMatch(/\S/);
       }
+    }
+
+    const translatedLocales = LOCALE_CODES.filter((locale) => locale !== "en").toSorted();
+    for (const variant of ITEM_VARIANTS) {
       const { evidence, game, machine } = ITEM_VARIANT_TERMS[variant];
       expect([...game, ...machine].toSorted(), variant).toEqual(translatedLocales);
       if (game.length === 0) continue;
