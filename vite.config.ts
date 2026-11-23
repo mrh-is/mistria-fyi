@@ -200,6 +200,16 @@ export default defineConfig(({ command }) => ({
       serviceWorker: { register: command === "build" },
       version: { name: getAppVersion(), pollInterval: 600_000 },
     }),
+    {
+      apply: "serve",
+      configEnvironment(name) {
+        if (name !== "ssr") return;
+        // Cloudflare enables automatic discovery. Pre-bundling newly discovered dependencies
+        // can split SvelteKit's request store and Svelte's component context across copies (#751).
+        return { optimizeDeps: { noDiscovery: true } };
+      },
+      name: "mistria:dev-ssr-dependencies",
+    },
     localeNameChunksPlugin(),
     offlinePagePlugin(),
     licensesPlugin({
