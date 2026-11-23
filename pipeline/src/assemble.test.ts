@@ -19,7 +19,7 @@ const miscLocal = Object.fromEntries(
 
 /**
  * The smallest fiddle that passes every extractor & validation: tables the reference index
- * requires, the villagers & quests that hard-coded visibility rules name, one almanac item, the
+ * requires, the villagers, quests & Almanac section that reviewed visibility rules name, the
  * Mistmare, its perk, & its Horse Statue quest, and every app UI string.
  */
 function syntheticFiddle() {
@@ -41,14 +41,28 @@ function syntheticFiddle() {
           turnip: { icon_sprite: "spr_ui_item_turnip", name: "Turnip", tags: ["crop"] },
         },
       },
+      other: {
+        song_crystals: {
+          song_crystal_farm_boy: {
+            icon_sprite: "spr_ui_item_song_crystal_farm_boy",
+            name: "Song Crystal - Farm Boy",
+            tags: ["song_crystal"],
+          },
+        },
+      },
     },
     locations: {},
     misc: {
-      ari_stats: { starting_inventory: ["turnip"] },
+      ari_stats: { starting_inventory: ["turnip", "song_crystal_farm_boy"] },
       chicken_statue: { high_price: 2, low_price: 1 },
       wishing_well: { high_price: 2, low_price: 1 },
     },
-    misc_local: { ...miscLocal, crops: "Crops", mistmare: "Mistmare" },
+    misc_local: {
+      ...miscLocal,
+      crops: "Crops",
+      mistmare: "Mistmare",
+      song_crystal: "Song Crystals",
+    },
     monsters: {},
     npcs: {
       adeline: {
@@ -83,6 +97,7 @@ function syntheticFiddle() {
         breaking_the_fire_seal: { name: "Breaking the Fire Seal" },
         find_the_magic_key: { name: "Find the Magic Key" },
         find_the_weathervane: { name: "Find the Weathervane" },
+        meet_the_new_vendors: { name: "Meet the New Vendors" },
         stone_refinery: { name: "Stone Refinery" },
         the_fire_tablet: { name: "The Fire Tablet" },
         upgrade_the_saturday_market: { name: "Upgrade the Saturday Market" },
@@ -103,7 +118,16 @@ function syntheticFiddle() {
     seals: {},
     ui: {
       character_customization: {},
-      menus: { sub_menus: { almanac: { categories: [{ key: "crops", tags: ["crop"] }] } } },
+      menus: {
+        sub_menus: {
+          almanac: {
+            categories: [
+              { key: "crops", tags: ["crop"] },
+              { key: "song_crystal", tags: ["song_crystal"] },
+            ],
+          },
+        },
+      },
       skill_menu: {
         mount: {
           tier_1: [
@@ -153,7 +177,13 @@ describe("assembleTrackerData", () => {
       category: "crops",
       sources: [{ type: "default" }],
     });
-    expect(trackerData.almanac).toEqual({ crops: { items: [{ itemIds: ["turnip"] }] } });
+    expect(trackerData.almanac).toEqual({
+      crops: { items: [{ itemIds: ["turnip"] }] },
+      song_crystal: {
+        items: [{ itemIds: ["song_crystal_farm_boy"] }],
+        visibility: { type: "questCompleted", questId: "meet_the_new_vendors" },
+      },
+    });
     expect(trackerData.pregnancyQuestByVillager).toEqual({ adeline: "adeline_pregnancy_request" });
     expect(trackerData.quests.heart["adeline_pregnancy_request" as QuestId]).toEqual({
       heartLevel: 10,
@@ -180,7 +210,10 @@ describe("assembleTrackerData", () => {
       // The perk needs the Mistmare, so it shares the Mistmare's gate.
       visibility: { type: "questAvailable", questId: "find_the_weathervane" },
     });
-    expect(iconSpritesByItemId).toEqual({ turnip: "spr_ui_item_turnip" });
+    expect(iconSpritesByItemId).toEqual({
+      song_crystal_farm_boy: "spr_ui_item_song_crystal_farm_boy",
+      turnip: "spr_ui_item_turnip",
+    });
     expect(Object.keys(iconSpritesByVillagerId)).toEqual(["adeline", "stillwell", "taliferro"]);
   });
 
@@ -217,6 +250,7 @@ describe("assembleTrackerData", () => {
     expect(villagers?.byLocale.ja.adeline).toBe("アデリン");
     expect(villagers?.byLocale.fr.adeline).toBe("Adeline");
     expect(localeChunks.find((chunk) => chunk.category === "items")?.byLocale.en).toEqual({
+      song_crystal_farm_boy: "Song Crystal - Farm Boy",
       turnip: "Turnip",
     });
   });

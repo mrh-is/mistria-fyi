@@ -202,7 +202,10 @@ export const AlmanacEntrySchema = v.strictObject({
   /** Tells this row apart from same-named rows in its category; absent when no name differs. */
   variant: v.optional(v.picklist(ITEM_VARIANTS)),
 });
-export const AlmanacCategorySchema = v.strictObject({ items: v.array(AlmanacEntrySchema) });
+export const AlmanacCategorySchema = v.strictObject({
+  items: v.array(AlmanacEntrySchema),
+  visibility: v.optional(VisibilitySchema),
+});
 export const AnimalVariantSchema = v.strictObject({
   source: v.variant("type", [source("breed", {}), v.strictObject({ type: v.literal("default") })]),
 });

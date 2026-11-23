@@ -11,11 +11,33 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import type { ItemId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId } from "#lib/types/tracker-data.js";
 
 describe("AlmanacContent", () => {
   beforeEach(async () => {
     await userState.startTrackingByHand();
+  });
+
+  it("reveals the Song Crystals section after Meet the New Vendors", async () => {
+    const section = { name: /^Song Crystals?,/ };
+    const questId = "meet_the_new_vendors" as QuestId;
+    const view = renderWithFeedback(AlmanacContent, { locale: "en" });
+    expect(view.queryByRole("button", section)).toBeNull();
+
+    toolbarState.setSearchQuery("Song Crystal");
+    userState.setQuestState("upgrade_the_saturday_market_plaza" as QuestId, "completed");
+    await tick();
+    expect(view.queryByRole("button", section)).toBeNull();
+
+    userState.setQuestState(questId, "completed");
+    expect(await view.findByRole("button", section)).toBeInTheDocument();
+
+    userState.setQuestState(questId, "none");
+    await tick();
+    expect(view.queryByRole("button", section)).toBeNull();
+
+    userState.toggleShowSpoilers();
+    expect(await view.findByRole("button", section)).toBeInTheDocument();
   });
 
   it("shows Date Inspiration without a duplicate Dates checklist", async () => {

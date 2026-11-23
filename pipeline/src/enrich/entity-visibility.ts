@@ -2,8 +2,10 @@ import { mapNonEmpty } from "#lib/utils/record.js";
 
 import { resolveToVisibility } from "../acquisition/requirement-projector.js";
 import {
+  ALMANAC_SECTION_UNLOCK_QUESTS,
   CROWN_QUEST_GATE,
   HAYDENS_BARN_GATE,
+  SECRET_CHEST_UNLOCK_QUESTS,
   SPELL_MINE_FLOORS,
   SPELL_SOURCES,
   STORE_UNLOCK_QUESTS,
@@ -14,6 +16,7 @@ import { availabilityToVisibility, toAvailableVisibility } from "./availability-
 import { ALWAYS_VISIBLE, simplifyCondition } from "./visibility-condition.js";
 
 import type {
+  AlmanacCategoryId,
   MinesBiomeId,
   QuestId,
   SkillId,
@@ -80,6 +83,11 @@ export function assignEntityVisibility(
 
   assignRecipeVisibility(trackerData, ctx);
   assignItemVisibility(trackerData, ctx);
+  for (const [id, questId] of Object.entries(ALMANAC_SECTION_UNLOCK_QUESTS)) {
+    const section = trackerData.almanac[id as AlmanacCategoryId];
+    if (!section) throw new Error(`Missing Almanac section "${id}" for reviewed visibility gate`);
+    section.visibility = { type: "questCompleted", questId };
+  }
   assignCosmeticVisibility(trackerData, ctx);
   assignMountVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
@@ -209,7 +217,6 @@ function acquisitionSourceCondition(
     case "museum_donation":
     case "proposal":
     case "reach_day":
-    case "secret_chest":
     case "ship_item":
     case "spouseGift":
     case "station":
@@ -218,6 +225,13 @@ function acquisitionSourceCondition(
     case "wedding":
     case "wishing_well":
       return ALWAYS_VISIBLE;
+    case "secret_chest": {
+      const questId = SECRET_CHEST_UNLOCK_QUESTS.get(source.locationId);
+      if (!questId) {
+        throw new Error(`No reviewed secret chest gate for location ${source.locationId}`);
+      }
+      return { type: "questCompleted", questId };
+    }
     case "recipe":
       return ctx.recipes[source.recipeId]?.visibility ?? ALWAYS_VISIBLE;
     case "bait_fish":
@@ -455,7 +469,6 @@ function acquisitionSourceConditions(
     case "reach_day":
     case "renown":
     case "ritual_chamber":
-    case "secret_chest":
     case "ship_item":
     case "spouseGift":
     case "station":
@@ -467,6 +480,7 @@ function acquisitionSourceConditions(
       return { entity, source: ALWAYS_VISIBLE };
     case "mine_floor":
     case "recipe":
+    case "secret_chest":
       return { entity, source: entity };
     case "mines_chest":
     case "mines_dig_site": {

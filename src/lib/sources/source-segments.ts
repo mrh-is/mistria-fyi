@@ -357,7 +357,7 @@ function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments
       const recipe = requireEntry(lookups.recipeNames, source.recipeId, "recipeNames");
       const stationId = requireEntry(lookups.recipeStations, source.recipeId, "recipeStations");
       const station = CRAFTING_STATION_LABELS[stationId]();
-      return productionSourceLabel(`Craft at ${station} via ${recipe}`, source.visibility);
+      return gatedSourceLabel(`Craft at ${station} via ${recipe}`, source.visibility);
     }
     case "renown":
       return [`Get the town rank to level ${String(source.level)}`];
@@ -385,7 +385,7 @@ function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments
     }
     case "station": {
       const station = requireEntry(lookups.stationNames, source.stationId, "stationNames");
-      return productionSourceLabel(`Process at ${station}`, source.visibility);
+      return gatedSourceLabel(`Process at ${station}`, source.visibility);
     }
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
@@ -398,7 +398,10 @@ function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments
     }
     case "secret_chest": {
       const location = requireEntry(lookups.locationNames, source.locationId, "locationNames");
-      return [`Find in the Gold Treasure Chest in the ${location}`];
+      return gatedSourceLabel(
+        `Find in the Gold Treasure Chest in the ${location}`,
+        source.visibility,
+      );
     }
     case "treasure_chest": {
       const { name } = requireEntry(lookups.treasureChestTiers, source.tier, "treasureChestTiers");
@@ -418,7 +421,7 @@ function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments
   }
 }
 
-function productionSourceLabel(label: string, condition?: VisibilityCondition): Segments {
+function gatedSourceLabel(label: string, condition?: VisibilityCondition): Segments {
   return condition && condition.type !== "always" ? [{ condition, unspoilered: [label] }] : [label];
 }
 

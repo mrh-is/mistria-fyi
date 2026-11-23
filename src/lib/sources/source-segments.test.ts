@@ -491,6 +491,22 @@ describe("buildSourceSegments — simple types", () => {
     ]);
   });
 
+  it("covers the secret chest location until its unlock quest is complete", () => {
+    const visibility = {
+      type: "questCompleted",
+      questId: "repair_the_bell_tower" as QuestId,
+    } as const;
+    const source: Source = {
+      type: "secret_chest",
+      locationId: "bell_tower_f2" as LocationId,
+      visibility,
+    };
+    const lookups = { ...BASE_LOOKUPS, locationNames: { bell_tower_f2: "Bell Tower" } };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      { condition: visibility, unspoilered: ["Find in the Gold Treasure Chest in the Bell Tower"] },
+    ]);
+  });
+
   it("upgrade — stairs", () => {
     const source: Source = {
       type: "upgrade",

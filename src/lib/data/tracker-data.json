@@ -10523,7 +10523,11 @@
             "song_crystal_valens_theme"
           ]
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "meet_the_new_vendors"
+      }
     }
   },
   "animals": {
@@ -47742,45 +47746,85 @@
       "sources": [
         {
           "type": "recipe",
-          "recipeId": "water_sprite"
+          "recipeId": "water_sprite",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "breaking_the_fire_seal"
+          }
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "breaking_the_fire_seal"
+      }
     },
     "water_sprite_statue_v2": {
       "category": "furniture",
       "sources": [
         {
           "type": "recipe",
-          "recipeId": "water_sprite"
+          "recipeId": "water_sprite",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "breaking_the_fire_seal"
+          }
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "breaking_the_fire_seal"
+      }
     },
     "water_sprite_statue_v3": {
       "category": "furniture",
       "sources": [
         {
           "type": "recipe",
-          "recipeId": "water_sprite"
+          "recipeId": "water_sprite",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "breaking_the_fire_seal"
+          }
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "breaking_the_fire_seal"
+      }
     },
     "water_sprite_statue_v4": {
       "category": "furniture",
       "sources": [
         {
           "type": "recipe",
-          "recipeId": "water_sprite"
+          "recipeId": "water_sprite",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "breaking_the_fire_seal"
+          }
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "breaking_the_fire_seal"
+      }
     },
     "water_sprite_statue_v5": {
       "category": "furniture",
       "sources": [
         {
           "type": "recipe",
-          "recipeId": "water_sprite"
+          "recipeId": "water_sprite",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "breaking_the_fire_seal"
+          }
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "breaking_the_fire_seal"
+      }
     },
     "water_sprite_statue_large_v1": {
       "category": "furniture",
@@ -71203,9 +71247,17 @@
       "sources": [
         {
           "type": "secret_chest",
-          "locationId": "bell_tower_f2"
+          "locationId": "bell_tower_f2",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "repair_the_bell_tower"
+          }
         }
-      ]
+      ],
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "repair_the_bell_tower"
+      }
     },
     "song_crystal_adelines_theme": {
       "category": "song_crystal",
@@ -90305,10 +90357,18 @@
       "sources": [
         {
           "type": "secret_chest",
-          "locationId": "beach_secret"
+          "locationId": "beach_secret",
+          "visibility": {
+            "type": "questCompleted",
+            "questId": "breaking_the_fire_seal"
+          }
         }
       ],
-      "stationId": "woodcrafting"
+      "stationId": "woodcrafting",
+      "visibility": {
+        "type": "questCompleted",
+        "questId": "breaking_the_fire_seal"
+      }
     },
     "water_sprite_large": {
       "sources": [
