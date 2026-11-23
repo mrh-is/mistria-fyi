@@ -125,7 +125,7 @@ test("keeps the tools and section index within reach in the middle of Furniture"
       return treatment ? getComputedStyle(treatment, "::after").maskImage : null;
     });
   expect(await spriteMask()).toBe("");
-  expect(await fallbackMask()).toContain("linear-gradient");
+  expect(await fallbackMask()).toBe("linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0))");
   await distantRow.scrollIntoViewIfNeeded();
   await expect.poll(spriteMask).toMatch(/^url\(/u);
   const contents = page.getByRole("navigation", { name: "Page sections" });
