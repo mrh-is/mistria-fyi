@@ -113,7 +113,7 @@ exit 0
       },
     });
   const branches = () => gitIn(primary, "branch", "--format=%(refname:short)").split("\n");
-  return { branches, detachedWorktree, directory, primary, prs, run, worktree };
+  return { bin, branches, detachedWorktree, directory, primary, prs, run, worktree };
 }
 
 describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
@@ -342,5 +342,30 @@ describe.skipIf(process.platform === "win32")("worktree cleanup", () => {
 
     expect(run([], "120").stdout).not.toContain("would delete branch recent");
     expect(run().stdout).toContain("would delete branch recent (PR MERGED)");
+  });
+
+  it("keeps a branch that moves just before deletion", () => {
+    const { bin, primary, run, worktree } = fixture();
+    const topic = worktree("topic", "MERGED");
+    gitIn(primary, "worktree", "remove", topic);
+    const unpublished = worktree("unpublished");
+    const newTip = gitIn(unpublished, "rev-parse", "HEAD");
+    const git = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
+    const wrapper = join(bin, "git");
+    writeFileSync(
+      wrapper,
+      `#!/usr/bin/env bash
+if [ "$1" = update-ref ] && [ "$3" = -d ] && [ "$4" = refs/heads/topic ]; then
+  "${git}" update-ref refs/heads/topic "${newTip}" || exit 1
+fi
+exec "${git}" "$@"
+`,
+      { mode: 0o755 },
+    );
+
+    const result = run(["--apply"]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("failed to delete branch topic");
+    expect(gitIn(primary, "rev-parse", "refs/heads/topic")).toBe(newTip);
   });
 });

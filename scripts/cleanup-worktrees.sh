@@ -155,9 +155,14 @@ while read -r ref head latest checked_out; do
   [ "$head" = "$pr_head" ] || continue
   if [ "$apply" = false ]; then
     echo "would delete branch $branch (PR $state)"
-  elif [ "$(git rev-parse --verify "$ref")" != "$head" ]; then
-    echo "keep branch $branch: tip changed"
-  elif git branch -D -q -- "$branch"; then
+    continue
+  fi
+  # Refresh the checkout check after the PR lookup. Require the verified tip inside Git's
+  # ref transaction so another process moving the branch can't cause unverified work to be deleted.
+  checkout=$(git for-each-ref --format='%(worktreepath)' "$ref") || { failed=1; continue; }
+  if [ -n "$checkout" ]; then
+    echo "keep branch $branch: checked out"
+  elif git update-ref --no-deref -d "$ref" "$head"; then
     echo "deleted branch $branch (PR $state)"
   else
     echo "failed to delete branch $branch"
