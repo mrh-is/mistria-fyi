@@ -41,23 +41,22 @@ for (const { theme, touch, width } of [
       await gotoApplication(page, "/");
       const link = page
         .getByRole("region", { name: "Places to go today" })
-        .getByRole("link")
-        .first();
-      const destination = await link.getAttribute("href");
-      const homeLabel = await link.textContent();
-      const homeCount = homeLabel?.match(/([\d,]+) to do/u)?.[1] ?? "";
-      expect(homeCount).toBeTruthy();
+        .getByRole("link", { name: /^Dig sites Gathering [\d,]+$/u });
+      const destination = "/en/everything?group=source#artifact_dig";
+      await expect(link).toHaveAttribute("href", destination);
+      const count = link.getByText(/^[\d,]+$/u);
+      await expect(count).toBeVisible();
+      const homeCount = await count.textContent();
       await (touch ? link.tap() : link.click());
-      await expect(page).toHaveURL(new URL(destination ?? "", page.url()).href);
+      await expect(page).toHaveURL(new URL(destination, page.url()).href);
 
       const placeId = new URL(page.url()).hash;
       // oxlint-disable-next-line playwright/no-raw-locators -- the Home link supplies the place anchor
       const place = page.locator(placeId);
-      const check = place.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
-      const label = await check.getAttribute("aria-label");
-      const name = label?.slice(6) ?? "";
-      const checkItem = place.getByRole("button", { exact: true, name: `Check ${name}` });
-      const uncheckItem = place.getByRole("button", { exact: true, name: `Uncheck ${name}` });
+      // oxlint-disable-next-line playwright/no-raw-locators -- The Almanac and Museum rows share the same check button name.
+      const row = place.locator('[data-ledger-fact="almanac/black_tablet"]');
+      const checkItem = row.getByRole("button", { exact: true, name: "Check Black Tablet" });
+      const uncheckItem = row.getByRole("button", { exact: true, name: "Uncheck Black Tablet" });
       const shelfCount = place.getByText(`${homeCount} to do`, { exact: true });
       await expect(shelfCount).toBeVisible();
       const rowHeight = await checkItem.evaluate(
@@ -83,17 +82,17 @@ for (const { theme, touch, width } of [
       await (touch ? disclosure.tap() : disclosure.click());
       await expect(disclosure).toHaveAttribute("aria-expanded", "false");
       await expect(checkItem).toBeHidden();
-      await expect(page).toHaveURL(new URL(destination ?? "", page.url()).href);
+      await expect(page).toHaveURL(new URL(destination, page.url()).href);
       await (touch ? disclosure.tap() : disclosure.click());
       await expect(checkItem).toBeVisible();
 
-      await openSearch(page, name);
+      await openSearch(page, "Black Tablet");
       await expect(checkItem).toBeVisible();
       await closeSearch(page);
       await openVisibilityPanel(page);
       const filters = page.getByRole("dialog", { name: "Filters" });
       if (width < 701) await filters.getByRole("button", { name: /^Source types/ }).click();
-      await filters.getByRole("switch", { exact: true, name: "Stores" }).click();
+      await filters.getByRole("switch", { exact: true, name: "Gathering" }).click();
       await page.keyboard.press("Escape");
       await expect(place).toBeHidden();
     });
@@ -163,6 +162,29 @@ test("a phone can fold and reopen a linked Almanac section", async ({ page }) =>
   await expect(page).toHaveURL(/#furniture$/u);
   await disclosure.click();
   await expect(furniture.getByRole("button", { name: /^Check /u }).first()).toBeVisible();
+});
+
+test("Back returns to the open Museum wing after a phone jump", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await initializeApplication(page, "dark", createStoredState());
+  await gotoApplication(page, "/museum");
+  const archaeology = page.getByRole("region", { exact: true, name: "Archaeology" });
+  const opener = archaeology.getByRole("button", { exact: true, name: "Archaeology" });
+  await opener.click();
+  await page.evaluate(() => {
+    globalThis.scrollBy(0, 500);
+  });
+  await archaeology.getByRole("button", { exact: true, name: "Sections" }).click();
+  await page
+    .getByRole("navigation", { name: "Jump to a section" })
+    .getByRole("link", { exact: true, name: "Fish" })
+    .click();
+  await expect(page).toHaveURL(/\/museum#fish$/u);
+
+  await page.goBack();
+
+  await expect(page).toHaveURL(/\/museum$/u);
+  await expect(opener).toHaveAttribute("aria-expanded", "true");
 });
 
 test("refreshing shelves with zero search matches returns focus to search", async ({ page }) => {
