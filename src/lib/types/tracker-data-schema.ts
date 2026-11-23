@@ -31,18 +31,37 @@ export const LevelRangeSchema = v.strictObject({ start: number, end: number });
 // Leaf fields and every nonrecursive entity are inferred directly from their schemas.
 export const VisibilityLeafSchema = v.variant("type", [
   v.strictObject({ type: v.literal("always") }),
+  v.strictObject({ type: v.literal("biomeReached"), biomeId: id("MinesBiomeId") }),
+  v.strictObject({ type: v.literal("questCategoryVisible"), questType }),
   v.strictObject({ type: v.literal("hasUpperFloor") }),
   v.strictObject({ type: v.literal("heartLevel"), level: number, villagerId: id("VillagerId") }),
+  v.strictObject({
+    type: v.literal("heartQuestLevel"),
+    questId: id("QuestId"),
+    villagerId: id("VillagerId"),
+  }),
   v.strictObject({ type: v.literal("isDating") }),
   v.strictObject({ type: v.literal("married"), villagerId: id("VillagerId") }),
   v.strictObject({ type: v.literal("mineFloor"), floor: number }),
+  v.strictObject({
+    type: v.literal("mountVisible"),
+    mountAppearanceId: id("MountAppearanceId"),
+  }),
+  v.strictObject({ type: v.literal("perkTierReached"), perkId: id("PerkId") }),
   v.strictObject({ type: v.literal("perkUnlocked"), perkId: id("PerkId") }),
+  v.strictObject({ type: v.literal("previousTownRank"), questId: id("QuestId") }),
   v.strictObject({ type: v.literal("questAvailable"), questId: id("QuestId") }),
   v.strictObject({ type: v.literal("questCompleted"), questId: id("QuestId") }),
   v.strictObject({ type: v.literal("reachedSeason"), season }),
+  v.strictObject({ type: v.literal("recipeVisible"), recipeId: id("RecipeId") }),
   v.strictObject({ type: v.literal("renownLevel"), level: number }),
   v.strictObject({ type: v.literal("skillLevel"), level: number, skillId: id("SkillId") }),
   v.strictObject({ type: v.literal("station"), stationId: craftingStationId }),
+  v.strictObject({
+    type: v.literal("storeUnlock"),
+    state: v.picklist(["available", "completed"]),
+    storeId: id("StoreId"),
+  }),
   v.strictObject({ type: v.literal("villagerKnown"), villagerId: id("VillagerId") }),
 ]);
 const VisibilitySchema: v.GenericSchema<unknown, VisibilityCondition> = v.lazy(() =>
@@ -166,6 +185,7 @@ export const SourceSchema = v.variant("type", [
   source("reach_day", {
     triggerDate: v.strictObject({ ...DaySchema.entries, year: v.optional(number) }),
   }),
+  source("reach_day", { festivalId: id("FestivalId") }),
   source("recipe", { recipeId: id("RecipeId") }),
   source("renown", { level: number }),
   source("ritual_chamber", { perkId: id("PerkId") }),
@@ -302,7 +322,12 @@ export const SkillSchema = v.strictObject({
 });
 export const StoreSchema = v.strictObject({
   upgradeAction: v.optional(v.picklist(STORE_UPGRADE_ACTIONS)),
-  visibility: v.optional(VisibilitySchema),
+  visibility: v.optional(
+    v.strictObject({
+      type: v.literal("questCompleted"),
+      questId: id("QuestId"),
+    }),
+  ),
 });
 export const TownRankSchema = v.strictObject({ levels: LevelRangeSchema });
 const RenownRewardSchema = v.variant("type", [

@@ -14,10 +14,13 @@ import {
 
 import type { DeepPartial } from "#lib/test-utils/deep-partial.js";
 import type {
+  MinesBiomeId,
   PerkId,
   QuestId,
   QuestType,
+  RecipeId,
   SkillId,
+  StoreId,
   StoryQuest,
   TrackerData,
   VillagerId,
@@ -90,6 +93,61 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
 }
 
 describe("isConditionVisible", () => {
+  it("resolves the first floor of a biome for both disclosure and progress recording", () => {
+    const biomeId = "test_biome" as MinesBiomeId;
+    const data = makeTrackerData({
+      mines: { biomes: [{ floors: { start: 37, end: 56 }, id: biomeId }] },
+    });
+    const condition: VisibilityCondition = { type: "biomeReached", biomeId };
+    const before = makeCompletedState({ mineFloor: 36 });
+    const at = makeCompletedState({ mineFloor: 37 });
+    expect(isConditionVisible(condition, deriveProgressionState(before, data, false))).toBe(false);
+    expect(isConditionVisible(condition, deriveProgressionState(at, data, false))).toBe(true);
+    expect(planCondition(condition, before, data)).toEqual([{ type: "mineFloor", floor: 37 }]);
+  });
+
+  it("resolves a recipe gate and distinguishes an offered store unlock from a completed one", () => {
+    const recipeId = "test_recipe" as RecipeId;
+    const storeId = "test_store" as StoreId;
+    const questId = "test_unlock" as QuestId;
+    const completion = { type: "storeUnlock", state: "completed", storeId } as const;
+    const offer = { ...completion, state: "available" } as const;
+    const recipe = { type: "recipeVisible", recipeId } as const;
+    const data = makeTrackerData({
+      quests: { story: { [questId]: { sources: [] } } },
+      recipes: { [recipeId]: { visibility: completion } },
+      stores: { [storeId]: { visibility: { type: "questCompleted", questId } } },
+    });
+    const obtained = makeCompletedState({ questStates: { [questId]: "obtained" } });
+    const completed = makeCompletedState({ questStates: { [questId]: "completed" } });
+    const offered = deriveProgressionState(obtained, data, false);
+    expect(isConditionVisible(offer, offered)).toBe(true);
+    expect(isConditionVisible(recipe, offered)).toBe(false);
+    expect(isConditionVisible(recipe, deriveProgressionState(completed, data, false))).toBe(true);
+    expect(canPlanConditionMutations(recipe, data)).toBe(true);
+    expect(planCondition(recipe, obtained, data)).toEqual([{ type: "questCompleted", questId }]);
+  });
+
+  it("resolves a rank quest's preceding rank when rank widths differ", () => {
+    const questId = "test_rank_quest" as QuestId;
+    const condition = { type: "previousTownRank", questId } as const;
+    const data = makeTrackerData({
+      quests: { story: { [questId]: { sources: [], townRankLevel: 20 } } },
+      renown: {
+        townRanks: [
+          { levels: { start: 0, end: 6 } },
+          { levels: { start: 7, end: 19 } },
+          { levels: { start: 20, end: 20 } },
+        ],
+      },
+    });
+    const before = makeCompletedState({ renown: 6 });
+    const at = makeCompletedState({ renown: 7 });
+    expect(isConditionVisible(condition, deriveProgressionState(before, data, false))).toBe(false);
+    expect(isConditionVisible(condition, deriveProgressionState(at, data, false))).toBe(true);
+    expect(planCondition(condition, before, data)).toEqual([{ type: "renownLevel", level: 7 }]);
+  });
+
   it.each([
     ["stone_refinery", "stone_refinery"],
     ["dragon_forge", "find_the_magic_key"],
@@ -136,11 +194,14 @@ describe("isConditionVisible", () => {
       const quest = actualTrackerData.quests.story[id];
       expect(quest, id).toBeDefined();
       const level = (index + 1) * 10;
-      expect(isConditionVisible(quest.visibility, makeState({ renown: 0 })), id).toBe(false);
-      expect(isConditionVisible(quest.visibility, makeState({ renown: level - 1 })), id).toBe(
-        false,
-      );
-      expect(isConditionVisible(quest.visibility, makeState({ renown: level })), id).toBe(true);
+      const visibleAt = (renown: number) =>
+        isConditionVisible(
+          quest.visibility,
+          deriveProgressionState(makeCompletedState({ renown }), actualTrackerData, false),
+        );
+      expect(visibleAt(0), id).toBe(false);
+      expect(visibleAt(level - 1), id).toBe(false);
+      expect(visibleAt(level), id).toBe(true);
     }
   });
 

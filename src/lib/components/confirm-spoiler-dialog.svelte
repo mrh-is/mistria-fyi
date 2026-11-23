@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/button.svelte";
+  import { trackerData } from "#lib/data/index.js";
   import { canPlanConditionMutations } from "#lib/engine/visibility.js";
 
   import type { GuardSubject } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -23,7 +24,7 @@
     subject?: GuardSubject;
   } = $props();
 
-  const invertible = $derived(canPlanConditionMutations(condition));
+  const invertible = $derived(canPlanConditionMutations(condition, trackerData));
   // Checking off an item whose name is still covered gets the playful wording; anything the player
   // can see gets the plain question. Without the update button, "just this" has nothing to
   // contrast with.

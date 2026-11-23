@@ -675,6 +675,22 @@ describe("buildSourceSegments — letter and perk", () => {
     ]);
   });
 
+  it("reads a festival letter's date from the festival without changing the label", () => {
+    const source: Source = { type: "reach_day", festivalId: "shooting_star" as FestivalId };
+    const lookups = {
+      ...BASE_LOOKUPS,
+      festivals: {
+        shooting_star: {
+          date: { day: 28, season: "summer" as const },
+          name: "Shooting Star Festival",
+        },
+      },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      "Receive in a letter after reaching Summer 28",
+    ]);
+  });
+
   it("builds the perk grammar for a perk source", () => {
     const source: Source = { type: "perk", perkId: "taste_maker" as PerkId };
     expect(buildSourceSegments(source, BASE_LOOKUPS)[0]).toBe("Unlock ");

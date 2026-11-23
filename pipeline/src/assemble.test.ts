@@ -178,7 +178,7 @@ describe("assembleTrackerData", () => {
         },
       ],
       // The perk needs the Mistmare, so it shares the Mistmare's gate.
-      visibility: { type: "questAvailable", questId: "find_the_weathervane" },
+      visibility: { type: "mountVisible", mountAppearanceId: "mistmare" },
     });
     expect(iconSpritesByItemId).toEqual({ turnip: "spr_ui_item_turnip" });
     expect(Object.keys(iconSpritesByVillagerId)).toEqual(["adeline", "stillwell", "taliferro"]);

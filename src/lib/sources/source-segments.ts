@@ -347,7 +347,13 @@ function formatSourceSegments(source: Source, lookups: SegmentLookups): Segments
     case "quest":
       return buildQuestSegments(source, lookups);
     case "reach_day": {
-      const { day, season, year } = source.triggerDate;
+      const { day, season, year } =
+        "festivalId" in source
+          ? {
+              ...requireEntry(lookups.festivals, source.festivalId, "festivals").date,
+              year: undefined,
+            }
+          : source.triggerDate;
       const date = year
         ? `${lookups.seasonNames[season]} ${String(day)}, Year ${String(year)}`
         : formatDate(season, day, lookups.seasonNames);
@@ -446,7 +452,12 @@ function formatStoreQualifier(
   const hasStoreGate =
     storeGate !== undefined &&
     storeGate.type !== "always" &&
-    visibilityContains(sourceVisibility, storeGate);
+    (visibilityContains(sourceVisibility, {
+      type: "storeUnlock",
+      state: "available",
+      storeId: source.storeId,
+    }) ||
+      visibilityContains(sourceVisibility, storeGate));
   const storeAction = hasStoreGate
     ? storeActionClause(lookups.stores[source.storeId]?.upgradeAction)
     : undefined;
@@ -912,6 +923,9 @@ function visibilityContains(
   condition: VisibilityCondition,
   expected: VisibilityCondition,
 ): boolean {
+  if (condition.type === "storeUnlock" && expected.type === "storeUnlock") {
+    return condition.storeId === expected.storeId && condition.state === expected.state;
+  }
   if (
     (condition.type === "questAvailable" || condition.type === "questCompleted") &&
     (expected.type === "questAvailable" || expected.type === "questCompleted")
