@@ -160,6 +160,10 @@ Use standalone Playwright Chromium for desktop evidence. The in-app browser pane
 page at 1280 CSS pixels but crop the right edge to the pane width, making a centered column appear
 off-center.
 
+If Chromium exits at launch with `bootstrap_check_in` and `Permission denied (1100)` in a Codex
+desktop worktree, see [Chromium on macOS](machine-setup.md#chromium-on-macos) for the launch probe &
+one-time sandbox approval.
+
 Run this from the workspace root. Replace the example URL with the dev server URL and route you're
 verifying. For an interaction state, perform the interaction before taking the screenshot.
 

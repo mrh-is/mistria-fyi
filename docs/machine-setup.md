@@ -153,6 +153,33 @@ worktrees. See [Codex Git sandbox](codex-git-sandbox.md) before changing writabl
 diagnosing an “index.lock” denial. Command allowlists do not grant filesystem access, & restarting
 Codex with unchanged settings does not remove that protection.
 
+### Chromium on macOS
+
+In a macOS Codex desktop worktree, Playwright can find the pinned Chromium but fail during
+`chromium.launch()`. When Chromium tries to register its process-specific
+`org.chromium.Chromium.MachPortRendezvousServer.<pid>` Mach service, Codex’s Seatbelt policy can
+deny `bootstrap_check_in` with `Permission denied (1100)`. Chromium exits with SIGTRAP before it
+loads a page. Codex owns this policy, and its documented project settings offer no Mach service
+registration permission. See the
+[Codex sandbox docs](https://developers.openai.com/codex/concepts/sandboxing) and the
+[upstream Chromium report](https://github.com/openai/codex/issues/21292).
+
+Run `node scripts/machine-doctor.ts --for browser` to confirm the pinned browser is installed. Then
+reproduce the launch failure from the workspace root in a default Codex shell:
+
+```sh
+pnpm exec node --input-type=module - <<'JS'
+import { chromium } from "@playwright/test";
+const browser = await chromium.launch();
+await browser.close();
+JS
+```
+
+If the doctor passes & the launch shows this exact error, request one-time sandbox approval for the
+specific Playwright command you need. In the Codex shell tool, use `require_escalated` for that
+call. Keep the session on its normal sandbox profile & use the installed Chromium with its usual
+launch options.
+
 ## Git hooks
 
 Configure the repository's pre-commit hook once per clone from the main checkout:
