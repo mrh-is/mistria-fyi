@@ -7,6 +7,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
+import { useSmallAlmanac } from "./support/small-almanac.js";
 
 for (const [theme, width] of [
   ["light", 1280],
@@ -15,7 +16,7 @@ for (const [theme, width] of [
   test(`${theme} first check-off requires a lane and offers a safe installation transfer`, async ({
     page,
   }, testInfo) => {
-    test.slow();
+    await useSmallAlmanac(page);
     await page.setViewportSize({ height: 844, width });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));

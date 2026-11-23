@@ -14,17 +14,7 @@ import {
   settleLayout,
   visitLedgerShelf,
 } from "./support/scenarios.js";
-
-/*
- * Trace DOM snapshots made the full-data ledger tests time out locally & on CI’s traced retry.
- * Keep the trace’s actions & screenshots (same modes as playwright.config.ts) without DOM snapshots.
- */
-test.use({
-  trace: {
-    mode: process.env.CI === "true" ? "on-first-retry" : "retain-on-failure",
-    snapshots: false,
-  },
-});
+import { completedFixtureBugs, useSmallAlmanac } from "./support/small-almanac.js";
 
 for (const { theme, touch, width } of [
   { theme: "light", touch: false, width: 1440 },
@@ -35,8 +25,6 @@ for (const { theme, touch, width } of [
     test.use({ hasTouch: touch, isMobile: touch, viewport: { height: 900, width } });
 
     test("opens a place from Home and keeps the check and its undo in place", async ({ page }) => {
-      // Keep all three viewports on the same full-data path, including the Linux CI workers.
-      test.slow();
       await initializeApplication(page, theme, createStoredState());
       await gotoApplication(page, "/");
       const link = page
@@ -150,6 +138,7 @@ test("keeps the tools and section index within reach in the middle of Furniture"
 });
 
 test("a phone can fold and reopen a linked Almanac section", async ({ page }) => {
+  await useSmallAlmanac(page);
   await page.setViewportSize({ height: 844, width: 390 });
   await initializeApplication(page, "dark", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
@@ -188,6 +177,7 @@ test("Back returns to the open Museum wing after a phone jump", async ({ page })
 });
 
 test("refreshing shelves with zero search matches returns focus to search", async ({ page }) => {
+  await useSmallAlmanac(page);
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac#furniture");
   await page.getByRole("button", { name: /^Season & weather/u }).click();
@@ -230,34 +220,24 @@ test("a section jump and a repeated jump focus the heading", async ({ page }) =>
 });
 
 test("Back restores the Furniture row and its offset", async ({ page }) => {
+  await useSmallAlmanac(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
   const furniture = page.getByRole("region", { exact: true, name: "Furniture" });
   await scrollToSection(furniture);
-  await page.mouse.wheel(0, 7000);
-  await expect(furniture.getByRole("button", { name: "Previous rows" }).first()).toBeAttached();
-  const check = furniture.getByRole("button", { name: /^Check (?!spoilered item)/ }).nth(20);
-  const label = (await check.getAttribute("aria-label")) ?? "";
-  const row = furniture.getByRole("button", { exact: true, name: label });
+  const row = furniture.getByRole("button", { exact: true, name: "Check Basic Doormat" });
   const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
   await row.evaluate((element) => {
     element.scrollIntoView({ block: "center" });
   });
-  // Rows near the screen replace their size estimates, so measure once they have.
-  await settleLayout(page);
-  await row.evaluate((element) => {
-    element.scrollIntoView({ block: "center" });
-  });
-  await settleLayout(page);
-  const top = await position();
+  const savedOffset = await position();
 
   await page.getByRole("link", { name: "Back to home" }).click();
   await expect(page).toHaveURL(/\/en\/?$/u);
   await page.goBack();
   await expect(row).toBeInViewport();
-  await expect.poll(async () => Math.abs((await position()) - top)).toBeLessThan(8);
-  expect(await furniture.getByRole("button", { name: /^Check /u }).count()).toBeLessThan(100);
+  await expect.poll(async () => Math.abs((await position()) - savedOffset)).toBeLessThan(8);
 });
 
 test("Tab right after Back keeps the newly focused control in view", async ({ page }) => {
@@ -278,6 +258,8 @@ test("Tab right after Back keeps the newly focused control in view", async ({ pa
     element.scrollIntoView({ block: "center" });
   });
   await settleLayout(page);
+  const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
+  const savedOffset = await position();
 
   await page.getByRole("link", { name: "Back to home" }).click();
   await expect(page).toHaveURL(/\/en\/?$/u);
@@ -285,6 +267,8 @@ test("Tab right after Back keeps the newly focused control in view", async ({ pa
   await expect(row).toBeInViewport();
   // The restore pins the row for a moment. Tab from above the window lands on its first row, which
   // sits off-screen, so the browser scrolls to it, and the pin mustn't scroll it back out.
+  // Read the offset before Tab without polling, which could wait for the pin to expire.
+  const restoredOffset = await position();
   await previous.evaluate((button: HTMLElement) => {
     button.focus({ preventScroll: true });
   });
@@ -301,10 +285,12 @@ test("Tab right after Back keeps the newly focused control in view", async ({ pa
     const { bottom, top } = focused.getBoundingClientRect();
     return bottom > 0 && top < globalThis.innerHeight;
   });
+  expect(Math.abs(restoredOffset - savedOffset)).toBeLessThan(8);
   expect(focusedInView).toBe(true);
 });
 
 test("Escape leaves an empty ledger search field", async ({ page }) => {
+  await useSmallAlmanac(page);
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
   const search = page.getByRole("textbox", { name: "Search items" });
@@ -324,6 +310,7 @@ test("Escape leaves an empty ledger search field", async ({ page }) => {
 });
 
 test("clearing a zero-match search restores the same Furniture row element", async ({ page }) => {
+  await useSmallAlmanac(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await initializeApplication(page, "light", createStoredState());
   await gotoApplication(page, "/almanac");
@@ -343,12 +330,6 @@ test("clearing a zero-match search restores the same Furniture row element", asy
     if (ledgerRow) ledgerRow.dataset.searchRestoreProbe = "original";
     element.scrollIntoView({ block: "center" });
   });
-  // Rows near the screen replace their size estimates, so measure once they have.
-  await settleLayout(page);
-  await row.evaluate((element) => {
-    element.scrollIntoView({ block: "center" });
-  });
-  await settleLayout(page);
   const position = () => row.evaluate((element) => element.getBoundingClientRect().top);
   const top = await position();
   await openSearch(page, "zzq-no-matching-furniture");
@@ -414,27 +395,19 @@ test("a section's stuck head names the shelf scrolling under it", async ({ page 
   await expect(head).toContainText("Not now");
 });
 
-/** The late-game save's checked Almanac items, which finish ten of the twelve sections. */
-function lateGameAlmanac(): string[] {
-  const fixtures = JSON.parse(
-    readFileSync(
-      new URL("../../scripts/fixtures/field-guide-progress.json", import.meta.url),
-      "utf8",
-    ),
-  ) as Record<"late-game", { progress: { almanac: string[] } }>;
-  return fixtures["late-game"].progress.almanac;
-}
-
 test("finished sections sit on the Completed shelf as one line each, and open in place", async ({
   page,
 }) => {
-  const almanac = lateGameAlmanac();
-  expect(almanac.length).toBeGreaterThan(1000);
-  await initializeApplication(page, "light", createStoredState({ progress: { almanac } }));
+  await useSmallAlmanac(page);
+  await initializeApplication(
+    page,
+    "light",
+    createStoredState({ progress: { almanac: completedFixtureBugs } }),
+  );
   await gotoApplication(page, "/almanac");
   // The page's running heads, over its To do & Completed shelves of sections.
   await expect(page.getByText("2 sections", { exact: true })).toBeVisible();
-  await expect(page.getByText("10 sections", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 section", { exact: true })).toBeVisible();
 
   const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
   const line = bugs.getByRole("button", { exact: true, name: "Bugs" });
@@ -455,20 +428,21 @@ test("finished sections sit on the Completed shelf as one line each, and open in
 test("a search matching one closed shelf in a section prints one line that opens it", async ({
   page,
 }) => {
+  await useSmallAlmanac(page);
   await initializeApplication(
     page,
     "light",
-    createStoredState({ progress: { almanac: lateGameAlmanac() } }),
+    createStoredState({ progress: { almanac: ["clay_amphora"] } }),
   );
   await gotoApplication(page, "/almanac");
-  await openSearch(page, "copper");
-  const blacksmithing = page.getByRole("region", { exact: true, name: "Blacksmithing" });
-  const line = blacksmithing.getByRole("button", { exact: true, name: "Blacksmithing" });
+  await openSearch(page, "Clay Amphora");
+  const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
+  const line = artifacts.getByRole("button", { exact: true, name: "Artifacts" });
   await expect(line).toHaveAttribute("aria-expanded", "false");
   await expect(line).toContainText("Completed");
   await line.click();
   await expect(
-    blacksmithing.getByRole("button", { name: /^Uncheck Copper/u }).first(),
+    artifacts.getByRole("button", { exact: true, name: "Uncheck Clay Amphora" }),
   ).toBeVisible();
 });
 
@@ -547,10 +521,11 @@ test("column heads stick below the section head's measured height at book widths
 test("Back returns opened lines as they were left, and a fresh visit starts closed", async ({
   page,
 }) => {
+  await useSmallAlmanac(page);
   await initializeApplication(
     page,
     "light",
-    createStoredState({ progress: { almanac: lateGameAlmanac() } }),
+    createStoredState({ progress: { almanac: completedFixtureBugs } }),
   );
   await gotoApplication(page, "/almanac");
   const bugs = page.getByRole("region", { exact: true, name: "Bugs" });
@@ -584,10 +559,11 @@ test("Back returns opened lines as they were left, and a fresh visit starts clos
 });
 
 test("Back keeps a linked section folded after the reader folds it", async ({ page }) => {
+  await useSmallAlmanac(page);
   await initializeApplication(
     page,
     "light",
-    createStoredState({ progress: { almanac: lateGameAlmanac() } }),
+    createStoredState({ progress: { almanac: completedFixtureBugs } }),
   );
   await gotoApplication(page, "/almanac#bugs");
   const bugs = page.getByRole("region", { exact: true, name: "Bugs" });

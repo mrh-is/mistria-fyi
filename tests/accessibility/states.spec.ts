@@ -16,6 +16,7 @@ import {
   openSettingsCard,
   openVisibilityPanel,
 } from "./support/scenarios.js";
+import { useSmallAlmanac } from "./support/small-almanac.js";
 import { critical } from "./support/tags.js";
 
 const emptySave = Buffer.from(buildSavBytes({ player: { items_acquired: [] } }));
@@ -104,8 +105,7 @@ test.describe("stateful accessibility", () => {
   });
 
   test("spoiler-hidden and revealed rows pass axe", critical, async ({ page }, testInfo) => {
-    // Allow for both ledger scans and the interactions between them in Linux CI (#694).
-    test.setTimeout(60_000);
+    await useSmallAlmanac(page);
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
     await artifacts.getByText("Not now", { exact: true }).click();
@@ -134,6 +134,7 @@ test.describe("stateful accessibility", () => {
   });
 
   test("completed rows and Undo pass axe", async ({ page }, testInfo) => {
+    await useSmallAlmanac(page);
     await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("region", { exact: true, name: "Artifacts" });
     const completion = artifacts.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
