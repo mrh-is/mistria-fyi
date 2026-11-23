@@ -60,9 +60,9 @@ async function measureAlmanac(page: Page): Promise<Budget> {
 test("the Almanac stays within its budget at 4× CPU throttling", async ({ page }) => {
   const measured = await measureAlmanac(page);
   test.info().annotations.push({ type: "budget", description: JSON.stringify(measured) });
-  // Measured about 2,100 elements, 60 rows, 1 s to interactive, & a 1.3 s scan. Mounting every
-  // row measured 35,407 elements & 1,879 rows on the same desktop window. Cap first-load
-  // elements at 2,500, over 10× below the old whole-document element count.
+  // The local 4× run measured 1,574 elements, 24 rows, 0.90 s to interaction, & 0.95 s for axe.
+  // Mounting every row measured 35,407 elements & 1,879 rows at the same viewport size.
+  // The 2,500-element cap leaves headroom while staying over 10× below the old count.
   expect(measured.rows).toBeLessThanOrEqual(200);
   expect(measured.elements).toBeLessThanOrEqual(2500);
   expect(measured.interactiveMs).toBeLessThanOrEqual(10_000);
