@@ -19,6 +19,32 @@ import type { Source, WaterType } from "#lib/types/acquisition.js";
 import type { ItemId, StoreId } from "#lib/types/tracker-data.js";
 
 beforeEach(async () => {
+  // Happy DOM has no viewport layout. Put the small fixture's places in view so these tests
+  // can exercise their disclosures, counts, and rows. Playwright covers real viewport mounting.
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class extends IntersectionObserver {
+      readonly notify: IntersectionObserverCallback;
+
+      constructor(notify: IntersectionObserverCallback) {
+        super(notify);
+        this.notify = notify;
+      }
+
+      override observe(target: Element): void {
+        this.notify(
+          [
+            {
+              boundingClientRect: new DOMRect(0, 0, 320, 49),
+              isIntersecting: true,
+              target,
+            } as IntersectionObserverEntry,
+          ],
+          this,
+        );
+      }
+    },
+  );
   await userState.startTrackingByHand();
   vi.spyOn(celebration, "celebrate").mockImplementation(() => undefined);
   vi.spyOn(celebration, "celebrateCategory").mockImplementation(() => undefined);
