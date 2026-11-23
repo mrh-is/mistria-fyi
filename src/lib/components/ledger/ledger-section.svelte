@@ -297,6 +297,7 @@
 
   // A focused row the window has scrolled past stays mounted, so focus never falls to the body.
   const focusedRows = $state<Partial<Record<Shelf, string>>>({});
+  let focusedPage = $state<{ button: HTMLElement; key: string; next: boolean; shelf: Shelf }>();
 
   function mountedEntries(shelf: Shelf, onScreen: readonly T[]): T[] {
     const kept = isSearching ? readingWindows[shelf] : undefined;
@@ -404,9 +405,38 @@
     }
   }
 
-  async function focusPage(event: MouseEvent, shelf: Shelf, rowIndex: number): Promise<void> {
+  function rememberPage(shelf: Shelf, next: boolean): Attachment<HTMLButtonElement> {
+    return (button) => {
+      function remember(): void {
+        // Focus can scroll the button into view and move the window before activation.
+        const window = rowWindow(shelf);
+        const entry = matches[shelf][next ? window.end : window.start - 1];
+        if (entry) focusedPage = { button, key: entry.key, next, shelf };
+      }
+
+      function forget(): void {
+        if (focusedPage?.button === button) focusedPage = undefined;
+      }
+
+      button.addEventListener("focus", remember);
+      button.addEventListener("blur", forget);
+      return () => {
+        button.removeEventListener("focus", remember);
+        button.removeEventListener("blur", forget);
+        forget();
+      };
+    };
+  }
+
+  async function focusPage(event: MouseEvent, shelf: Shelf, boundaryIndex: number): Promise<void> {
     const trigger = event.currentTarget;
     const entries = matches[shelf];
+    let rowIndex = boundaryIndex;
+    if (focusedPage && focusedPage.button === trigger) {
+      const key = focusedPage.key;
+      const rememberedIndex = entries.findIndex((entry) => entry.key === key);
+      if (rememberedIndex !== -1) rowIndex = rememberedIndex;
+    }
     const entry = entries[rowIndex];
     if (!(trigger instanceof HTMLElement) || !entry) return;
     const list = trigger.closest(".row-window");
@@ -812,10 +842,11 @@
           : undefined}
       >
         <div class="row-spacer" data-rows-before style:--unmounted={window.start}>
-          {#if window.start > 0}
+          {#if window.start > 0 || (focusedPage?.shelf === shelf && !focusedPage.next)}
             <button
               class="row-page previous"
               type="button"
+              {@attach rememberPage(shelf, false)}
               onclick={(event) => void focusPage(event, shelf, window.start - 1)}
               >Previous rows</button
             >
@@ -844,10 +875,11 @@
           )}
         {/each}
         <div class="row-spacer" data-rows-after style:--unmounted={entries.length - window.end}>
-          {#if window.end > 0 && window.end < entries.length}
+          {#if (window.end > 0 && window.end < entries.length) || (focusedPage?.shelf === shelf && focusedPage.next)}
             <button
               class="row-page next"
               type="button"
+              {@attach rememberPage(shelf, true)}
               onclick={(event) => void focusPage(event, shelf, window.end)}>Next rows</button
             >
           {/if}
