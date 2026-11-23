@@ -165,6 +165,13 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   hook from `$CLAUDE_PROJECT_DIR`, which is fixed at session start to the session’s original
   checkout. So an edit to a hook script or its settings in a worktree, including a subagent’s,
   doesn’t change the hooks of that session.
+- **Keep the primary checkout current:** sessions launched from the primary checkout use its
+  `.claude/settings.json` for hooks & permission rules even when they work in a linked worktree.
+  Keep the primary checkout on `main`. Before starting a new session, make sure its working tree is
+  clean and run `git pull --ff-only origin main` there. If the branches have diverged, resolve the
+  divergence before starting the session. This keeps new sessions from loading stale hooks or
+  permission rules. The [housekeeping job](development-workflow.md#automatic-housekeeping) cleans up
+  worktrees & branches. Refreshing `main` is a manual step.
 - **Hooks aren’t evidence:** run the required checks directly before committing. Without `--files`,
   `pnpm run lint` & `pnpm run lint:fix` still cover the full repository. Changed-file mode uses the
   same lint tools, scopes, & zero-warning checks.
