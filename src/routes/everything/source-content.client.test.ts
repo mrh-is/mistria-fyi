@@ -130,6 +130,24 @@ it("keeps the same place and villager rows through search clear", async () => {
   expect(view.getByRole("slider", { name: "Adeline heart level" })).toBe(adeline);
 });
 
+it("keeps focus on a matching villager and moves it when the query hides the record", async () => {
+  const view = renderWithFeedback(SourceContent, { anchor: "", locale: "en" });
+  const heartMark = await view.findByRole("slider", { name: "Adeline heart level" });
+  heartMark.focus();
+
+  // A debounced search can apply after the reader has already moved focus into a record.
+  toolbarState.setSearchQuery("Adeline");
+  await tick();
+  await tick();
+  expect(heartMark).toHaveFocus();
+
+  toolbarState.setSearchQuery("Acorn");
+  await tick();
+  await tick();
+  expect(heartMark).not.toBeVisible();
+  expect(view.getByRole("button", { name: "Stores" })).toHaveFocus();
+});
+
 it("lists this week’s birthdays and shares editable marks with Hearts to go", async () => {
   const showMeterUndo = vi.spyOn(undoToast, "showMeterUndo");
   const adeline = "adeline" as VillagerId;
