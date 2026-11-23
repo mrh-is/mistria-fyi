@@ -218,23 +218,24 @@ test.describe("keyboard and focus accessibility", () => {
     await expect(ruler).toBeFocused();
   });
 
-  test("specialized numeric records support direct keyboard editing", async ({ page }) => {
+  test("vertical meters support keyboard editing", async ({ page }) => {
     await gotoApplication(page, "/mines");
-    const floorInput = page.getByRole("spinbutton", { name: "Mine floor" });
-    await floorInput.fill("19");
-    await floorInput.press("Tab");
-    await expect(page.getByRole("group", { name: /Mine floor, 19 of/ })).toBeVisible();
+    const shaft = page.getByRole("slider", { name: "Deepest floor" });
+    await shaft.press("PageUp");
+    await shaft.press("PageUp");
+    await expect(shaft).toHaveAttribute("aria-valuetext", "Floor 20 of 100");
 
     // Floor 21 is past the first seal, so the dialog must work from the keyboard too.
-    await floorInput.fill("21");
-    await floorInput.press("Tab");
+    await shaft.press("ArrowRight");
     await page.getByRole("button", { name: "Yes, just this one" }).press("Enter");
-    await expect(page.getByRole("group", { name: /Mine floor, 21 of/ })).toBeVisible();
+    await expect(shaft).toHaveAttribute("aria-valuenow", "21");
 
     await gotoApplication(page, "/renown");
-    const renownInput = page.getByRole("spinbutton", { name: "Renown level" });
-    await renownInput.fill("10");
-    await renownInput.press("Tab");
-    await expect(page.getByRole("group", { name: /Renown level, 10 of/ })).toBeVisible();
+    const pole = page.getByRole("slider", { name: "Renown level" });
+    await pole.press("PageUp");
+    await expect(pole).toHaveAttribute("aria-valuetext", "Renown level 10 of 100, Stone");
+    const toast = page.getByRole("listitem").filter({ hasText: "Renown: 0 → 10" });
+    await toast.getByRole("button", { exact: true, name: "Undo" }).press("Enter");
+    await expect(pole).toHaveAttribute("aria-valuenow", "0");
   });
 });
