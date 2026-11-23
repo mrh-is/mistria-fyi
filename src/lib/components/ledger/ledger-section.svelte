@@ -16,7 +16,7 @@
   import ShelfHeading from "#lib/components/shelf-heading.svelte";
   import { sourceFilterLabel } from "#lib/data/source-filters.js";
   import plural from "#lib/i18n/catalogs/plural.js";
-  import { ledgerShelf, ledgerSourceFamily } from "#lib/presentation/ledger.js";
+  import { ledgerColumn, ledgerColumnFamily, ledgerShelf } from "#lib/presentation/ledger.js";
   import { shelfLabel } from "#lib/presentation/shelves.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -28,27 +28,35 @@
   import type { RowWindow } from "#lib/components/ledger/ledger-row-window.js";
   import type { SourceFilterId } from "#lib/data/source-filters.js";
   import type { Shelf } from "#lib/engine/shelves.js";
-  import type { LedgerPlacement } from "#lib/presentation/ledger.js";
+  import type { LedgerColumn, LedgerPlacement } from "#lib/presentation/ledger.js";
   import type { LocaleCode } from "#lib/types/locale.js";
 
   let {
+    categoryDetails = false,
     collapsible = false,
+    contents,
     contextualFamily,
+    covered = false,
     divider = false,
     explains = false,
     folded = false,
     id,
     locale,
     name,
+    onReveal,
     open = $bindable(untrack(() => !collapsible && !folded)),
     openOnArrival = false,
     progress,
     row,
     rows,
+    subsection = false,
     visible,
   }: {
+    categoryDetails?: boolean;
     collapsible?: boolean;
+    contents?: Snippet;
     contextualFamily?: SourceFilterId;
+    covered?: boolean;
     /** Draws the sprig divider above this section; the parent passes `index > 0`. */
     divider?: boolean;
     explains?: boolean;
@@ -60,6 +68,7 @@
     id?: string;
     locale: LocaleCode;
     name: string;
+    onReveal?: () => void;
     /** Whether the reader opened the section. Bind it to keep the choice across a Back visit. */
     open?: boolean;
     /** Opens the section when its fragment becomes the navigation target. */
@@ -69,7 +78,7 @@
       [
         T,
         Shelf,
-        readonly SourceFilterId[],
+        readonly LedgerColumn[],
         boolean,
         boolean,
         boolean,
@@ -79,6 +88,7 @@
     >;
     /** Every placement at the last refresh, including the rows filters can bring back. */
     rows: readonly T[];
+    subsection?: boolean;
     visible: (entry: T) => boolean;
   } = $props();
 
@@ -86,6 +96,9 @@
   const instance = $props.id();
   const index = getLedgerIndexContext();
   setLedgerSectionContext({
+    get categoryDetails() {
+      return categoryDetails;
+    },
     get contextualFamily() {
       return contextualFamily;
     },
@@ -93,7 +106,7 @@
   const SPRIG_COUNT = 6;
   // Every shelf a Find match revealed stays open, so a later match elsewhere doesn't close it.
   const revealedShelves = $state<Partial<Record<Shelf, boolean>>>({});
-  const highlights = $state<Partial<Record<Shelf, SourceFilterId>>>({});
+  const highlights = $state<Partial<Record<Shelf, LedgerColumn>>>({});
   let groups = $derived.by(() => {
     const grouped: Record<Shelf, T[]> = { completed: [], notNow: [], todo: [] };
     for (const entry of rows) {
@@ -133,14 +146,16 @@
    * that opens it, so a phone doesn't spend a screen on heads, folds, & dividers.
    */
   let soleClosedShelf = $derived.by((): Shelf | undefined => {
-    if (!isSearching || collapsible) return undefined;
+    if (!isSearching || collapsible || contents || subsection) return undefined;
     const found = shelves.filter((shelf) => matches[shelf].length > 0);
     const [shelf] = found;
     if (found.length !== 1 || shelf === undefined || shelf === "todo") return undefined;
     if (shelfOpen(shelf)) return undefined;
     return shelf;
   });
-  let line = $derived(soleClosedShelf !== undefined || (folded && !expanded));
+  let line = $derived(
+    covered || soleClosedShelf !== undefined || ((folded || subsection) && !expanded),
+  );
   let headHeight = $state(0);
 
   /*
@@ -418,6 +433,8 @@
    * while that shelf is open: a closed fold names itself, so the head keeps the To do count.
    */
   let head = $state<HTMLElement>();
+  let sectionElement = $state<HTMLElement>();
+  let stuck = $state(false);
   let shelvesElement = $state<HTMLElement>();
   let shelfInView = $state<Shelf>("todo");
   let headShelf = $derived(matches[shelfInView].length > 0 ? shelfInView : "todo");
@@ -426,6 +443,13 @@
   function readShelfInView(): void {
     frame = undefined;
     if (!head || !shelvesElement) return;
+    if (categoryDetails && index?.jumpList && sectionElement) {
+      const top = head.getBoundingClientRect().top;
+      const stickyTop = Number(getComputedStyle(head).top.replace("px", ""));
+      stuck =
+        Math.abs(top - stickyTop) <= 1 && sectionElement.getBoundingClientRect().top < top - 1;
+    }
+    if (contents) return;
     const stuckLine = head.getBoundingClientRect().bottom + 1;
     let next: Shelf = "todo";
     for (const element of shelvesElement.querySelectorAll<HTMLElement>("[data-shelf]")) {
@@ -436,7 +460,7 @@
   }
 
   function scheduleShelfRead(): void {
-    if (collapsible) return;
+    if (collapsible || subsection || line) return;
     frame ??= requestAnimationFrame(readShelfInView);
   }
 
@@ -457,18 +481,18 @@
     if (target instanceof HTMLElement) target.scrollIntoView({ block: "center" });
   }
 
-  function timetable(entries: readonly T[]): SourceFilterId[] {
+  function timetable(entries: readonly T[]): LedgerColumn[] {
     // Search hides rows, but the shelf's headings still describe the whole filtered shelf.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Scratch counts for this snapshot.
-    const counts = new Map<SourceFilterId, number>();
+    const counts = new Map<LedgerColumn, number>();
     for (const entry of entries) {
       const families = new Set(
         entry.visibleSources.flatMap((source) =>
-          toolbarState.showsSource(source) ? [ledgerSourceFamily(source)] : [],
+          toolbarState.showsSource(source) ? [ledgerColumn(source, categoryDetails)] : [],
         ),
       );
       for (const family of families) {
-        if (family && family !== contextualFamily) {
+        if (family && ledgerColumnFamily(family) !== contextualFamily) {
           counts.set(family, (counts.get(family) ?? 0) + 1);
         }
       }
@@ -487,12 +511,26 @@
    * Whether a family's column head can highlight anything: only when it picks out some of the
    * shelf's rows, not none or all of them.
    */
-  function picksOut(entries: readonly T[], family: SourceFilterId): boolean {
+  function columnLabel(column: LedgerColumn): string {
+    switch (column) {
+      case "wing":
+        return "Wing";
+      case "bundle":
+        return "Bundle";
+      case "price":
+        return "Price";
+      default:
+        return sourceFilterLabel(column, locale);
+    }
+  }
+
+  function picksOut(entries: readonly T[], family: LedgerColumn): boolean {
     let count = 0;
     for (const entry of entries) {
       if (
         entry.visibleSources.some(
-          (source) => toolbarState.showsSource(source) && ledgerSourceFamily(source) === family,
+          (source) =>
+            toolbarState.showsSource(source) && ledgerColumn(source, categoryDetails) === family,
         )
       ) {
         count += 1;
@@ -518,24 +556,33 @@
   }
 </script>
 
-<svelte:window onscroll={scheduleShelfRead} />
+<svelte:window onscroll={scheduleShelfRead} onresize={scheduleShelfRead} />
 
 <section
   {id}
+  bind:this={sectionElement}
   data-ledger-section
   data-divider={(divider && !line) || undefined}
   data-ledger-searching={isSearching || undefined}
   data-sprig={sprig}
   class:collapsible
   class:line
-  hidden={!hasRows}
+  class:subsection
+  hidden={covered ? isSearching : !hasRows}
   aria-labelledby={`${instance}-name`}
   style:--ledger-head-measured={headHeight ? `${headHeight}px` : undefined}
   {@attach listenForLedgerRequests}
 >
   <div class="head" data-ledger-head bind:this={head} {@attach measureHead}>
     <h3 id={`${instance}-heading`} tabindex="-1">
-      {#if line}
+      {#if covered}
+        <button type="button" class="line-button" onclick={onReveal}>
+          <span id={`${instance}-name`} class="sr-only">Reveal spoilered section</span>
+          <span class="section-blank" aria-hidden="true"></span>
+          <span class="leader" aria-hidden="true"></span>
+          <span class="line-count" aria-hidden="true">? / ?</span>
+        </button>
+      {:else if line}
         <button
           type="button"
           class="line-button"
@@ -589,20 +636,21 @@
             >
           {/if}
         </button>
-      {:else if folded && open && !isSearching}
+      {:else if (folded || subsection) && open && !isSearching}
         <!-- An opened line folds back to itself, so a phone returns to the list in place. -->
         <button
           type="button"
           data-section-trigger
           aria-expanded="true"
           aria-labelledby={`${instance}-name`}
+          aria-describedby={progress ? `${instance}-progress` : undefined}
           aria-controls={`${instance}-rows`}
           onclick={() => void fold()}
         >
           <span id={`${instance}-name`}>{name}</span>
           <Icon.UI type="disclosure" class="size-3.5 rotate-90" />
         </button>
-      {:else if index?.jumpList}
+      {:else if index?.jumpList && !categoryDetails}
         <!-- On phones the section's own head opens the jump list, since there's no index rail. -->
         <button
           type="button"
@@ -617,6 +665,9 @@
         <span id={`${instance}-name`}>{name}</span>
       {/if}
     </h3>
+    {#if categoryDetails && !line && !subsection && index?.jumpList && stuck}
+      <button class="sections-jump" type="button" popovertarget={index.jumpList}>Sections</button>
+    {/if}
     <!-- Describes the head's button without becoming part of the section's name. -->
     <span id={`${instance}-jump`} hidden>Jump to a section</span>
     {#if progress && !line}
@@ -627,7 +678,7 @@
         <span aria-hidden="true"><span class="hand">{completed}</span> / {total}</span>
       </p>
     {/if}
-    {#if !collapsible && !line && matches[headShelf].length > 0}
+    {#if !collapsible && !line && !contents && matches[headShelf].length > 0}
       {#key headShelf}
         <ShelfHeading
           class="head-shelf"
@@ -640,61 +691,67 @@
     {/if}
   </div>
 
-  <div
-    id={`${instance}-rows`}
-    class="shelves"
-    bind:this={shelvesElement}
-    hidden={expanded && !line ? undefined : "until-found"}
-    onbeforematch={() => {
-      if (soleClosedShelf) revealShelf(soleClosedShelf);
-      open = true;
-    }}
-  >
-    {#each shelves as shelf (shelf)}
-      {@const entries = matches[shelf]}
-      {#if groups[shelf].length > 0}
-        {#if shelf === "todo"}
-          <div class="shelf" data-shelf={shelf} hidden={entries.length === 0}>
-            {#if expanded && collapsible}<ShelfHeading
-                {shelf}
-                {explains}
-                count={progress && !isSearching ? undefined : entries.length}
-                level={4}
-              />{/if}
-            {@render shelfRows(shelf)}
-          </div>
-        {:else}
-          <details
-            class="shelf"
-            data-shelf={shelf}
-            hidden={entries.length === 0}
-            open={shelfOpen(shelf)}
-            ontoggle={(event) => void toggleShelf(event, shelf)}
-          >
-            <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
-              {#if expanded}
-                <Icon.UI type="disclosure" class="shelf-chevron size-3.5 shrink-0" />
-                {#if shelf === "completed"}<Icon.Category
-                    category="complete"
-                    class="size-3.5"
+  {#if !covered}
+    <div
+      id={`${instance}-rows`}
+      class="shelves"
+      bind:this={shelvesElement}
+      hidden={expanded && !line ? undefined : "until-found"}
+      onbeforematch={() => {
+        if (soleClosedShelf) revealShelf(soleClosedShelf);
+        open = true;
+      }}
+    >
+      {#if contents}
+        {#if expanded}{@render contents()}{/if}
+      {:else}
+        {#each shelves as shelf (shelf)}
+          {@const entries = matches[shelf]}
+          {#if groups[shelf].length > 0}
+            {#if shelf === "todo"}
+              <div class="shelf" data-shelf={shelf} hidden={entries.length === 0}>
+                {#if expanded && collapsible}<ShelfHeading
+                    {shelf}
+                    {explains}
+                    count={progress && !isSearching ? undefined : entries.length}
+                    level={4}
                   />{/if}
-                <span>{shelfLabel(shelf)}</span>
-                <span class="shelf-count">
-                  {#if isSearching}
-                    {@const count = formatNumber(entries.length, locale)}
-                    {plural(entries.length, [`${count} match`, `${count} matches`])}
-                  {:else}
-                    {formatNumber(entries.length, locale)}
+                {@render shelfRows(shelf)}
+              </div>
+            {:else}
+              <details
+                class="shelf"
+                data-shelf={shelf}
+                hidden={entries.length === 0}
+                open={shelfOpen(shelf)}
+                ontoggle={(event) => void toggleShelf(event, shelf)}
+              >
+                <summary class:completed={shelf === "completed"} data-shelf-heading={shelf}>
+                  {#if expanded}
+                    <Icon.UI type="disclosure" class="shelf-chevron size-3.5 shrink-0" />
+                    {#if shelf === "completed"}<Icon.Category
+                        category="complete"
+                        class="size-3.5"
+                      />{/if}
+                    <span>{shelfLabel(shelf)}</span>
+                    <span class="shelf-count">
+                      {#if isSearching}
+                        {@const count = formatNumber(entries.length, locale)}
+                        {plural(entries.length, [`${count} match`, `${count} matches`])}
+                      {:else}
+                        {formatNumber(entries.length, locale)}
+                      {/if}
+                    </span>
                   {/if}
-                </span>
-              {/if}
-            </summary>
-            {@render shelfRows(shelf)}
-          </details>
-        {/if}
+                </summary>
+                {@render shelfRows(shelf)}
+              </details>
+            {/if}
+          {/if}
+        {/each}
       {/if}
-    {/each}
-  </div>
+    </div>
+  {/if}
 </section>
 
 {#snippet shelfRows(shelf: Shelf)}
@@ -715,8 +772,8 @@
       <div class="timetable">
         <span class="name-head">Name</span>
         {#each columns as family, column (family)}
-          {@const FamilyIcon = SOURCE_FILTER_ICON[family]}
-          {@const label = sourceFilterLabel(family, locale)}
+          {@const FamilyIcon = SOURCE_FILTER_ICON[ledgerColumnFamily(family)]}
+          {@const label = columnLabel(family)}
           {#if picksOut(groups[shelf], family)}
             <button
               type="button"
@@ -765,7 +822,8 @@
             picksOut(groups[shelf], highlight) &&
             entry.visibleSources.some(
               (source) =>
-                toolbarState.showsSource(source) && ledgerSourceFamily(source) === highlight,
+                toolbarState.showsSource(source) &&
+                ledgerColumn(source, categoryDetails) === highlight,
             )}
           {@render row(
             entry,
@@ -937,6 +995,38 @@
 
   .jump :global(svg) {
     color: var(--color-ink-muted);
+  }
+
+  .sections-jump {
+    order: 1;
+    min-block-size: 44px;
+    margin-inline-start: auto;
+    padding-inline: 0.35rem;
+    color: var(--color-guide-voice);
+    font-family: var(--font-controls);
+    font-size: var(--text-xs);
+  }
+
+  .section-blank {
+    inline-size: 7rem;
+    block-size: 1em;
+    border-block-end: 1px solid var(--color-ink-muted);
+  }
+
+  .subsection > .head {
+    position: static;
+    min-block-size: 0;
+  }
+
+  .subsection > .head h3 {
+    color: var(--color-guide-voice);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+  }
+
+  .subsection .section-progress::before {
+    margin-inline-end: 0.45ch;
+    content: "·";
   }
 
   /*

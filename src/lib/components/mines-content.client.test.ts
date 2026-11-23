@@ -1,13 +1,19 @@
-import { fireEvent, screen } from "@testing-library/svelte";
+import { fireEvent, screen, within } from "@testing-library/svelte";
 import { flushSync, tick } from "svelte";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import MinesContent from "#lib/components/mines-content.svelte";
 import { trackerData } from "#lib/data/index.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 const waterQuest = trackerData.mines.seals[0].questId;
+
+afterEach(() => {
+  toolbarState.closeSearch();
+  toolbarState.resetSourceFilters();
+});
 
 async function stepDown(): Promise<void> {
   await fireEvent.click(screen.getByRole("button", { name: "Go down one floor" }));
@@ -74,5 +80,84 @@ describe("MinesContent floor stepper", () => {
     expect(input.value).toBe("0");
     await confirm("Never mind");
     expect(userState.state.progress.mineFloor).toBe(0);
+  });
+});
+
+describe("Mines depth chart", () => {
+  beforeEach(async () => {
+    userState.resetAll();
+    await userState.startTrackingByHand();
+    renderWithFeedback(MinesContent, { locale: "en" });
+  });
+
+  it("uses ten-floor keyboard steps and prompts before crossing a seal", async () => {
+    const slider = screen.getByRole("slider", { name: "Deepest floor" });
+    await fireEvent.keyDown(slider, { key: "PageUp" });
+    expect(slider).toHaveAttribute("aria-valuenow", "10");
+    await fireEvent.keyDown(slider, { key: "PageUp" });
+    expect(slider).toHaveAttribute("aria-valuenow", "20");
+    await fireEvent.keyDown(slider, { key: "PageUp" });
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    await confirm("Never mind");
+    expect(slider).toHaveAttribute("aria-valuenow", "20");
+  });
+
+  it("keeps unlearned spells and unreached biome names off the page", () => {
+    expect(screen.getAllByText("A spell you haven’t found")).toHaveLength(5);
+    expect(screen.queryByText("Upper Mines")).toBeNull();
+    expect(screen.getByText("20–39")).toBeTruthy();
+  });
+
+  it("reveals a single covered spell and keeps its prerequisite confirmation", async () => {
+    await fireEvent.click(screen.getAllByRole("button", { name: "Reveal spoiler" })[0]);
+    const check = screen.getByRole("button", { name: "Check Dragon's Breath" });
+    expect(check).toHaveFocus();
+    expect(screen.getAllByText("A spell you haven’t found")).toHaveLength(4);
+
+    await fireEvent.click(check);
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    await confirm("Yes, just this one");
+
+    expect(screen.getByRole("button", { name: "Uncheck Dragon's Breath" })).toBeTruthy();
+    expect(userState.state.progress.mineFloor).toBe(0);
+    expect(userState.state.showSpoilers).toBe(false);
+  });
+
+  it("can find and record a gated spell with Show spoilers enabled", async () => {
+    userState.toggleShowSpoilers();
+    toolbarState.setSearchQuery("Full Restore");
+    flushSync();
+    await fireEvent.click(screen.getByRole("button", { name: "Check Full Restore" }));
+    expect(screen.getByRole("button", { name: "Uncheck Full Restore" })).toBeTruthy();
+    expect(userState.state.progress.mineFloor).toBe(0);
+  });
+
+  it("updates a reached biome’s counts when a ledger entry is checked off", async () => {
+    userState.setMineFloor(19);
+    flushSync();
+    const details = screen.getByText("Upper Mines").closest("details");
+    if (!details) throw new Error("Expected a biome disclosure");
+    const biome = within(details);
+    const count = biome.getByText(/^[0-9]+ to do$/u);
+    const before = Number(count.textContent.split(" ")[0]);
+
+    details.open = true;
+    await fireEvent(details, new Event("toggle"));
+    await fireEvent.click(biome.getAllByRole("button", { name: /^Check (?!spoilered)/u })[0]);
+
+    expect(biome.getByText(`${before - 1} to do`)).toBeTruthy();
+  });
+
+  it("reports matching biome entries hidden by source filters", () => {
+    userState.setMineFloor(39);
+    toolbarState.setSearchQuery("Cherry Smoothie");
+    flushSync();
+    expect(toolbarState.pageSearchCount.visible).toBeGreaterThan(0);
+
+    toolbarState.hideAllSourceFilters();
+    flushSync();
+    const { filtered, visible } = toolbarState.pageSearchCount;
+    expect(visible).toBe(0);
+    expect(filtered.todo + filtered.notNow).toBeGreaterThan(0);
   });
 });

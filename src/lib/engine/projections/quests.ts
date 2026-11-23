@@ -33,6 +33,7 @@ export function projectQuests(
   options: CategoryProjectionOptions = {},
 ): QuestsProjection {
   const rows: QuestRow[] = [];
+  const counted: ShelfRow[] = [];
   for (const [questType, byType] of recordEntries(trackerData.quests)) {
     const typeOpen = isConditionVisible(
       trackerData.categoryVisibility[questType],
@@ -54,17 +55,19 @@ export function projectQuests(
             },
           },
         });
-      rows.push({
+      const projected = {
         ...facts,
         doable: facts.doable && typeOpen && canStart,
         doableAnywhere: facts.doableAnywhere && typeOpen && canStart,
         id,
         spoilered: isSpoilered(quest.visibility, options.progressionState),
-      });
+      };
+      rows.push(projected);
+      if (typeOpen || !options.excludeSpoileredSections) counted.push(projected);
     }
   }
   const craving = getCravingQuest(ctx.progress);
-  const counted = craving.applicable ? [...rows, cravingFacts(craving, ctx)] : rows;
+  if (craving.applicable) counted.push(cravingFacts(craving, ctx));
   return { craving, rows, totals: countShelfRows(counted) };
 }
 

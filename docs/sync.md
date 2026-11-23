@@ -484,10 +484,11 @@ Stored progress records per-fact provenance (`manual`, `inferred`, `save`, `unkn
 
 ### The day
 
-Every applied save also sets the season & weather, unless the player kept their progress over an
-older save. The day isn’t a progress fact, so it has no provenance & asks no questions: the newest
-applied save wins, and a clock change holds until the next one. It stays on the device that applies
-the save, so the protocol doesn’t change. An unreadable value leaves the current one alone.
+Every applied save also sets the clock’s day, season, year, & weather, unless the player kept their
+progress over an older save. Home compares the clock with the original date from that save. The
+clock stays on the device that applies the save, so the protocol doesn’t change. An unreadable clock
+value leaves the current one alone. If the save’s date is unreadable, Home has no original date for
+the comparison.
 
 ### Resolved diffs
 

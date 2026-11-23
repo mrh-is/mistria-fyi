@@ -149,6 +149,7 @@ export interface SaveDayFields {
   day?: number;
   season: ExtractedField<Season>;
   weather: ExtractedField<Weather>;
+  year?: number;
 }
 
 export interface SaveExtraction {
@@ -266,6 +267,7 @@ export function progressOfExtraction(extraction: SaveExtraction): {
       ...(extraction.day.day === undefined ? {} : { day: extraction.day.day }),
       season: extraction.day.season.value,
       weather: extraction.day.weather.value,
+      ...(extraction.day.year === undefined ? {} : { year: extraction.day.year }),
     },
     playtime: extraction.identity.playtime.value,
     warnings: extraction.diagnostics.filter(isSaveImportWarning),
@@ -817,6 +819,7 @@ export function extractSave(bundle: SaveBundle): SaveExtraction {
   return {
     day: {
       ...(today === undefined ? {} : { day: today.day }),
+      ...(today === undefined || !Number.isSafeInteger(today.year) ? {} : { year: today.year }),
       season: collector.finish("season", today?.season),
       weather: collector.finish("weather", weather),
     },

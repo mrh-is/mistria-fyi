@@ -49,7 +49,7 @@ export async function openVisibilityPanel(page: Page): Promise<void> {
   // Scoped to the toolbar, since a page-wide button query is slow on Everything's large ledger.
   await page
     .getByRole("navigation", { name: "Field guide tools" })
-    .getByRole("button", { name: "Visibility filters" })
+    .getByRole("button", { name: /^(Visibility filters|Filter, \d+ sources? off)$/ })
     .click();
   await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
 }
@@ -57,11 +57,6 @@ export async function openVisibilityPanel(page: Page): Promise<void> {
 /** A villager's record card; the page anchors it by id, which has no role or accessible name. */
 export function villagerRecord(page: Page, villagerId: string): Locator {
   return page.locator(`#villager-${villagerId}`);
-}
-
-/** The villager record card whose id starts with `prefix` and currently holds focus. */
-export function focusedVillagerRecord(page: Page, prefix: string): Locator {
-  return page.locator(`[id^="villager-${prefix}"]:focus`);
 }
 
 /** Visit each screen of a shelf in order, including rows already mounted just outside the view. */

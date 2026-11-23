@@ -78,26 +78,28 @@
     () => {
       const context = userState.progressContext;
       const visibility = context.progressionState;
-      return projectAlmanac(context, { progressionState: visibility }).sections.map((section) => ({
-        canonicalIds: section.canonicalIds,
-        id: section.id,
-        name: getName("ui", section.id, locale),
-        progress: section.progress,
-        rows: section.rows
-          .map((row) => {
-            const names = getAlmanacEntryNames(row.entry, locale);
-            return {
-              ...ledgerPlacement(row.sources, context, visibility, row),
-              key: row.canonicalId,
-              name: names[0],
-              names,
-              obtainable: row.obtainable,
-              variant: getAlmanacEntryVariant(row.entry, locale),
-              visibility: row.item.visibility,
-            };
-          })
-          .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
-      }));
+      return projectAlmanac(context, { progressionState: visibility })
+        .sections.map((section) => ({
+          canonicalIds: section.canonicalIds,
+          id: section.id,
+          name: getName("ui", section.id, locale),
+          progress: section.progress,
+          rows: section.rows
+            .map((row) => {
+              const names = getAlmanacEntryNames(row.entry, locale);
+              return {
+                ...ledgerPlacement(row.sources, context, visibility, row),
+                key: row.canonicalId,
+                name: names[0],
+                names,
+                obtainable: row.obtainable,
+                variant: getAlmanacEntryVariant(row.entry, locale),
+                visibility: row.item.visibility,
+              };
+            })
+            .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
+        }))
+        .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name));
     },
     (row) => {
       const query = toolbarState.searchQuery;
@@ -171,6 +173,7 @@
       />
     {/if}
     <LedgerSection
+      categoryDetails
       {id}
       {locale}
       {name}

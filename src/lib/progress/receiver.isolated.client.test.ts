@@ -496,7 +496,13 @@ describe("applying", () => {
     expect(receiver.status.kind).toBe("up-to-date");
     const { local, progress, worldState } = stored();
     expect(progress.reachedSeason).toBe("summer");
-    expect(worldState).toEqual({ day: 14, season: "summer", weather: "calm" });
+    expect(worldState).toEqual({
+      day: 14,
+      saveDate: { day: 14, season: "summer", year: 1 },
+      season: "summer",
+      weather: "calm",
+      year: 1,
+    });
     expect(local.syncReceipt).toEqual({
       counter: 4,
       hash: expect.stringMatching(/^[\w-]{43}$/u) as string,
@@ -1035,7 +1041,13 @@ describe("switching farms", () => {
     await untilKind(receiver, "up-to-date");
 
     expect(userState.farmSwitchBackup?.farmName).toBe("Rosewood");
-    expect(userState.state.worldState).toEqual({ day: 1, season: "summer", weather: "inclement" });
+    expect(userState.state.worldState).toEqual({
+      day: 1,
+      saveDate: { day: 1, season: "summer", year: 1 },
+      season: "summer",
+      weather: "inclement",
+      year: 1,
+    });
   });
 
   it("does not carry over the old farm's day when the new save is undated", async () => {

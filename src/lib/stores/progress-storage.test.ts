@@ -166,8 +166,25 @@ describe("migration table", () => {
     expect(older.worldState.day).toBeUndefined();
     const dated = readOk(JSON.stringify(fixture(10)), policy);
     expect(dated.worldState.day).toBe(17);
+    expect(dated.worldState.year).toBeUndefined();
+    expect(dated.worldState.saveDate).toBeUndefined();
     expect(readOk(serializeProgress(dated), policy).worldState).toEqual(dated.worldState);
   });
+
+  it.each(POLICIES)(
+    "round-trips the clock and the original save date independently (%s)",
+    (policy) => {
+      const dated = readOk(JSON.stringify(fixture(11)), policy);
+      expect(dated.worldState).toEqual({
+        day: 8,
+        saveDate: { day: 2, season: "fall", year: 2 },
+        season: "fall",
+        weather: "calm",
+        year: 2,
+      });
+      expect(readOk(serializeProgress(dated), policy).worldState).toEqual(dated.worldState);
+    },
+  );
 
   it("has one contiguous step per version up to this build's", () => {
     const versions = Object.keys(MIGRATIONS).map(Number);

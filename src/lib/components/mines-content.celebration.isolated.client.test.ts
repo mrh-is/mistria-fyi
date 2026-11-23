@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from "@testing-library/svelte";
+import { fireEvent, screen } from "@testing-library/svelte";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import MinesContent from "#lib/components/mines-content.svelte";
@@ -40,7 +40,7 @@ function lastUndo(): () => void {
 }
 
 it("finishing the category fires only the category burst, not the section one too", async () => {
-  renderWithFeedback(MinesContent, { defaultOpen: true, locale: "en" });
+  renderWithFeedback(MinesContent, { locale: "en" });
   await fireEvent.click(await screen.findByRole("button", { name: `Check ${lastSpellName}` }));
 
   expect(celebrateCategory).toHaveBeenCalledTimes(1);
@@ -49,14 +49,7 @@ it("finishing the category fires only the category burst, not the section one to
 
 it("undoing an untick doesn't celebrate", async () => {
   userState.toggleSpell(lastSpell);
-  renderWithFeedback(MinesContent, { defaultOpen: true, locale: "en" });
-  // Every finished list sits under a closed Completed shelf.
-  const completedHeadings = await screen.findAllByRole("heading", {
-    name: "Completed",
-  });
-  await Promise.all(
-    completedHeadings.map((heading) => fireEvent.click(within(heading).getByRole("button"))),
-  );
+  renderWithFeedback(MinesContent, { locale: "en" });
   await fireEvent.click(await screen.findByRole("button", { name: `Uncheck ${lastSpellName}` }));
   expect(userState.state.progress.spells.has(lastSpell)).toBe(false);
 

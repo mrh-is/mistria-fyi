@@ -5,6 +5,7 @@ import { getName } from "#lib/data/names.js";
 import {
   clearUndoToasts,
   questToastMessage,
+  showMeterUndo,
   showQuestToast,
   showUndoToast,
 } from "#lib/effects/undo-toast.js";
@@ -46,6 +47,29 @@ vi.mock("svelte-sonner", () => ({
     ],
   }),
 }));
+
+it("combines rapid changes to one meter and starts a new undo after the window", () => {
+  clearUndoToasts();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(0);
+  const undo = vi.fn();
+  const options = { id: "skillLevels/mining", locale: "en", name: "Mining", undo } as const;
+  try {
+    showMeterUndo({ ...options, after: 52, before: 51 });
+    clock.mockReturnValue(1000);
+    showMeterUndo({ ...options, after: 56, before: 52 });
+    expect(lastToast()[0]).toBe("Mining: 51 → 56");
+    lastToast()[1].cancel.onClick();
+    expect(undo).toHaveBeenCalledExactlyOnceWith(51);
+
+    showMeterUndo({ ...options, after: 52, before: 51 });
+    clock.mockReturnValue(2501);
+    showMeterUndo({ ...options, after: 53, before: 52 });
+    expect(lastToast()[0]).toBe("Mining: 52 → 53");
+  } finally {
+    clock.mockRestore();
+    clearUndoToasts();
+  }
+});
 
 describe("showUndoToast", () => {
   beforeEach(() => {

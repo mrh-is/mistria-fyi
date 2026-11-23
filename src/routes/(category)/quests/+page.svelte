@@ -1,9 +1,9 @@
 <script lang="ts">
-  import QuestsContent from "#lib/components/quests-content.svelte";
+  import CategoryLedger from "#lib/components/ledger/category-ledger.svelte";
 
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>
 
-<QuestsContent locale={data.locale} />
+<CategoryLedger category="quests" locale={data.locale} />

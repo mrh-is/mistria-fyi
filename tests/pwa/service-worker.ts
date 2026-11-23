@@ -1,3 +1,5 @@
+import { setNetworkIsolationOffline } from "../browser/test.js";
+
 import type { BrowserContext, CDPSession, Page, Route } from "@playwright/test";
 
 /**
@@ -6,6 +8,7 @@ import type { BrowserContext, CDPSession, Page, Route } from "@playwright/test";
  * would still reach the server. Chromium routes worker requests, so aborting them closes that gap.
  */
 export async function goOffline(context: BrowserContext): Promise<void> {
+  setNetworkIsolationOffline(context, true);
   await context.setOffline(true);
   await context.route("**/*", disconnect);
 }
@@ -14,6 +17,7 @@ export async function goOffline(context: BrowserContext): Promise<void> {
 export async function goOnline(context: BrowserContext): Promise<void> {
   await context.unroute("**/*", disconnect);
   await context.setOffline(false);
+  setNetworkIsolationOffline(context, false);
 }
 
 async function disconnect(route: Route): Promise<void> {

@@ -25,6 +25,8 @@ import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-pro
 
 import type { ProgressShell } from "./progress-shell.svelte.js";
 
+type MeterApplied = (before: number, after: number) => void;
+
 interface StarterItemsNotice {
   count: number;
   dismiss: () => void;
@@ -39,12 +41,16 @@ interface HandEdits {
     setBreakUpsDisabled: (value: boolean) => void;
     setChildChoice: (choice: ChildChoice) => void;
     setHasUpperFloor: (value: boolean) => void;
-    setHeartLevel: (id: VillagerId, level: number) => void;
-    setMineFloor: (floor: number) => void;
+    setHeartLevel: (id: VillagerId, level: number, onApplied?: MeterApplied) => void;
+    setMineFloor: (floor: number, onApplied?: MeterApplied) => void;
     setQuestState: (id: QuestId, state: QuestState) => void;
     setReachedSeason: (season: Season) => void;
-    setRenown: (level: number) => void;
-    setSkillLevel: (id: SkillId, level: number) => void;
+    setRenown: (level: number, onApplied?: MeterApplied) => void;
+    setSkillLevel: (
+      id: SkillId,
+      level: number,
+      onApplied?: (before: number, after: number) => void,
+    ) => void;
     setVillagerRelationship: (id: VillagerId, relationship: VillagerRelationship) => void;
     readonly starterItems: Readonly<StarterItemsNotice> | undefined;
     toggleAlmanacItem: (id: ItemId) => void;
@@ -157,11 +163,17 @@ export function createHandEdits(
   }
 
   /** Hold the first edit until a tracking lane is chosen. Nested edits share one provenance diff. */
-  function handEdit<T>(run: () => T, primary?: string, addDefaults = true): T | undefined {
+  function handEdit<T>(
+    run: () => T,
+    primary?: string,
+    addDefaults = true,
+    onApplied?: (result: T) => void,
+  ): T | undefined {
     function apply(): T {
       const starting = addDefaults && !tracking && canStartTrackingByHand;
       const result = track(run, primary);
       if (starting && shell.facts.size > 0) applyStarterItems();
+      onApplied?.(result);
       return result;
     }
 
@@ -184,6 +196,26 @@ export function createHandEdits(
     handEdit(() => {
       commit(edit(shell.state.progress));
     }, key);
+  }
+
+  function setMeter(
+    field: "mineFloor" | "renown",
+    edit: (progress: ProgressState) => ProgressState,
+    onApplied?: MeterApplied,
+  ): void {
+    handEdit(
+      () => {
+        const before = shell.state.progress[field];
+        commit(edit(shell.state.progress));
+        return before;
+      },
+      field,
+      true,
+      (before) => {
+        const after = shell.state.progress[field];
+        if (before !== after) onApplied?.(before, after);
+      },
+    );
   }
 
   function toggleFact<Field extends ProgressListField>(
@@ -232,11 +264,27 @@ export function createHandEdits(
           edits.setSimpleProgress(progress, "hasUpperFloor", value),
         );
       },
-      setHeartLevel(id: VillagerId, level: number) {
-        manual(factKey("heartLevels", id), (progress) => edits.setHeartLevel(progress, id, level));
+      setHeartLevel(
+        id: VillagerId,
+        level: number,
+        onApplied?: (before: number, after: number) => void,
+      ) {
+        handEdit(
+          () => {
+            const before = shell.state.progress.heartLevels[id] ?? 0;
+            commit(edits.setHeartLevel(shell.state.progress, id, level));
+            return before;
+          },
+          factKey("heartLevels", id),
+          true,
+          (before) => {
+            const after = shell.state.progress.heartLevels[id] ?? 0;
+            if (before !== after) onApplied?.(before, after);
+          },
+        );
       },
-      setMineFloor(floor: number) {
-        manual("mineFloor", (progress) => edits.setMineFloor(progress, floor));
+      setMineFloor(floor: number, onApplied?: MeterApplied) {
+        setMeter("mineFloor", (progress) => edits.setMineFloor(progress, floor), onApplied);
       },
       setQuestState(id: QuestId, state: QuestState) {
         manual(factKey("questStates", id), (progress) => edits.setQuestState(progress, id, state));
@@ -244,11 +292,27 @@ export function createHandEdits(
       setReachedSeason(season: Season) {
         manual("reachedSeason", (progress) => edits.setReachedSeason(progress, season));
       },
-      setRenown(level: number) {
-        manual("renown", (progress) => edits.setRenown(progress, level));
+      setRenown(level: number, onApplied?: MeterApplied) {
+        setMeter("renown", (progress) => edits.setRenown(progress, level), onApplied);
       },
-      setSkillLevel(id: SkillId, level: number) {
-        manual(factKey("skillLevels", id), (progress) => edits.setSkillLevel(progress, id, level));
+      setSkillLevel(
+        id: SkillId,
+        level: number,
+        onApplied?: (before: number, after: number) => void,
+      ) {
+        handEdit(
+          () => {
+            const before = shell.state.progress.skillLevels[id] ?? 0;
+            commit(edits.setSkillLevel(shell.state.progress, id, level));
+            return before;
+          },
+          factKey("skillLevels", id),
+          true,
+          (before) => {
+            const after = shell.state.progress.skillLevels[id] ?? 0;
+            if (before !== after) onApplied?.(before, after);
+          },
+        );
       },
       setVillagerRelationship(id: VillagerId, relationship: VillagerRelationship) {
         manual(factKey("villagerRelationships", id), (progress) =>

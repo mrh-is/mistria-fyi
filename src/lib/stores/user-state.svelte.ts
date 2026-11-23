@@ -1,5 +1,6 @@
+import { DAYS_PER_SEASON } from "#lib/engine/game-calendar.js";
 import { progressFingerprint } from "#lib/engine/tracking-reminders.js";
-import { applySaveDay, isWeatherInSeason } from "#lib/engine/world-state.js";
+import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import { createBackupFacade } from "#lib/progress/backup.js";
 import { createImportFacade } from "#lib/progress/import.js";
 import { createSyncFacade } from "#lib/progress/sync.svelte.js";
@@ -149,12 +150,25 @@ const core = {
   resolutionOf(key: string): Readonly<Resolution> | undefined {
     return shell.history.resolutions[key];
   },
+  setCalendarDate(season: Season, day: number | undefined, year: number | undefined) {
+    if (day !== undefined && (!Number.isInteger(day) || day < 1 || day > DAYS_PER_SEASON)) return;
+    if (year !== undefined && (!Number.isSafeInteger(year) || year < 1)) return;
+    const { saveDate, weather } = shell.state.worldState;
+    shell.state.worldState = {
+      ...(day === undefined ? {} : { day }),
+      ...(saveDate === undefined ? {} : { saveDate }),
+      season,
+      weather: isWeatherInSeason(weather, season) ? weather : "calm",
+      ...(year === undefined ? {} : { year }),
+    };
+  },
   setEverythingGrouping(grouping: "category" | "source") {
     shell.state.everythingGrouping = grouping;
   },
   setSeason(season: Season) {
     const { worldState } = shell.state;
-    shell.state.worldState = applySaveDay(worldState, { season, weather: undefined });
+    if (season === worldState.season) return;
+    userState.setCalendarDate(season, undefined, worldState.year);
   },
   setWeather(weather: Weather) {
     if (isWeatherInSeason(weather, shell.state.worldState.season)) {

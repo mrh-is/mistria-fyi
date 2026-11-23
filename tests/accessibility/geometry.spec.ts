@@ -179,10 +179,11 @@ test.describe("interactive target geometry", () => {
     },
   );
 
-  test("home category ribbons stay inside the viewport at 320 pixels", async ({ page }) => {
+  test("Home Contents fit inside the viewport at 320 pixels", async ({ page }) => {
     await page.setViewportSize({ height: 720, width: 320 });
     await gotoApplication(page, "/");
-    await expect(page.locator("[data-category-ribbon]").first()).toBeVisible();
+    const contents = page.getByRole("navigation", { name: "Contents" });
+    await expect(contents.getByRole("link", { name: /^Everything,/u })).toBeVisible();
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });
 
@@ -401,67 +402,40 @@ test.describe("tracker paper touch geometry", () => {
     await gotoApplication(page, "/villagers");
     for (const control of await page
       .locator(
-        "#villager-adeline [data-stepper-button], #villager-adeline [data-relationship-action]",
+        "#villager-adeline [data-villager-mark], #villager-adeline [data-relationship-action]",
       )
       .all()) {
       const box = await control.boundingBox();
-      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.width).toBeGreaterThanOrEqual(24);
       expect(box?.height).toBeGreaterThanOrEqual(44);
     }
 
-    const index = page.getByRole("navigation", { name: "Villager alphabet" });
-    const beforeScroll = await requireBox(index);
-    const roster = await requireBox(page.getByTestId("villager-roster"));
-    const whitespaceCenter = (roster.x + roster.width + 320) / 2;
-    expect(Math.abs(beforeScroll.x + beforeScroll.width / 2 - whitespaceCenter)).toBe(0);
-    const indexGeometry = await index.evaluate((element) => {
-      const style = getComputedStyle(element);
-      const buttons = [...element.querySelectorAll("button")];
-      return {
-        buttonHeights: buttons.map((button) => button.getBoundingClientRect().height),
-        clientHeight: element.clientHeight,
-        overflowY: style.overflowY,
-        position: style.position,
-        scrollHeight: element.scrollHeight,
-      };
-    });
-    expect(indexGeometry.position).toBe("fixed");
-    expect(indexGeometry.overflowY).not.toMatch(/auto|scroll/);
-    expect(indexGeometry.scrollHeight).toBe(indexGeometry.clientHeight);
-    expect(Math.max(...indexGeometry.buttonHeights)).toBeLessThanOrEqual(24);
-
-    await page.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight);
-    });
-    const afterScroll = await settledBox(index);
-    expect(Math.abs(afterScroll.y - beforeScroll.y)).toBeLessThanOrEqual(0.5);
-    expect(afterScroll.y).toBeGreaterThanOrEqual(62);
-    expect(afterScroll.y + afterScroll.height).toBeLessThanOrEqual(652);
-
     await gotoApplication(page, "/skills");
-    for (const control of await page.locator("[data-skill-record] button").first().all()) {
+    for (const control of [
+      page.getByRole("button", { name: "Decrease Archaeology level" }),
+      page.getByRole("button", { name: "Increase Archaeology level" }),
+      page.getByRole("slider", { name: "Archaeology level" }),
+    ]) {
       const box = await control.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(44);
       expect(box?.height).toBeGreaterThanOrEqual(44);
     }
 
     await gotoApplication(page, "/mines");
-    for (const control of await page
-      .locator("[data-mine-floor-record] button, [data-mine-floor-record] input")
-      .all()) {
-      const box = await control.boundingBox();
-      expect(box?.width).toBeGreaterThanOrEqual(44);
-      expect(box?.height).toBeGreaterThanOrEqual(44);
+    const mineControls = [
+      page.getByRole("slider", { name: "Deepest floor" }),
+      page.getByRole("button", { name: "Go up one floor" }),
+      page.getByRole("button", { name: "Go down one floor" }),
+    ];
+    for (const control of mineControls) {
+      const box = await requireBox(control);
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
     }
-
     await gotoApplication(page, "/renown");
-    for (const control of await page
-      .locator("[data-renown-current] button, [data-renown-current] input")
-      .all()) {
-      const box = await control.boundingBox();
-      expect(box?.width).toBeGreaterThanOrEqual(44);
-      expect(box?.height).toBeGreaterThanOrEqual(44);
-    }
+    const pole = await requireBox(page.getByRole("slider", { name: "Renown level" }));
+    expect(pole.width).toBeGreaterThanOrEqual(44);
+    expect(pole.height).toBeGreaterThanOrEqual(44);
   });
 });
 
@@ -489,18 +463,16 @@ test.describe("landscape phone width", () => {
     });
   }
 
-  test("the villager index stays in the full-width roster's margin", async ({ page }) => {
+  test("the birthday rail links to the roster when opened on narrower screens", async ({
+    page,
+  }) => {
     await gotoApplication(page, "/villagers");
-    const index = await requireBox(page.getByRole("navigation", { name: "Villager alphabet" }));
-    const roster = await requireBox(page.getByTestId("villager-roster"));
-    const whitespaceCenter = (roster.x + roster.width + 844) / 2;
-    expect(Math.abs(index.x + index.width / 2 - whitespaceCenter)).toBeLessThanOrEqual(0.5);
-  });
-
-  test("a desktop window keeps the narrow column", async ({ page }) => {
-    await page.setViewportSize({ height: 800, width: 1280 });
-    await gotoApplication(page, "/");
-    const main = await requireBox(page.locator("#main-content"));
-    expect(main.width).toBe(512);
+    const rail = page.getByRole("navigation", { name: "Birthdays next" });
+    await rail.getByText("Birthdays next").click();
+    const links = rail.getByRole("link");
+    await expect(links).toHaveCount(7);
+    const target = await links.first().getAttribute("href");
+    await links.first().click();
+    await expect(page.locator(target ?? "")).toBeInViewport();
   });
 });

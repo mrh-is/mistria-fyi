@@ -17,7 +17,7 @@ test("replacing a deeply scrolled home query shows the new first screenful", asy
   const results = page.locator(".search-results__rows");
   await expect(results).toHaveAttribute("aria-busy", "false");
   // oxlint-disable-next-line playwright/no-raw-locators -- Exercise the route’s actual scroll container.
-  const scroller = page.locator(".home-content");
+  const scroller = page.locator(".search-content");
   await scroller.evaluate((element) => {
     element.scrollTop = element.scrollHeight / 2;
   });

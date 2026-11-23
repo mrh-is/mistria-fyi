@@ -1,0 +1,74 @@
+import { expect, it, vi } from "vitest";
+
+import { meterInput } from "#lib/attachments/meter-input.js";
+
+it("previews a drag, commits once on release, and discards a canceled drag", () => {
+  const element = document.createElement("div");
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 20, 120, 40));
+  Object.defineProperty(element, "setPointerCapture", { value: vi.fn() });
+  const onPreview = vi.fn();
+  const onCommit = vi.fn();
+  const detach = meterInput({ getValue: () => 0, max: 60, min: 0, onCommit, onPreview })(element);
+  function pointer(type: string, clientX: number): void {
+    element.dispatchEvent(new PointerEvent(type, { clientX, isPrimary: true, pointerId: 1 }));
+  }
+
+  pointer("pointerdown", 30);
+  pointer("pointermove", 70);
+  element.dispatchEvent(new KeyboardEvent("keydown", { key: "End" }));
+  expect(onPreview.mock.calls).toEqual([[10], [30]]);
+  expect(onCommit).not.toHaveBeenCalled();
+  pointer("pointerup", 130);
+  pointer("lostpointercapture", 130);
+  expect(onPreview).toHaveBeenLastCalledWith(undefined);
+  expect(onCommit).toHaveBeenCalledExactlyOnceWith(60);
+
+  pointer("pointerdown", 110);
+  pointer("pointercancel", 110);
+  expect(onPreview).toHaveBeenLastCalledWith(undefined);
+  expect(onCommit).toHaveBeenCalledTimes(1);
+  if (typeof detach === "function") detach();
+});
+
+it("maps the whole width of each discrete mark and steps down when reselected", () => {
+  const element = document.createElement("div");
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 20, 240, 44));
+  Object.defineProperty(element, "setPointerCapture", { value: vi.fn() });
+  let level = 0;
+  const onCommit = vi.fn((value: number) => {
+    level = value;
+  });
+  meterInput({ discreteMarks: true, getValue: () => level, max: 10, min: 0, onCommit })(element);
+
+  function pointer(type: string, clientX: number): void {
+    element.dispatchEvent(new PointerEvent(type, { clientX, isPrimary: true, pointerId: 1 }));
+  }
+
+  function press(clientX: number): void {
+    pointer("pointerdown", clientX);
+    pointer("pointerup", clientX);
+  }
+
+  press(11);
+  press(249);
+  press(228);
+  expect(onCommit.mock.calls).toEqual([[1], [10], [9]]);
+
+  onCommit.mockClear();
+  pointer("pointerdown", 215);
+  pointer("pointermove", 239);
+  pointer("pointermove", 215);
+  pointer("pointerup", 215);
+  expect(onCommit).not.toHaveBeenCalled();
+
+  pointer("pointerdown", 239);
+  pointer("pointerup", 215);
+  expect(onCommit).not.toHaveBeenCalled();
+
+  press(239);
+  onCommit.mockClear();
+  pointer("pointerdown", 239);
+  pointer("pointermove", 300);
+  pointer("pointerup", 239);
+  expect(onCommit).not.toHaveBeenCalled();
+});

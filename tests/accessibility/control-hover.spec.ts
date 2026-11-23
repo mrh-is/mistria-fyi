@@ -48,23 +48,29 @@ for (const theme of ["light", "dark"] as const) {
 
   test(`shelf info uses the page accent in ${theme} mode`, async ({ page }) => {
     await initializeApplication(page, theme);
-    for (const [path, token] of [
-      ["/", "--color-home-accent"],
-      ["/almanac", "--color-category-almanac"],
-    ] as const) {
-      await gotoApplication(page, path);
-      const info = page.getByRole("button", { name: /^About the .* shelf$/ }).first();
-      await info.hover();
-      const accent = await info.evaluate((element, property) => {
-        const sample = document.createElement("span");
-        sample.style.color = `var(${property})`;
-        element.append(sample);
-        const color = getComputedStyle(sample).color;
-        sample.remove();
-        return color;
-      }, token);
-      await expect(info).toHaveCSS("outline-width", "2px");
-      await expect(info).toHaveCSS("outline-color", accent);
-    }
+    await gotoApplication(page, "/almanac");
+    const info = page.getByRole("button", { name: /^About the .* shelf$/ }).first();
+    await info.hover();
+    const accent = await info.evaluate((element) => {
+      const sample = document.createElement("span");
+      sample.style.color = "var(--color-category-almanac)";
+      element.append(sample);
+      const color = getComputedStyle(sample).color;
+      sample.remove();
+      return color;
+    });
+    await expect(info).toHaveCSS("outline-width", "2px");
+    await expect(info).toHaveCSS("outline-color", accent);
+  });
+
+  test(`Home underlines the clock on hover in ${theme} mode`, async ({ page }) => {
+    await initializeApplication(page, theme);
+    await gotoApplication(page, "/");
+    const clock = page.getByRole("button", { name: "Spring 1, Year 1" });
+    const before = await requireBox(clock);
+    await expect(clock).toHaveCSS("text-decoration-line", "none");
+    await clock.hover();
+    await expect(clock).toHaveCSS("text-decoration-line", "underline");
+    expect(await requireBox(clock)).toEqual(before);
   });
 }

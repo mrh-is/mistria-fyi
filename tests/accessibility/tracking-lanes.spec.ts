@@ -35,7 +35,7 @@ for (const [theme, width] of [
       { preference: theme, themeKey: THEME_STORAGE_KEY },
     );
     await gotoApplication(page, "/");
-    await expect(page.getByRole("heading", { name: "Ready to get started?" })).toBeVisible();
+    await expect(page.getByRole("link", { exact: true, name: "Load a save" })).toBeVisible();
     await waitForRendering(page);
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) });
     await gotoApplication(page, "/almanac");
@@ -128,6 +128,6 @@ for (const [theme, width] of [
     await page.screenshot({ path: testInfo.outputPath(`sync-${width}.png`) });
     await page.getByRole("button", { name: /track.*by hand/i }).click();
     await expect(page).toHaveURL(/\/en\/?$/);
-    await expect(page.getByRole("heading", { name: "Ready to get started?" })).toBeHidden();
+    await expect(page.getByRole("link", { exact: true, name: "Load a save" })).toBeHidden();
   });
 }

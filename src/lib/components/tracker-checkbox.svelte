@@ -9,16 +9,18 @@
   export type CheckboxState = "checked" | "obtained" | "unchecked";
 
   let {
+    disabled = false,
     fact,
     label,
     onclick,
     provenance,
     state,
   }: {
+    disabled?: boolean;
     /** The fact's key: it seeds the mark, and a quest's X takes two moments. */
     fact: string;
     label: string;
-    onclick: (event: MouseEvent) => void;
+    onclick?: (event: MouseEvent) => void;
     /** Decorative: picks the tool that drew the mark, so it's never announced. */
     provenance: DeepReadonly<FactProvenance> | undefined;
     state: CheckboxState;
@@ -43,14 +45,7 @@
   );
 </script>
 
-<button
-  class="tracker-checkbox"
-  class:tracker-checkbox--checked={isChecked}
-  class:tracker-checkbox--obtained={isObtained}
-  type="button"
-  aria-label={label}
-  {onclick}
->
+{#snippet mark()}
   <svg class="tracker-checkbox__icon" viewBox="0 0 28 28" fill="none" aria-hidden="true">
     <rect
       x="3.5"
@@ -92,15 +87,16 @@
         >
           {#each layer.elements as element, elementIndex (elementIndex)}
             {#if element.kind === "stroke"}
+              {@const animated = element.animated && !!onclick}
               <path
-                class:tracker-checkbox__crossing-stroke={element.animated}
+                class:tracker-checkbox__crossing-stroke={animated}
                 d={element.d}
                 opacity={element.opacity}
-                pathLength={element.animated ? 1 : undefined}
+                pathLength={animated ? 1 : undefined}
                 stroke="currentColor"
                 stroke-width={element.width}
-                stroke-dasharray={element.animated ? "1 2" : undefined}
-                stroke-dashoffset={element.animated ? 1 : undefined}
+                stroke-dasharray={animated ? "1 2" : undefined}
+                stroke-dashoffset={animated ? 1 : undefined}
               />
             {:else if element.kind === "dot"}
               <circle cx={element.cx} cy={element.cy} r={element.r} fill="currentColor" />
@@ -119,7 +115,30 @@
       </g>
     {/each}
   </svg>
-</button>
+{/snippet}
+
+{#if onclick}
+  <button
+    class="tracker-checkbox"
+    class:tracker-checkbox--checked={isChecked}
+    class:tracker-checkbox--obtained={isObtained}
+    type="button"
+    aria-label={label}
+    {disabled}
+    {onclick}
+  >
+    {@render mark()}
+  </button>
+{:else}
+  <span
+    class="tracker-print-mark"
+    class:tracker-checkbox--checked={isChecked}
+    role="img"
+    aria-label={label}
+  >
+    {@render mark()}
+  </span>
+{/if}
 
 <style>
   .tracker-checkbox {
@@ -165,6 +184,16 @@
     height: 24px;
     /* A hand-drawn stroke can overrun the box, and the viewBox's edge shouldn't cut it off. */
     overflow: visible;
+  }
+
+  .tracker-print-mark {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .tracker-print-mark .tracker-checkbox__icon {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
   }
 
   .tracker-checkbox__crossing-stroke {

@@ -120,5 +120,12 @@ export function projectAnimals(
       spoilered: false,
     });
   }
-  return { rows, totals: countShelfRows(rows) };
+  const counted = options.excludeSpoileredSections
+    ? rows.filter(
+        (row) =>
+          !("animalId" in row) ||
+          !isSpoilered(trackerData.animals[row.animalId].visibility, ctx.progressionState),
+      )
+    : rows;
+  return { rows, totals: countShelfRows(counted) };
 }
