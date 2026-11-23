@@ -5,6 +5,7 @@ import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
 import plural from "#lib/i18n/catalogs/plural.js";
 import { inLocale } from "#lib/i18n/locale-runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { formatNumber } from "#lib/utils/format.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { RecipeId } from "#lib/types/tracker-data.js";
@@ -161,6 +162,45 @@ export function showMeterUndo(
       },
     );
   });
+}
+
+/** Start with the focus and finish with the actual committed value, even after lane selection. */
+export function captureVerticalMeterUndo(
+  field: "mineFloor" | "renown",
+  name: string,
+  locale: LocaleCode,
+): (before: number, after: number) => void {
+  const focus = captureUndoFocus();
+  const set = field === "mineFloor" ? userState.setMineFloor : userState.setRenown;
+  return (before, after) => {
+    const provenance = userState.provenanceOf(field);
+    showMeterUndo(
+      {
+        after,
+        before,
+        formatMessage:
+          field === "mineFloor"
+            ? (from, to) => {
+                const start = formatNumber(from, locale);
+                const end = formatNumber(to, locale);
+                return `${name}: ${start} → ${end} floors`;
+              }
+            : undefined,
+        id: field,
+        locale,
+        name,
+        undo(value) {
+          if (
+            userState.state.progress[field] === after &&
+            userState.provenanceOf(field) === provenance
+          ) {
+            set(value);
+          }
+        },
+      },
+      focus,
+    );
+  };
 }
 
 /** The starter batch keeps its own Undo while the player continues checking things off. */

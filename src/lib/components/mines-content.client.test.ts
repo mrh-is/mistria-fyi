@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/svelte";
+import { fireEvent, screen, within } from "@testing-library/svelte";
 import { flushSync, tick } from "svelte";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -74,5 +74,47 @@ describe("MinesContent floor stepper", () => {
     expect(input.value).toBe("0");
     await confirm("Never mind");
     expect(userState.state.progress.mineFloor).toBe(0);
+  });
+});
+
+describe("Mines depth chart", () => {
+  beforeEach(async () => {
+    userState.resetAll();
+    await userState.startTrackingByHand();
+    renderWithFeedback(MinesContent, { locale: "en" });
+  });
+
+  it("uses ten-floor keyboard steps and prompts before crossing a seal", async () => {
+    const slider = screen.getByRole("slider", { name: "Deepest floor" });
+    await fireEvent.keyDown(slider, { key: "PageUp" });
+    expect(slider).toHaveAttribute("aria-valuenow", "10");
+    await fireEvent.keyDown(slider, { key: "PageUp" });
+    expect(slider).toHaveAttribute("aria-valuenow", "20");
+    await fireEvent.keyDown(slider, { key: "PageUp" });
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    await confirm("Never mind");
+    expect(slider).toHaveAttribute("aria-valuenow", "20");
+  });
+
+  it("keeps unlearned spells and unreached biome names off the page", () => {
+    expect(screen.getAllByText("A spell you haven’t found")).toHaveLength(5);
+    expect(screen.queryByText("Upper Mines")).toBeNull();
+    expect(screen.getByText("20–39")).toBeTruthy();
+  });
+
+  it("updates a reached biome’s counts when a ledger entry is checked off", async () => {
+    userState.setMineFloor(19);
+    flushSync();
+    const details = screen.getByText("Upper Mines").closest("details");
+    if (!details) throw new Error("Expected a biome disclosure");
+    const biome = within(details);
+    const count = biome.getByText(/^[0-9]+ to do$/u);
+    const before = Number(count.textContent.split(" ")[0]);
+
+    details.open = true;
+    await fireEvent(details, new Event("toggle"));
+    await fireEvent.click(biome.getAllByRole("button", { name: /^Check (?!spoilered)/u })[0]);
+
+    expect(biome.getByText(`${before - 1} to do`)).toBeTruthy();
   });
 });
