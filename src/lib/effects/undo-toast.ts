@@ -164,6 +164,12 @@ export function showMeterUndo(
   });
 }
 
+function formatMineFloorUndo(name: string, from: number, to: number, locale: LocaleCode): string {
+  const start = formatNumber(from, locale);
+  const end = formatNumber(to, locale);
+  return `${name}: ${start} → ${end} floors`;
+}
+
 /** Start with the focus and finish with the actual committed value, even after lane selection. */
 export function captureVerticalMeterUndo(
   field: "mineFloor" | "renown",
@@ -180,11 +186,7 @@ export function captureVerticalMeterUndo(
         before,
         formatMessage:
           field === "mineFloor"
-            ? (from, to) => {
-                const start = formatNumber(from, locale);
-                const end = formatNumber(to, locale);
-                return `${name}: ${start} → ${end} floors`;
-              }
+            ? (from, to) => formatMineFloorUndo(name, from, to, locale)
             : undefined,
         id: field,
         locale,
