@@ -1,13 +1,19 @@
 import { fireEvent, screen, within } from "@testing-library/svelte";
 import { flushSync, tick } from "svelte";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import MinesContent from "#lib/components/mines-content.svelte";
 import { trackerData } from "#lib/data/index.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 const waterQuest = trackerData.mines.seals[0].questId;
+
+afterEach(() => {
+  toolbarState.closeSearch();
+  toolbarState.resetSourceFilters();
+});
 
 async function stepDown(): Promise<void> {
   await fireEvent.click(screen.getByRole("button", { name: "Go down one floor" }));
@@ -116,5 +122,18 @@ describe("Mines depth chart", () => {
     await fireEvent.click(biome.getAllByRole("button", { name: /^Check (?!spoilered)/u })[0]);
 
     expect(biome.getByText(`${before - 1} to do`)).toBeTruthy();
+  });
+
+  it("reports matching biome entries hidden by source filters", () => {
+    userState.setMineFloor(39);
+    toolbarState.setSearchQuery("Cherry Smoothie");
+    flushSync();
+    expect(toolbarState.pageSearchCount.visible).toBeGreaterThan(0);
+
+    toolbarState.hideAllSourceFilters();
+    flushSync();
+    const { filtered, visible } = toolbarState.pageSearchCount;
+    expect(visible).toBe(0);
+    expect(filtered.todo + filtered.notNow).toBeGreaterThan(0);
   });
 });

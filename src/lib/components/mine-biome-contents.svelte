@@ -6,7 +6,6 @@
   import { isDoableToday } from "#lib/engine/availability.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { ledgerPlacement, ledgerShelf } from "#lib/presentation/ledger.js";
-  import { isBiomeSource } from "#lib/presentation/mine-biome-sources.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -14,14 +13,11 @@
 
   import type { SourceChecklistRow } from "#lib/controllers/source-checklist.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { MinesBiome } from "#lib/types/tracker-data.js";
 
   let {
-    biome,
     locale,
     rows,
   }: {
-    biome: MinesBiome;
     locale: LocaleCode;
     rows: SourceChecklistRow[];
   } = $props();
@@ -32,21 +28,15 @@
   );
   let entries = $derived(
     rows.map((row) => {
-      const sources = row.sources.filter((source) => isBiomeSource(source, biome));
+      const { sources } = row;
       const context = userState.progressContext;
       return {
         placement: {
-          ...ledgerPlacement(
-            sources,
-            context,
-            context.progressionState,
-            {
-              completed: row.completed,
-              doable: isDoableToday({ sources, visibility: row.visibility }, context),
-              spoilered: !isConditionVisible(row.visibility, context.progressionState),
-            },
-            row.sources,
-          ),
+          ...ledgerPlacement(sources, context, context.progressionState, {
+            completed: row.completed,
+            doable: isDoableToday({ sources, visibility: row.visibility }, context),
+            spoilered: !isConditionVisible(row.visibility, context.progressionState),
+          }),
           key: row.key,
         },
         row,

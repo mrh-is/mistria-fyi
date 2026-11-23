@@ -9,6 +9,7 @@
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
+  import { filteredCounts, shelfFacts } from "#lib/engine/shelves.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import plural from "#lib/i18n/catalogs/plural.js";
@@ -98,16 +99,20 @@
         ? rows.filter((row) => row.sources.some((source) => isBiomeSource(source, biome)))
         : [];
       const nameMatch = Boolean(search && name && matchesName(name, search, locale));
-      const matching = entries.filter(
+      const named = entries.filter(
         (row) =>
-          row.sources.some(
-            (source) => isBiomeSource(source, biome) && toolbarState.showsSource(source),
-          ) &&
-          (!search ||
-            nameMatch ||
-            ((userState.state.showSpoilers ||
-              isConditionVisible(row.visibility, userState.progressionState)) &&
-              matchesName(row.name, search, locale))),
+          !search ||
+          nameMatch ||
+          ((userState.state.showSpoilers ||
+            isConditionVisible(row.visibility, userState.progressionState)) &&
+            matchesName(row.name, search, locale)),
+      );
+      const localRows = named.map((row) => ({
+        ...row,
+        sources: row.sources.filter((source) => isBiomeSource(source, biome)),
+      }));
+      const matching = localRows.filter(({ sources }) =>
+        sources.some((source) => toolbarState.showsSource(source)),
       );
       return {
         biome,
@@ -116,6 +121,7 @@
         furniture: entries.filter(
           (row) => row.reportCategory === "almanac-item" && furniture.has(row.id),
         ).length,
+        localRows,
         matching,
         name,
         nameMatch,
@@ -131,7 +137,13 @@
     ),
   );
   registerPageSearch(() => ({
-    filtered: { completed: 0, notNow: 0, todo: 0 },
+    filtered: filteredCounts(
+      sections.flatMap(({ localRows }) =>
+        localRows.map((row) =>
+          shelfFacts(row, row.completed, userState.progressContext, toolbarState.showsSource),
+        ),
+      ),
+    ),
     visible: sections.reduce(
       (count, { matching, nameMatch }) => count + matching.length + Number(nameMatch),
       0,
@@ -230,7 +242,7 @@
               </summary>
               {#if matching.length && (search || expandedBiomes.has(biome.id))}
                 <div class="biome-contents">
-                  <MineBiomeContents {biome} {locale} rows={matching} />
+                  <MineBiomeContents {locale} rows={matching} />
                 </div>
               {/if}
             </details>

@@ -23,16 +23,20 @@ function itemName(itemId: ItemId, locale: LocaleCode): string {
   return getName("items", itemId, locale);
 }
 
-export function renownRewards(locale: LocaleCode): RenownRewardDisplay[] {
+export function renownRewards(
+  locale: LocaleCode,
+  reachedLevel: number,
+  showSpoilers: boolean,
+): RenownRewardDisplay[] {
   const { rewards, townRanks } = trackerData.renown;
   return rewards.map((reward, index) => {
     const level = index + 1;
     const printed = formatNumber(level, locale);
-    const rank = getName(
-      "town-ranks",
-      String(getRenownPresentation(level, townRanks).currentRankIndex),
-      locale,
-    );
+    const { currentRank, currentRankIndex } = getRenownPresentation(level, townRanks);
+    const rank =
+      showSpoilers || reachedLevel >= currentRank.levels.start
+        ? getName("town-ranks", String(currentRankIndex), locale)
+        : "Upcoming";
     const amount = reward.type === "money" ? formatNumber(reward.amount, locale) : undefined;
     const chest = reward.type === "item" && reward.itemId.startsWith("treasure_box_");
     let name: string;

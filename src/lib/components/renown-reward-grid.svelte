@@ -41,69 +41,78 @@
 
   async function move(event: KeyboardEvent, current: number): Promise<void> {
     const first = Math.floor((current - 1) / columns) * columns + 1;
+    const last = Math.min(first + columns - 1, rewards.length);
+    const top = rows[0]?.[0].level ?? 1;
     const destinations: Partial<Record<string, number>> = {
       ArrowDown: current - columns,
-      ArrowLeft: current - 1,
-      ArrowRight: current + 1,
+      ArrowLeft: Math.max(current - 1, first),
+      ArrowRight: Math.min(current + 1, last),
       ArrowUp: current + columns,
-      End: event.ctrlKey ? rewards.length : Math.min(first + columns - 1, rewards.length),
-      Home: event.ctrlKey ? 1 : first,
+      End: event.ctrlKey ? Math.min(columns, rewards.length) : last,
+      Home: event.ctrlKey ? top : first,
     };
     const next = destinations[event.key];
     if (typeof next !== "number" || event.altKey || event.metaKey) return;
     event.preventDefault();
-    if (next < 1 || next > rewards.length) return;
+    if (next === current || next < 1 || next > rewards.length) return;
     selected = next;
     await tick();
     document.getElementById(`${id}-reward-${next}`)?.focus();
   }
 </script>
 
-<div class="reward-chart">
-  <RenownPole {locale} />
-  <div class="reward-grid" role="grid" aria-label="Renown rewards" style:--reward-columns={columns}>
-    {#each rows as row (row[0].level)}
-      <div class="reward-row" role="row">
-        {#each row as cell (cell.level)}
-          <div
-            class="reward-cell"
-            role="gridcell"
-            id={`${id}-reward-${cell.level}`}
-            tabindex={selected === cell.level ? 0 : -1}
-            aria-selected={selected === cell.level}
-            aria-label={cell.label}
-            aria-describedby={cell.level <= level ? `${id}-reached` : `${id}-unreached`}
-            data-reached={cell.level <= level}
-            onclick={() => (selected = cell.level)}
-            onkeydown={(event) => void move(event, cell.level)}
-          >
-            <span
-              class="reward-icon"
-              data-sprite-treatment={cell.level <= level ? "completed" : "not-now"}
-              aria-hidden="true"
+<div class="reward-sheet">
+  <div class="reward-chart">
+    <RenownPole {locale} />
+    <div
+      class="reward-grid"
+      role="grid"
+      aria-label="Renown rewards"
+      style:--reward-columns={columns}
+    >
+      {#each rows as row (row[0].level)}
+        <div class="reward-row" role="row">
+          {#each row as cell (cell.level)}
+            <div
+              class="reward-cell"
+              role="gridcell"
+              id={`${id}-reward-${cell.level}`}
+              tabindex={selected === cell.level ? 0 : -1}
+              aria-selected={selected === cell.level}
+              aria-label={cell.label}
+              aria-describedby={cell.level <= level ? `${id}-reached` : `${id}-unreached`}
+              data-reached={cell.level <= level}
+              onclick={() => (selected = cell.level)}
+              onkeydown={(event) => void move(event, cell.level)}
             >
-              {#if cell.sprite}
-                <img
-                  src={itemSpriteUrl(cell.sprite)}
-                  alt=""
-                  crossorigin="anonymous"
-                  width="28"
-                  height="28"
-                  loading="lazy"
-                />
-              {:else if cell.amount}
-                <IconCoins size={20} />
-              {:else if cell.chest}
-                <IconArchive size={20} />
-              {:else}
-                <IconShirt size={20} />
-              {/if}
-            </span>
-            {#if cell.amount}<span class="amount" aria-hidden="true">{cell.amount}</span>{/if}
-          </div>
-        {/each}
-      </div>
-    {/each}
+              <span
+                class="reward-icon"
+                data-sprite-treatment={cell.level <= level ? "completed" : "not-now"}
+                aria-hidden="true"
+              >
+                {#if cell.sprite}
+                  <img
+                    src={itemSpriteUrl(cell.sprite)}
+                    alt=""
+                    crossorigin="anonymous"
+                    width="28"
+                    height="28"
+                    loading="lazy"
+                  />
+                {:else if cell.amount}
+                  <IconCoins size={20} />
+                {:else if cell.chest}
+                  <IconArchive size={20} />
+                {:else}
+                  <IconShirt size={20} />
+                {/if}
+              </span>
+              {#if cell.amount}<span class="amount" aria-hidden="true">{cell.amount}</span>{/if}
+            </div>
+          {/each}
+        </div>
+      {/each}
+    </div>
   </div>
   <span id={`${id}-reached`} hidden>Reached</span>
   <span id={`${id}-unreached`} hidden>Not yet reached</span>
@@ -178,8 +187,9 @@
   }
 
   .reward-detail {
-    grid-column: 2;
     min-block-size: 2.75rem;
+    margin-inline-start: min(calc(8rem + 0.5rem), 28%);
+    padding-block: 0.35rem;
     color: var(--color-ink);
     font-family: var(--font-annotation);
     font-size: var(--text-sm);
@@ -192,6 +202,16 @@
 
     .reward-row:nth-child(2n) .reward-cell {
       border-block-end-color: var(--color-ink-hairline);
+    }
+
+    .reward-detail {
+      position: sticky;
+      z-index: 1;
+      inset-block-end: calc(env(safe-area-inset-bottom) + 4.5rem);
+      margin-inline-start: 0;
+      padding-inline: 0.5rem;
+      border-block-start: 1px solid var(--color-rule);
+      background: var(--color-paper);
     }
   }
 </style>

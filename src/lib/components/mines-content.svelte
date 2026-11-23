@@ -12,6 +12,7 @@
   import { createSectionGrouping } from "#lib/controllers/section-grouping.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
+  import { categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { captureVerticalMeterUndo } from "#lib/effects/undo-toast.js";
@@ -58,7 +59,9 @@
   }
 
   function requestFloor(floor: number): void {
-    const onApplied = compact ? undefined : captureVerticalMeterUndo("mineFloor", "Mines", locale);
+    const onApplied = compact
+      ? undefined
+      : captureVerticalMeterUndo("mineFloor", categoryNameForKey("mines", locale), locale);
     const seals = sealsBefore(userState.state.progress, floor);
     const apply = () => {
       celebrateProgress(

@@ -72,9 +72,13 @@
   {#each townRanks as tick, index (index)}
     {@const at = tick.levels.start}
     <span class="tick" style:inset-block-end={`${(100 * at) / max}%`} aria-hidden="true">
-      <span class="rank-label" class:near={Math.abs(shown - at) < 4}>
-        {getName("town-ranks", String(index), locale)}
-      </span>
+      {#if userState.state.showSpoilers || level >= at}
+        <span class="rank-label" class:near={Math.abs(shown - at) < 4}>
+          {getName("town-ranks", String(index), locale)}
+        </span>
+      {:else}
+        <span class="rank-blank"></span>
+      {/if}
     </span>
   {/each}
   <span class="fill" style:block-size={`${(100 * shown) / max}%`} aria-hidden="true"></span>
@@ -149,6 +153,11 @@
 
   .rank-label.near {
     visibility: hidden;
+  }
+
+  .rank-blank {
+    inline-size: 2rem;
+    border-block-end: 1px solid var(--color-meter-tick);
   }
 
   .star {

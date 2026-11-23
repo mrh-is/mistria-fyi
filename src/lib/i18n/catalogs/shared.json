@@ -5461,12 +5461,6 @@
     },
     "references": [
       {
-        "file": "src/lib/components/mines-content.svelte",
-        "refs": [
-          null
-        ]
-      },
-      {
         "file": "src/lib/data/categories.ts",
         "refs": [
           null
@@ -5996,6 +5990,12 @@
       "ru": "Ещё не достигнут"
     },
     "references": [
+      {
+        "file": "src/lib/components/renown-content.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/renown-reward-grid.svelte",
         "refs": [
@@ -6980,6 +6980,12 @@
       "ru": "Уровень достигнут"
     },
     "references": [
+      {
+        "file": "src/lib/components/renown-content.svelte",
+        "refs": [
+          null
+        ]
+      },
       {
         "file": "src/lib/components/renown-reward-grid.svelte",
         "refs": [
@@ -10215,6 +10221,12 @@
     "references": [
       {
         "file": "src/lib/components/rank-record.svelte",
+        "refs": [
+          null
+        ]
+      },
+      {
+        "file": "src/lib/presentation/renown-rewards-messages.ts",
         "refs": [
           null
         ]

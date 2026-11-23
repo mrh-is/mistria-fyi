@@ -16,7 +16,7 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
   let level = $derived(userState.state.progress.renown);
-  let rewards = $derived(compact ? [] : renownRewards(locale));
+  let rewards = $derived(compact ? [] : renownRewards(locale, level, userState.state.showSpoilers));
   let matching = $derived(rewards.filter(({ label }) => matchesName(label, nameFilter, locale)));
   registerPageSearch(() => ({
     filtered: { completed: 0, notNow: 0, todo: 0 },
@@ -42,6 +42,7 @@
       {#each matching as reward (reward.level)}
         <li class:reached={reward.level <= level}>
           {reward.label}
+          <span class="sr-only">{reward.level <= level ? "Reached" : "Not yet reached"}</span>
         </li>
       {/each}
     </ol>
