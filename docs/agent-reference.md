@@ -172,6 +172,10 @@ for the verified diagnostic syntax, exact-path workaround limits, & fresh-sessio
   divergence before starting the session. This keeps new sessions from loading stale hooks or
   permission rules. The [housekeeping job](development-workflow.md#automatic-housekeeping) cleans up
   worktrees & branches. Refreshing `main` is a manual step.
+- **Worktree setup warning:** setup lists changed Claude Code or Codex configuration & hook files
+  when local `main` differs from the latest fetched `origin/main`. Setup continues with its normal
+  links & install. The comparison uses the refs already available locally. `worktree:new` fetches
+  its base branch (`origin/main` by default) before creating the worktree & running setup.
 - **Hooks aren’t evidence:** run the required checks directly before committing. Without `--files`,
   `pnpm run lint` & `pnpm run lint:fix` still cover the full repository. Changed-file mode uses the
   same lint tools, scopes, & zero-warning checks.
