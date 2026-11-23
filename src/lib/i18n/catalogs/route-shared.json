@@ -382,11 +382,11 @@
               ],
               [
                 "1",
-                "formatNumber(progress.completed, page.data.locale)"
+                "formatNumber(progress.completed, locale)"
               ],
               [
                 "2",
-                "formatNumber(progress.total, page.data.locale)"
+                "formatNumber(progress.total, locale)"
               ]
             ]
           }

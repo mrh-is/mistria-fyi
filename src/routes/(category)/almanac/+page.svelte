@@ -4,6 +4,7 @@
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
+  let locale = $derived(data.locale);
 </script>
 
-<AlmanacLedger locale={data.locale} />
+<AlmanacLedger {locale} />
