@@ -44,7 +44,7 @@ function issueView(number: string): Issue {
   ]) as Issue;
 }
 
-function checkIssue(issue: Issue, takeover: boolean): void {
+function checkIssue(issue: Issue, takeover: boolean, login: string): void {
   const labels = issue.labels.map(({ name }) => name);
   if (
     issue.state !== "OPEN" ||
@@ -56,7 +56,7 @@ function checkIssue(issue: Issue, takeover: boolean): void {
   }
   if (
     !takeover &&
-    (issue.assignees.length > 0 ||
+    (issue.assignees.some((assignee) => assignee.login !== login) ||
       labels.some((label) => label === "status: in progress" || label.startsWith("agent:")))
   ) {
     throw new Error("Issue already has an owner or active label. Coordinate with the human owner.");
@@ -74,7 +74,7 @@ function checkIssue(issue: Issue, takeover: boolean): void {
 
 function claimIssue(number: string, login: string, agent: string, takeover: boolean): void {
   const issue = issueView(number);
-  checkIssue(issue, takeover);
+  checkIssue(issue, takeover, login);
   const args = [
     "issue",
     "edit",
@@ -205,7 +205,7 @@ export function startWork(args: string[]): void {
     ]);
   }
   if (issueMode) {
-    checkIssue(issueView(target), false);
+    checkIssue(issueView(target), false, login);
     if (detail === "--current") {
       setupExisting();
     } else {
@@ -229,7 +229,7 @@ export function startWork(args: string[]): void {
   const linked = issue ? issueView(issue) : undefined;
   const openIssue = linked?.state === "OPEN" ? issue : undefined;
   if (linked?.state === "OPEN") {
-    checkIssue(linked, true);
+    checkIssue(linked, true, login);
   }
   if (!issue) {
     console.warn(

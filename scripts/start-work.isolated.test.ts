@@ -84,7 +84,8 @@ describe("start work", () => {
   });
 
   it.each([
-    [{ assignees: [{ login: "billyleet" }] }, "already has an owner"],
+    [{ assignees: [{ login: "mrh-is" }] }, "already has an owner"],
+    [{ assignees: [{ login: "billyleet" }, { login: "mrh-is" }] }, "already has an owner"],
     [{ blockedBy: { nodes: [{ state: "OPEN" }] } }, "blocked"],
   ])("stops before setup when the issue has a conflict", (fields, message) => {
     exec
@@ -96,6 +97,18 @@ describe("start work", () => {
       startWork(["issue", "123", "fix-navigation", "codex"]);
     }).toThrow(message);
     expect(exec).toHaveBeenCalledTimes(4);
+  });
+
+  it("accepts an issue already assigned to the current user", () => {
+    mockLogin();
+    exec
+      .mockReturnValueOnce(JSON.stringify({ ...unclaimed, assignees: [{ login: "billyleet" }] }))
+      .mockImplementationOnce(() => {
+        throw new Error("setup failed");
+      });
+    expect(() => {
+      startWork(["issue", "123", "fix-navigation", "codex"]);
+    }).toThrow("setup failed");
   });
 
   it("does not claim an issue when worktree setup fails", () => {
