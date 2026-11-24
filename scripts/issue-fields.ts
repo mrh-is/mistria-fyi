@@ -84,11 +84,11 @@ export function resolveUpdates(assignments: string[], catalog: Catalog): Update[
   });
 }
 
-function graphql(query: string, variables: Record<string, string> = {}): unknown {
+function graphql(query: string, variables: Record<string, number | string> = {}): unknown {
   const args = ["api", "graphql", "-f", `query=${query}`];
   for (const [key, value] of Object.entries(variables)) {
-    // -F (not -f) so numeric values reach GraphQL as Int.
-    args.push("-F", `${key}=${value}`);
+    // -F coerces numbers, booleans, null, & @files, so only numbers use it; strings stay literal.
+    args.push(typeof value === "number" ? "-F" : "-f", `${key}=${value}`);
   }
   const output = execFileSync("gh", args, {
     encoding: "utf8",
@@ -158,7 +158,7 @@ function loadCatalog(repo: { name: string; owner: string }): Catalog {
 function issueId(repo: { name: string; owner: string }, number: string): string {
   const data = graphql(
     "query($o:String!,$n:String!,$i:Int!){repository(owner:$o,name:$n){issue(number:$i){id}}}",
-    { i: number, n: repo.name, o: repo.owner },
+    { i: Number(number), n: repo.name, o: repo.owner },
   ) as { repository: { issue: { id: string } } };
   return data.repository.issue.id;
 }
@@ -184,8 +184,8 @@ function apply(id: string, updates: Update[]): void {
     const entries = fields
       .map((field) =>
         field.optionId
-          ? `{fieldId:"${field.fieldId}",singleSelectOptionId:"${field.optionId}"}`
-          : `{fieldId:"${field.fieldId}",delete:true}`,
+          ? `{fieldId:${JSON.stringify(field.fieldId)},singleSelectOptionId:${JSON.stringify(field.optionId)}}`
+          : `{fieldId:${JSON.stringify(field.fieldId)},delete:true}`,
       )
       .join(",");
     graphql(
@@ -232,7 +232,7 @@ export function readIssue(number: string): IssueState {
         }
       }
     `,
-    { i: number, n: repo.name, o: repo.owner },
+    { i: Number(number), n: repo.name, o: repo.owner },
   ) as ShowResponse;
   const values = issue.issueFieldValues.nodes.filter((node) => node.field);
   return {

@@ -86,7 +86,14 @@ function claimIssue(number: string, login: string, agent: string, takeover: bool
     }
   }
   run("gh", args);
-  updateIssue(number, ["status=In progress", `agent=${agent === "human" ? "-" : agent}`]);
+  try {
+    updateIssue(number, ["status=In progress", `agent=${agent === "human" ? "-" : agent}`]);
+  } catch (error) {
+    throw new Error(
+      `Issue #${number} is assigned to ${login}, but its status & Agent weren't set (${error instanceof Error ? error.message : String(error)}). Run: pnpm run issue-fields claim ${number} ${agent}`,
+      { cause: error },
+    );
+  }
   const claimed = issueView(number);
   const { fields, status } = readIssue(number);
   if (

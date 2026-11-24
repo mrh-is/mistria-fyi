@@ -64,7 +64,9 @@ pnpm run start-work takeover 456 --current codex
 
 - **Issue** prepares `123-short-description` and then claims the issue. It verifies the human
   assignee, the In progress status, & the Agent field for agent work. Pass an Agent option’s name,
-  such as `codex` or `claude`. Use `human` for work without an agent, which leaves Agent empty.
+  such as `codex` or `claude` (the `Agent:` line in an issue body or comment uses a different
+  identifier, such as `claude-code`). Use `human` for work without an agent, which leaves Agent
+  empty.
 - **Task** prepares an ad hoc branch without looking up or creating an issue. Both new-worktree
   modes branch from freshly fetched `origin/main` and leave the primary checkout alone. Redesign
   work branches from `next` instead; see [The redesign branch](#the-redesign-branch).

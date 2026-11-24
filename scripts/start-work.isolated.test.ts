@@ -192,6 +192,16 @@ describe("start work", () => {
     expect(updateIssue).toHaveBeenCalledWith("123", ["status=In progress", "agent=codex"]);
   });
 
+  it("names the recovery command when the status & Agent update fails after assignment", () => {
+    mockIssueClaim({ ...unclaimed, assignees: [{ login: "billyleet" }] });
+    vi.mocked(updateIssue).mockImplementation(() => {
+      throw new Error("INSUFFICIENT_SCOPES");
+    });
+    expect(() => {
+      startWork(["issue", "123", "fix-navigation", "codex"]);
+    }).toThrow("pnpm run issue-fields claim 123 codex");
+  });
+
   it("reports when GitHub does not reflect the issue claim", () => {
     mockIssueClaim(unclaimed);
     expect(() => {
@@ -277,6 +287,7 @@ describe("start work", () => {
       { stdio: "inherit" },
     );
     expect(updateIssue).toHaveBeenCalledWith("123", ["status=In progress", "agent=codex"]);
+    expect(readIssue).toHaveBeenCalledTimes(1);
     expect(exec).toHaveBeenCalledWith(
       "gh",
       ["pr", "edit", "456", "--add-assignee", "billyleet", "--remove-assignee", "mrh-is"],
