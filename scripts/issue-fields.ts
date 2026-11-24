@@ -195,7 +195,14 @@ function apply(id: string, updates: Update[]): void {
   }
 }
 
-function show(repo: { name: string; owner: string }, number: string): void {
+export interface IssueState {
+  fields: Record<string, string>;
+  status: null | string;
+  type: null | string;
+}
+
+export function readIssue(number: string): IssueState {
+  const repo = repository();
   const {
     repository: { issue },
   } = graphql(
@@ -228,17 +235,22 @@ function show(repo: { name: string; owner: string }, number: string): void {
     { i: number, n: repo.name, o: repo.owner },
   ) as ShowResponse;
   const values = issue.issueFieldValues.nodes.filter((node) => node.field);
-  console.log(
-    JSON.stringify(
-      {
-        type: issue.issueType?.name ?? null,
-        fields: Object.fromEntries(values.map((node) => [node.field?.name, node.name])),
-        status: issue.status?.name ?? null,
-      },
-      null,
-      2,
-    ),
-  );
+  return {
+    type: issue.issueType?.name ?? null,
+    fields: Object.fromEntries(values.map((node) => [node.field?.name ?? "", node.name])),
+    status: issue.status?.name ?? null,
+  };
+}
+
+/** Throws when a name or value in `assignments` doesn't exist, without changing anything. */
+export function checkAssignments(assignments: string[]): void {
+  resolveUpdates(assignments, loadCatalog(repository()));
+}
+
+export function updateIssue(number: string, assignments: string[]): void {
+  const repo = repository();
+  const updates = resolveUpdates(assignments, loadCatalog(repo));
+  apply(issueId(repo, number), updates);
 }
 
 export function issueFields(args: string[]): void {
@@ -246,9 +258,8 @@ export function issueFields(args: string[]): void {
   if (!/^[1-9]\d*$/.test(number) || !["claim", "get", "release", "set"].includes(command ?? "")) {
     throw new Error(USAGE);
   }
-  const repo = repository();
   if (command === "get") {
-    show(repo, number);
+    console.log(JSON.stringify(readIssue(number), null, 2));
     return;
   }
   let assignments = rest;
@@ -264,9 +275,8 @@ export function issueFields(args: string[]): void {
   if (assignments.length === 0) {
     throw new Error(USAGE);
   }
-  const updates = resolveUpdates(assignments, loadCatalog(repo));
-  apply(issueId(repo, number), updates);
-  show(repo, number);
+  updateIssue(number, assignments);
+  console.log(JSON.stringify(readIssue(number), null, 2));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

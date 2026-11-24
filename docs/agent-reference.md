@@ -65,7 +65,7 @@ session’s own worktree, including in `.worktrees/`. So spawn editing subagents
 **Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
 from the main checkout (`SHARED_DIRECTORIES` in `scripts/setup-worktree.ts`), so `ls pipeline/input`
 settles the question once setup has run. Before setup, look in the main checkout’s
-`pipeline/input/`. A `needs game installation` label alone doesn’t block a task.
+`pipeline/input/`. A `requires game install` label alone doesn’t block a task.
 
 When present, `pipeline/input/` holds one `vX.Y.Z/` folder per release. Each has `assets/`, `save/`,
 or both. The `assets/` folder holds:

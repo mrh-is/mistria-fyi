@@ -507,7 +507,7 @@ describe("accessibility issue sync", () => {
       workflowUrl: "https://example.test/run/1",
     });
     expect(calls[1]?.args).toContain("create");
-    expect(calls[1]?.args).toContain("agent: codex");
+    expect(calls[1]?.args).toEqual(expect.arrayContaining(["--type", "Bug"]));
     expect(calls[1]?.input).toContain("route: /");
     expect(calls[1]?.input).toContain("Agent: codex");
   });

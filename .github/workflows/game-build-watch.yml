@@ -71,5 +71,4 @@ jobs:
           EOF
 
           gh issue create --title "$issue_title" --body-file body.md \
-            --label "status: ready" --label "area: pipeline" \
-            --label "type: maintenance" --label "requires game install"
+            --type Task --label "requires game install"

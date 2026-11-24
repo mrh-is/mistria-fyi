@@ -402,11 +402,11 @@ This job doesn’t count toward “CI passed”.
 
 The same job also keeps the “Automated accessibility regression detected” issue, so it waits for the
 scheduled `accessibility` job & runs whatever that job’s result, unless the run was cancelled. An
-accessibility regression is a product bug, so it gets its own `type: bug` issue instead of a line in
-the nightly report. On failure, the job opens that issue, or comments on it if it’s already open,
-with up to 10 violations from the shard reports. After a passing run, it comments & closes the
-issue. If the accessibility job failed without a usable report, or was skipped, the job fails
-without changing that issue. Each report still runs when the other fails.
+accessibility regression is a product bug, so it gets its own Bug issue instead of a line in the
+nightly report. On failure, the job opens that issue, or comments on it if it’s already open, with
+up to 10 violations from the shard reports. After a passing run, it comments & closes the issue. If
+the accessibility job failed without a usable report, or was skipped, the job fails without changing
+that issue. Each report still runs when the other fails.
 
 ### Test projects
 

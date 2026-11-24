@@ -125,7 +125,7 @@ session limits) belong in each contributor’s user config.
 - Inspect `assets.zip` entries or extract named subtrees. Extracting the whole archive needs the
   user’s explicit approval.
 - Before declaring the game assets unavailable, look in `pipeline/input/`, or in the main checkout’s
-  when a linked worktree hasn’t run setup. The “needs game installation” label alone doesn’t block a
+  when a linked worktree hasn’t run setup. The “requires game install” label alone doesn’t block a
   task.
 - Before pipeline work, read [pipeline/README.md](pipeline/README.md) & the “Asset inputs” section
   of agent-reference.md.

@@ -36,15 +36,15 @@ export async function defaultCommandRunner(
 // query only narrows candidates; the exact marker in the body is what identifies a report issue.
 export async function findMarkedIssue(
   run: CommandRunner,
-  { label, marker, title }: { label: string; marker: string; title: string },
+  { type, marker, title }: { type: string; marker: string; title: string },
 ): Promise<IssueSummary | undefined> {
   const output = await run("gh", [
     "issue",
     "list",
     "--state",
     "open",
-    "--label",
-    label,
+    "--type",
+    type,
     "--search",
     `"${title}" in:title`,
     "--json",

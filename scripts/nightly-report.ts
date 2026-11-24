@@ -18,7 +18,7 @@ const ACCESSIBILITY_TITLE = "Automated accessibility regression detected";
 
 const MARKER = "<!-- mistria-nightly-report -->";
 const TITLE = "Nightly CI report";
-const LABEL = "type: maintenance";
+const ISSUE_TYPE = "Task";
 
 // Pull requests don't fail on wall time, so this line is what catches the suite growing. Main's
 // step took 73-119 s, with a median of about 90 s, when this was set (#13).
@@ -148,7 +148,7 @@ export async function synchronizeNightlyIssue(options: {
 }): Promise<void> {
   const { findings, workflowUrl } = options;
   const run = options.run ?? defaultCommandRunner;
-  const issue = await findMarkedIssue(run, { label: LABEL, marker: MARKER, title: TITLE });
+  const issue = await findMarkedIssue(run, { type: ISSUE_TYPE, marker: MARKER, title: TITLE });
   const issueNumber = issue?.number;
   // Reports have a flat bullet list. Refresh advisories & status notes, retaining the other
   // findings only when timing data is incomplete. A complete timing check replaces them normally.
@@ -194,7 +194,7 @@ export async function synchronizeNightlyIssue(options: {
   ].join("\n");
   const args =
     issueNumber === undefined
-      ? ["issue", "create", "--title", TITLE, "--label", LABEL, "--body-file", "-"]
+      ? ["issue", "create", "--title", TITLE, "--type", ISSUE_TYPE, "--body-file", "-"]
       : ["issue", "edit", String(issueNumber), "--body-file", "-"];
   await run("gh", args, body);
 }
@@ -318,7 +318,7 @@ export async function synchronizeAccessibilityIssue(options: {
 }): Promise<void> {
   const run = options.run ?? defaultCommandRunner;
   const issue = await findMarkedIssue(run, {
-    label: "type: bug",
+    type: "Bug",
     marker: ACCESSIBILITY_MARKER,
     title: ACCESSIBILITY_TITLE,
   });
@@ -364,20 +364,7 @@ export async function synchronizeAccessibilityIssue(options: {
 
   const args =
     issueNumber === undefined
-      ? [
-          "issue",
-          "create",
-          "--title",
-          ACCESSIBILITY_TITLE,
-          "--label",
-          "type: bug",
-          "--label",
-          "status: ready",
-          "--label",
-          "agent: codex",
-          "--body-file",
-          "-",
-        ]
+      ? ["issue", "create", "--title", ACCESSIBILITY_TITLE, "--type", "Bug", "--body-file", "-"]
       : ["issue", "comment", String(issueNumber), "--body-file", "-"];
   await run("gh", args, body);
 }
