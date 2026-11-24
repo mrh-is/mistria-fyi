@@ -1,13 +1,13 @@
 ---
 name: Bug
 about: A product or tooling problem with evidence & a way to tell when it is fixed
-labels: "type: bug,status: ready"
+type: Bug
 ---
 
-<!-- Before filing: choose exactly one type: label & exactly one status: label (the defaults are
-type: bug & status: ready), an area: label when one fits, & a current milestone. Include acceptance
-criteria below, or a "Done when" line for an investigation. With gh issue create --body-file, pass
---label & --milestone explicitly; template defaults don't apply. See docs/agent-workflow.md#agent-attribution. -->
+<!-- Before filing: the issue type defaults to Bug. Set the Area field when one fits, & choose a
+current milestone. Include acceptance criteria below, or a "Done when" line for an investigation.
+With gh issue create --body-file, pass --type & --milestone explicitly, then set Area with
+pnpm run issue-fields; template defaults don't apply. See docs/agent-workflow.md#agent-attribution. -->
 
 ## Symptom
 

@@ -4,6 +4,8 @@ import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { checkAssignments, readIssue, updateIssue } from "#scripts/issue-fields";
+
 interface Issue {
   assignees: { login: string }[];
   blockedBy: { nodes: { state: string }[] };
@@ -44,24 +46,26 @@ function issueView(number: string): Issue {
   ]) as Issue;
 }
 
-function checkIssue(issue: Issue, takeover: boolean): void {
-  const labels = issue.labels.map(({ name }) => name);
+function checkIssue(number: string, issue: Issue, takeover: boolean, login: string): void {
   if (
     issue.state !== "OPEN" ||
     issue.blockedBy.nodes.some(({ state }) => state === "OPEN") ||
-    labels.includes("status: blocked") ||
-    labels.includes("status: needs decision")
+    issue.labels.some(({ name }) => name === "needs decision")
   ) {
     throw new Error("Issue is closed, blocked, or awaiting a decision.");
   }
-  if (
-    !takeover &&
-    (issue.assignees.length > 0 ||
-      labels.some((label) => label === "status: in progress" || label.startsWith("agent:")))
-  ) {
-    throw new Error("Issue already has an owner or active label. Coordinate with the human owner.");
-  }
   if (!takeover) {
+    const { fields, status } = readIssue(number);
+    if (
+      issue.assignees.some((assignee) => assignee.login !== login) ||
+      status === "In progress" ||
+      status === "In review" ||
+      fields.Agent
+    ) {
+      throw new Error(
+        "Issue already has an owner or active status. Coordinate with the human owner.",
+      );
+    }
     for (const { url } of issue.closedByPullRequestsReferences) {
       if (read("gh", ["pr", "view", url, "--json", "state", "--jq", ".state"]) === "OPEN") {
         throw new Error(
@@ -74,41 +78,29 @@ function checkIssue(issue: Issue, takeover: boolean): void {
 
 function claimIssue(number: string, login: string, agent: string, takeover: boolean): void {
   const issue = issueView(number);
-  checkIssue(issue, takeover);
-  const args = [
-    "issue",
-    "edit",
-    number,
-    "--add-assignee",
-    login,
-    "--add-label",
-    "status: in progress",
-  ];
-  if (agent !== "human") {
-    args.push("--add-label", `agent: ${agent}`);
-  }
-  for (const { name } of issue.labels) {
-    if (
-      (name.startsWith("status:") && name !== "status: in progress") ||
-      (name.startsWith("agent:") && name !== `agent: ${agent}`)
-    ) {
-      args.push("--remove-label", name);
-    }
-  }
+  checkIssue(number, issue, takeover, login);
+  const args = ["issue", "edit", number, "--add-assignee", login];
   for (const assignee of issue.assignees) {
     if (assignee.login !== login) {
       args.push("--remove-assignee", assignee.login);
     }
   }
   run("gh", args);
+  try {
+    updateIssue(number, ["status=In progress", `agent=${agent === "human" ? "-" : agent}`]);
+  } catch (error) {
+    throw new Error(
+      `Issue #${number} is assigned to ${login}, but its status & Agent weren't set (${error instanceof Error ? error.message : String(error)}). Run: pnpm run issue-fields claim ${number} ${agent}`,
+      { cause: error },
+    );
+  }
   const claimed = issueView(number);
-  const labels = claimed.labels.map(({ name }) => name);
-  const agents = labels.filter((label) => label.startsWith("agent:"));
+  const { fields, status } = readIssue(number);
   if (
     claimed.assignees.length !== 1 ||
     claimed.assignees[0]?.login !== login ||
-    labels.filter((label) => label.startsWith("status:")).join(",") !== "status: in progress" ||
-    agents.join(",") !== (agent === "human" ? "" : `agent: ${agent}`)
+    status !== "In progress" ||
+    (fields.Agent ?? "").toLowerCase() !== (agent === "human" ? "" : agent)
   ) {
     throw new Error(`Issue #${number} claim could not be verified. Check its current state.`);
   }
@@ -199,13 +191,10 @@ export function startWork(args: string[]): void {
   }
   const repositoryUrl = read("gh", ["repo", "view", "--json", "url", "--jq", ".url"]);
   if (agent !== "human") {
-    read("gh", [
-      "api",
-      `repos/${new URL(repositoryUrl).pathname.slice(1)}/labels/${encodeURIComponent(`agent: ${agent}`)}`,
-    ]);
+    checkAssignments([`agent=${agent}`]);
   }
   if (issueMode) {
-    checkIssue(issueView(target), false);
+    checkIssue(target, issueView(target), false, login);
     if (detail === "--current") {
       setupExisting();
     } else {
@@ -228,8 +217,8 @@ export function startWork(args: string[]): void {
   const issue = linkedIssue(pr, repositoryUrl);
   const linked = issue ? issueView(issue) : undefined;
   const openIssue = linked?.state === "OPEN" ? issue : undefined;
-  if (linked?.state === "OPEN") {
-    checkIssue(linked, true);
+  if (issue && linked?.state === "OPEN") {
+    checkIssue(issue, linked, true, login);
   }
   if (!issue) {
     console.warn(

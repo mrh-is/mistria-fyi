@@ -24,14 +24,15 @@ Use the PR body for the change summary, verification, & decisions.
   - `Co-Authored-By: Claude Code <noreply@anthropic.com>`
   - `Co-Authored-By: Codex <codex@openai.com>`
 - **Issues:** end the body with `Agent: <agent-id>`. Use `claude-code` for Claude Code, `codex` for
-  Codex, & a stable lowercase product slug for any other agent. Include exactly one `type:` label,
-  exactly one `status:` label, an `area:` label when one fits, a milestone, & an “Acceptance
-  criteria” section (or a “Done when” line for investigations). Use the
-  [task](../.github/ISSUE_TEMPLATE/task.md) or [bug](../.github/ISSUE_TEMPLATE/bug.md) template.
-  With `gh issue create --body-file`, pass labels & the milestone explicitly through `--label` &
-  `--milestone`; template defaults don't apply. List current milestones with
-  `gh api repos/mrh-is/mistria-fyi/milestones --jq '.[].title'`. Use the issue’s `agent:*` label to
-  identify its active agent.
+  Codex, & a stable lowercase product slug for any other agent. Give each issue an issue type (Bug,
+  Feature, or Task), an Area field when one fits, a milestone, & an “Acceptance criteria” section
+  (or a “Done when” line for investigations). Use the [task](../.github/ISSUE_TEMPLATE/task.md) or
+  [bug](../.github/ISSUE_TEMPLATE/bug.md) template. With `gh issue create --body-file`, pass the
+  type & milestone explicitly through `--type` & `--milestone`; template defaults don't apply.
+  GitHub files a new issue as Backlog; set it to Todo once it’s ready to pick up. List current
+  milestones with `gh api repos/mrh-is/mistria-fyi/milestones --jq '.[].title'`. Use the issue’s
+  Agent field to identify its active agent. [Issue fields](#issue-fields) has the command that sets
+  status, type, Area, & Agent.
 - **Issue & PR assignees:** when taking on work, assign the issue & its PR to the GitHub user you
   represent. Check the authenticated account with `gh api user --jq .login`; use
   `gh issue edit <number> --add-assignee @me` & `gh pr edit <number> --add-assignee @me`, or
@@ -49,11 +50,11 @@ Use the PR body for the change summary, verification, & decisions.
 
 For issue-backed work, read the issue, comments, & relationships with
 `gh issue view <number> --json title,body,labels,assignees,comments,blockedBy,parent`. An open
-blocker, `status: blocked`, or `status: needs decision` prevents starting. An assignee,
-`status: in progress`, an `agent:*` label, or an existing implementation PR calls for coordination
-unless the user explicitly authorized a handoff. The command checks open PRs that GitHub lists as
-closing the issue. Check for existing work that uses a `Refs` line or another informal reference
-when reviewing the issue.
+blocker or the `needs decision` label prevents starting. An assignee other than you, the In progress
+or In review status, an Agent field value, or an existing implementation PR calls for coordination
+unless the user explicitly authorized a handoff. An issue assigned only to you counts as yours. The
+command checks open PRs that GitHub lists as closing the issue. Check for existing work that uses a
+`Refs` line or another informal reference when reviewing the issue.
 
 ```sh
 pnpm run start-work issue 123 short-description codex
@@ -62,9 +63,10 @@ pnpm run start-work takeover 456 --current codex
 ```
 
 - **Issue** prepares `123-short-description` and then claims the issue. It verifies the human
-  assignee, `status: in progress` as the only status, & one `agent:*` label for agent work. Pass the
-  suffix of an existing agent label, such as `codex` or `claude`. Use `human` for work without an
-  agent.
+  assignee, the In progress status, & the Agent field for agent work. Pass an Agent option’s name,
+  such as `codex` or `claude` (the `Agent:` line in an issue body or comment uses a different
+  identifier, such as `claude-code`). Use `human` for work without an agent, which leaves Agent
+  empty.
 - **Task** prepares an ad hoc branch without looking up or creating an issue. Both new-worktree
   modes branch from freshly fetched `origin/main` and leave the primary checkout alone. Redesign
   work branches from `next` instead; see [The redesign branch](#the-redesign-branch).
@@ -81,10 +83,9 @@ Use `--current` in place of the slug for an already-branched harness worktree. W
 absent, run `node scripts/start-work.ts` with the pinned Node instead of `pnpm run start-work`. For
 cloud checkouts or harnesses that require separate Git operations, follow
 [Worktrees](../AGENTS.md#worktrees). Apply the same claim with `gh issue edit` & read it back with
-`gh issue view <number> --json labels,assignees` before implementing. Label names have a space after
-the colon, so the manual claim is
-`gh issue edit 123 --add-label "status: in progress" --add-label "agent: codex"`, not `agent:codex`.
-List the agent labels with `gh label list --search agent`.
+`gh issue view <number> --json assignees` & `pnpm run issue-fields get <number>` before
+implementing. The manual claim is `gh issue edit 123 --add-assignee @me`, then
+`pnpm run issue-fields claim 123 codex`.
 
 If claiming fails after setup, the prepared worktree remains. Inspect the issue, then use
 `--current` in that worktree if it remains unclaimed. If a takeover fails partway through, inspect
@@ -135,16 +136,38 @@ blocker on both issues and clears it when the blocker closes, so the dependency 
 - **Remove:** `gh issue edit <number> --remove-blocked-by <other>` when the dependency no longer
   applies.
 
-`status: blocked` is only for blockers outside the tracker, such as waiting on a game release,
-hardware, or a third party. Name the blocker & what would clear it in a comment. An issue blocked
-only by other issues keeps its other status, usually `status: ready`.
+A blocker outside the tracker, such as waiting on a game release, hardware, or a third party, has no
+relationship to record. Leave the issue in Backlog & name the blocker & what would clear it in a
+comment. An issue blocked only by other issues keeps its status, usually Todo.
+
+### Issue fields
+
+An issue’s status, type, Area, & Agent are GitHub issue statuses, issue types, & issue fields, not
+labels. `gh issue create --type` & `gh issue edit --type` set the type. Nothing in `gh` sets the
+rest yet, so `pnpm run issue-fields` does, through GraphQL, & resolves each name to its ID:
+
+```sh
+pnpm run issue-fields get 123
+pnpm run issue-fields set 123 status=Todo area=UI type=Bug
+pnpm run issue-fields claim 123 codex
+pnpm run issue-fields release 123
+```
+
+- **Statuses:** Backlog, Todo, In progress, In review, Done, Not planned, & Duplicate. GitHub moves
+  an issue to In progress or In review when a PR links to it, so don’t set those by hand while a PR
+  is open.
+- **Clearing:** `name=-` clears a type or field. A status can’t be cleared.
+- **Delete the script** when `gh issue edit` can set statuses & fields itself.
+
+`needs decision` stays a label: the status set is fixed, & it has no equivalent. Issues that CI
+files, such as the game build watch, arrive as Backlog without an Area, so triage sets those.
 
 ### Small-agent tasks
 
 The `delegate: small agent` label marks an issue that Antigravity or Copilot can finish without
-judgment calls. It describes the task’s fit, not who owns it, so the usual `status:*` & `agent:*`
-claiming rules still apply. Claude & Codex add it, unprompted, to any issue they file or triage that
-meets every condition below:
+judgment calls. It describes the task’s fit, not who owns it, so the usual status & Agent claiming
+rules still apply. Claude & Codex add it, unprompted, to any issue they file or triage that meets
+every condition below:
 
 - **Specified:** the body names the files to change, and the acceptance criteria are checkable
   states, not goals.

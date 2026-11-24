@@ -1,13 +1,14 @@
 ---
 name: Task
 about: A self-contained task for an agent or human to pick up
-labels: "status: ready"
+type: Task
 ---
 
-<!-- Before filing: choose exactly one type: label, exactly one status: label (the default is
-status: ready), an area: label when one fits, & a current milestone. Include acceptance criteria
-below, or a "Done when" line for an investigation. With gh issue create --body-file, pass --label
-& --milestone explicitly; template defaults don't apply. See docs/agent-workflow.md#agent-attribution. -->
+<!-- Before filing: choose an issue type (the default is Task), set the Area field when one fits, &
+choose a current milestone. Include acceptance criteria below, or a "Done when" line for an
+investigation. With gh issue create --body-file, pass --type & --milestone explicitly, then set
+Area with pnpm run issue-fields; template defaults don't apply. See
+docs/agent-workflow.md#agent-attribution. -->
 
 ## Context
 

@@ -3,30 +3,38 @@ import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { checkAssignments, readIssue, updateIssue } from "#scripts/issue-fields";
 import { startWork } from "#scripts/start-work";
 
 vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
+vi.mock("#scripts/issue-fields", () => ({
+  checkAssignments: vi.fn(),
+  readIssue: vi.fn(),
+  updateIssue: vi.fn(),
+}));
 
 const exec = vi.mocked(execFileSync);
+const todo = { type: "Task", fields: {}, status: "Todo" };
+const claimedByCodex = { type: "Task", fields: { Agent: "Codex" }, status: "In progress" };
 const unclaimed = {
   assignees: [],
   blockedBy: { nodes: [] },
   closedByPullRequestsReferences: [],
-  labels: [{ name: "status: ready" }],
+  labels: [],
   state: "OPEN",
 };
 
 beforeEach(() => {
   exec.mockReset();
+  vi.mocked(checkAssignments).mockReset();
+  vi.mocked(readIssue).mockReset().mockReturnValue(todo);
+  vi.mocked(updateIssue).mockReset();
 });
 
-function mockLogin(agent = "codex"): void {
+function mockLogin(): void {
   exec
     .mockReturnValueOnce("billyleet")
     .mockReturnValueOnce("https://github.com/mrh-is/mistria-fyi");
-  if (agent !== "human") {
-    exec.mockReturnValueOnce("{}");
-  }
 }
 
 function mockWorktree(): void {
@@ -84,18 +92,56 @@ describe("start work", () => {
   });
 
   it.each([
-    [{ assignees: [{ login: "billyleet" }] }, "already has an owner"],
+    [{ assignees: [{ login: "mrh-is" }] }, "already has an owner"],
+    [{ assignees: [{ login: "billyleet" }, { login: "mrh-is" }] }, "already has an owner"],
     [{ blockedBy: { nodes: [{ state: "OPEN" }] } }, "blocked"],
+    [{ labels: [{ name: "needs decision" }] }, "awaiting a decision"],
   ])("stops before setup when the issue has a conflict", (fields, message) => {
-    exec
-      .mockReturnValueOnce("billyleet")
-      .mockReturnValueOnce("https://github.com/mrh-is/mistria-fyi")
-      .mockReturnValueOnce("{}")
-      .mockReturnValueOnce(JSON.stringify({ ...unclaimed, ...fields }));
+    mockLogin();
+    exec.mockReturnValueOnce(JSON.stringify({ ...unclaimed, ...fields }));
     expect(() => {
       startWork(["issue", "123", "fix-navigation", "codex"]);
     }).toThrow(message);
-    expect(exec).toHaveBeenCalledTimes(4);
+    expect(exec).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    ["an In progress status", { type: "Task", fields: {}, status: "In progress" }],
+    ["an In review status", { type: "Task", fields: {}, status: "In review" }],
+    ["an Agent field", { type: "Task", fields: { Agent: "Claude" }, status: "Todo" }],
+  ])("stops before setup when the issue has %s", (_name, state) => {
+    mockLogin();
+    exec.mockReturnValueOnce(JSON.stringify(unclaimed));
+    vi.mocked(readIssue).mockReturnValue(state);
+    expect(() => {
+      startWork(["issue", "123", "fix-navigation", "codex"]);
+    }).toThrow("already has an owner");
+    expect(exec).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops before setup when the agent is not an Agent field option", () => {
+    exec
+      .mockReturnValueOnce("billyleet")
+      .mockReturnValueOnce("https://github.com/mrh-is/mistria-fyi");
+    vi.mocked(checkAssignments).mockImplementation(() => {
+      throw new Error('Unknown Agent "kilo".');
+    });
+    expect(() => {
+      startWork(["issue", "123", "fix-navigation", "kilo"]);
+    }).toThrow("Unknown Agent");
+    expect(exec).toHaveBeenCalledTimes(2);
+  });
+
+  it("accepts an issue already assigned to the current user", () => {
+    mockLogin();
+    exec
+      .mockReturnValueOnce(JSON.stringify({ ...unclaimed, assignees: [{ login: "billyleet" }] }))
+      .mockImplementationOnce(() => {
+        throw new Error("setup failed");
+      });
+    expect(() => {
+      startWork(["issue", "123", "fix-navigation", "codex"]);
+    }).toThrow("setup failed");
   });
 
   it("does not claim an issue when worktree setup fails", () => {
@@ -129,11 +175,11 @@ describe("start work", () => {
   });
 
   it("sets up and verifies the complete issue claim", () => {
-    mockIssueClaim({
-      ...unclaimed,
-      assignees: [{ login: "billyleet" }],
-      labels: [{ name: "status: in progress" }, { name: "agent: codex" }],
-    });
+    mockIssueClaim({ ...unclaimed, assignees: [{ login: "billyleet" }] });
+    vi.mocked(readIssue)
+      .mockReturnValueOnce(todo)
+      .mockReturnValueOnce(todo)
+      .mockReturnValueOnce(claimedByCodex);
     startWork(["issue", "123", "fix-navigation", "codex"]);
     expect(exec).toHaveBeenCalledWith(
       process.execPath,
@@ -141,24 +187,19 @@ describe("start work", () => {
       { stdio: "inherit" },
     );
     expect(issueEdits()).toEqual([
-      [
-        "gh",
-        [
-          "issue",
-          "edit",
-          "123",
-          "--add-assignee",
-          "billyleet",
-          "--add-label",
-          "status: in progress",
-          "--add-label",
-          "agent: codex",
-          "--remove-label",
-          "status: ready",
-        ],
-        { stdio: "inherit" },
-      ],
+      ["gh", ["issue", "edit", "123", "--add-assignee", "billyleet"], { stdio: "inherit" }],
     ]);
+    expect(updateIssue).toHaveBeenCalledWith("123", ["status=In progress", "agent=codex"]);
+  });
+
+  it("names the recovery command when the status & Agent update fails after assignment", () => {
+    mockIssueClaim({ ...unclaimed, assignees: [{ login: "billyleet" }] });
+    vi.mocked(updateIssue).mockImplementation(() => {
+      throw new Error("INSUFFICIENT_SCOPES");
+    });
+    expect(() => {
+      startWork(["issue", "123", "fix-navigation", "codex"]);
+    }).toThrow("pnpm run issue-fields claim 123 codex");
   });
 
   it("reports when GitHub does not reflect the issue claim", () => {
@@ -181,8 +222,8 @@ describe("start work", () => {
     expect(exec.mock.calls.every(([command]) => command !== "gh")).toBe(true);
   });
 
-  it("claims in the current worktree without an agent label for human work", () => {
-    mockLogin("human");
+  it("claims in the current worktree without an Agent value for human work", () => {
+    mockLogin();
     exec.mockReturnValueOnce(JSON.stringify(unclaimed));
     mockWorktree();
     exec
@@ -190,13 +231,11 @@ describe("start work", () => {
       .mockReturnValueOnce("")
       .mockReturnValueOnce(JSON.stringify(unclaimed))
       .mockReturnValueOnce("")
-      .mockReturnValueOnce(
-        JSON.stringify({
-          ...unclaimed,
-          assignees: [{ login: "billyleet" }],
-          labels: [{ name: "status: in progress" }],
-        }),
-      );
+      .mockReturnValueOnce(JSON.stringify({ ...unclaimed, assignees: [{ login: "billyleet" }] }));
+    vi.mocked(readIssue)
+      .mockReturnValueOnce(todo)
+      .mockReturnValueOnce(todo)
+      .mockReturnValueOnce({ type: "Task", fields: {}, status: "In progress" });
     startWork(["issue", "123", "--current", "human"]);
     expect(exec).toHaveBeenCalledWith(
       process.execPath,
@@ -204,43 +243,20 @@ describe("start work", () => {
       { stdio: "inherit" },
     );
     expect(issueEdits()).toEqual([
-      [
-        "gh",
-        [
-          "issue",
-          "edit",
-          "123",
-          "--add-assignee",
-          "billyleet",
-          "--add-label",
-          "status: in progress",
-          "--remove-label",
-          "status: ready",
-        ],
-        { stdio: "inherit" },
-      ],
+      ["gh", ["issue", "edit", "123", "--add-assignee", "billyleet"], { stdio: "inherit" }],
     ]);
-    expect(exec.mock.calls.some(([, args]) => args?.some((arg) => arg.includes("/labels/")))).toBe(
-      false,
-    );
+    expect(updateIssue).toHaveBeenCalledWith("123", ["status=In progress", "agent=-"]);
+    expect(checkAssignments).not.toHaveBeenCalled();
   });
 
   it("updates both owners on an explicit takeover with a standalone Refs line", () => {
     const root = realpathSync(process.cwd());
-    const previous = {
-      ...unclaimed,
-      assignees: [{ login: "mrh-is" }],
-      labels: [{ name: "status: in progress" }, { name: "agent: claude" }],
-    };
-    const next = {
-      ...previous,
-      assignees: [{ login: "billyleet" }],
-      labels: [{ name: "status: in progress" }, { name: "agent: codex" }],
-    };
+    const previous = { ...unclaimed, assignees: [{ login: "mrh-is" }] };
+    const next = { ...previous, assignees: [{ login: "billyleet" }] };
+    vi.mocked(readIssue).mockReturnValue(claimedByCodex);
     const outputs = [
       "billyleet",
       "https://github.com/mrh-is/mistria-fyi",
-      "{}",
       root,
       join(root, "scripts"),
       join(root, "docs"),
@@ -267,9 +283,11 @@ describe("start work", () => {
     expect(exec).toHaveBeenCalledWith("gh", ["pr", "checkout", "456"], { stdio: "inherit" });
     expect(exec).toHaveBeenCalledWith(
       "gh",
-      expect.arrayContaining(["--remove-assignee", "mrh-is", "--remove-label", "agent: claude"]),
+      ["issue", "edit", "123", "--add-assignee", "billyleet", "--remove-assignee", "mrh-is"],
       { stdio: "inherit" },
     );
+    expect(updateIssue).toHaveBeenCalledWith("123", ["status=In progress", "agent=codex"]);
+    expect(readIssue).toHaveBeenCalledTimes(1);
     expect(exec).toHaveBeenCalledWith(
       "gh",
       ["pr", "edit", "456", "--add-assignee", "billyleet", "--remove-assignee", "mrh-is"],
