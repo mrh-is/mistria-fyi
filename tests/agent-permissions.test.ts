@@ -17,6 +17,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "game-assets:share": "copies licensed game files & saves to the maintainer’s Google Drive",
   "generate:brand-assets": "rewrites committed brand assets",
   "housekeeping:install": "installs a persistent launchd agent that deletes merged worktrees",
+  "issue-fields": "changes GitHub issue statuses, types, and fields",
   "optimize-icons": "rewrites committed icon files",
   "r2:check": "writes & deletes a probe object in production storage",
   "saves:fetch": "downloads private player saves with stored Cloudflare credentials",
